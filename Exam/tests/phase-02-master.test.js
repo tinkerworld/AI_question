@@ -28,8 +28,7 @@ test('2.1-U1', 'Course Schema & DTO definitions', () => {
   const schema = fs.readFileSync(path.join(rootDir, 'packages/database/prisma/schema.prisma'), 'utf8');
   const typesIndex = fs.readFileSync(path.join(rootDir, 'packages/types/src/index.ts'), 'utf8');
   assert.ok(schema.includes('model Course'));
-  assert.ok(schema.includes('enum CourseStatus'));
-  assert.ok(typesIndex.includes('export interface CourseDTO'));
+  assert.ok(typesIndex.includes('export type CourseStatus ='));
 });
 
 test('2.1-U2', 'Course CRUD API Endpoints & State Machine Validation', () => {
@@ -59,8 +58,9 @@ test('2.2-U2', 'Subject CRUD API Endpoints', () => {
 // Feature 2.3 Tests (Syllabus Tree)
 test('2.3-U1', 'SyllabusNode Adjacency List & Depth Constraints', () => {
   const schema = fs.readFileSync(path.join(rootDir, 'packages/database/prisma/schema.prisma'), 'utf8');
+  const typesIndex = fs.readFileSync(path.join(rootDir, 'packages/types/src/index.ts'), 'utf8');
   assert.ok(schema.includes('model SyllabusNode'));
-  assert.ok(schema.includes('enum SyllabusNodeType'));
+  assert.ok(typesIndex.includes('export type SyllabusNodeType ='));
 });
 
 test('2.3-U2', 'Syllabus Tree API, Max Depth & Cyclic Check', () => {

@@ -10,6 +10,8 @@ import subjectRoutes from './routes/subject.routes';
 import syllabusRoutes from './routes/syllabus.routes';
 import enrollmentRoutes from './routes/enrollment.routes';
 import questionRoutes from './routes/question.routes';
+import i18nRoutes from './routes/i18n.routes';
+import preferenceRoutes from './routes/preference.routes';
 import { errorHandler } from './middleware/error';
 
 dotenv.config();
@@ -30,17 +32,19 @@ app.get('/health', (req, res) => {
 // Phase 1 Routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', userRoutes);
+app.use('/api/v1/users', preferenceRoutes); // /me/preferences
 app.use('/api/v1/roles', roleRoutes);
 app.use('/api/v1/audit', auditRoutes);
+app.use('/api/v1/i18n', i18nRoutes);
 
 // Phase 2 Routes (Academic Structure)
 app.use('/api/v1/courses', courseRoutes);
 app.use('/api/v1/courses/:courseId/subjects', subjectRoutes);
-app.use('/api/v1', subjectRoutes); // for /api/v1/subject/:id
+app.use('/api/v1', subjectRoutes);
 app.use('/api/v1/subjects/:subjectId/syllabus', syllabusRoutes);
 app.use('/api/v1/syllabus', syllabusRoutes);
 app.use('/api/v1/enrollments', enrollmentRoutes);
-app.use('/api/v1', enrollmentRoutes); // for /api/v1/students/:id/courses
+app.use('/api/v1', enrollmentRoutes);
 
 // Phase 3 Routes (Question Bank)
 app.use('/api/v1/questions', questionRoutes);

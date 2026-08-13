@@ -35,7 +35,7 @@ test('3.2-U1', 'Question Schema & DTO definitions', () => {
   const schema = fs.readFileSync(path.join(rootDir, 'packages/database/prisma/schema.prisma'), 'utf8');
   const typesIndex = fs.readFileSync(path.join(rootDir, 'packages/types/src/index.ts'), 'utf8');
   assert.ok(schema.includes('model Question'));
-  assert.ok(schema.includes('enum QuestionDifficulty'));
+  assert.ok(typesIndex.includes('export type QuestionDifficulty ='));
   assert.ok(typesIndex.includes('export interface QuestionDTO'));
 });
 

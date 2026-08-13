@@ -1,5 +1,5 @@
-import { PrismaClient } from '@prisma/client';
-
+require('dotenv').config();
+const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 const PERMISSIONS = [
@@ -60,7 +60,6 @@ const ROLES = [
   },
 ];
 
-// 23 Baseline Languages
 const BASELINE_LANGUAGES = [
   { code: 'en', name: 'English', nativeName: 'English', isDefault: true },
   { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी', isDefault: false },
@@ -70,7 +69,7 @@ const BASELINE_LANGUAGES = [
   { code: 'ta', name: 'Tamil', nativeName: 'தமிழ்', isDefault: false },
   { code: 'ur', name: 'Urdu', nativeName: 'اردو', isDefault: false },
   { code: 'gu', name: 'Gujarati', nativeName: 'ગુજરાતી', isDefault: false },
-  { code: 'kn', name: 'Kannada', nativeName: 'ಕನ್ನಡ', isDefault: false },
+  { code: 'kn', name: 'Kannada', nativeName: 'కನ್ನಡ', isDefault: false },
   { code: 'ml', name: 'Malayalam', nativeName: 'മലയാളം', isDefault: false },
   { code: 'or', name: 'Odia', nativeName: 'ଓଡ଼ିଆ', isDefault: false },
   { code: 'pa', name: 'Punjabi', nativeName: 'ਪੰਜਾਬੀ', isDefault: false },
@@ -98,16 +97,14 @@ const TRANSLATION_KEYS = [
   { key: 'analytics', description: 'Navigation student analytics label', module: 'navigation' },
 ];
 
-const SEED_TRANSLATIONS: Record<string, Record<string, string>> = {
+const SEED_TRANSLATIONS = {
   en: { welcome: 'Welcome to ExamOS Platform', app_title: 'ExamOS // Adaptive Learning Platform', dashboard: 'Dashboard', users: 'User Management', courses: 'Academic Courses', question_bank: 'Question Bank', exam_patterns: 'Exam Patterns', analytics: 'Student Analytics' },
   hi: { welcome: 'ExamOS प्लेटफॉर्म में आपका स्वागत है', app_title: 'ExamOS // अनुकूलनीय शिक्षण मंच', dashboard: 'डैशबोर्ड', users: 'उपयोगकर्ता प्रबंधन', courses: 'अकादमिक पाठ्यक्रम', question_bank: 'प्रश्न बैंक', exam_patterns: 'परीक्षा पैटर्न', analytics: 'छात्र विश्लेषण' },
-  bn: { welcome: 'ExamOS প্ল্যাটফর্মে স্বাগতম', app_title: 'ExamOS // অ্যাডাপ্টিভ লার্নিং প্ল্যাটফর্ম', dashboard: 'ড্যাশবোর্ড', users: 'ব্যবহারকারী পরিচালনা', courses: 'একাডেমিক কোর্স', question_bank: 'প্রশ্ন ব্যাংক', exam_patterns: 'পরীক্ষার প্যাটার্ন', analytics: 'ছাত্র অ্যানালিটিক্স' },
-  te: { welcome: 'ExamOS ప్లాట్‌ఫారమ్‌కు స్వాగతం', app_title: 'ExamOS // అడాప్టివ్ లెర్నింగ్ ప్లాట్‌ఫారమ్', dashboard: 'డాష్‌బోర్డ్', users: 'వినియోగదారు నిర్వహణ', courses: 'అకాడమిక్ కోర్సులు', question_bank: 'ప్రశ్నల బ్యాంక్', exam_patterns: 'పరీక్షా సరళి', analytics: 'విద్యార్థుల విశ్లేషణ' },
 };
 
 async function seed() {
   console.log('Seeding permissions & roles...');
-  const permMap = new Map<string, string>();
+  const permMap = new Map();
   for (const p of PERMISSIONS) {
     const perm = await prisma.permission.upsert({
       where: { key: p.key },
@@ -136,7 +133,7 @@ async function seed() {
   }
 
   console.log('Seeding 23 baseline languages into database...');
-  const langMap = new Map<string, string>();
+  const langMap = new Map();
   for (const l of BASELINE_LANGUAGES) {
     const lang = await prisma.language.upsert({
       where: { code: l.code },
@@ -147,7 +144,7 @@ async function seed() {
   }
 
   console.log('Seeding translation keys & values into database...');
-  const keyMap = new Map<string, string>();
+  const keyMap = new Map();
   for (const k of TRANSLATION_KEYS) {
     const tk = await prisma.translationKey.upsert({
       where: { key: k.key },

@@ -130,13 +130,11 @@ test('1.12-U1', '3-Theme Switcher (LIGHT, GRAY slate, DARK)', () => {
   assert.ok(themeCss.includes('[data-theme="light"]'));
 });
 
-test('1.12-U2', '23-Language Multilingual Engine (English + 22 Indian languages)', () => {
+test('1.12-U2', '23-Language Database-Driven Multilingual Engine (ADR-013)', () => {
   const i18nCtx = fs.readFileSync(path.join(rootDir, 'apps/web/src/context/I18nContext.tsx'), 'utf8');
-  assert.ok(i18nCtx.includes("code: 'hi'"));
-  assert.ok(i18nCtx.includes("code: 'bn'"));
-  assert.ok(i18nCtx.includes("code: 'te'"));
-  assert.ok(i18nCtx.includes("code: 'sat'"));
-  assert.ok(i18nCtx.includes("code: 'lus'"));
+  assert.ok(i18nCtx.includes('/i18n/languages'), 'Fetches registered languages from database API');
+  assert.ok(i18nCtx.includes('/i18n/translations'), 'Fetches translation dictionary from database API');
+  assert.ok(i18nCtx.includes('registerLanguage'), 'Supports database persistence of new languages');
 });
 
 // Section 7 Security Confirmation Gates
