@@ -1,6 +1,20 @@
 {
-  "extends": "@repo/typescript-config/node.json",
   "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@repo/database": ["../../packages/database/src/index.ts"],
+      "@repo/types": ["../../packages/types/src/index.ts"],
+      "@repo/validation": ["../../packages/validation/src/index.ts"],
+      "@repo/permissions": ["../../packages/permissions/src/index.ts"],
+      "@repo/question-types": ["../../packages/question-types/src/index.ts"]
+    },
     "rootDir": "src",
     "outDir": "dist"
   },
