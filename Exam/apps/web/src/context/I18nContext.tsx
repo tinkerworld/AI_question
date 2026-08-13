@@ -174,3 +174,15 @@ export const useI18n = (): I18nContextType => {
   }
   return context;
 };
+
+export const useTranslation = useI18n;
+
+export const LANGUAGES: LanguageInfo[] = [
+  { code: 'en', name: 'English', nativeName: 'English', isDefault: true },
+  { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी' },
+  { code: 'bn', name: 'Bengali', nativeName: 'বাংলা' },
+  { code: 'te', name: 'Telugu', nativeName: 'తెలుగు' },
+  { code: 'mr', name: 'Marathi', nativeName: 'मराठी' },
+  { code: 'ta', name: 'Tamil', nativeName: 'தமிழ்' },
+];
+

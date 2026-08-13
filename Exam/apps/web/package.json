@@ -8,13 +8,13 @@
     "test": "node --test"
   },
   "dependencies": {
-    "@repo/types": "workspace:*",
+    "@repo/types": "file:../../packages/types",
     "lucide-react": "^0.359.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
-    "@repo/typescript-config": "workspace:*",
+    "@repo/typescript-config": "file:../../packages/typescript-config",
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
     "@vitejs/plugin-react": "^4.2.1",
