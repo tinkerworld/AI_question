@@ -1,10 +1,54 @@
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 generator client {
   provider = "prisma-client-js"
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  ARCHIVED
+}
+
+enum CourseStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum SyllabusNodeType {
+  UNIT
+  TOPIC
+  SUBTOPIC
+  CONCEPT
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  DROPPED
+}
+
+enum QuestionDifficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum QuestionStatus {
+  DRAFT
+  REVIEW
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ThemeMode {
+  LIGHT
+  GRAY
+  DARK
 }
 
 model User {
@@ -13,7 +57,7 @@ model User {
   passwordHash   String
   firstName      String
   lastName       String
-  status         String          @default("ACTIVE")
+  status         UserStatus      @default(ACTIVE)
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   userRoles      UserRole[]
@@ -89,7 +133,7 @@ model AuditLog {
   action     String
   resource   String
   resourceId String?
-  details    String?
+  details    Json?
   ipAddress  String?
   userAgent  String?
   createdAt  DateTime @default(now())
@@ -103,7 +147,7 @@ model EntityVersion {
   entityType    String
   entityId      String
   version       Int
-  data          String
+  data          Json
   changeSummary String
   createdBy     String
   createdAt     DateTime @default(now())
@@ -116,7 +160,7 @@ model Course {
   name           String
   code           String       @unique
   description    String?
-  status         String       @default("DRAFT")
+  status         CourseStatus @default(DRAFT)
   thumbnailUrl   String?
   durationMonths Int          @default(12)
   createdById    String?
@@ -149,61 +193,61 @@ model Subject {
 }
 
 model SyllabusNode {
-  id                 String        @id @default(uuid())
+  id                 String           @id @default(uuid())
   subjectId          String
   parentId           String?
   title              String
-  type               String        @default("UNIT")
-  orderIndex         Int           @default(0)
-  depth              Int           @default(0)
+  type               SyllabusNodeType @default(UNIT)
+  orderIndex         Int              @default(0)
+  depth              Int              @default(0)
   description        String?
-  learningObjectives String?
-  estimatedMinutes   Int           @default(60)
-  status             String        @default("PUBLISHED")
-  tags               String?
-  subject            Subject       @relation(fields: [subjectId], references: [id], onDelete: Cascade)
-  parent             SyllabusNode? @relation("SyllabusHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
-  children           SyllabusNode[] @relation("SyllabusHierarchy")
-  createdAt          DateTime      @default(now())
-  updatedAt          DateTime      @updatedAt
+  learningObjectives Json?
+  estimatedMinutes   Int              @default(60)
+  status             CourseStatus     @default(PUBLISHED)
+  tags               String[]         @default([])
+  subject            Subject          @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  parent             SyllabusNode?    @relation("SyllabusHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children           SyllabusNode[]   @relation("SyllabusHierarchy")
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
   questions          Question[]
 
   @@map("syllabus_nodes")
 }
 
 model Enrollment {
-  id          String    @id @default(uuid())
+  id          String           @id @default(uuid())
   userId      String
   courseId    String
-  status      String    @default("ACTIVE")
-  enrolledAt  DateTime  @default(now())
+  status      EnrollmentStatus @default(ACTIVE)
+  enrolledAt  DateTime         @default(now())
   completedAt DateTime?
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course      Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@unique([userId, courseId])
   @@map("enrollments")
 }
 
 model Question {
-  id             String              @id @default(uuid())
+  id             String             @id @default(uuid())
   type           String
   content        String
-  data           String
-  difficulty     String              @default("MEDIUM")
-  marks          Float               @default(1.0)
-  status         String              @default("DRAFT")
-  version        Int                 @default(1)
+  data           Json
+  difficulty     QuestionDifficulty @default(MEDIUM)
+  marks          Float              @default(1.0)
+  status         QuestionStatus     @default(DRAFT)
+  version        Int                @default(1)
   courseId       String?
   subjectId      String?
   syllabusNodeId String?
   createdById    String?
-  course         Course?             @relation(fields: [courseId], references: [id], onDelete: SetNull)
-  subject        Subject?            @relation(fields: [subjectId], references: [id], onDelete: SetNull)
-  syllabusNode   SyllabusNode?       @relation(fields: [syllabusNodeId], references: [id], onDelete: SetNull)
-  createdBy      User?               @relation("QuestionCreator", fields: [createdById], references: [id], onDelete: SetNull)
-  createdAt      DateTime            @default(now())
-  updatedAt      DateTime            @updatedAt
+  course         Course?            @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  subject        Subject?           @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  syllabusNode   SyllabusNode?      @relation(fields: [syllabusNodeId], references: [id], onDelete: SetNull)
+  createdBy      User?              @relation("QuestionCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
   versions       QuestionVersion[]
   questionTags   QuestionTag[]
   examUsages     PreviousExamUsage[]
@@ -212,16 +256,16 @@ model Question {
 }
 
 model QuestionVersion {
-  id          String   @id @default(uuid())
+  id          String             @id @default(uuid())
   questionId  String
   version     Int
   content     String
-  data        String
-  difficulty  String
+  data        Json
+  difficulty  QuestionDifficulty
   marks       Float
   changedById String?
-  createdAt   DateTime @default(now())
-  question    Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  createdAt   DateTime           @default(now())
+  question    Question           @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
   @@map("question_versions")
 }
@@ -296,13 +340,13 @@ model Translation {
 }
 
 model UserPreference {
-  id           String   @id @default(uuid())
-  userId       String   @unique
-  themeMode    String   @default("DARK")
-  languageCode String   @default("en")
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           String    @id @default(uuid())
+  userId       String    @unique
+  themeMode    ThemeMode @default(DARK)
+  languageCode String    @default("en")
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_preferences")
 }

@@ -1,17 +1,12 @@
 import { PrismaClient } from '@prisma/client';
+import { PGlite } from '@electric-sql/pglite';
+import path from 'path';
 
-declare global {
-  var prismaSingleton: PrismaClient | undefined;
-}
+// Instantiate genuine PostgreSQL 16 WASM database engine
+const dbPath = path.resolve(__dirname, '../prisma/postgres-data');
+export const pgDb = new PGlite(dbPath);
 
-export const prisma =
-  globalThis.prismaSingleton ||
-  new PrismaClient({
-    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
-  });
-
-if (process.env.NODE_ENV !== 'production') {
-  globalThis.prismaSingleton = prisma;
-}
+// Prisma Client Instance
+export const prisma = new PrismaClient();
 
 export * from '@prisma/client';

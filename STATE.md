@@ -1,30 +1,36 @@
 # ExamOS Build State
 
-**Last updated:** 2026-08-14T01:37:00+05:30  
-**Current phase:** Phase 3 — Question Bank (Audit & i18n DB Refactor Complete)
+**Last updated:** 2026-08-14T01:55:00+05:30  
+**Current phase:** Phase 3 — Question Bank (PostgreSQL 16 Engine Configured & Fully Verified)
 
-## Completed Phases
-- **Phase 1 — Foundation**: Completed & Approved (Features 1.1 to 1.12 complete).
-  - *Feature 1.12 Refactor (Database-Driven Multilingual Engine & Preferences)*: `apps/web/preview.js` removed. Refactored `I18nContext` & `ThemeContext` to be 100% database-driven per ADR-013 (`languages`, `translation_keys`, `translations`, `user_preferences` DB tables). 23 baseline languages seeded into DB. Full database round-trip verified. Re-tested & marked `tested`. Tagged `phase-01-complete`.
+## Database Configuration
+- **Database Engine**: Genuine PostgreSQL 16 (`postgresql://examos:examos_password@localhost:5432/examos_db?schema=public`).
+- **Prisma Schema**: `provider = "postgresql"` with native `JSONB` columns on `questions.data`, `question_versions.data`, `audit_logs.details`, `entity_versions.data`, `syllabus_nodes.learningObjectives`, and native PostgreSQL `ENUM` types (`UserStatus`, `CourseStatus`, `SyllabusNodeType`, `EnrollmentStatus`, `QuestionDifficulty`, `QuestionStatus`, `ThemeMode`).
+- **Stray Files**: SQLite `dev.db` files deleted.
+
+## Completed Phases & Tasks
+- **Phase 1 — Foundation**: Completed & Approved (Features 1.1 to 1.12 complete). Tagged `phase-01-complete`.
+  - *Feature 1.12*: Refactored to 100% database-driven architecture (`languages`, `translation_keys`, `translations`, `user_preferences` DB tables) with 23 baseline languages seeded into PostgreSQL. Verified against PostgreSQL 16.
 - **Phase 2 — Academic Structure**: Completed & Approved (Features 2.1 to 2.6 complete). Tagged `phase-02-complete`.
+- **Phase 3 — Question Bank**: All Features 3.1 to 3.8 built & tested against PostgreSQL 16:
+  - *Feature 3.1*: Pluggable Question Type System (`@repo/question-types`, 8 built-in handlers).
+  - *Feature 3.2*: Question CRUD API & filters.
+  - *Feature 3.3*: Question Versioning & Rollback with native `JSONB` data columns.
+  - *Feature 3.4*: Question Tagging System & autocomplete.
+  - *Feature 3.5*: Question Lifecycle Workflow State Machine.
+  - *Feature 3.6*: Previous Exam Usage Tracking.
+  - *Feature 3.7*: Question Bank Frontend.
+  - *Feature 3.8*: Question Bank Analytics & Syllabus Coverage Calculation.
 
-## Audit of Core Backend Wiring (Features 1.6, 1.7, 1.9)
-- **Feature 1.6 (Authentication)**: 100% database-wired (`users` & `refresh_tokens` tables, bcrypt password verification, refresh token rotation).
-- **Feature 1.7 (User Management)**: 100% database-wired (`users` CRUD, Section 7 IDOR ownership checks).
-- **Feature 1.9 (Audit Logging)**: 100% database-wired (`audit_logs` table, Express middleware, search API).
-
-## Completed / Tested Tasks (Phase 3)
-- **Feature 3.1 — Pluggable Question Type System**: Built & Tested (`@repo/question-types`, 8 built-in handlers).
-- **Feature 3.2 — Question CRUD**: Built & Tested (Question model, CRUD API, filters).
-- **Feature 3.3 — Question Versioning**: Built & Tested (`QuestionVersion` model, version history & rollback).
-- **Feature 3.4 — Question Tags**: Built & Tested (`Tag`, `QuestionTag` models, autocomplete).
-- **Feature 3.5 — Question Lifecycle**: Built & Tested (`DRAFT` → `REVIEW` → `PUBLISHED` → `ARCHIVED` state machine).
-- **Feature 3.6 — Previous Exam Tracking**: Built & Tested (`PreviousExamUsage` model & endpoints).
-- **Feature 3.7 — Question Bank Frontend**: Built & Tested (Question bank workspace & filtering UI).
-- **Feature 3.8 — Question Bank Analytics**: Built & Tested (Analytics summary & syllabus coverage ratio).
+## Test Verification Summary (PostgreSQL 16)
+- **Feature 1.12 PostgreSQL i18n & Preferences Test**: Passed (Joined DB queries & 23 languages verified).
+- **Feature 3.3 PostgreSQL Native JSONB Question Versioning & Rollback Test**: Passed.
+- **Phase 1 Master Test Suite**: 18/18 Passed.
+- **Phase 2 Master Test Suite**: 10/10 Passed.
+- **Phase 3 Master Test Suite**: 9/9 Passed.
 
 ## Next Action
-- Await supervisor review of Feature 1.12 database round-trip proof & sign-off in `tools/build-tracker`.
+- Await supervisor review and approval for Phase 3 completion in the build tracker UI at `http://localhost:3050`.
 
 ## Blockers
 - None
