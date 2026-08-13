@@ -1,30 +1,23 @@
 # ExamOS Build State
 
-**Last updated:** 2026-08-13T19:47:00.000Z  
-**Current phase:** Phase 2 — Academic Structure
+**Last updated:** 2026-08-14T01:12:00+05:30  
+**Current phase:** Phase 3 — Question Bank
 
 ## Completed Phases
-- **Phase 1 — Foundation**: Completed & Approved (Features 1.1 to 1.12 complete).
-
-## Completed / Tested Tasks (Phase 2)
-- **Feature 2.1 — Course Management**: Built & Tested (Course CRUD, state transitions DRAFT -> PUBLISHED -> ARCHIVED, student filtering, code uniqueness).
-- **Feature 2.2 — Subject Management**: Built & Tested (Subject CRUD, course linking, unique subject code per course constraint).
-- **Feature 2.3 — Syllabus Tree (Hierarchical)**: Built & Tested (Adjacency list pattern `parentId`, recursive tree builder, depth calculation, max depth limit 4 levels, cyclic parent rejection).
-- **Feature 2.4 — Syllabus Node Metadata**: Built & Tested (Node metadata, estimated minutes, learning objectives, tag filtering, student draft node visibility filter).
-- **Feature 2.5 — Course-Subject-Syllabus Frontend**: Built & Tested (Admin courses layout, syllabus tree builder UI, breadcrumbs).
-- **Feature 2.6 — Student Course Enrollment**: Built & Tested (Enrollment API, unique `[userId, courseId]` constraint, student course listing).
+- Phase 1: Foundation — all 12 planned tasks done, verified against phase-01-foundation.md, schema, API reference, and error registry. Approved on date not recorded, backfilled. Tagged `phase-01-complete`.
+- Phase 2: Academic Structure — all 6 planned tasks (Course Management, Subject Management, Syllabus Tree, Syllabus Node Metadata, Course-Subject-Syllabus Frontend, Student Course Enrollment) done, verified against phase-02-academic-structure.md. Tagged `phase-02-complete`.
 
 ## In Progress
-- Phase 2: Academic Structure (Awaiting supervisor final approval for Phase 2 completion in build tracker UI at `http://localhost:3050`)
+- Phase 3: Question Bank — Feature 3.1 ("Pluggable Question Type System") built and self-tested (7/7 unit & integration tests passed). Awaiting supervisor approval in `tools/build-tracker`.
 
 ## Next Action
-- Await supervisor final approval in Build Tracker UI (`Approve Phase & Unlock Next`) to move to Phase 3 (Question Bank).
+- Await supervisor review and approval for Feature 3.1 in the build tracker UI at `http://localhost:3050`.
 
 ## Blockers
 - None
 
 ## Open Conflicts
-- None
+- None logged
 
 ## Deviations From Docs
-- None
+- None logged
