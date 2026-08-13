@@ -1,5 +1,5 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { pgDb, prisma } from '@repo/database';
+import { pgDb } from '@repo/database';
 import { authenticate } from '../middleware/auth';
 import { requirePermission } from '../middleware/permission';
 import { PERMISSIONS } from '@repo/permissions';
@@ -37,6 +37,27 @@ const BASELINE_LANGUAGES = [
 const SEED_TRANSLATIONS: Record<string, Record<string, string>> = {
   en: { welcome: 'Welcome to ExamOS Platform', app_title: 'ExamOS // Adaptive Learning Platform', dashboard: 'Dashboard', users: 'User Management', courses: 'Academic Courses', question_bank: 'Question Bank', exam_patterns: 'Exam Patterns', analytics: 'Student Analytics' },
   hi: { welcome: 'ExamOS प्लेटफॉर्म में आपका स्वागत है', app_title: 'ExamOS // अनुकूलनीय शिक्षण मंच', dashboard: 'डैशबोर्ड', users: 'उपयोगकर्ता प्रबंधन', courses: 'अकादमिक पाठ्यक्रम', question_bank: 'प्रश्न बैंक', exam_patterns: 'परीक्षा पैटर्न', analytics: 'छात्र विश्लेषण' },
+  bn: { welcome: 'ExamOS প্ল্যাটফর্মে আপনাকে স্বাগতম', app_title: 'ExamOS // অ্যাডাপ্টিভ লার্নিং প্ল্যাটফর্ম', dashboard: 'ড্যাশবোর্ড', users: 'ব্যবহারকারী ব্যবস্থাপনা', courses: 'একাডেমিক কোর্স', question_bank: 'প্রশ্ন ব্যাংক', exam_patterns: 'পরীক্ষার প্যাটার্ন', analytics: 'শিক্ষার্থী বিশ্লেষণ' },
+  te: { welcome: 'ExamOS వేదికకు స్వాగతం', app_title: 'ExamOS // అడాప్టివ్ లెర్నింగ్ ప్లాట్‌ఫారమ్', dashboard: 'డాష్‌బోర్డ్', users: 'వినియోగదారు నిర్వహణ', courses: 'అకాడమిక్ కోర్సులు', question_bank: 'ప్రశ్నల నిధి', exam_patterns: 'పరీక్ష విధానాలు', analytics: 'విద్యార్థి విశ్లేషణలు' },
+  mr: { welcome: 'ExamOS प्लॅटफॉर्मवर आपले स्वागत आहे', app_title: 'ExamOS // अडॅप्टिव्ह लर्निंग प्लॅटफॉर्म', dashboard: 'डॅशबोर्ड', users: 'वापरकर्ता व्यवस्थापन', courses: 'शैक्षणिक अभ्यासक्रम', question_bank: 'प्रश्न संच', exam_patterns: 'परीक्षा स्वरूप', analytics: 'विद्यार्थी विश्लेषण' },
+  ta: { welcome: 'ExamOS தளத்திற்கு உங்களை வரவேற்கிறோம்', app_title: 'ExamOS // அடாப்டிவ் கற்றல் தளம்', dashboard: 'முகப்புப்பலகை', users: 'பயனர் நிர்வாகம்', courses: 'கல்விப் பாடங்கள்', question_bank: 'வினா வங்கி', exam_patterns: 'தேர்வு முறைகள்', analytics: 'மாணவர் பகுப்பாய்வு' },
+  ur: { welcome: 'ExamOS پلیٹ فارم میں خوش آمدید', app_title: 'ExamOS // اڈاپٹیو لرننگ پلیٹ فارم', dashboard: 'ڈیش بورڈ', users: 'صارفین کا انتظام', courses: 'تعلیمی کورسز', question_bank: 'سوالات کا بینک', exam_patterns: 'امتحانی انداز', analytics: 'طلباء کے تجزیات' },
+  gu: { welcome: 'ExamOS પ્લેટફોર્મ પર આપનું સ્વાગત છે', app_title: 'ExamOS // અડેપ્ટિવ લર્નિંગ પ્લેટફોર્મ', dashboard: 'ડેશબોર્ડ', users: 'વપરાશકર્તા વ્યવસ્થાપન', courses: 'શૈક્ષણિક અભ્યાસક્રમો', question_bank: 'પ્રશ્ન બેંક', exam_patterns: 'પરીક્ષાની પેટર્ન', analytics: 'વિદ્યાર્થી વિશ્લેષણ' },
+  kn: { welcome: 'ExamOS ವೇದಿಕೆಗೆ ಸುಸ್ವಾಗತ', app_title: 'ExamOS // ಅಡಾಪ್ಟಿವ್ ಕಲಿಕಾ ವೇದಿಕೆ', dashboard: 'ಡ್ಯಾಶ್‌ಬೋರ್ಡ್', users: 'ಬಳಕೆದಾರರ ನಿರ್ವಹಣೆ', courses: 'ಶೈಕ್ಷಣಿಕ ಕೋರ್ಸ್‌ಗಳು', question_bank: 'ಪ್ರಶ್ನೆ ಬ್ಯಾಂಕ್', exam_patterns: 'ಪರೀಕ್ಷಾ ಮಾದರಿಗಳು', analytics: 'ವಿದ್ಯಾರ್ಥಿ ವಿಶ್ಲೇಷಣೆ' },
+  ml: { welcome: 'ExamOS പ്ലാറ്റ്‌ഫോമിലേക്ക് സ്വാഗതം', app_title: 'ExamOS // അഡാപ്റ്റീവ് ലേണിംഗ് പ്ലാറ്റ്ഫോം', dashboard: 'ഡാഷ്‌ബോർഡ്', users: 'ഉപയോക്തൃ മാനേജ്മെന്റ്', courses: 'അക്കാദമിക് കോഴ്സുകൾ', question_bank: 'ചോദ്യ ബാങ്ക്', exam_patterns: 'പരീക്ഷാ രീതികൾ', analytics: 'വിദ്യാർത്ഥി വിശകലനം' },
+  or: { welcome: 'ExamOS ପ୍ଲାଟଫର୍ମକୁ ସ୍ୱାଗତ', app_title: 'ExamOS // ଆଡାପ୍ଟିଭ୍ ଶିକ୍ଷଣ ପ୍ଲାଟଫର୍ମ', dashboard: 'ଡ୍ୟାସବୋର୍ଡ', users: 'ବ୍ୟବହାରକାରୀ ପରିଚାଳନା', courses: 'ଶିକ୍ଷାଗତ ପାଠ୍ୟକ୍ରମ', question_bank: 'ପ୍ରଶ୍ନ ବ୍ୟାଙ୍କ', exam_patterns: 'ପରୀକ୍ଷା ପ୍ୟାଟର୍ନ', analytics: 'ଛାତ୍ର ବିଶ୍ଳେଷଣ' },
+  pa: { welcome: 'ExamOS ਪਲੇਟਫਾਰਮ \'ਤੇ ਤੁਹਾਡਾ ਸਵਾਗਤ ਹੈ', app_title: 'ExamOS // ਅਡੈਪਟਿਵ ਲਰਨਿੰਗ ਪਲੇਟਫਾਰਮ', dashboard: 'ਡੈਸ਼ਬੋਰਡ', users: 'ਉਪਭੋਗਤਾ ਪ੍ਰਬੰਧਨ', courses: 'ਅਕਾਦਮਿਕ ਕੋਰਸ', question_bank: 'ਪ੍ਰਸ਼ਨ ਬੈਂਕ', exam_patterns: 'ਪ੍ਰੀਖਿਆ ਪੈਟਰਨ', analytics: 'ਵਿਦਿਆਰਥੀ ਵਿਸ਼ਲੇਸ਼ਣ' },
+  as: { welcome: 'ExamOS প্লেটফৰ্মলৈ স্বাগতম', app_title: 'ExamOS // এডাপ্টিভ লার্নিং প্লেটফর্ম', dashboard: 'ড্যাশবোর্ড', users: 'ব্যৱহাৰকাৰী ব্যৱস্থাপনা', courses: 'শৈক্ষিক পাঠ্যক্ৰম', question_bank: 'প্রশ্ন বেংক', exam_patterns: 'পৰীক্ষাৰ আৰ্হি', analytics: 'ছাত্ৰ-ছাত্ৰীৰ বিশ্লেষণ' },
+  ma: { welcome: 'ExamOS प्लेटफॉर्म पर स्वागत अछि', app_title: 'ExamOS // अनुकूलनीय शिक्षण मंच', dashboard: 'डैशबोर्ड', users: 'उपयोगकर्ता प्रबंधन', courses: 'अकादमिक पाठ्यक्रम', question_bank: 'प्रश्न बैंक', exam_patterns: 'परीक्षा पैटर्न', analytics: 'छात्र विश्लेषण' },
+  sa: { welcome: 'ExamOS मञ्चे भवतां स्वागतम्', app_title: 'ExamOS // अनुकूलाधिगममञ्चः', dashboard: 'नियन्त्रणपट्टिका', users: 'प्रयोक्तृप्रबन्धनम्', courses: 'शैक्षणिकपाठ्यक्रमः', question_bank: 'प्रश्नकोशः', exam_patterns: 'परीक्षाप्रारूपम्', analytics: 'छात्रविश्लेषणम्' },
+  ks: { welcome: 'ExamOS پلیٹ فارمس منز خوش آمدید', app_title: 'ExamOS // اڈاپٹیو لرننگ پلیٹ فارم', dashboard: 'ڈیش بورڈ', users: 'صارفین منجمنٹ', courses: 'تعلیمی کورس', question_bank: 'سوال بینک', exam_patterns: 'امتحانی پیٹرن', analytics: 'طالب علم تجزئیے' },
+  ne: { welcome: 'ExamOS प्लेटफर्ममा स्वागत छ', app_title: 'ExamOS // एडप्टिभ लर्निङ प्लेटफर्म', dashboard: 'ड्यासबोर्ड', users: 'प्रयोगकर्ता व्यवस्थापन', courses: 'शैक्षिक पाठ्यक्रम', question_bank: 'प्रश्न बैंक', exam_patterns: 'परीक्षा ढाँचा', analytics: 'विद्यार्थी विश्लेषण' },
+  sd: { welcome: 'ExamOS پليٽفارم تي ڀلي ڪري آيا', app_title: 'ExamOS // اڊاپٽو لرننگ پليٽفارم', dashboard: 'ڊيش بورڊ', users: 'صارفين جي سڀال', courses: 'تعليمي ڪورس', question_bank: 'سوالن جي بئنڪ', exam_patterns: 'امتحان جا نمونا', analytics: 'شاگردن جي تجزيات' },
+  br: { welcome: 'ExamOS प्लैटफर्मआव बरायबाय', app_title: 'ExamOS // सोलोंथाइ प्लैटफर्म', dashboard: 'डैशबोर्ड', users: 'बाहायगिरि सामलायनाय', courses: 'सोलोङो फरायखौंथाय', question_bank: 'सोंनाय बैंक', exam_patterns: 'आनजाद रोखोम', analytics: 'फरायसु विस्लेषण' },
+  doi: { welcome: 'ExamOS प्लेटफार्म पर स्वागत ऐ', app_title: 'ExamOS // अडैप्टिव लर्निंग मंच', dashboard: 'डैशबोर्ड', users: 'उपयोगकर्ता प्रबंधन', courses: 'अकादमिक कोर्स', question_bank: 'सवाल बैंक', exam_patterns: 'परीक्षा पैटर्न', analytics: 'छात्र विश्लेषण' },
+  mni: { welcome: 'ExamOS प्लेटफॉर्मदा तराम্না ओकचरी', app_title: 'ExamOS // अडैप्टिव लर्निंग प्लेटफॉर्म', dashboard: 'ड्यासबोर्ड', users: 'शीजिन्‍नरिबा मयेक', courses: 'अकादमिक कोर्स', question_bank: 'वाहंग बैंक', exam_patterns: 'परीक्षा पैटर्न', analytics: 'माहैरोइ विश्‍लेषण' },
+  sat: { welcome: 'ExamOS ᱯᱞᱮᱴᱯᱷᱚᱨᱢ ᱨᱮ ᱥᱟᱹᱜᱩᱱ ᱫᱟᱨᱟᱢ', app_title: 'ExamOS // ᱪᱮᱫᱚᱜ ᱯᱞᱮᱴᱯᱷᱚᱨᱢ', dashboard: 'ᱰᱮᱥᱵᱚᱨᱰ', users: 'ᱵᱮᱣᱦᱟᱨᱤᱭᱟᱹ ᱥᱟᱧᱮᱞ', courses: 'ᱥᱮᱪᱮᱫ ᱠᱳᱨᱥ', question_bank: 'ᱠᱩᱠᱞᱤ ᱵᱮᱝᱠ', exam_patterns: 'ᱵᱤᱱᱤᱰ ᱯᱮᱴᱚᱨᱱ', analytics: 'ᱯᱟᱹᱴᱷᱩᱣᱟᱹ ᱵᱤ' },
+  lus: { welcome: 'ExamOS Platform-ah kan lo lawm a che', app_title: 'ExamOS // Learning Platform', dashboard: 'Dashboard', users: 'User Control', courses: 'Academic Courses', question_bank: 'Question Bank', exam_patterns: 'Exam Patterns', analytics: 'Student Analytics' },
 };
 
 // ----------------------------------------------------------------------------
