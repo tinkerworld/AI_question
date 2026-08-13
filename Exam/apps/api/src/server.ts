@@ -24,7 +24,11 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Healthcheck
+// Healthcheck & Root Landing
+app.get('/', (req, res) => {
+  res.json({ name: 'ExamOS API', status: 'ONLINE', version: '1.0.0', apiBase: '/api/v1' });
+});
+
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });

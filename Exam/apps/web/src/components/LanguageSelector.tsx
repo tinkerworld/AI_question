@@ -1,14 +1,16 @@
 import React from 'react';
 import { useTranslation, LANGUAGES } from '../context/I18nContext';
-import { LanguageCode } from '@repo/types';
 
 export const LanguageSelector: React.FC = () => {
-  const { language, setLanguage } = useTranslation();
+  const { currentLanguage, language, setLanguage, availableLanguages } = useTranslation();
+
+  const activeCode = currentLanguage || language || 'en';
+  const list = (availableLanguages && availableLanguages.length > 0) ? availableLanguages : LANGUAGES;
 
   return (
     <select
-      value={language}
-      onChange={(e) => setLanguage(e.target.value as LanguageCode)}
+      value={activeCode}
+      onChange={(e) => setLanguage(e.target.value)}
       style={{
         padding: '6px 12px',
         borderRadius: '6px',
@@ -20,7 +22,7 @@ export const LanguageSelector: React.FC = () => {
         outline: 'none',
       }}
     >
-      {LANGUAGES.map((lang) => (
+      {list.map((lang) => (
         <option key={lang.code} value={lang.code} style={{ background: '#1e293b', color: '#fff' }}>
           {lang.nativeName} ({lang.name})
         </option>

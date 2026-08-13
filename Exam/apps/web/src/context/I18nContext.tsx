@@ -10,6 +10,7 @@ export interface LanguageInfo {
 
 interface I18nContextType {
   currentLanguage: string;
+  language: string;
   setLanguage: (code: string) => void;
   t: (key: string) => string;
   availableLanguages: LanguageInfo[];
@@ -155,6 +156,7 @@ export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     <I18nContext.Provider
       value={{
         currentLanguage,
+        language: currentLanguage,
         setLanguage,
         t,
         availableLanguages,
