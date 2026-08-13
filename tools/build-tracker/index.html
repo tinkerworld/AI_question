@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ExamOS // Kanban Build Tracker (Dev Tool)</title>
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Top Header Bar -->
+  <header class="top-header">
+    <div class="brand-section">
+      <div class="brand-logo">OS</div>
+      <div>
+        <div class="brand-title">EXAMOS // BUILD TRACKER</div>
+        <div class="brand-subtitle">SUPERVISOR CONTROL PANEL — 14 PHASES / 112+ FEATURES</div>
+      </div>
+    </div>
+
+    <div class="global-metrics">
+      <div class="metric-item">
+        <div class="metric-label">Total Build Completion</div>
+        <div class="metric-val" id="global-progress-text">0 / 0 Tasks (0%)</div>
+        <div class="progress-bar-outer">
+          <div class="progress-bar-inner" id="global-progress-fill"></div>
+        </div>
+      </div>
+
+      <div class="metric-item">
+        <div class="metric-label">Active Phase</div>
+        <div class="metric-val" id="active-phase-tag" style="color: var(--color-approved-text)">PHASE 01</div>
+      </div>
+
+      <div class="sync-status">
+        <span class="led-dot"></span>
+        <span id="sync-text">LIVE SYNCED</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Workspace Container -->
+  <div class="app-container">
+    
+    <!-- Sidebar: 14 Phases -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <span>Implementation DAG</span>
+        <span id="sidebar-phases-done">0/14 PHASES</span>
+      </div>
+      <div class="sidebar-list" id="sidebar-phase-list">
+        <!-- Rendered via JS -->
+      </div>
+    </aside>
+
+    <!-- Main Detail Content Area -->
+    <main class="main-content" id="main-view">
+      
+      <!-- Phase Banner Header -->
+      <div class="phase-header-card">
+        <div class="phase-title-row">
+          <div class="phase-title-group">
+            <span class="phase-badge" id="phase-badge-id" style="font-size: 14px; padding: 6px 12px; background: var(--color-approved-border); color: #000;">P01</span>
+            <h1 class="phase-title-text" id="phase-title-text">PHASE 1: FOUNDATION</h1>
+          </div>
+          
+          <button class="btn-unlock-phase" id="btn-complete-phase">
+            <span>✓ APPROVE PHASE & UNLOCK NEXT</span>
+          </button>
+        </div>
+
+        <p class="phase-desc" id="phase-desc-text">Phase description goes here...</p>
+
+        <div class="phase-meta-bar">
+          <div class="state-pills-group">
+            <div class="state-pill pending" id="pill-pending">PENDING: 0</div>
+            <div class="state-pill approved" id="pill-approved">APPROVED: 0</div>
+            <div class="state-pill tested" id="pill-tested">TESTED: 0</div>
+            <div class="state-pill done" id="pill-done">DONE: 0</div>
+          </div>
+
+          <div style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);" id="phase-prereq-text">
+            PREREQUISITES: NONE
+          </div>
+        </div>
+      </div>
+
+      <!-- Stacked Three Distinct Task Lists -->
+      <div class="task-sections-stack">
+        
+        <!-- SECTION 1: Planned Tasks -->
+        <section class="task-section">
+          <div class="section-header">
+            <div class="section-title-group">
+              <h2 class="section-title">1. Planned Tasks</h2>
+              <span class="section-count-badge" id="count-plan">0</span>
+              <span class="section-source-tag plan">Pre-Seeded Plan</span>
+            </div>
+            <div style="font-family: var(--font-mono); font-size: 11px; color: var(--text-dim);">docs/phases/*.md</div>
+          </div>
+          <div class="task-grid" id="grid-plan-tasks">
+            <!-- Rendered via JS -->
+          </div>
+        </section>
+
+        <!-- SECTION 2: AI-Suggested Tasks -->
+        <section class="task-section" style="border-color: rgba(168, 85, 247, 0.3);">
+          <div class="section-header">
+            <div class="section-title-group">
+              <h2 class="section-title" style="color: var(--color-ai-text);">2. AI-Suggested Tasks</h2>
+              <span class="section-count-badge" id="count-ai" style="background: var(--color-ai-border); color: #fff;">0</span>
+              <span class="section-source-tag ai">Proposed by Agent</span>
+            </div>
+            <div style="font-family: var(--font-mono); font-size: 11px; color: var(--color-ai-text);">⚠️ Explicit Engineer Approval Required</div>
+          </div>
+          <div class="task-grid" id="grid-ai-tasks">
+            <!-- Rendered via JS -->
+          </div>
+        </section>
+
+        <!-- SECTION 3: User-Added Tasks -->
+        <section class="task-section" style="border-color: rgba(59, 130, 246, 0.3);">
+          <div class="section-header">
+            <div class="section-title-group">
+              <h2 class="section-title" style="color: var(--color-user-text);">3. User-Added Tasks</h2>
+              <span class="section-count-badge" id="count-user" style="background: var(--color-user-border); color: #fff;">0</span>
+              <span class="section-source-tag user">Supervisor Added</span>
+            </div>
+          </div>
+
+          <!-- Add Task Input Form (Visible only on active/unlocked phase) -->
+          <div class="add-task-form" id="user-add-task-form">
+            <div style="font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--color-user-text);">+ ADD AD-HOC TASK TO CURRENT PHASE</div>
+            <div class="add-task-title-row">
+              <input type="text" id="new-task-title" class="input-field" placeholder="Enter task title (e.g. Add missing database index for auth logs)..." />
+              <button class="btn-add-task" id="btn-submit-task">+ Add Task</button>
+            </div>
+            <input type="text" id="new-task-note" class="input-field" placeholder="Optional rationale / notes for this task..." />
+          </div>
+
+          <div class="task-grid" id="grid-user-tasks">
+            <!-- Rendered via JS -->
+          </div>
+        </section>
+
+      </div>
+
+    </main>
+
+  </div>
+
+  <div class="toast-container" id="toast-container"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

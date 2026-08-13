@@ -1,0 +1,13 @@
+{
+  "name": "examos-kanban-build-tracker",
+  "version": "1.0.0",
+  "description": "Supervisor control panel for tracking and approving the 14-phase ExamOS build",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": ["examos", "kanban", "tracker", "dev-tool"],
+  "author": "ExamOS Core Engineering",
+  "license": "MIT"
+}
