@@ -228,3 +228,85 @@ export interface CreateEnrollmentDTO {
   userId: string;
   courseId: string;
 }
+
+// Phase 3 DTOs (Question Bank)
+export type QuestionDifficulty = 'EASY' | 'MEDIUM' | 'HARD';
+export type QuestionStatus = 'DRAFT' | 'REVIEW' | 'PUBLISHED' | 'ARCHIVED';
+
+export interface QuestionDTO {
+  id: string;
+  type: string;
+  content: string;
+  data: Record<string, any>;
+  difficulty: QuestionDifficulty;
+  marks: number;
+  status: QuestionStatus;
+  version: number;
+  courseId?: string | null;
+  subjectId?: string | null;
+  syllabusNodeId?: string | null;
+  tags?: string[];
+  createdById?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateQuestionDTO {
+  type: string;
+  content: string;
+  data: Record<string, any>;
+  difficulty?: QuestionDifficulty;
+  marks?: number;
+  status?: QuestionStatus;
+  courseId?: string;
+  subjectId?: string;
+  syllabusNodeId?: string;
+  tags?: string[];
+}
+
+export interface UpdateQuestionDTO {
+  content?: string;
+  data?: Record<string, any>;
+  difficulty?: QuestionDifficulty;
+  marks?: number;
+  status?: QuestionStatus;
+  courseId?: string;
+  subjectId?: string;
+  syllabusNodeId?: string;
+  tags?: string[];
+}
+
+export interface QuestionVersionDTO {
+  id: string;
+  questionId: string;
+  version: number;
+  content: string;
+  data: Record<string, any>;
+  difficulty: QuestionDifficulty;
+  marks: number;
+  changedById?: string | null;
+  createdAt: string;
+}
+
+export interface TagDTO {
+  id: string;
+  name: string;
+  createdAt: string;
+}
+
+export interface PreviousExamUsageDTO {
+  id: string;
+  questionId: string;
+  examName: string;
+  year: number;
+  shift?: string | null;
+  createdAt: string;
+}
+
+export interface QuestionBankAnalyticsDTO {
+  totalQuestions: number;
+  byDifficulty: Record<QuestionDifficulty, number>;
+  byType: Record<string, number>;
+  byStatus: Record<QuestionStatus, number>;
+  syllabusCoverageRatio: number;
+}

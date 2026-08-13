@@ -110,3 +110,43 @@ export const createEnrollmentSchema = z.object({
   userId: z.string().uuid('Valid user ID is required'),
   courseId: z.string().uuid('Valid course ID is required'),
 });
+
+// Phase 3 Validation Schemas (Question Bank)
+export const createQuestionSchema = z.object({
+  type: z.string().min(1, 'Question type is required'),
+  content: z.string().min(5, 'Question content must be at least 5 characters'),
+  data: z.record(z.any()),
+  difficulty: z.enum(['EASY', 'MEDIUM', 'HARD']).default('MEDIUM'),
+  marks: z.number().min(0.5).default(1.0),
+  status: z.enum(['DRAFT', 'REVIEW', 'PUBLISHED', 'ARCHIVED']).default('DRAFT'),
+  courseId: z.string().optional(),
+  subjectId: z.string().optional(),
+  syllabusNodeId: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+});
+
+export const updateQuestionSchema = z.object({
+  content: z.string().min(5).optional(),
+  data: z.record(z.any()).optional(),
+  difficulty: z.enum(['EASY', 'MEDIUM', 'HARD']).optional(),
+  marks: z.number().min(0.5).optional(),
+  status: z.enum(['DRAFT', 'REVIEW', 'PUBLISHED', 'ARCHIVED']).optional(),
+  courseId: z.string().optional(),
+  subjectId: z.string().optional(),
+  syllabusNodeId: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+});
+
+export const questionStatusSchema = z.object({
+  status: z.enum(['DRAFT', 'REVIEW', 'PUBLISHED', 'ARCHIVED']),
+});
+
+export const addExamUsageSchema = z.object({
+  examName: z.string().min(2, 'Exam name is required'),
+  year: z.number().min(1990).max(2100),
+  shift: z.string().optional(),
+});
+
+export const tagSchema = z.object({
+  name: z.string().min(2, 'Tag name is required'),
+});

@@ -32,20 +32,34 @@ enum EnrollmentStatus {
   DROPPED
 }
 
+enum QuestionDifficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum QuestionStatus {
+  DRAFT
+  REVIEW
+  PUBLISHED
+  ARCHIVED
+}
+
 model User {
-  id           String         @id @default(uuid())
-  email        String         @unique
-  passwordHash String
-  firstName    String
-  lastName     String
-  status       UserStatus     @default(ACTIVE)
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  userRoles    UserRole[]
-  tokens       RefreshToken[]
-  auditLogs    AuditLog[]
-  enrollments  Enrollment[]
-  createdCourses Course[]     @relation("CourseCreator")
+  id             String         @id @default(uuid())
+  email          String         @unique
+  passwordHash   String
+  firstName      String
+  lastName       String
+  status         UserStatus     @default(ACTIVE)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  userRoles      UserRole[]
+  tokens         RefreshToken[]
+  auditLogs      AuditLog[]
+  enrollments    Enrollment[]
+  createdCourses Course[]       @relation("CourseCreator")
+  questions      Question[]     @relation("QuestionCreator")
 
   @@map("users")
 }
@@ -148,6 +162,7 @@ model Course {
   updatedAt      DateTime     @updatedAt
   subjects       Subject[]
   enrollments    Enrollment[]
+  questions      Question[]
 
   @@map("courses")
 }
@@ -164,6 +179,7 @@ model Subject {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   syllabusNodes SyllabusNode[]
+  questions     Question[]
 
   @@unique([courseId, code])
   @@map("subjects")
@@ -187,6 +203,7 @@ model SyllabusNode {
   children           SyllabusNode[]   @relation("SyllabusHierarchy")
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
+  questions          Question[]
 
   @@map("syllabus_nodes")
 }
@@ -203,4 +220,76 @@ model Enrollment {
 
   @@unique([userId, courseId])
   @@map("enrollments")
+}
+
+model Question {
+  id            String             @id @default(uuid())
+  type          String             // MCQ, MULTIPLE_SELECT, TRUE_FALSE, FILL_IN_BLANK, etc.
+  content       String             // Rich text / markdown / image URL
+  data          Json               // Type-specific options / correct answers payload
+  difficulty    QuestionDifficulty @default(MEDIUM)
+  marks         Float              @default(1.0)
+  status        QuestionStatus     @default(DRAFT)
+  version       Int                @default(1)
+  courseId      String?
+  subjectId     String?
+  syllabusNodeId String?
+  createdById   String?
+  course        Course?            @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  subject       Subject?           @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  syllabusNode  SyllabusNode?      @relation(fields: [syllabusNodeId], references: [id], onDelete: SetNull)
+  createdBy     User?              @relation("QuestionCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  versions      QuestionVersion[]
+  questionTags  QuestionTag[]
+  examUsages    PreviousExamUsage[]
+
+  @@map("questions")
+}
+
+model QuestionVersion {
+  id          String             @id @default(uuid())
+  questionId  String
+  version     Int
+  content     String
+  data        Json
+  difficulty  QuestionDifficulty
+  marks       Float
+  changedById String?
+  createdAt   DateTime           @default(now())
+  question    Question           @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@map("question_versions")
+}
+
+model Tag {
+  id           String        @id @default(uuid())
+  name         String        @unique
+  createdAt    DateTime      @default(now())
+  questionTags QuestionTag[]
+
+  @@map("tags")
+}
+
+model QuestionTag {
+  questionId String
+  tagId      String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  tag        Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([questionId, tagId])
+  @@map("question_tags")
+}
+
+model PreviousExamUsage {
+  id         String   @id @default(uuid())
+  questionId String
+  examName   String
+  year       Int
+  shift      String?
+  createdAt  DateTime @default(now())
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@map("previous_exam_usages")
 }

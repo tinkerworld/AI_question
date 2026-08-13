@@ -9,6 +9,7 @@ import courseRoutes from './routes/course.routes';
 import subjectRoutes from './routes/subject.routes';
 import syllabusRoutes from './routes/syllabus.routes';
 import enrollmentRoutes from './routes/enrollment.routes';
+import questionRoutes from './routes/question.routes';
 import { errorHandler } from './middleware/error';
 
 dotenv.config();
@@ -40,6 +41,9 @@ app.use('/api/v1/subjects/:subjectId/syllabus', syllabusRoutes);
 app.use('/api/v1/syllabus', syllabusRoutes);
 app.use('/api/v1/enrollments', enrollmentRoutes);
 app.use('/api/v1', enrollmentRoutes); // for /api/v1/students/:id/courses
+
+// Phase 3 Routes (Question Bank)
+app.use('/api/v1/questions', questionRoutes);
 
 // Error Handling Middleware (Must be last)
 app.use(errorHandler);
