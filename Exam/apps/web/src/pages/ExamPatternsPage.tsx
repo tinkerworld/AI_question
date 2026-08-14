@@ -69,8 +69,11 @@ export const ExamPatternsPage: React.FC = () => {
     }
   };
 
+  const [formError, setFormError] = useState<string | null>(null);
+
   const handleCreatePattern = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
     try {
       const res = await fetch('http://localhost:4000/api/v1/exam-patterns', {
         method: 'POST',
@@ -86,13 +89,18 @@ export const ExamPatternsPage: React.FC = () => {
           description,
         }),
       });
-      if (res.ok) {
+      const body = await res.json();
+      if (res.ok && body.success) {
         setShowCreateModal(false);
         setName('');
+        setDescription('');
         fetchPatterns();
+      } else {
+        setFormError(body.message || 'Failed to create exam pattern');
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error('Failed to create pattern', e);
+      setFormError(e.message || 'Network error creating exam pattern');
     }
   };
 
@@ -309,6 +317,84 @@ export const ExamPatternsPage: React.FC = () => {
             ) : (
               <div style={{ color: 'var(--text-muted)', fontSize: '13px' }}>No sections added yet. Use form above to add sections.</div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Create Exam Pattern Modal */}
+      {showCreateModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: 'var(--panel-bg)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '24px', width: '500px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0, fontFamily: 'JetBrains Mono' }}>Create New Exam Pattern</h3>
+              <button onClick={() => setShowCreateModal(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>✕</button>
+            </div>
+            {formError && (
+              <div style={{ padding: '8px 12px', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid #ef4444', color: '#ef4444', borderRadius: '6px', fontSize: '12px', marginBottom: '12px' }}>
+                {formError}
+              </div>
+            )}
+            <form onSubmit={handleCreatePattern} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Pattern Name</label>
+                <input
+                  required
+                  placeholder="e.g. JEE Main Physics Blueprint"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '8px', borderRadius: '4px' }}
+                />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Pattern Type</label>
+                  <select
+                    value={type}
+                    onChange={(e) => setType(e.target.value as 'SINGLE' | 'MULTI')}
+                    style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '8px', borderRadius: '4px' }}
+                  >
+                    <option value="SINGLE">Single Subject</option>
+                    <option value="MULTI">Multi Subject</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Duration (Minutes)</label>
+                  <input
+                    type="number"
+                    required
+                    min={1}
+                    value={durationMinutes}
+                    onChange={(e) => setDurationMinutes(parseInt(e.target.value, 10))}
+                    style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '8px', borderRadius: '4px' }}
+                  />
+                </div>
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Description</label>
+                <textarea
+                  rows={3}
+                  placeholder="Blueprint notes or instructions..."
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '8px', borderRadius: '4px' }}
+                />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '12px' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  style={{ background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  style={{ background: 'var(--accent-color)', color: '#000', border: 'none', padding: '8px 16px', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer' }}
+                >
+                  Create Pattern
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

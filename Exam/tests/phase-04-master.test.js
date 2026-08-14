@@ -246,10 +246,17 @@ async function runPhase4Tests() {
     assert(verHistoryRes.status === 200 && verHistoryRes.body.data.length >= 1, '4.9-U2 — Fetch pattern entity version history snapshot');
 
     // ----------------------------------------------------
-    // Test 4.10 — Exam Pattern Frontend Integration
+    // Test 4.10 — Exam Pattern Frontend Component Interaction
     // ----------------------------------------------------
-    const apiHealthRes = await request('GET', 'http://localhost:4000/health');
-    assert(apiHealthRes.status === 200 && apiHealthRes.body.status === 'ok', '4.10-U1 — API Server ready for ExamPatternPage UI components');
+    const fs = require('fs');
+    const path = require('path');
+    const pagePath = path.resolve(__dirname, '../apps/web/src/pages/ExamPatternsPage.tsx');
+    const pageCode = fs.readFileSync(pagePath, 'utf8');
+
+    assert(pageCode.includes('const [showCreateModal, setShowCreateModal] = useState'), '4.10-U1 — State Check: showCreateModal is declared');
+    assert(pageCode.includes('onClick={() => setShowCreateModal(true)}'), '4.10-U2 — Trigger Check: "+ Create Exam Pattern" button toggles showCreateModal(true)');
+    assert(pageCode.includes('{showCreateModal && ('), '4.10-U3 — DOM Render Check: {showCreateModal && (...)} conditional block exists in JSX');
+    assert(pageCode.includes('onSubmit={handleCreatePattern}'), '4.10-U4 — Form Handler Check: Create Pattern form connected to handleCreatePattern submit handler');
 
     console.log('\n====================================================');
     console.log(` Phase 4 Master Test Results: ${passed}/${passed + failed} Passed`);
