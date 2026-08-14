@@ -24,16 +24,46 @@ function ensureStateFile() {
   }
 }
 
+function recomputePhaseStates(data) {
+  if (!data || !Array.isArray(data.phases)) return false;
+  let drifted = false;
+
+  for (const phase of data.phases) {
+    if (!Array.isArray(phase.tasks)) continue;
+
+    const isAllDone = phase.tasks.length > 0 && phase.tasks.every(t => t.state === 'done');
+
+    if (phase.completed && !isAllDone) {
+      const unfinished = phase.tasks.filter(t => t.state !== 'done').map(t => `${t.id} [${t.state}]`).join(', ');
+      console.warn(`[BUILD-TRACKER WARNING] Corrected drifted phase state: Phase ${phase.id} (${phase.name}) completed was true, but task(s) not done: ${unfinished || 'no tasks'}. Resetting completed to false.`);
+      phase.completed = false;
+      drifted = true;
+    } else if (!phase.completed && isAllDone) {
+      phase.completed = true;
+      drifted = true;
+    }
+  }
+
+  return drifted;
+}
+
 function readState() {
   ensureStateFile();
   try {
     const raw = fs.readFileSync(STATE_FILE, 'utf8');
-    return JSON.parse(raw);
+    const data = JSON.parse(raw);
+    const drifted = recomputePhaseStates(data);
+    if (drifted) {
+      writeState(data);
+    }
+    return data;
   } catch (err) {
     console.error('[Server] Error reading state.json:', err);
     if (fs.existsSync(EXAMPLE_FILE)) {
       const rawExample = fs.readFileSync(EXAMPLE_FILE, 'utf8');
-      return JSON.parse(rawExample);
+      const data = JSON.parse(rawExample);
+      recomputePhaseStates(data);
+      return data;
     }
     return { phases: [], activePhase: 1 };
   }
@@ -41,6 +71,7 @@ function readState() {
 
 function writeState(data) {
   try {
+    recomputePhaseStates(data);
     data.lastUpdated = new Date().toISOString();
     const content = JSON.stringify(data, null, 2);
     fs.writeFileSync(STATE_FILE, content, 'utf8');
