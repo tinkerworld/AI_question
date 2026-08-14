@@ -175,6 +175,18 @@ async function runPhase4Tests() {
     });
     assert(diffRes.status === 200 && diffRes.body.data.length === 3, '4.5-U1 — Set valid PERCENT difficulty distribution (30% + 50% + 20% = 100%)');
 
+    // Test 3-way floating point percentage split (33.33 + 33.33 + 33.34 = 100.00000000000001)
+    const floatDiffRes = await request('PUT', `/exam-patterns/${patternId}/sections/${sec1Id}/difficulty`, {
+      distributionType: 'PERCENT',
+      isAutomatic: false,
+      difficulties: [
+        { difficultyLevel: 'EASY', value: 33.33 },
+        { difficultyLevel: 'MEDIUM', value: 33.33 },
+        { difficultyLevel: 'HARD', value: 33.34 },
+      ],
+    });
+    assert(floatDiffRes.status === 200 && floatDiffRes.body.data.length === 3, '4.5-U2 — Accept 3-way floating-point percentage split (33.33 + 33.33 + 33.34 = 100%)');
+
     const invalidDiffRes = await request('PUT', `/exam-patterns/${patternId}/sections/${sec1Id}/difficulty`, {
       distributionType: 'PERCENT',
       isAutomatic: false,
@@ -183,7 +195,7 @@ async function runPhase4Tests() {
         { difficultyLevel: 'MEDIUM', value: 40 },
       ],
     });
-    assert(invalidDiffRes.status === 400, '4.5-U2 — Reject invalid difficulty percent sum (!= 100%) with 400 Bad Request');
+    assert(invalidDiffRes.status === 400, '4.5-U3 — Reject invalid difficulty percent sum (!= 100%) with 400 Bad Request');
 
     // ----------------------------------------------------
     // Test 4.6 — Negative Marking Configuration

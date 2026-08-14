@@ -606,11 +606,12 @@ examPatternRouter.put(
           return;
         }
       } else if (body.distributionType === 'PERCENT') {
-        if (sumValue !== 100) {
+        const EPSILON = 0.01;
+        if (Math.abs(sumValue - 100) > EPSILON) {
           res.status(400).json({
             success: false,
             errorCode: 'VALIDATION_ERROR',
-            message: `Sum of topic percentages (${sumValue}%) must equal exactly 100%`,
+            message: `Sum of topic percentages (${sumValue}%) must equal 100%`,
           });
           return;
         }
@@ -690,11 +691,12 @@ examPatternRouter.put(
             return;
           }
         } else if (body.distributionType === 'PERCENT') {
-          if (sumValue !== 100) {
+          const EPSILON = 0.01;
+          if (Math.abs(sumValue - 100) > EPSILON) {
             res.status(400).json({
               success: false,
               errorCode: 'VALIDATION_ERROR',
-              message: `Sum of difficulty percentages (${sumValue}%) must equal exactly 100%`,
+              message: `Sum of difficulty percentages (${sumValue}%) must equal 100%`,
             });
             return;
           }
