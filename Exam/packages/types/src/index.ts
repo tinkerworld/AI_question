@@ -310,3 +310,159 @@ export interface QuestionBankAnalyticsDTO {
   byStatus: Record<QuestionStatus, number>;
   syllabusCoverageRatio: number;
 }
+
+// Phase 4 DTOs (Exam Pattern System)
+export type ExamPatternStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+export type ExamPatternType = 'SINGLE' | 'MULTI';
+export type DistributionType = 'COUNT' | 'PERCENT';
+
+export interface ExamPatternDTO {
+  id: string;
+  name: string;
+  courseId: string;
+  levelId?: string | null;
+  durationMinutes: number;
+  description?: string | null;
+  status: ExamPatternStatus;
+  type: ExamPatternType;
+  totalMarks: number;
+  version: number;
+  parentId?: string | null;
+  tenantId?: string | null;
+  createdById?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  subjects?: { subjectId: string; targetMarks?: number | null }[];
+  sections?: ExamPatternSectionDTO[];
+}
+
+export interface CreateExamPatternDTO {
+  name: string;
+  courseId: string;
+  levelId?: string;
+  durationMinutes?: number;
+  description?: string;
+  type?: ExamPatternType;
+  subjectIds?: string[];
+}
+
+export interface UpdateExamPatternDTO {
+  name?: string;
+  courseId?: string;
+  levelId?: string;
+  durationMinutes?: number;
+  description?: string;
+  status?: ExamPatternStatus;
+  type?: ExamPatternType;
+  subjectIds?: string[];
+}
+
+export interface ExamPatternSectionDTO {
+  id: string;
+  examPatternId: string;
+  subjectId?: string | null;
+  name: string;
+  sequenceOrder: number;
+  numQuestions: number;
+  marksPerQuestion: number;
+  totalMarks: number;
+  marksCorrect: number;
+  marksWrong: number;
+  marksUnattempted: number;
+  createdAt: string;
+  updatedAt: string;
+  rules?: ExamPatternSectionRuleDTO | null;
+  topics?: ExamPatternSectionTopicDTO[];
+  difficulties?: ExamPatternSectionDifficultyDTO[];
+}
+
+export interface CreateExamPatternSectionDTO {
+  name: string;
+  subjectId?: string;
+  sequenceOrder?: number;
+  numQuestions: number;
+  marksPerQuestion: number;
+  marksCorrect?: number;
+  marksWrong?: number;
+  marksUnattempted?: number;
+}
+
+export interface UpdateExamPatternSectionDTO {
+  name?: string;
+  subjectId?: string;
+  sequenceOrder?: number;
+  numQuestions?: number;
+  marksPerQuestion?: number;
+  marksCorrect?: number;
+  marksWrong?: number;
+  marksUnattempted?: number;
+}
+
+export interface ExamPatternSectionRuleDTO {
+  id: string;
+  sectionId: string;
+  allowedQuestionTypes?: string[];
+  allowedCategories?: string[];
+  selectionMode: 'RANDOM' | 'BALANCED';
+  sourceFilters?: Record<string, any>;
+  tags?: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SetExamPatternSectionRuleDTO {
+  allowedQuestionTypes?: string[];
+  allowedCategories?: string[];
+  selectionMode?: 'RANDOM' | 'BALANCED';
+  sourceFilters?: Record<string, any>;
+  tags?: string[];
+}
+
+export interface ExamPatternSectionTopicDTO {
+  id: string;
+  sectionId: string;
+  topicId: string;
+  distributionType: DistributionType;
+  value: number;
+  createdAt: string;
+}
+
+export interface SetExamPatternSectionTopicDTO {
+  distributionType: DistributionType;
+  topics: { topicId: string; value: number }[];
+}
+
+export interface ExamPatternSectionDifficultyDTO {
+  id: string;
+  sectionId: string;
+  difficultyLevel: QuestionDifficulty;
+  distributionType: DistributionType;
+  value: number;
+  isAutomatic: boolean;
+  createdAt: string;
+}
+
+export interface SetExamPatternSectionDifficultyDTO {
+  distributionType?: DistributionType;
+  isAutomatic?: boolean;
+  difficulties?: { difficultyLevel: QuestionDifficulty; value: number }[];
+}
+
+export interface MultiSubjectAllocationDTO {
+  subjectAllocations: { subjectId: string; targetMarks?: number }[];
+  sectionSubjectMappings?: { sectionId: string; subjectId: string }[];
+}
+
+export interface ExamPatternValidationResultDTO {
+  isValid: boolean;
+  errors: string[];
+  warnings: string[];
+  details: {
+    sectionId: string;
+    sectionName: string;
+    requiredCount: number;
+    availableCount: number;
+    status: 'OK' | 'DEFICIT';
+    message?: string;
+  }[];
+}

@@ -1,12 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ThemeProvider } from './context/ThemeContext';
 import { I18nProvider, useTranslation } from './context/I18nContext';
 import { ThemeSwitcher } from './components/ThemeSwitcher';
 import { LanguageSelector } from './components/LanguageSelector';
+import { ExamPatternsPage } from './pages/ExamPatternsPage';
 import './styles/theme.css';
 
 const MainLayout: React.FC = () => {
   const { t } = useTranslation();
+  const [activeTab, setActiveTab] = useState<string>('exam_patterns');
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -39,7 +41,7 @@ const MainLayout: React.FC = () => {
               {t('app_title')}
             </div>
             <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-              Phase 1 Foundation Scaffolding
+              Phase 4 Exam Pattern Engine Active
             </div>
           </div>
         </div>
@@ -66,13 +68,14 @@ const MainLayout: React.FC = () => {
             {['dashboard', 'users', 'courses', 'question_bank', 'exam_patterns', 'analytics'].map((item) => (
               <div
                 key={item}
+                onClick={() => setActiveTab(item)}
                 style={{
                   padding: '10px 14px',
                   borderRadius: '6px',
-                  background: item === 'dashboard' ? 'rgba(6, 182, 212, 0.15)' : 'transparent',
-                  border: item === 'dashboard' ? '1px solid var(--accent-color)' : '1px solid transparent',
-                  color: item === 'dashboard' ? 'var(--accent-color)' : 'var(--text-main)',
-                  fontWeight: item === 'dashboard' ? 'bold' : 'normal',
+                  background: activeTab === item ? 'rgba(6, 182, 212, 0.15)' : 'transparent',
+                  border: activeTab === item ? '1px solid var(--accent-color)' : '1px solid transparent',
+                  color: activeTab === item ? 'var(--accent-color)' : 'var(--text-main)',
+                  fontWeight: activeTab === item ? 'bold' : 'normal',
                   fontSize: '13px',
                   cursor: 'pointer',
                 }}
@@ -85,19 +88,23 @@ const MainLayout: React.FC = () => {
 
         {/* Content Body */}
         <main style={{ flex: 1, padding: '32px' }}>
-          <div style={{
-            background: 'var(--panel-bg)',
-            border: '1px solid var(--border-color)',
-            borderRadius: '12px',
-            padding: '28px',
-          }}>
-            <h1 style={{ marginTop: 0, fontSize: '24px', fontFamily: 'JetBrains Mono' }}>
-              {t('welcome')}
-            </h1>
-            <p style={{ color: 'var(--text-muted)', lineHeight: '1.6' }}>
-              Phase 1 Foundation complete. 3-Theme Switcher (Light, Slate Gray, Dark) and 23-language database-driven Multilingual Engine (ADR-013) initialized.
-            </p>
-          </div>
+          {activeTab === 'exam_patterns' ? (
+            <ExamPatternsPage />
+          ) : (
+            <div style={{
+              background: 'var(--panel-bg)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '12px',
+              padding: '28px',
+            }}>
+              <h1 style={{ marginTop: 0, fontSize: '24px', fontFamily: 'JetBrains Mono' }}>
+                {t('welcome')}
+              </h1>
+              <p style={{ color: 'var(--text-muted)', lineHeight: '1.6' }}>
+                Phase 4 Exam Pattern System (Blueprints, Sections, Difficulty Distribution, Topic Rules, Validation Engine, Multi-Subject Allocation).
+              </p>
+            </div>
+          )}
         </main>
       </div>
     </div>

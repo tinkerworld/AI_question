@@ -150,3 +150,101 @@ export const addExamUsageSchema = z.object({
 export const tagSchema = z.object({
   name: z.string().min(2, 'Tag name is required'),
 });
+
+// Phase 4 Validation Schemas (Exam Pattern System)
+export const createExamPatternSchema = z.object({
+  name: z.string().min(2, 'Exam pattern name is required'),
+  courseId: z.string().min(1, 'Course ID is required'),
+  levelId: z.string().optional(),
+  durationMinutes: z.number().min(1, 'Duration must be at least 1 minute').default(60),
+  description: z.string().optional(),
+  type: z.enum(['SINGLE', 'MULTI']).default('SINGLE'),
+  subjectIds: z.array(z.string()).optional(),
+});
+
+export const updateExamPatternSchema = z.object({
+  name: z.string().min(2).optional(),
+  courseId: z.string().min(1).optional(),
+  levelId: z.string().optional(),
+  durationMinutes: z.number().min(1).optional(),
+  description: z.string().optional(),
+  status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']).optional(),
+  type: z.enum(['SINGLE', 'MULTI']).optional(),
+  subjectIds: z.array(z.string()).optional(),
+});
+
+export const createExamPatternSectionSchema = z.object({
+  name: z.string().min(1, 'Section name is required'),
+  subjectId: z.string().optional(),
+  sequenceOrder: z.number().min(0).default(0),
+  numQuestions: z.number().min(1, 'Number of questions must be at least 1'),
+  marksPerQuestion: z.number().min(0.1, 'Marks per question must be positive').default(1.0),
+  marksCorrect: z.number().optional(),
+  marksWrong: z.number().optional(),
+  marksUnattempted: z.number().optional(),
+});
+
+export const updateExamPatternSectionSchema = z.object({
+  name: z.string().min(1).optional(),
+  subjectId: z.string().optional(),
+  sequenceOrder: z.number().min(0).optional(),
+  numQuestions: z.number().min(1).optional(),
+  marksPerQuestion: z.number().min(0.1).optional(),
+  marksCorrect: z.number().optional(),
+  marksWrong: z.number().optional(),
+  marksUnattempted: z.number().optional(),
+});
+
+export const reorderSectionsSchema = z.object({
+  sectionIds: z.array(z.string()).min(1, 'Section IDs array is required'),
+});
+
+export const setSectionRulesSchema = z.object({
+  allowedQuestionTypes: z.array(z.string()).optional(),
+  allowedCategories: z.array(z.string()).optional(),
+  selectionMode: z.enum(['RANDOM', 'BALANCED']).default('RANDOM'),
+  sourceFilters: z.record(z.any()).optional(),
+  tags: z.array(z.string()).optional(),
+});
+
+export const setSectionTopicsSchema = z.object({
+  distributionType: z.enum(['COUNT', 'PERCENT']).default('COUNT'),
+  topics: z.array(
+    z.object({
+      topicId: z.string().min(1, 'Topic ID is required'),
+      value: z.number().min(0, 'Value must be non-negative'),
+    })
+  ),
+});
+
+export const setSectionDifficultySchema = z.object({
+  distributionType: z.enum(['COUNT', 'PERCENT']).default('COUNT'),
+  isAutomatic: z.boolean().default(false),
+  difficulties: z.array(
+    z.object({
+      difficultyLevel: z.enum(['EASY', 'MEDIUM', 'HARD']),
+      value: z.number().min(0, 'Value must be non-negative'),
+    })
+  ).optional(),
+});
+
+export const setMarkingSchemeSchema = z.object({
+  marksCorrect: z.number().min(0.1, 'Marks correct must be positive'),
+  marksWrong: z.number().max(0, 'Marks wrong must be 0 or negative'),
+  marksUnattempted: z.number().default(0),
+});
+
+export const multiSubjectAllocationSchema = z.object({
+  subjectAllocations: z.array(
+    z.object({
+      subjectId: z.string().min(1, 'Subject ID is required'),
+      targetMarks: z.number().min(0).optional(),
+    })
+  ),
+  sectionSubjectMappings: z.array(
+    z.object({
+      sectionId: z.string().min(1, 'Section ID is required'),
+      subjectId: z.string().min(1, 'Subject ID is required'),
+    })
+  ).optional(),
+});

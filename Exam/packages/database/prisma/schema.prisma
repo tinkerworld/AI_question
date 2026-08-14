@@ -67,6 +67,7 @@ model User {
   createdCourses Course[]        @relation("CourseCreator")
   questions      Question[]      @relation("QuestionCreator")
   preference     UserPreference?
+  patternsCreated  ExamPattern[]     @relation("PatternCreator")
 
   @@map("users")
 }
@@ -170,6 +171,7 @@ model Course {
   subjects       Subject[]
   enrollments    Enrollment[]
   questions      Question[]
+  examPatterns   ExamPattern[]
 
   @@map("courses")
 }
@@ -187,6 +189,8 @@ model Subject {
   updatedAt     DateTime       @updatedAt
   syllabusNodes SyllabusNode[]
   questions     Question[]
+  examPatternSubjects ExamPatternSubject[]
+  examPatternSections ExamPatternSection[]
 
   @@unique([courseId, code])
   @@map("subjects")
@@ -211,6 +215,7 @@ model SyllabusNode {
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
   questions          Question[]
+  sectionTopics      ExamPatternSectionTopic[]
 
   @@map("syllabus_nodes")
 }
@@ -349,4 +354,121 @@ model UserPreference {
   user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_preferences")
+}
+
+enum ExamPatternStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ExamPatternType {
+  SINGLE
+  MULTI
+}
+
+enum DistributionType {
+  COUNT
+  PERCENT
+}
+
+model ExamPattern {
+  id              String               @id @default(uuid())
+  name            String
+  courseId        String
+  levelId         String?
+  durationMinutes Int                  @default(60)
+  description     String?
+  status          ExamPatternStatus    @default(DRAFT)
+  type            ExamPatternType      @default(SINGLE)
+  totalMarks      Float                @default(0.0)
+  version         Int                  @default(1)
+  parentId        String?
+  tenantId        String?
+  createdById     String?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  course          Course               @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  createdBy       User?                @relation("PatternCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  subjects        ExamPatternSubject[]
+  sections        ExamPatternSection[]
+
+  @@map("exam_patterns")
+}
+
+model ExamPatternSubject {
+  examPatternId String
+  subjectId     String
+  targetMarks   Float?
+  examPattern   ExamPattern @relation(fields: [examPatternId], references: [id], onDelete: Cascade)
+  subject       Subject     @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@id([examPatternId, subjectId])
+  @@map("exam_pattern_subjects")
+}
+
+model ExamPatternSection {
+  id               String                         @id @default(uuid())
+  examPatternId   String
+  subjectId        String?
+  name             String
+  sequenceOrder    Int                            @default(0)
+  numQuestions     Int                            @default(10)
+  marksPerQuestion Float                          @default(1.0)
+  totalMarks       Float                          @default(10.0)
+  marksCorrect     Float                          @default(1.0)
+  marksWrong       Float                          @default(0.0)
+  marksUnattempted Float                          @default(0.0)
+  createdAt        DateTime                       @default(now())
+  updatedAt        DateTime                       @updatedAt
+  examPattern      ExamPattern                    @relation(fields: [examPatternId], references: [id], onDelete: Cascade)
+  subject          Subject?                       @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  rules            ExamPatternSectionRule?
+  topics           ExamPatternSectionTopic[]
+  difficulties     ExamPatternSectionDifficulty[]
+
+  @@map("exam_pattern_sections")
+}
+
+model ExamPatternSectionRule {
+  id                   String             @id @default(uuid())
+  sectionId            String             @unique
+  allowedQuestionTypes Json?
+  allowedCategories   Json?
+  selectionMode        String             @default("RANDOM")
+  sourceFilters        Json?
+  tags                 Json?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  section              ExamPatternSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  @@map("exam_pattern_section_rules")
+}
+
+model ExamPatternSectionTopic {
+  id               String             @id @default(uuid())
+  sectionId        String
+  topicId          String
+  distributionType DistributionType   @default(COUNT)
+  value            Float
+  createdAt        DateTime           @default(now())
+  section          ExamPatternSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  topic            SyllabusNode       @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@unique([sectionId, topicId])
+  @@map("exam_pattern_section_topics")
+}
+
+model ExamPatternSectionDifficulty {
+  id               String             @id @default(uuid())
+  sectionId        String
+  difficultyLevel  QuestionDifficulty
+  distributionType DistributionType   @default(COUNT)
+  value            Float
+  isAutomatic      Boolean            @default(false)
+  createdAt        DateTime           @default(now())
+  section          ExamPatternSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  @@unique([sectionId, difficultyLevel])
+  @@map("exam_pattern_section_difficulties")
 }

@@ -113,6 +113,43 @@ async function seed() {
     );
   }
 
+  await db.query(
+    `INSERT INTO "users" ("id", "email", "passwordHash", "firstName", "lastName", "status")
+     VALUES ('usr_admin_test', 'admin@examos.com', 'hash', 'Admin', 'User', 'ACTIVE')
+     ON CONFLICT ("email") DO NOTHING`
+  );
+
+  console.log('Seeding default Course & Subjects into PostgreSQL...');
+  await db.query(
+    `INSERT INTO "courses" ("id", "name", "code", "description", "status", "durationMonths")
+     VALUES ('c1', 'Engineering Entrance Course', 'ENG-101', 'JEE & Engineering Foundation Course', 'PUBLISHED', 12)
+     ON CONFLICT ("code") DO NOTHING`
+  );
+
+  await db.query(
+    `INSERT INTO "subjects" ("id", "courseId", "name", "code", "description", "credits", "order")
+     VALUES ('sub_phy', 'c1', 'Physics', 'PHY-101', 'General Physics', 4, 1)
+     ON CONFLICT ("courseId", "code") DO NOTHING`
+  );
+
+  await db.query(
+    `INSERT INTO "subjects" ("id", "courseId", "name", "code", "description", "credits", "order")
+     VALUES ('sub_chem', 'c1', 'Chemistry', 'CHEM-101', 'General Chemistry', 4, 2)
+     ON CONFLICT ("courseId", "code") DO NOTHING`
+  );
+
+  await db.query(
+    `INSERT INTO "syllabus_nodes" ("id", "subjectId", "title", "type", "orderIndex", "depth")
+     VALUES ('top_mech', 'sub_phy', 'Mechanics', 'TOPIC', 1, 1)
+     ON CONFLICT ("id") DO NOTHING`
+  );
+
+  await db.query(
+    `INSERT INTO "syllabus_nodes" ("id", "subjectId", "title", "type", "orderIndex", "depth")
+     VALUES ('top_optics', 'sub_phy', 'Optics', 'TOPIC', 2, 1)
+     ON CONFLICT ("id") DO NOTHING`
+  );
+
   console.log('Seeding 23 baseline languages into PostgreSQL...');
   for (const l of BASELINE_LANGUAGES) {
     await db.query(

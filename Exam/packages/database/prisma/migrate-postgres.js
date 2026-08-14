@@ -10,6 +10,12 @@ async function migrate() {
 
   await db.exec(`
     -- Drop existing tables if present
+    DROP TABLE IF EXISTS "exam_pattern_section_difficulties" CASCADE;
+    DROP TABLE IF EXISTS "exam_pattern_section_topics" CASCADE;
+    DROP TABLE IF EXISTS "exam_pattern_section_rules" CASCADE;
+    DROP TABLE IF EXISTS "exam_pattern_sections" CASCADE;
+    DROP TABLE IF EXISTS "exam_pattern_subjects" CASCADE;
+    DROP TABLE IF EXISTS "exam_patterns" CASCADE;
     DROP TABLE IF EXISTS "user_preferences" CASCADE;
     DROP TABLE IF EXISTS "translations" CASCADE;
     DROP TABLE IF EXISTS "translation_keys" CASCADE;
@@ -32,6 +38,9 @@ async function migrate() {
     DROP TABLE IF EXISTS "roles" CASCADE;
     DROP TABLE IF EXISTS "users" CASCADE;
 
+    DROP TYPE IF EXISTS "DistributionType" CASCADE;
+    DROP TYPE IF EXISTS "ExamPatternType" CASCADE;
+    DROP TYPE IF EXISTS "ExamPatternStatus" CASCADE;
     DROP TYPE IF EXISTS "ThemeMode" CASCADE;
     DROP TYPE IF EXISTS "QuestionStatus" CASCADE;
     DROP TYPE IF EXISTS "QuestionDifficulty" CASCADE;
@@ -48,6 +57,9 @@ async function migrate() {
     CREATE TYPE "QuestionDifficulty" AS ENUM ('EASY', 'MEDIUM', 'HARD');
     CREATE TYPE "QuestionStatus" AS ENUM ('DRAFT', 'REVIEW', 'PUBLISHED', 'ARCHIVED');
     CREATE TYPE "ThemeMode" AS ENUM ('LIGHT', 'GRAY', 'DARK');
+    CREATE TYPE "ExamPatternStatus" AS ENUM ('DRAFT', 'PUBLISHED', 'ARCHIVED');
+    CREATE TYPE "ExamPatternType" AS ENUM ('SINGLE', 'MULTI');
+    CREATE TYPE "DistributionType" AS ENUM ('COUNT', 'PERCENT');
 
     -- Create Tables with native JSONB columns
     CREATE TABLE "users" (
@@ -260,6 +272,80 @@ async function migrate() {
       "languageCode" TEXT NOT NULL DEFAULT 'en',
       "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       "updatedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE "exam_patterns" (
+      "id" TEXT PRIMARY KEY,
+      "name" TEXT NOT NULL,
+      "courseId" TEXT NOT NULL REFERENCES "courses"("id") ON DELETE CASCADE,
+      "levelId" TEXT,
+      "durationMinutes" INT NOT NULL DEFAULT 60,
+      "description" TEXT,
+      "status" "ExamPatternStatus" NOT NULL DEFAULT 'DRAFT',
+      "type" "ExamPatternType" NOT NULL DEFAULT 'SINGLE',
+      "totalMarks" DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+      "version" INT NOT NULL DEFAULT 1,
+      "parentId" TEXT,
+      "tenantId" TEXT,
+      "createdById" TEXT REFERENCES "users"("id") ON DELETE SET NULL,
+      "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE "exam_pattern_subjects" (
+      "examPatternId" TEXT NOT NULL REFERENCES "exam_patterns"("id") ON DELETE CASCADE,
+      "subjectId" TEXT NOT NULL REFERENCES "subjects"("id") ON DELETE CASCADE,
+      "targetMarks" DOUBLE PRECISION,
+      PRIMARY KEY ("examPatternId", "subjectId")
+    );
+
+    CREATE TABLE "exam_pattern_sections" (
+      "id" TEXT PRIMARY KEY,
+      "examPatternId" TEXT NOT NULL REFERENCES "exam_patterns"("id") ON DELETE CASCADE,
+      "subjectId" TEXT REFERENCES "subjects"("id") ON DELETE SET NULL,
+      "name" TEXT NOT NULL,
+      "sequenceOrder" INT NOT NULL DEFAULT 0,
+      "numQuestions" INT NOT NULL DEFAULT 10,
+      "marksPerQuestion" DOUBLE PRECISION NOT NULL DEFAULT 1.0,
+      "totalMarks" DOUBLE PRECISION NOT NULL DEFAULT 10.0,
+      "marksCorrect" DOUBLE PRECISION NOT NULL DEFAULT 1.0,
+      "marksWrong" DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+      "marksUnattempted" DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+      "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE "exam_pattern_section_rules" (
+      "id" TEXT PRIMARY KEY,
+      "sectionId" TEXT UNIQUE NOT NULL REFERENCES "exam_pattern_sections"("id") ON DELETE CASCADE,
+      "allowedQuestionTypes" JSONB,
+      "allowedCategories" JSONB,
+      "selectionMode" TEXT NOT NULL DEFAULT 'RANDOM',
+      "sourceFilters" JSONB,
+      "tags" JSONB,
+      "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE "exam_pattern_section_topics" (
+      "id" TEXT PRIMARY KEY,
+      "sectionId" TEXT NOT NULL REFERENCES "exam_pattern_sections"("id") ON DELETE CASCADE,
+      "topicId" TEXT NOT NULL REFERENCES "syllabus_nodes"("id") ON DELETE CASCADE,
+      "distributionType" "DistributionType" NOT NULL DEFAULT 'COUNT',
+      "value" DOUBLE PRECISION NOT NULL,
+      "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE("sectionId", "topicId")
+    );
+
+    CREATE TABLE "exam_pattern_section_difficulties" (
+      "id" TEXT PRIMARY KEY,
+      "sectionId" TEXT NOT NULL REFERENCES "exam_pattern_sections"("id") ON DELETE CASCADE,
+      "difficultyLevel" "QuestionDifficulty" NOT NULL,
+      "distributionType" "DistributionType" NOT NULL DEFAULT 'COUNT',
+      "value" DOUBLE PRECISION NOT NULL,
+      "isAutomatic" BOOLEAN NOT NULL DEFAULT false,
+      "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE("sectionId", "difficultyLevel")
     );
   `);
 
