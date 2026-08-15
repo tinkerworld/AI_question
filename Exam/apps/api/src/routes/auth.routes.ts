@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { prisma } from '@repo/database';
+import { pgDb } from '@repo/database';
 import { loginSchema, refreshTokenSchema } from '@repo/validation';
 import { validate } from '../middleware/validate';
 import { authenticate, JWT_SECRET, JWT_REFRESH_SECRET } from '../middleware/auth';
@@ -13,26 +13,12 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response,
   try {
     const { email, password } = req.body;
 
-    const user = await prisma.user.findUnique({
-      where: { email },
-      include: {
-        userRoles: {
-          include: {
-            role: {
-              include: {
-                rolePermissions: {
-                  include: { permission: true },
-                },
-              },
-            },
-          },
-        },
-      },
-    });
-
-    if (!user) {
+    const userRes = await pgDb.query(`SELECT * FROM "users" WHERE "email" = $1`, [email]);
+    if (userRes.rows.length === 0) {
       throw new AppError(401, 'INVALID_CREDENTIALS', 'Invalid email or password');
     }
+
+    const user = userRes.rows[0];
 
     if (user.status !== 'ACTIVE') {
       throw new AppError(403, 'ACCOUNT_INACTIVE', `User account is ${user.status.toLowerCase()}`);
@@ -43,13 +29,28 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response,
       throw new AppError(401, 'INVALID_CREDENTIALS', 'Invalid email or password');
     }
 
-    const roles = user.userRoles.map((ur) => ur.role.name);
+    const rolesRes = await pgDb.query(
+      `SELECT r.name as "roleName", p.key as "permKey"
+       FROM "user_roles" ur
+       JOIN "roles" r ON ur."roleId" = r.id
+       LEFT JOIN "role_permissions" rp ON r.id = rp."roleId"
+       LEFT JOIN "permissions" p ON rp."permissionId" = p.id
+       WHERE ur."userId" = $1`,
+      [user.id]
+    );
+
+    const rolesSet = new Set<string>();
     const permissionsSet = new Set<string>();
-    user.userRoles.forEach((ur) => {
-      ur.role.rolePermissions.forEach((rp) => {
-        permissionsSet.add(rp.permission.key);
-      });
+
+    rolesRes.rows.forEach((r: any) => {
+      if (r.roleName) rolesSet.add(r.roleName);
+      if (r.permKey) permissionsSet.add(r.permKey);
     });
+
+    const roles = Array.from(rolesSet);
+    if (roles.includes('MAIN_ADMIN')) {
+      permissionsSet.add('*');
+    }
     const permissions = Array.from(permissionsSet);
 
     const accessToken = jwt.sign(
@@ -59,18 +60,19 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response,
     );
 
     const refreshToken = jwt.sign(
-      { sub: user.id, email: user.email },
+      { sub: user.id, email: user.email, jti: `jti_${Date.now()}_${Math.random().toString(36).substr(2, 6)}` },
       JWT_REFRESH_SECRET,
       { expiresIn: '7d' }
     );
 
-    await prisma.refreshToken.create({
-      data: {
-        userId: user.id,
-        token: refreshToken,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      },
-    });
+    const rfId = `rf_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+    await pgDb.query(
+      `INSERT INTO "refresh_tokens" ("id", "userId", "token", "expiresAt", "revoked", "createdAt")
+       VALUES ($1, $2, $3, $4, false, CURRENT_TIMESTAMP)`,
+      [rfId, user.id, refreshToken, expiresAt]
+    );
 
     res.json({
       success: true,
@@ -97,45 +99,50 @@ router.post('/refresh', validate(refreshTokenSchema), async (req: Request, res: 
   try {
     const { refreshToken } = req.body;
 
-    const storedToken = await prisma.refreshToken.findUnique({
-      where: { token: refreshToken },
-      include: {
-        user: {
-          include: {
-            userRoles: {
-              include: {
-                role: {
-                  include: {
-                    rolePermissions: {
-                      include: { permission: true },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    });
+    const rfRes = await pgDb.query(
+      `SELECT * FROM "refresh_tokens" WHERE "token" = $1 AND "revoked" = false`,
+      [refreshToken]
+    );
 
-    if (!storedToken || storedToken.revoked || storedToken.expiresAt < new Date()) {
+    if (rfRes.rows.length === 0) {
       throw new AppError(401, 'INVALID_REFRESH_TOKEN', 'Refresh token is invalid or expired');
     }
 
-    // Token Rotation: revoke used token
-    await prisma.refreshToken.update({
-      where: { id: storedToken.id },
-      data: { revoked: true },
+    const storedToken = rfRes.rows[0];
+    if (new Date(storedToken.expiresAt) < new Date()) {
+      throw new AppError(401, 'INVALID_REFRESH_TOKEN', 'Refresh token has expired');
+    }
+
+    // Token Rotation: revoke used token (revoked: true)
+    await pgDb.query(`UPDATE "refresh_tokens" SET "revoked" = true WHERE "id" = $1`, [storedToken.id]);
+
+    const userRes = await pgDb.query(`SELECT * FROM "users" WHERE "id" = $1`, [storedToken.userId]);
+    if (userRes.rows.length === 0) {
+      throw new AppError(401, 'USER_NOT_FOUND', 'User not found');
+    }
+    const user = userRes.rows[0];
+
+    const rolesRes = await pgDb.query(
+      `SELECT r.name as "roleName", p.key as "permKey"
+       FROM "user_roles" ur
+       JOIN "roles" r ON ur."roleId" = r.id
+       LEFT JOIN "role_permissions" rp ON r.id = rp."roleId"
+       LEFT JOIN "permissions" p ON rp."permissionId" = p.id
+       WHERE ur."userId" = $1`,
+      [user.id]
+    );
+
+    const rolesSet = new Set<string>();
+    const permissionsSet = new Set<string>();
+    rolesRes.rows.forEach((r: any) => {
+      if (r.roleName) rolesSet.add(r.roleName);
+      if (r.permKey) permissionsSet.add(r.permKey);
     });
 
-    const user = storedToken.user;
-    const roles = user.userRoles.map((ur) => ur.role.name);
-    const permissionsSet = new Set<string>();
-    user.userRoles.forEach((ur) => {
-      ur.role.rolePermissions.forEach((rp) => {
-        permissionsSet.add(rp.permission.key);
-      });
-    });
+    const roles = Array.from(rolesSet);
+    if (roles.includes('MAIN_ADMIN')) {
+      permissionsSet.add('*');
+    }
     const permissions = Array.from(permissionsSet);
 
     const newAccessToken = jwt.sign(
@@ -145,18 +152,19 @@ router.post('/refresh', validate(refreshTokenSchema), async (req: Request, res: 
     );
 
     const newRefreshToken = jwt.sign(
-      { sub: user.id, email: user.email },
+      { sub: user.id, email: user.email, jti: `jti_${Date.now()}_${Math.random().toString(36).substr(2, 6)}` },
       JWT_REFRESH_SECRET,
       { expiresIn: '7d' }
     );
 
-    await prisma.refreshToken.create({
-      data: {
-        userId: user.id,
-        token: newRefreshToken,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      },
-    });
+    const newRfId = `rf_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+    await pgDb.query(
+      `INSERT INTO "refresh_tokens" ("id", "userId", "token", "expiresAt", "revoked", "createdAt")
+       VALUES ($1, $2, $3, $4, false, CURRENT_TIMESTAMP)`,
+      [newRfId, user.id, newRefreshToken, expiresAt]
+    );
 
     res.json({
       success: true,
@@ -174,10 +182,10 @@ router.post('/logout', authenticate, async (req: Request, res: Response, next: N
   try {
     const { refreshToken } = req.body;
     if (refreshToken) {
-      await prisma.refreshToken.updateMany({
-        where: { token: refreshToken, userId: req.user!.userId },
-        data: { revoked: true },
-      });
+      await pgDb.query(
+        `UPDATE "refresh_tokens" SET "revoked" = true WHERE "token" = $1 AND "userId" = $2`,
+        [refreshToken, req.user!.userId]
+      );
     }
     res.json({ success: true, message: 'Logged out successfully' });
   } catch (err) {
@@ -187,32 +195,33 @@ router.post('/logout', authenticate, async (req: Request, res: Response, next: N
 
 router.get('/me', authenticate, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const user = await prisma.user.findUnique({
-      where: { id: req.user!.userId },
-      include: {
-        userRoles: {
-          include: {
-            role: {
-              include: {
-                rolePermissions: {
-                  include: { permission: true },
-                },
-              },
-            },
-          },
-        },
-      },
-    });
+    const userRes = await pgDb.query(`SELECT * FROM "users" WHERE "id" = $1`, [req.user!.userId]);
+    if (userRes.rows.length === 0) {
+      throw new AppError(404, 'USER_NOT_FOUND', 'User not found');
+    }
 
-    if (!user) throw new AppError(404, 'USER_NOT_FOUND', 'User not found');
+    const user = userRes.rows[0];
+    const rolesRes = await pgDb.query(
+      `SELECT r.name as "roleName", p.key as "permKey"
+       FROM "user_roles" ur
+       JOIN "roles" r ON ur."roleId" = r.id
+       LEFT JOIN "role_permissions" rp ON r.id = rp."roleId"
+       LEFT JOIN "permissions" p ON rp."permissionId" = p.id
+       WHERE ur."userId" = $1`,
+      [user.id]
+    );
 
-    const roles = user.userRoles.map((ur) => ur.role.name);
+    const rolesSet = new Set<string>();
     const permissionsSet = new Set<string>();
-    user.userRoles.forEach((ur) => {
-      ur.role.rolePermissions.forEach((rp) => {
-        permissionsSet.add(rp.permission.key);
-      });
+    rolesRes.rows.forEach((r: any) => {
+      if (r.roleName) rolesSet.add(r.roleName);
+      if (r.permKey) permissionsSet.add(r.permKey);
     });
+
+    const roles = Array.from(rolesSet);
+    if (roles.includes('MAIN_ADMIN')) {
+      permissionsSet.add('*');
+    }
 
     res.json({
       success: true,

@@ -122,17 +122,57 @@ async function seed() {
     );
   }
 
+  console.log('Seeding role_permissions mappings into PostgreSQL...');
   for (const r of ROLES) {
-    await db.query(
-      `INSERT INTO "roles" ("id", "name", "description", "isSystem") VALUES ($1, $2, $3, $4) ON CONFLICT ("name") DO NOTHING`,
-      [r.id, r.name, r.description, r.isSystem]
-    );
+    for (const permKey of r.permissions) {
+      const permRes = await db.query(`SELECT "id" FROM "permissions" WHERE "key" = $1`, [permKey]);
+      if (permRes.rows.length > 0) {
+        const permId = permRes.rows[0].id;
+        await db.query(
+          `INSERT INTO "role_permissions" ("roleId", "permissionId") VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+          [r.id, permId]
+        );
+      }
+    }
   }
 
+  console.log('Seeding initial users (Admin, Teacher, Student) into PostgreSQL...');
+  const bcrypt = require('bcryptjs');
+  const adminHash = bcrypt.hashSync('Admin@123', 10);
+  const teacherHash = bcrypt.hashSync('Teacher@123', 10);
+  const studentHash = bcrypt.hashSync('Student@123', 10);
+
+  // Admin user
   await db.query(
     `INSERT INTO "users" ("id", "email", "passwordHash", "firstName", "lastName", "status")
-     VALUES ('usr_admin_test', 'admin@examos.com', 'hash', 'Admin', 'User', 'ACTIVE')
-     ON CONFLICT ("email") DO NOTHING`
+     VALUES ('usr_admin_test', 'admin@examos.com', $1, 'Admin', 'User', 'ACTIVE')
+     ON CONFLICT ("email") DO UPDATE SET "passwordHash" = EXCLUDED."passwordHash"`,
+    [adminHash]
+  );
+  await db.query(
+    `INSERT INTO "user_roles" ("userId", "roleId") VALUES ('usr_admin_test', 'r1') ON CONFLICT DO NOTHING`
+  );
+
+  // Teacher user
+  await db.query(
+    `INSERT INTO "users" ("id", "email", "passwordHash", "firstName", "lastName", "status")
+     VALUES ('usr_teacher_test', 'teacher@examos.com', $1, 'Teacher', 'Faculty', 'ACTIVE')
+     ON CONFLICT ("email") DO UPDATE SET "passwordHash" = EXCLUDED."passwordHash"`,
+    [teacherHash]
+  );
+  await db.query(
+    `INSERT INTO "user_roles" ("userId", "roleId") VALUES ('usr_teacher_test', 'r3') ON CONFLICT DO NOTHING`
+  );
+
+  // Student user
+  await db.query(
+    `INSERT INTO "users" ("id", "email", "passwordHash", "firstName", "lastName", "status")
+     VALUES ('usr_student_test', 'student@examos.com', $1, 'Student', 'Learner', 'ACTIVE')
+     ON CONFLICT ("email") DO UPDATE SET "passwordHash" = EXCLUDED."passwordHash"`,
+    [studentHash]
+  );
+  await db.query(
+    `INSERT INTO "user_roles" ("userId", "roleId") VALUES ('usr_student_test', 'r4') ON CONFLICT DO NOTHING`
   );
 
   console.log('Seeding default Course & Subjects into PostgreSQL...');

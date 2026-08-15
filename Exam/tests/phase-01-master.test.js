@@ -103,7 +103,7 @@ test('1.9-U1', 'Audit logging endpoints & middleware', () => {
   const auditRoutes = fs.readFileSync(path.join(rootDir, 'apps/api/src/routes/audit.routes.ts'), 'utf8');
   const auditMw = fs.readFileSync(path.join(rootDir, 'apps/api/src/middleware/audit.ts'), 'utf8');
   assert.ok(auditRoutes.includes('router.get('));
-  assert.ok(auditMw.includes('prisma.auditLog.create'));
+  assert.ok(auditMw.includes('prisma.auditLog.create') || auditMw.includes('INSERT INTO "audit_logs"'));
 });
 
 // Feature 1.10 Tests
@@ -147,7 +147,10 @@ test('SEC-01', 'Security Gate: Ownership vs. Permission IDOR Separation', () => 
 
 test('SEC-02', 'Security Gate: JWT Revocation & Refresh Rotation', () => {
   const authRoutes = fs.readFileSync(path.join(rootDir, 'apps/api/src/routes/auth.routes.ts'), 'utf8');
-  assert.ok(authRoutes.includes('revoked: true'), 'Must revoke used refresh tokens during rotation');
+  assert.ok(
+    authRoutes.includes('revoked: true') || authRoutes.includes('"revoked" = true'),
+    'Must revoke used refresh tokens during rotation'
+  );
 });
 
 test('SEC-03', 'Security Gate: 100% Request Validation Pipeline', () => {

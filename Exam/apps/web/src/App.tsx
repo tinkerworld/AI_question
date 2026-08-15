@@ -1,76 +1,190 @@
 import React, { useState } from 'react';
 import { ThemeProvider } from './context/ThemeContext';
 import { I18nProvider, useTranslation } from './context/I18nContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeSwitcher } from './components/ThemeSwitcher';
 import { LanguageSelector } from './components/LanguageSelector';
+import { LoginPage } from './pages/LoginPage';
 import { ExamPatternsPage } from './pages/ExamPatternsPage';
 import './styles/theme.css';
 
 const MainLayout: React.FC = () => {
   const { t } = useTranslation();
+  const { user, isAuthenticated, isLoading, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<string>('exam_patterns');
+
+  if (isLoading) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'var(--bg-color)',
+          color: 'var(--text-main)',
+          gap: '12px',
+          fontFamily: 'JetBrains Mono',
+        }}
+      >
+        <div
+          style={{
+            width: '40px',
+            height: '40px',
+            borderRadius: '50%',
+            border: '3px solid rgba(6, 182, 212, 0.2)',
+            borderTopColor: '#06b6d4',
+            animation: 'spin 1s linear infinite',
+          }}
+        />
+        <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Verifying ExamOS session...</div>
+      </div>
+    );
+  }
+
+  // Route Guard: If not authenticated, render Login Screen
+  if (!isAuthenticated) {
+    return <LoginPage />;
+  }
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* Header Bar */}
-      <header style={{
-        background: 'var(--panel-bg)',
-        borderBottom: '1px solid var(--border-color)',
-        padding: '16px 32px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-      }}>
+      <header
+        style={{
+          background: 'var(--panel-bg)',
+          borderBottom: '1px solid var(--border-color)',
+          padding: '12px 28px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{
-            width: '36px',
-            height: '36px',
-            borderRadius: '8px',
-            background: 'linear-gradient(135deg, #06b6d4, #8b5cf6)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontWeight: 'bold',
-            fontFamily: 'JetBrains Mono',
-            color: '#fff',
-          }}>
+          <div
+            style={{
+              width: '34px',
+              height: '34px',
+              borderRadius: '8px',
+              background: 'linear-gradient(135deg, #06b6d4, #8b5cf6)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 'bold',
+              fontFamily: 'JetBrains Mono',
+              color: '#fff',
+              fontSize: '14px',
+            }}
+          >
             EX
           </div>
           <div>
-            <div style={{ fontWeight: 'bold', fontFamily: 'JetBrains Mono', fontSize: '16px' }}>
+            <div style={{ fontWeight: 'bold', fontFamily: 'JetBrains Mono', fontSize: '15px' }}>
               {t('app_title')}
             </div>
             <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-              Phase 4 Exam Pattern Engine Active
+              ExamOS // Adaptive Learning Platform
             </div>
           </div>
         </div>
 
+        {/* User Info & Global Controls */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          {/* User Profile Badge */}
+          {user && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '4px 10px',
+                background: 'rgba(255, 255, 255, 0.03)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '6px',
+                fontSize: '12px',
+              }}
+            >
+              <span style={{ fontWeight: 'bold' }}>{user.firstName || user.email}</span>
+              {user.roles && user.roles.length > 0 && (
+                <span
+                  style={{
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    fontSize: '10px',
+                    fontFamily: 'JetBrains Mono',
+                    background:
+                      user.roles[0] === 'MAIN_ADMIN'
+                        ? 'rgba(6, 182, 212, 0.15)'
+                        : user.roles[0] === 'TEACHER'
+                        ? 'rgba(139, 92, 246, 0.15)'
+                        : 'rgba(16, 185, 129, 0.15)',
+                    color:
+                      user.roles[0] === 'MAIN_ADMIN'
+                        ? '#06b6d4'
+                        : user.roles[0] === 'TEACHER'
+                        ? '#8b5cf6'
+                        : '#10b981',
+                  }}
+                >
+                  {user.roles[0]}
+                </span>
+              )}
+            </div>
+          )}
+
           <ThemeSwitcher />
           <LanguageSelector />
+
+          {/* Logout Button */}
+          <button
+            onClick={logout}
+            style={{
+              background: 'rgba(239, 68, 68, 0.1)',
+              border: '1px solid #ef4444',
+              color: '#ef4444',
+              padding: '6px 12px',
+              borderRadius: '6px',
+              fontSize: '12px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+            }}
+            title="Sign out of ExamOS"
+          >
+            Logout
+          </button>
         </div>
       </header>
 
       {/* Main Dashboard Layout */}
       <div style={{ flex: 1, display: 'flex' }}>
         {/* Sidebar */}
-        <aside style={{
-          width: '260px',
-          background: 'var(--panel-bg)',
-          borderRight: '1px solid var(--border-color)',
-          padding: '24px 16px',
-        }}>
-          <div style={{ fontSize: '11px', fontFamily: 'JetBrains Mono', color: 'var(--text-muted)', marginBottom: '12px' }}>
-            NAVIGATION
+        <aside
+          style={{
+            width: '240px',
+            background: 'var(--panel-bg)',
+            borderRight: '1px solid var(--border-color)',
+            padding: '20px 14px',
+          }}
+        >
+          <div
+            style={{
+              fontSize: '11px',
+              fontFamily: 'JetBrains Mono',
+              color: 'var(--text-muted)',
+              marginBottom: '12px',
+              paddingLeft: '6px',
+            }}
+          >
+            MODULES
           </div>
-          <nav style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <nav style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             {['dashboard', 'users', 'courses', 'question_bank', 'exam_patterns', 'analytics'].map((item) => (
               <div
                 key={item}
                 onClick={() => setActiveTab(item)}
                 style={{
-                  padding: '10px 14px',
+                  padding: '9px 12px',
                   borderRadius: '6px',
                   background: activeTab === item ? 'rgba(6, 182, 212, 0.15)' : 'transparent',
                   border: activeTab === item ? '1px solid var(--accent-color)' : '1px solid transparent',
@@ -87,21 +201,23 @@ const MainLayout: React.FC = () => {
         </aside>
 
         {/* Content Body */}
-        <main style={{ flex: 1, padding: '32px' }}>
+        <main style={{ flex: 1, padding: '28px' }}>
           {activeTab === 'exam_patterns' ? (
             <ExamPatternsPage />
           ) : (
-            <div style={{
-              background: 'var(--panel-bg)',
-              border: '1px solid var(--border-color)',
-              borderRadius: '12px',
-              padding: '28px',
-            }}>
-              <h1 style={{ marginTop: 0, fontSize: '24px', fontFamily: 'JetBrains Mono' }}>
+            <div
+              style={{
+                background: 'var(--panel-bg)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '12px',
+                padding: '28px',
+              }}
+            >
+              <h1 style={{ marginTop: 0, fontSize: '22px', fontFamily: 'JetBrains Mono' }}>
                 {t('welcome')}
               </h1>
-              <p style={{ color: 'var(--text-muted)', lineHeight: '1.6' }}>
-                Phase 4 Exam Pattern System (Blueprints, Sections, Difficulty Distribution, Topic Rules, Validation Engine, Multi-Subject Allocation).
+              <p style={{ color: 'var(--text-muted)', lineHeight: '1.6', fontSize: '13px' }}>
+                Welcome to ExamOS. Use the sidebar to navigate to Exam Patterns, Academic Structure, or Question Bank.
               </p>
             </div>
           )}
@@ -115,7 +231,9 @@ export const App: React.FC = () => {
   return (
     <ThemeProvider>
       <I18nProvider>
-        <MainLayout />
+        <AuthProvider>
+          <MainLayout />
+        </AuthProvider>
       </I18nProvider>
     </ThemeProvider>
   );

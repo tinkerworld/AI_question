@@ -1,5 +1,5 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { prisma } from '@repo/database';
+import { pgDb } from '@repo/database';
 import { authenticate } from '../middleware/auth';
 import { requirePermission } from '../middleware/permission';
 import { PERMISSIONS } from '@repo/permissions';
@@ -16,21 +16,19 @@ router.get('/me/preferences', async (req: Request, res: Response, next: NextFunc
   try {
     const userId = req.user!.userId;
 
-    let pref = await prisma.userPreference.findUnique({
-      where: { userId },
-    });
+    let resDb = await pgDb.query(`SELECT * FROM "user_preferences" WHERE "userId" = $1`, [userId]);
 
-    if (!pref) {
-      pref = await prisma.userPreference.create({
-        data: {
-          userId,
-          themeMode: 'DARK',
-          languageCode: 'en',
-        },
-      });
+    if (resDb.rows.length === 0) {
+      const id = `pref_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+      await pgDb.query(
+        `INSERT INTO "user_preferences" ("id", "userId", "themeMode", "languageCode")
+         VALUES ($1, $2, 'DARK', 'en')`,
+        [id, userId]
+      );
+      resDb = await pgDb.query(`SELECT * FROM "user_preferences" WHERE "userId" = $1`, [userId]);
     }
 
-    res.json({ success: true, data: pref });
+    res.json({ success: true, data: resDb.rows[0] });
   } catch (err) {
     next(err);
   }
@@ -48,25 +46,25 @@ router.patch(
       const userId = req.user!.userId;
       const { themeMode, languageCode } = req.body;
 
-      const updateData: any = {};
-      if (themeMode && ['LIGHT', 'GRAY', 'DARK'].includes(themeMode)) {
-        updateData.themeMode = themeMode;
-      }
-      if (languageCode) {
-        updateData.languageCode = String(languageCode).toLowerCase().trim();
-      }
+      const existingRes = await pgDb.query(`SELECT * FROM "user_preferences" WHERE "userId" = $1`, [userId]);
+      const prefId = existingRes.rows.length > 0 ? existingRes.rows[0].id : `pref_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+      const currentTheme = existingRes.rows.length > 0 ? existingRes.rows[0].themeMode : 'DARK';
+      const currentLang = existingRes.rows.length > 0 ? existingRes.rows[0].languageCode : 'en';
 
-      const pref = await prisma.userPreference.upsert({
-        where: { userId },
-        update: updateData,
-        create: {
-          userId,
-          themeMode: updateData.themeMode || 'DARK',
-          languageCode: updateData.languageCode || 'en',
-        },
-      });
+      const finalTheme = themeMode && ['LIGHT', 'GRAY', 'DARK'].includes(themeMode) ? themeMode : currentTheme;
+      const finalLang = languageCode ? String(languageCode).toLowerCase().trim() : currentLang;
 
-      res.json({ success: true, data: pref });
+      await pgDb.query(
+        `INSERT INTO "user_preferences" ("id", "userId", "themeMode", "languageCode", "updatedAt")
+         VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
+         ON CONFLICT ("userId") DO UPDATE
+         SET "themeMode" = EXCLUDED."themeMode", "languageCode" = EXCLUDED."languageCode", "updatedAt" = CURRENT_TIMESTAMP`,
+        [prefId, userId, finalTheme, finalLang]
+      );
+
+      const updatedRes = await pgDb.query(`SELECT * FROM "user_preferences" WHERE "userId" = $1`, [userId]);
+
+      res.json({ success: true, data: updatedRes.rows[0] });
     } catch (err) {
       next(err);
     }
