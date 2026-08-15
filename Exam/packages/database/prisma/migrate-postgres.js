@@ -1,8 +1,22 @@
 const { PGlite } = require('@electric-sql/pglite');
 const path = require('path');
 const fs = require('fs');
+function getDbPath() {
+  if (process.env.PG_DATA_DIR && fs.existsSync(process.env.PG_DATA_DIR)) {
+    return process.env.PG_DATA_DIR;
+  }
+  const workspaceRootData = path.resolve(__dirname, '../../../../postgres-data');
+  if (fs.existsSync(workspaceRootData)) {
+    return workspaceRootData;
+  }
+  const cwdData = path.resolve(process.cwd(), 'postgres-data');
+  if (fs.existsSync(cwdData)) {
+    return cwdData;
+  }
+  return path.resolve(__dirname, 'postgres-data');
+}
 
-const dbPath = path.resolve(__dirname, 'postgres-data');
+const dbPath = getDbPath();
 const db = new PGlite(dbPath);
 
 async function migrate() {
