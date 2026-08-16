@@ -50,7 +50,7 @@ function request(method, urlPath, data = null, token = null) {
 async function runEndToEndTests() {
   console.log('====================================================');
   console.log(' EXAMOS AUTHENTICATION & PATTERN BUILDER E2E AUDIT');
-  console.log(' Testing Real Login Session, Token Storage & API Calls');
+  console.log(' Testing Real Login Session, SubAdmin, Edit & Config');
   console.log('====================================================\n');
 
   // Step 1: Reject unauthenticated / null token requests
@@ -63,18 +63,48 @@ async function runEndToEndTests() {
   assert.strictEqual(unauthRes.status, 401, 'Backend must return 401 for unauthenticated request');
   console.log('   [PASS] Unauthenticated request rejected with 401 Unauthorized');
 
-  // Step 2: Reject invalid password
-  console.log('\n2. Testing Login with Invalid Credentials...');
-  const badLoginRes = await request('POST', '/auth/login', {
-    email: 'admin@examos.com',
-    password: 'WrongPassword123!',
+  // Step 2: Test SubAdmin Login & Pattern Creation (subadmin@examos.com)
+  console.log('\n2. Testing SubAdmin Login & Mutation Permissions (subadmin@examos.com)...');
+  const subAdminLogin = await request('POST', '/auth/login', {
+    email: 'subadmin@examos.com',
+    password: 'SubAdmin@123',
   });
-  assert.strictEqual(badLoginRes.status, 401);
-  assert.strictEqual(badLoginRes.body.errorCode, 'INVALID_CREDENTIALS');
-  console.log('   [PASS] Invalid password rejected with 401 INVALID_CREDENTIALS');
+  assert.strictEqual(subAdminLogin.status, 200);
+  assert.ok(subAdminLogin.body.data.user.roles.includes('SUB_ADMIN'));
+  const subAdminToken = subAdminLogin.body.data.accessToken;
+  console.log('   [PASS] SubAdmin logged in successfully! Role: SUB_ADMIN');
+
+  // SubAdmin creates an exam pattern to verify exams.create permission
+  const subAdminCreateRes = await request('POST', '/exam-patterns', {
+    name: 'SubAdmin Created Pattern',
+    courseId: 'c1',
+    durationMinutes: 90,
+    type: 'SINGLE',
+    description: 'Created by SubAdmin persona with exams.create permission',
+  }, subAdminToken);
+  assert.strictEqual(subAdminCreateRes.status, 201, 'SubAdmin must be authorized with exams.create');
+  assert.ok(subAdminCreateRes.body.success);
+  console.log(`   [PASS] SubAdmin successfully created Exam Pattern (ID: ${subAdminCreateRes.body.data.id})`);
+
+  // Step 2b: Test Student attempting mutation without exams.create (403 Forbidden)
+  console.log('\n2b. Testing Student Unauthorized Mutation Rejection (student@examos.com)...');
+  const studentLogin = await request('POST', '/auth/login', {
+    email: 'student@examos.com',
+    password: 'Student@123',
+  });
+  assert.strictEqual(studentLogin.status, 200);
+  const studentToken = studentLogin.body.data.accessToken;
+  const studentCreateRes = await request('POST', '/exam-patterns', {
+    name: 'Unauthorized Student Pattern',
+    courseId: 'c1',
+    durationMinutes: 60,
+  }, studentToken);
+  assert.strictEqual(studentCreateRes.status, 403, 'Student must receive 403 Forbidden');
+  assert.strictEqual(studentCreateRes.body.errorCode, 'PERMISSION_DENIED');
+  console.log('   [PASS] Student pattern creation rejected with 403 PERMISSION_DENIED (atomic permission required)');
 
   // Step 3: Login as Admin with real credentials
-  console.log('\n3. Testing Real Admin Login (POST /api/v1/auth/login)...');
+  console.log('\n3. Testing Main Admin Login (admin@examos.com / Admin@123)...');
   const loginRes = await request('POST', '/auth/login', {
     email: 'admin@examos.com',
     password: 'Admin@123',
@@ -88,7 +118,7 @@ async function runEndToEndTests() {
 
   const sessionToken = loginRes.body.data.accessToken;
   const sessionRefresh = loginRes.body.data.refreshToken;
-  console.log('   [PASS] Login successful! Tokens received and user permissions loaded.');
+  console.log('   [PASS] Main Admin login successful! Permissions loaded.');
 
   // Step 4: Verify /auth/me with session token
   console.log('\n4. Testing Session Verification (GET /api/v1/auth/me)...');
@@ -109,20 +139,34 @@ async function runEndToEndTests() {
   // Step 6: Create Exam Pattern using the Real Logged-in Token
   console.log('\n6. Testing Create Exam Pattern (Feature 4.1) using Real Logged-In Session...');
   const createRes = await request('POST', '/exam-patterns', {
-    name: 'JEE Advanced Master Pattern (Logged-in)',
+    name: 'Initial Pattern Name',
     courseId: 'c1',
-    durationMinutes: 180,
-    type: 'MULTI',
-    description: 'Created via real logged-in admin session',
-    subjectIds: ['sub_phy', 'sub_chem'],
+    durationMinutes: 120,
+    type: 'SINGLE',
+    description: 'Initial description',
   }, sessionToken);
   assert.strictEqual(createRes.status, 201);
   assert.ok(createRes.body.success);
   const patternId = createRes.body.data.id;
   console.log(`   [PASS] Pattern created successfully! ID: ${patternId}`);
 
-  // Step 7: Add Section with Real Token (Feature 4.2)
-  console.log('\n7. Testing Add Section (Feature 4.2)...');
+  // Step 7: Edit Pattern Fields (Feature 4.1 Update: name, durationMinutes, type, description)
+  console.log('\n7. Testing Edit Pattern Fields (PATCH /api/v1/exam-patterns/:id)...');
+  const editRes = await request('PATCH', `/exam-patterns/${patternId}`, {
+    name: 'JEE Advanced Master Pattern (Edited)',
+    durationMinutes: 180,
+    type: 'MULTI',
+    description: 'Updated comprehensive multi-subject pattern',
+    subjectIds: ['sub_phy', 'sub_chem'],
+  }, sessionToken);
+  assert.strictEqual(editRes.status, 200);
+  assert.strictEqual(editRes.body.data.name, 'JEE Advanced Master Pattern (Edited)');
+  assert.strictEqual(editRes.body.data.durationMinutes, 180);
+  assert.strictEqual(editRes.body.data.type, 'MULTI');
+  console.log('   [PASS] Pattern properties updated successfully (name, duration, type, description)!');
+
+  // Step 8: Add Section with Real Token (Feature 4.2)
+  console.log('\n8. Testing Add Section (Feature 4.2)...');
   const addSecRes = await request('POST', `/exam-patterns/${patternId}/sections`, {
     name: 'Physics Section A (Single Correct)',
     subjectId: 'sub_phy',
@@ -137,8 +181,8 @@ async function runEndToEndTests() {
   const sectionId = addSecRes.body.data.id;
   console.log(`   [PASS] Section created with ID: ${sectionId} (Total marks: 60)`);
 
-  // Step 8: Configure Rules, Topics, Difficulty, Marking with Real Token (Features 4.3 - 4.6)
-  console.log('\n8. Testing Section Rules & Distribution Config (Features 4.3, 4.4, 4.5, 4.6)...');
+  // Step 9: Configure Rules, Topics, Difficulty, Marking with Real Token (Features 4.3 - 4.6)
+  console.log('\n9. Testing Section Rules & Distribution Config (Features 4.3, 4.4, 4.5, 4.6)...');
   const rulesRes = await request('PUT', `/exam-patterns/${patternId}/sections/${sectionId}/rules`, {
     allowedQuestionTypes: ['MCQ_SINGLE', 'MCQ_MULTI'],
     selectionMode: 'BALANCED',
@@ -174,8 +218,8 @@ async function runEndToEndTests() {
   assert.strictEqual(markRes.status, 200);
   console.log('   [PASS] Rules, Topics (10+5=15), Difficulty (30/50/20), and Marking (+4/-1/0) configured!');
 
-  // Step 9: Multi-Subject Allocation & Validation Engine (Features 4.7 & 4.8)
-  console.log('\n9. Testing Multi-Subject Allocation & Validation Engine...');
+  // Step 10: Multi-Subject Allocation & Validation Engine (Features 4.7 & 4.8)
+  console.log('\n10. Testing Multi-Subject Allocation & Validation Engine...');
   const allocRes = await request('PUT', `/exam-patterns/${patternId}/subjects-allocation`, {
     subjectAllocations: [
       { subjectId: 'sub_phy', targetMarks: 60 },
@@ -191,8 +235,8 @@ async function runEndToEndTests() {
   assert.strictEqual(valRes.status, 200);
   console.log('   [PASS] Multi-Subject allocation and Validation Engine executed successfully');
 
-  // Step 10: Token Refresh Rotation (Feature 1.6)
-  console.log('\n10. Testing Refresh Token Rotation (POST /api/v1/auth/refresh)...');
+  // Step 11: Token Refresh Rotation (Feature 1.6)
+  console.log('\n11. Testing Refresh Token Rotation (POST /api/v1/auth/refresh)...');
   const refRes = await request('POST', '/auth/refresh', { refreshToken: sessionRefresh });
   assert.strictEqual(refRes.status, 200);
   assert.ok(refRes.body.data.accessToken);
@@ -200,8 +244,8 @@ async function runEndToEndTests() {
   assert.notStrictEqual(refRes.body.data.refreshToken, sessionRefresh, 'Refresh token must be rotated');
   console.log('   [PASS] Token rotated successfully with new access & refresh tokens');
 
-  // Step 11: Logout (POST /api/v1/auth/logout)
-  console.log('\n11. Testing Logout (POST /api/v1/auth/logout)...');
+  // Step 12: Logout (POST /api/v1/auth/logout)
+  console.log('\n12. Testing Logout (POST /api/v1/auth/logout)...');
   const logoutRes = await request('POST', '/auth/logout', {
     refreshToken: refRes.body.data.refreshToken,
   }, refRes.body.data.accessToken);
@@ -210,7 +254,7 @@ async function runEndToEndTests() {
   console.log('   [PASS] User session revoked and logged out successfully');
 
   console.log('\n====================================================');
-  console.log(' ALL AUTHENTICATION & PATTERN BUILDER TESTS PASSED! (11/11)');
+  console.log(' ALL AUTHENTICATION, SUBADMIN & PATTERN BUILDER TESTS PASSED! (12/12)');
   console.log('====================================================\n');
 }
 

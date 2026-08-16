@@ -237,8 +237,29 @@ export const LoginPage: React.FC = () => {
                   textAlign: 'left',
                 }}
               >
-                <span>👑 <strong>Admin</strong> (admin@examos.com)</span>
+                <span>👑 <strong>Main Admin</strong> (admin@examos.com)</span>
                 <span style={{ fontSize: '10px', color: '#06b6d4' }}>Auto-Fill</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => fillCredentials('subadmin@examos.com', 'SubAdmin@123')}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  background: 'rgba(59, 130, 246, 0.08)',
+                  border: '1px solid rgba(59, 130, 246, 0.2)',
+                  color: 'var(--text-main)',
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                }}
+              >
+                <span>🛡️ <strong>Sub Admin</strong> (subadmin@examos.com)</span>
+                <span style={{ fontSize: '10px', color: '#3b82f6' }}>Auto-Fill</span>
               </button>
 
               <button

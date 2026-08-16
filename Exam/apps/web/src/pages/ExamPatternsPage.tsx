@@ -94,6 +94,8 @@ export const ExamPatternsPage: React.FC = () => {
 
   // Modals
   const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
+  const [showEditModal, setShowEditModal] = useState<boolean>(false);
+  const [editingPattern, setEditingPattern] = useState<ExamPattern | null>(null);
   const [showValidationModal, setShowValidationModal] = useState<boolean>(false);
   const [showVersionsModal, setShowVersionsModal] = useState<boolean>(false);
   const [validationResult, setValidationResult] = useState<any>(null);
@@ -112,6 +114,14 @@ export const ExamPatternsPage: React.FC = () => {
   const [description, setDescription] = useState('');
   const [selectedSubjectIds, setSelectedSubjectIds] = useState<string[]>([]);
   const [formError, setFormError] = useState<string | null>(null);
+
+  // Edit Pattern Form State
+  const [editName, setEditName] = useState('');
+  const [editDurationMinutes, setEditDurationMinutes] = useState(60);
+  const [editType, setEditType] = useState<'SINGLE' | 'MULTI'>('SINGLE');
+  const [editDescription, setEditDescription] = useState('');
+  const [editSelectedSubjectIds, setEditSelectedSubjectIds] = useState<string[]>([]);
+  const [editFormError, setEditFormError] = useState<string | null>(null);
 
   // New Section Form State
   const [secName, setSecName] = useState('Section A');
@@ -305,7 +315,55 @@ export const ExamPatternsPage: React.FC = () => {
     }
   };
 
-  // Endpoint 4: PATCH /api/v1/exam-patterns/:id — Update / Transition Pattern
+  // Open Edit Pattern Modal
+  const handleOpenEditModal = (pat: ExamPattern) => {
+    setEditingPattern(pat);
+    setEditName(pat.name);
+    setEditDurationMinutes(pat.durationMinutes);
+    setEditType(pat.type);
+    setEditDescription(pat.description || '');
+    setEditSelectedSubjectIds(pat.subjects?.map((s) => s.subjectId) || []);
+    setEditFormError(null);
+    setShowEditModal(true);
+  };
+
+  // Endpoint 4: PATCH /api/v1/exam-patterns/:id — Update Pattern Fields
+  const handleSavePatternEdits = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingPattern) return;
+    setEditFormError(null);
+
+    try {
+      const res = await fetch(`http://localhost:4000/api/v1/exam-patterns/${editingPattern.id}`, {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          name: editName,
+          durationMinutes: editDurationMinutes,
+          type: editType,
+          description: editDescription || undefined,
+          subjectIds: editSelectedSubjectIds.length > 0 ? editSelectedSubjectIds : undefined,
+        }),
+      });
+
+      const body = await res.json();
+      if (res.ok && body.success) {
+        setShowEditModal(false);
+        setStatusNotice(`Updated pattern "${body.data.name}" successfully.`);
+        await fetchPatterns();
+        if (selectedPattern?.id === editingPattern.id) {
+          await fetchPatternDetails(editingPattern.id);
+        }
+      } else {
+        setEditFormError(body.message || 'Failed to update exam pattern');
+      }
+    } catch (e: any) {
+      console.error('Failed to update pattern', e);
+      setEditFormError(e.message || 'Network error updating exam pattern');
+    }
+  };
+
+  // Endpoint 4: PATCH /api/v1/exam-patterns/:id — Update Status Transition
   const handleUpdateStatus = async (patternId: string, newStatus: 'PUBLISHED' | 'ARCHIVED') => {
     try {
       const res = await fetch(`http://localhost:4000/api/v1/exam-patterns/${patternId}`, {
@@ -377,20 +435,6 @@ export const ExamPatternsPage: React.FC = () => {
     }
   };
 
-  // Endpoint 7: GET /api/v1/exam-patterns/:id/sections — List Sections
-  const handleRefreshSections = async (patternId: string) => {
-    try {
-      const res = await fetch(`http://localhost:4000/api/v1/exam-patterns/${patternId}/sections`, {
-        headers: getAuthHeaders(),
-      });
-      if (res.ok) {
-        await fetchPatternDetails(patternId);
-      }
-    } catch (e) {
-      console.error('Failed to refresh sections', e);
-    }
-  };
-
   // Endpoint 8: PATCH /api/v1/exam-patterns/:id/sections/reorder — Reorder Sections
   const handleMoveSection = async (patternId: string, fromIndex: number, direction: 'UP' | 'DOWN') => {
     if (!selectedPattern?.sections) return;
@@ -413,24 +457,6 @@ export const ExamPatternsPage: React.FC = () => {
       }
     } catch (e) {
       console.error('Failed to reorder sections', e);
-    }
-  };
-
-  // Endpoint 9: PATCH /api/v1/exam-patterns/:id/sections/:sectionId — Update Section
-  const handleUpdateSectionBasic = async (patternId: string, sectionId: string, updates: Partial<Section>) => {
-    try {
-      const res = await fetch(`http://localhost:4000/api/v1/exam-patterns/${patternId}/sections/${sectionId}`, {
-        method: 'PATCH',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(updates),
-      });
-      if (res.ok) {
-        setStatusNotice('Section details updated.');
-        await fetchPatternDetails(patternId);
-        await fetchPatterns();
-      }
-    } catch (e) {
-      console.error('Failed to update section', e);
     }
   };
 
@@ -799,6 +825,13 @@ export const ExamPatternsPage: React.FC = () => {
                       🛠️ Builder
                     </button>
                     <button
+                      onClick={() => handleOpenEditModal(p)}
+                      style={{ background: 'rgba(59, 130, 246, 0.15)', border: '1px solid #3b82f6', color: '#3b82f6', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer' }}
+                      title="Edit pattern properties"
+                    >
+                      ✏️ Edit
+                    </button>
+                    <button
                       onClick={() => handleRunValidation(p.id)}
                       style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid #10b981', color: '#10b981', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer' }}
                     >
@@ -856,6 +889,12 @@ export const ExamPatternsPage: React.FC = () => {
               </div>
             </div>
             <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={() => handleOpenEditModal(selectedPattern)}
+                style={{ background: 'rgba(59, 130, 246, 0.15)', border: '1px solid #3b82f6', color: '#3b82f6', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}
+              >
+                ✏️ Edit Blueprint Details
+              </button>
               <button
                 onClick={() => handleRunValidation(selectedPattern.id)}
                 style={{ background: 'rgba(16, 185, 129, 0.2)', border: '1px solid #10b981', color: '#10b981', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}
@@ -1574,6 +1613,117 @@ export const ExamPatternsPage: React.FC = () => {
                   style={{ background: 'var(--accent-color)', color: '#000', border: 'none', padding: '8px 16px', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer' }}
                 >
                   Create Pattern
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal 1.5: Edit Exam Pattern Modal (PATCH /api/v1/exam-patterns/:id) */}
+      {showEditModal && editingPattern && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: 'var(--panel-bg)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '24px', width: '520px', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <div>
+                <h3 style={{ margin: 0, fontFamily: 'JetBrains Mono' }}>Edit Exam Pattern</h3>
+                <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                  ID: {editingPattern.id} | Status: {editingPattern.status} | Version: v{editingPattern.version}
+                </div>
+              </div>
+              <button onClick={() => setShowEditModal(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>✕</button>
+            </div>
+            {editFormError && (
+              <div style={{ padding: '8px 12px', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid #ef4444', color: '#ef4444', borderRadius: '6px', fontSize: '12px', marginBottom: '12px' }}>
+                {editFormError}
+              </div>
+            )}
+            <form onSubmit={handleSavePatternEdits} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Pattern Name</label>
+                <input
+                  required
+                  placeholder="e.g. JEE Main Physics Blueprint"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '8px', borderRadius: '4px' }}
+                />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Pattern Type</label>
+                  <select
+                    value={editType}
+                    onChange={(e) => setEditType(e.target.value as 'SINGLE' | 'MULTI')}
+                    style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '8px', borderRadius: '4px' }}
+                  >
+                    <option value="SINGLE">Single Subject</option>
+                    <option value="MULTI">Multi Subject</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Duration (Minutes)</label>
+                  <input
+                    type="number"
+                    required
+                    min={1}
+                    value={editDurationMinutes}
+                    onChange={(e) => setEditDurationMinutes(parseInt(e.target.value, 10))}
+                    style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '8px', borderRadius: '4px' }}
+                  />
+                </div>
+              </div>
+
+              {/* Linked Subjects if Multi-Subject */}
+              {editType === 'MULTI' && (
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>
+                    Select Subjects in Pattern:
+                  </label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', maxHeight: '120px', overflowY: 'auto', border: '1px solid var(--border-color)', padding: '8px', borderRadius: '4px' }}>
+                    {availableSubjects.map((sub) => {
+                      const selected = editSelectedSubjectIds.includes(sub.id);
+                      return (
+                        <label key={sub.id} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', cursor: 'pointer' }}>
+                          <input
+                            type="checkbox"
+                            checked={selected}
+                            onChange={(e) => {
+                              if (e.target.checked) setEditSelectedSubjectIds([...editSelectedSubjectIds, sub.id]);
+                              else setEditSelectedSubjectIds(editSelectedSubjectIds.filter((s) => s !== sub.id));
+                            }}
+                          />
+                          {sub.name}
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Description</label>
+                <textarea
+                  rows={3}
+                  placeholder="Blueprint notes or instructions..."
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '8px', borderRadius: '4px' }}
+                />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '12px' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  style={{ background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  style={{ background: '#3b82f6', color: '#fff', border: 'none', padding: '8px 16px', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer' }}
+                >
+                  Save Changes
                 </button>
               </div>
             </form>
