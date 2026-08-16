@@ -1,38 +1,42 @@
 import { PrismaClient } from '@prisma/client';
+import * as bcrypt from 'bcryptjs';
+import { pgDb } from '../src/index';
 
 const prisma = new PrismaClient();
 
-const PERMISSIONS = [
-  { key: 'users.create', description: 'Create user accounts', module: 'users' },
-  { key: 'users.read', description: 'View user profiles', module: 'users' },
-  { key: 'users.update', description: 'Update user profiles', module: 'users' },
-  { key: 'users.delete', description: 'Delete user accounts', module: 'users' },
-  { key: 'roles.manage', description: 'Manage roles and permissions', module: 'roles' },
-  { key: 'audit.read', description: 'View system audit logs', module: 'audit' },
-  { key: 'i18n.manage', description: 'Manage multilingual translations', module: 'i18n' },
-  { key: 'preferences.update', description: 'Update system preferences', module: 'preferences' },
-  { key: 'courses.create', description: 'Create courses and subjects', module: 'courses' },
-  { key: 'courses.read', description: 'View courses and syllabus', module: 'courses' },
-  { key: 'courses.update', description: 'Update courses and syllabus', module: 'courses' },
-  { key: 'courses.delete', description: 'Delete courses', module: 'courses' },
-  { key: 'questions.create', description: 'Create question bank items', module: 'questions' },
-  { key: 'questions.read', description: 'View question bank', module: 'questions' },
-  { key: 'questions.update', description: 'Update question items', module: 'questions' },
-  { key: 'questions.delete', description: 'Delete question items', module: 'questions' },
-  { key: 'exams.create', description: 'Create exam patterns', module: 'exams' },
-  { key: 'exams.read', description: 'View exam patterns and results', module: 'exams' },
-  { key: 'exams.publish', description: 'Publish exams', module: 'exams' },
-  { key: 'exams.attempt', description: 'Attempt student exams', module: 'exams' },
+export const PERMISSIONS = [
+  { id: 'p1', key: 'users.create', description: 'Create user accounts', module: 'users' },
+  { id: 'p2', key: 'users.read', description: 'View user profiles', module: 'users' },
+  { id: 'p3', key: 'users.update', description: 'Update user profiles', module: 'users' },
+  { id: 'p4', key: 'users.delete', description: 'Delete user accounts', module: 'users' },
+  { id: 'p5', key: 'roles.manage', description: 'Manage roles and permissions', module: 'roles' },
+  { id: 'p6', key: 'audit.read', description: 'View system audit logs', module: 'audit' },
+  { id: 'p7', key: 'i18n.manage', description: 'Manage multilingual translations', module: 'i18n' },
+  { id: 'p8', key: 'preferences.update', description: 'Update system preferences', module: 'preferences' },
+  { id: 'p9', key: 'courses.create', description: 'Create courses and subjects', module: 'courses' },
+  { id: 'p10', key: 'courses.read', description: 'View courses and syllabus', module: 'courses' },
+  { id: 'p11', key: 'courses.update', description: 'Update courses and syllabus', module: 'courses' },
+  { id: 'p12', key: 'courses.delete', description: 'Delete courses', module: 'courses' },
+  { id: 'p13', key: 'questions.create', description: 'Create question bank items', module: 'questions' },
+  { id: 'p14', key: 'questions.read', description: 'View question bank', module: 'questions' },
+  { id: 'p15', key: 'questions.update', description: 'Update question items', module: 'questions' },
+  { id: 'p16', key: 'questions.delete', description: 'Delete question items', module: 'questions' },
+  { id: 'p17', key: 'exams.create', description: 'Create exam patterns', module: 'exams' },
+  { id: 'p18', key: 'exams.read', description: 'View exam patterns and results', module: 'exams' },
+  { id: 'p19', key: 'exams.publish', description: 'Publish exams', module: 'exams' },
+  { id: 'p20', key: 'exams.attempt', description: 'Attempt student exams', module: 'exams' },
 ];
 
-const ROLES = [
+export const ROLES = [
   {
+    id: 'r1',
     name: 'MAIN_ADMIN',
     description: 'System Super Administrator with full authority',
     isSystem: true,
     permissions: PERMISSIONS.map((p) => p.key),
   },
   {
+    id: 'r2',
     name: 'SUB_ADMIN',
     description: 'Delegated Administrator for content & user ops',
     isSystem: true,
@@ -40,19 +44,21 @@ const ROLES = [
       'users.read', 'users.create', 'users.update',
       'courses.read', 'courses.create', 'courses.update',
       'questions.read', 'questions.create', 'questions.update',
-      'exams.read', 'audit.read',
+      'exams.read', 'exams.create', 'exams.publish', 'audit.read',
     ],
   },
   {
+    id: 'r3',
     name: 'TEACHER',
     description: 'Faculty and question author',
     isSystem: true,
     permissions: [
       'courses.read', 'questions.read', 'questions.create',
-      'questions.update', 'exams.read', 'exams.create',
+      'questions.update', 'exams.read', 'exams.create', 'exams.publish',
     ],
   },
   {
+    id: 'r4',
     name: 'STUDENT',
     description: 'Enrolled learner persona',
     isSystem: true,
@@ -60,8 +66,47 @@ const ROLES = [
   },
 ];
 
+export const USERS = [
+  {
+    id: 'usr_admin_test',
+    email: 'admin@examos.com',
+    password: 'Admin@123',
+    firstName: 'Admin',
+    lastName: 'User',
+    roleId: 'r1',
+    roleName: 'MAIN_ADMIN',
+  },
+  {
+    id: 'usr_subadmin_test',
+    email: 'subadmin@examos.com',
+    password: 'SubAdmin@123',
+    firstName: 'SubAdmin',
+    lastName: 'User',
+    roleId: 'r2',
+    roleName: 'SUB_ADMIN',
+  },
+  {
+    id: 'usr_teacher_test',
+    email: 'teacher@examos.com',
+    password: 'Teacher@123',
+    firstName: 'Teacher',
+    lastName: 'Faculty',
+    roleId: 'r3',
+    roleName: 'TEACHER',
+  },
+  {
+    id: 'usr_student_test',
+    email: 'student@examos.com',
+    password: 'Student@123',
+    firstName: 'Student',
+    lastName: 'Learner',
+    roleId: 'r4',
+    roleName: 'STUDENT',
+  },
+];
+
 // 23 Baseline Languages
-const BASELINE_LANGUAGES = [
+export const BASELINE_LANGUAGES = [
   { code: 'en', name: 'English', nativeName: 'English', isDefault: true },
   { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी', isDefault: false },
   { code: 'bn', name: 'Bengali', nativeName: 'বাংলা', isDefault: false },
@@ -87,7 +132,7 @@ const BASELINE_LANGUAGES = [
   { code: 'lus', name: 'Mizo', nativeName: 'Mizo', isDefault: false },
 ];
 
-const TRANSLATION_KEYS = [
+export const TRANSLATION_KEYS = [
   { key: 'welcome', description: 'Welcome banner heading', module: 'common' },
   { key: 'app_title', description: 'Application header title', module: 'common' },
   { key: 'dashboard', description: 'Navigation dashboard label', module: 'navigation' },
@@ -98,7 +143,7 @@ const TRANSLATION_KEYS = [
   { key: 'analytics', description: 'Navigation student analytics label', module: 'navigation' },
 ];
 
-const SEED_TRANSLATIONS: Record<string, Record<string, string>> = {
+export const SEED_TRANSLATIONS: Record<string, Record<string, string>> = {
   en: { welcome: 'Welcome to ExamOS Platform', app_title: 'ExamOS // Adaptive Learning Platform', dashboard: 'Dashboard', users: 'User Management', courses: 'Academic Courses', question_bank: 'Question Bank', exam_patterns: 'Exam Patterns', analytics: 'Student Analytics' },
   hi: { welcome: 'ExamOS प्लेटफॉर्म में आपका स्वागत है', app_title: 'ExamOS // अनुकूलनीय शिक्षण मंच', dashboard: 'डैशबोर्ड', users: 'उपयोगकर्ता प्रबंधन', courses: 'अकादमिक पाठ्यक्रम', question_bank: 'प्रश्न बैंक', exam_patterns: 'परीक्षा पैटर्न', analytics: 'छात्र विश्लेषण' },
   bn: { welcome: 'ExamOS প্ল্যাটফর্মে স্বাগতম', app_title: 'ExamOS // অ্যাডাপ্টিভ লার্নিং প্ল্যাটফর্ম', dashboard: 'ড্যাশবোর্ড', users: 'ব্যবহারকারী পরিচালনা', courses: 'একাডেমিক কোর্স', question_bank: 'প্রশ্ন ব্যাংক', exam_patterns: 'পরীক্ষার প্যাটার্ন', analytics: 'ছাত্র অ্যানালিটিক্স' },
@@ -108,7 +153,7 @@ const SEED_TRANSLATIONS: Record<string, Record<string, string>> = {
   ur: { welcome: 'ExamOS پلیٹ فارم میں خوش آمدید', app_title: 'ExamOS // موافقانہ تعلیمی پلیٹ فارم', dashboard: 'ڈیش بورڈ', users: 'صارفین کا انتظام', courses: 'تعليمى نصاب', question_bank: 'سوالات کا بنک', exam_patterns: 'امتحانی پیٹرن', analytics: 'طالب علم کا تجزیہ' },
   gu: { welcome: 'ExamOS પ્લેટફોર્મ પર આપનું સ્વાગત છે', app_title: 'ExamOS // અનુકૂલનશીલ શિક્ષણ પ્લેટફોર્મ', dashboard: 'ડેશબોર્ડ', users: 'વપરાશકર્તા સંચાલન', courses: 'શૈક્ષણિક અભ્યાસક્રમો', question_bank: 'પ્રશ્ન બેંક', exam_patterns: 'પરીક્ષા પેટર્ન', analytics: 'વિદ્યાર્થી પૃથ્થકરણ' },
   kn: { welcome: 'ExamOS ವೇದಿಕೆಗೆ ನಿಮಗೆ ಸುಸ್ವಾಗತ', app_title: 'ExamOS // ಅಡಾಪ್ಟಿವ್ ಕಲಿಕಾ ವೇದಿಕೆ', dashboard: 'ಡ್ಯಾಶ್‌ಬೋರ್ಡ್', users: 'ಬಳಕೆದಾರರ ನಿರ್ವಹಣೆ', courses: 'ಶೈಕ್ಷಣಿಕ ಕೋರ್ಸ್‌ಗಳು', question_bank: 'ಪ್ರಶ್ನೆ ಬ್ಯಾಂಕ್', exam_patterns: 'ಪರೀಕ್ಷಾ ಮಾದರಿಗಳು', analytics: 'ವಿದ್ಯಾರ್ಥಿ ವಿಶ್ಲೇಷಣೆ' },
-  ml: { welcome: 'ExamOS പ്ലാറ്റ്‌ഫോമിലേക്ക് സ്വാഗതം', app_title: 'ExamOS // അഡാപ്റ്റീവ് ലേണിംഗ് പ്ലാറ്റ്‌ഫോം', dashboard: 'ഡാഷ്‌ബോർഡ്', users: 'ഉപയോക്തൃ മാനേജ്മെന്റ്', courses: 'അക്കാദമിക് കോഴ്‌സുകൾ', question_bank: 'ചോദ്യ ബാങ്ക്', exam_patterns: 'പരീക്ഷാ പാറ്റേൺ', analytics: 'വിദ്യാർത്ഥി വിശകലനം' },
+  ml: { welcome: 'ExamOS പ്ലാറ്റ്‌ഫോമിലേക്ക് സ്വാgatam', app_title: 'ExamOS // അഡാപ്റ്റീവ് ലേണിംഗ് പ്ലാറ്റ്‌ഫോം', dashboard: 'ഡാഷ്‌ബോർഡ്', users: 'ഉപയോക്തൃ മാനേജ്മെന്റ്', courses: 'അക്കാദമിക് കോഴ്‌സുകൾ', question_bank: 'ചോദ്യ ബാങ്ക്', exam_patterns: 'പരീക്ഷാ പാറ്റേൺ', analytics: 'വിദ്യാർത്ഥി വിശകലനം' },
   or: { welcome: 'ExamOS ପ୍ଲାଟଫର୍ମକୁ ସ୍ୱାଗତ', app_title: 'ExamOS // ଆଡାପ୍ଟିଭ୍ ଶିକ୍ଷଣ ପ୍ଲାଟଫର୍ମ', dashboard: 'ଡ୍ୟାସବୋର୍ଡ', users: 'ବ୍ୟବହାରକାରୀ ପରିଚାଳନା', courses: 'ଶିକ୍ଷାଗତ ପାଠ୍ୟକ୍ରମ', question_bank: 'ପ୍ରଶ୍ନ ବ୍ୟାଙ୍କ', exam_patterns: 'ପରୀକ୍ଷା ପ୍ୟାଟର୍ନ', analytics: 'ଛାତ୍ର ବିଶ୍ଳେଷଣ' },
   pa: { welcome: 'ExamOS ਪਲੇਟਫਾਰਮ ਵਿੱਚ ਤੁਹਾਡਾ ਸਵਾਗਤ ਹੈ', app_title: 'ExamOS // ਅਨੁਕੂਲ ਸਿਖਲਾਈ ਪਲੇਟਫਾਰਮ', dashboard: 'ਡੈਸ਼ਬੋਰਡ', users: 'ਉਪਭੋਗਤਾ ਪ੍ਰਬੰਧਨ', courses: 'ਅਕਾਦਮਿਕ ਕੋਰਸ', question_bank: 'ਪ੍ਰਸ਼ਨ ਬੈਂਕ', exam_patterns: 'ਪ੍ਰੀਖਿਆ ਪੈਟਰਨ', analytics: 'ਵਿਦਿਆਰਥੀ ਵਿਸ਼ਲੇਸ਼ਣ' },
   as: { welcome: 'ExamOS মঞ্চলৈ স্বাগতম', app_title: 'ExamOS // অভিযোজনযোগ্য শিক্ষণ মঞ্চ', dashboard: 'ড্যাশবৰ্ড', users: 'ব্যৱহাৰকাৰী ব্যৱস্থাপনা', courses: 'শৈক্ষিক পাঠ্যক্ৰম', question_bank: 'প্ৰশ্ন বেংক', exam_patterns: 'পৰীক্ষাৰ আৰ্হি', analytics: 'ছাত্ৰ বিশ্লেষণ' },
@@ -124,75 +169,136 @@ const SEED_TRANSLATIONS: Record<string, Record<string, string>> = {
   lus: { welcome: 'ExamOS Platform-ah te lo lawm a ni', app_title: 'ExamOS // Zirna Platform', dashboard: 'Dashboard', users: 'Hmannu Inenkawlna', courses: 'Zirna Courses', question_bank: 'Zawhna Bank', exam_patterns: 'Chhenna Pattern', analytics: 'Zirlai Analysis' },
 };
 
-async function seed() {
-  console.log('Seeding permissions & roles...');
-  const permMap = new Map<string, string>();
+export async function runSeed() {
+  console.log('Seeding permissions & roles into PostgreSQL...');
   for (const p of PERMISSIONS) {
-    const perm = await prisma.permission.upsert({
-      where: { key: p.key },
-      update: { description: p.description, module: p.module },
-      create: { key: p.key, description: p.description, module: p.module },
-    });
-    permMap.set(p.key, perm.id);
+    await pgDb.query(
+      `INSERT INTO "permissions" ("id", "key", "description", "module")
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT ("key") DO UPDATE SET "description" = EXCLUDED."description", "module" = EXCLUDED."module"`,
+      [p.id, p.key, p.description, p.module]
+    );
   }
 
   for (const r of ROLES) {
-    const role = await prisma.role.upsert({
-      where: { name: r.name },
-      update: { description: r.description, isSystem: r.isSystem },
-      create: { name: r.name, description: r.description, isSystem: r.isSystem },
-    });
+    await pgDb.query(
+      `INSERT INTO "roles" ("id", "name", "description", "isSystem")
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT ("name") DO UPDATE SET "description" = EXCLUDED."description", "isSystem" = EXCLUDED."isSystem"`,
+      [r.id, r.name, r.description, r.isSystem]
+    );
+  }
+
+  console.log('Seeding role_permissions mappings into PostgreSQL...');
+  for (const r of ROLES) {
     for (const permKey of r.permissions) {
-      const permId = permMap.get(permKey);
-      if (permId) {
-        await prisma.rolePermission.upsert({
-          where: { roleId_permissionId: { roleId: role.id, permissionId: permId } },
-          update: {},
-          create: { roleId: role.id, permissionId: permId },
-        });
+      const permRes = await pgDb.query(`SELECT "id" FROM "permissions" WHERE "key" = $1`, [permKey]);
+      if (permRes.rows.length > 0) {
+        const permId = (permRes.rows[0] as any).id;
+        await pgDb.query(
+          `INSERT INTO "role_permissions" ("roleId", "permissionId")
+           VALUES ($1, $2)
+           ON CONFLICT DO NOTHING`,
+          [r.id, permId]
+        );
       }
     }
   }
 
-  console.log('Seeding 23 baseline languages into database...');
-  const langMap = new Map<string, string>();
-  for (const l of BASELINE_LANGUAGES) {
-    const lang = await prisma.language.upsert({
-      where: { code: l.code },
-      update: { name: l.name, nativeName: l.nativeName, isDefault: l.isDefault },
-      create: { code: l.code, name: l.name, nativeName: l.nativeName, isDefault: l.isDefault },
-    });
-    langMap.set(l.code, lang.id);
+  console.log('Seeding 4 baseline persona users (Admin, SubAdmin, Teacher, Student)...');
+  for (const u of USERS) {
+    const passwordHash = bcrypt.hashSync(u.password, 10);
+    await pgDb.query(
+      `INSERT INTO "users" ("id", "email", "passwordHash", "firstName", "lastName", "status")
+       VALUES ($1, $2, $3, $4, $5, 'ACTIVE')
+       ON CONFLICT ("email") DO UPDATE SET
+         "passwordHash" = EXCLUDED."passwordHash",
+         "firstName" = EXCLUDED."firstName",
+         "lastName" = EXCLUDED."lastName",
+         "status" = 'ACTIVE'`,
+      [u.id, u.email, passwordHash, u.firstName, u.lastName]
+    );
+
+    await pgDb.query(
+      `INSERT INTO "user_roles" ("userId", "roleId")
+       VALUES ($1, $2)
+       ON CONFLICT DO NOTHING`,
+      [u.id, u.roleId]
+    );
   }
 
-  console.log('Seeding translation keys & values into database...');
-  const keyMap = new Map<string, string>();
+  console.log('Seeding default Course & Subjects into PostgreSQL...');
+  await pgDb.query(
+    `INSERT INTO "courses" ("id", "name", "code", "description", "status", "durationMonths")
+     VALUES ('c1', 'Engineering Entrance Course', 'ENG-101', 'JEE & Engineering Foundation Course', 'PUBLISHED', 12)
+     ON CONFLICT ("code") DO NOTHING`
+  );
+
+  await pgDb.query(
+    `INSERT INTO "subjects" ("id", "courseId", "name", "code", "description", "credits", "order")
+     VALUES ('sub_phy', 'c1', 'Physics', 'PHY-101', 'General Physics', 4, 1)
+     ON CONFLICT ("courseId", "code") DO NOTHING`
+  );
+
+  await pgDb.query(
+    `INSERT INTO "subjects" ("id", "courseId", "name", "code", "description", "credits", "order")
+     VALUES ('sub_chem', 'c1', 'Chemistry', 'CHEM-101', 'General Chemistry', 4, 2)
+     ON CONFLICT ("courseId", "code") DO NOTHING`
+  );
+
+  await pgDb.query(
+    `INSERT INTO "syllabus_nodes" ("id", "subjectId", "title", "type", "orderIndex", "depth")
+     VALUES ('top_mech', 'sub_phy', 'Mechanics', 'TOPIC', 1, 1)
+     ON CONFLICT ("id") DO NOTHING`
+  );
+
+  await pgDb.query(
+    `INSERT INTO "syllabus_nodes" ("id", "subjectId", "title", "type", "orderIndex", "depth")
+     VALUES ('top_optics', 'sub_phy', 'Optics', 'TOPIC', 2, 1)
+     ON CONFLICT ("id") DO NOTHING`
+  );
+
+  console.log('Seeding 23 baseline languages into PostgreSQL...');
+  for (const l of BASELINE_LANGUAGES) {
+    const langId = `lang_${l.code}`;
+    await pgDb.query(
+      `INSERT INTO "languages" ("id", "code", "name", "nativeName", "isDefault")
+       VALUES ($1, $2, $3, $4, $5)
+       ON CONFLICT ("code") DO UPDATE SET "name" = EXCLUDED."name", "nativeName" = EXCLUDED."nativeName"`,
+      [langId, l.code, l.name, l.nativeName, l.isDefault]
+    );
+  }
+
+  console.log('Seeding translation keys & values into PostgreSQL...');
   for (const k of TRANSLATION_KEYS) {
-    const tk = await prisma.translationKey.upsert({
-      where: { key: k.key },
-      update: { description: k.description, module: k.module },
-      create: { key: k.key, description: k.description, module: k.module },
-    });
-    keyMap.set(k.key, tk.id);
+    const keyId = `tk_${k.key}`;
+    await pgDb.query(
+      `INSERT INTO "translation_keys" ("id", "key", "description", "module")
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT ("key") DO UPDATE SET "description" = EXCLUDED."description", "module" = EXCLUDED."module"`,
+      [keyId, k.key, k.description, k.module]
+    );
   }
 
   let totalTranslationsSeeded = 0;
   let languagesWithFullTranslations = 0;
 
   for (const [langCode, keyVals] of Object.entries(SEED_TRANSLATIONS)) {
-    const langId = langMap.get(langCode);
-    if (langId) {
+    const langRes = await pgDb.query(`SELECT "id" FROM "languages" WHERE "code" = $1`, [langCode]);
+    if (langRes.rows.length > 0) {
+      const langId = (langRes.rows[0] as any).id;
       let countForLang = 0;
       for (const [key, value] of Object.entries(keyVals)) {
-        const keyId = keyMap.get(key);
-        if (keyId) {
-          await prisma.translation.upsert({
-            where: {
-              languageId_translationKeyId: { languageId: langId, translationKeyId: keyId },
-            },
-            update: { value },
-            create: { languageId: langId, translationKeyId: keyId, value },
-          });
+        const keyRes = await pgDb.query(`SELECT "id" FROM "translation_keys" WHERE "key" = $1`, [key]);
+        if (keyRes.rows.length > 0) {
+          const keyId = (keyRes.rows[0] as any).id;
+          const trId = `tr_${langCode}_${key}`;
+          await pgDb.query(
+            `INSERT INTO "translations" ("id", "languageId", "translationKeyId", "value")
+             VALUES ($1, $2, $3, $4)
+             ON CONFLICT ("languageId", "translationKeyId") DO UPDATE SET "value" = EXCLUDED."value"`,
+            [trId, langId, keyId, value]
+          );
           totalTranslationsSeeded++;
           countForLang++;
         }
@@ -203,14 +309,18 @@ async function seed() {
     }
   }
 
-  console.log(`Database seed complete: Registered ${BASELINE_LANGUAGES.length} baseline languages; seeded ${totalTranslationsSeeded} translation entries across ${languagesWithFullTranslations} languages with 100% full 8-key coverage.`);
+  console.log(
+    `Database seed complete: Registered ${BASELINE_LANGUAGES.length} baseline languages; seeded ${totalTranslationsSeeded} translation entries across ${languagesWithFullTranslations} languages with 100% full 8-key coverage.`
+  );
 }
 
-seed()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+if (require.main === module) {
+  runSeed()
+    .catch((e) => {
+      console.error(e);
+      process.exit(1);
+    })
+    .finally(async () => {
+      await prisma.$disconnect();
+    });
+}
