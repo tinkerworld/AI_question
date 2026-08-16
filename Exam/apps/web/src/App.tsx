@@ -6,12 +6,13 @@ import { ThemeSwitcher } from './components/ThemeSwitcher';
 import { LanguageSelector } from './components/LanguageSelector';
 import { LoginPage } from './pages/LoginPage';
 import { ExamPatternsPage } from './pages/ExamPatternsPage';
+import { ExamsPage } from './pages/ExamsPage';
 import './styles/theme.css';
 
 const MainLayout: React.FC = () => {
   const { t } = useTranslation();
   const { user, isAuthenticated, isLoading, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState<string>('exam_patterns');
+  const [activeTab, setActiveTab] = useState<string>('exams');
 
   if (isLoading) {
     return (
@@ -179,9 +180,10 @@ const MainLayout: React.FC = () => {
             MODULES
           </div>
           <nav style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            {['dashboard', 'users', 'courses', 'question_bank', 'exam_patterns', 'analytics'].map((item) => (
+            {['dashboard', 'exams', 'exam_patterns', 'question_bank', 'courses', 'users', 'analytics'].map((item) => (
               <div
                 key={item}
+                id={`nav-tab-${item}`}
                 onClick={() => setActiveTab(item)}
                 style={{
                   padding: '9px 12px',
@@ -194,15 +196,17 @@ const MainLayout: React.FC = () => {
                   cursor: 'pointer',
                 }}
               >
-                {t(item)}
+                {item === 'exams' ? 'Exam Generator & Papers' : t(item)}
               </div>
             ))}
           </nav>
         </aside>
 
         {/* Content Body */}
-        <main style={{ flex: 1, padding: '28px' }}>
-          {activeTab === 'exam_patterns' ? (
+        <main style={{ flex: 1, padding: activeTab === 'exams' || activeTab === 'exam_patterns' ? '0' : '28px', display: 'flex' }}>
+          {activeTab === 'exams' ? (
+            <ExamsPage />
+          ) : activeTab === 'exam_patterns' ? (
             <ExamPatternsPage />
           ) : (
             <div
@@ -211,13 +215,14 @@ const MainLayout: React.FC = () => {
                 border: '1px solid var(--border-color)',
                 borderRadius: '12px',
                 padding: '28px',
+                flex: 1,
               }}
             >
               <h1 style={{ marginTop: 0, fontSize: '22px', fontFamily: 'JetBrains Mono' }}>
                 {t('welcome')}
               </h1>
               <p style={{ color: 'var(--text-muted)', lineHeight: '1.6', fontSize: '13px' }}>
-                Welcome to ExamOS. Use the sidebar to navigate to Exam Patterns, Academic Structure, or Question Bank.
+                Welcome to ExamOS. Use the sidebar to navigate to Exam Generator & Papers, Exam Patterns, Academic Structure, or Question Bank.
               </p>
             </div>
           )}
