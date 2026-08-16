@@ -13,6 +13,7 @@ import questionRoutes from './routes/question.routes';
 import i18nRoutes from './routes/i18n.routes';
 import preferenceRoutes from './routes/preference.routes';
 import { examPatternRouter } from './routes/exam-patterns.routes';
+import { examRouter } from './routes/exam.routes';
 import { errorHandler } from './middleware/error';
 
 dotenv.config();
@@ -56,6 +57,10 @@ app.use('/api/v1/questions', questionRoutes);
 
 // Phase 4 Routes (Exam Pattern)
 app.use('/api/v1/exam-patterns', examPatternRouter);
+
+// Phase 5 Routes (Exam Generator)
+app.use('/api/v1/exams', examRouter);
+app.use('/api/exams', examRouter);
 
 // Error Handling Middleware (Must be last)
 app.use(errorHandler);

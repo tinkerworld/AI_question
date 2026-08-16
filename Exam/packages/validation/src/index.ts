@@ -248,3 +248,70 @@ export const multiSubjectAllocationSchema = z.object({
     })
   ).optional(),
 });
+
+// Phase 5 Validation Schemas (Exam Generator & Inspection)
+export const generateExamSchema = z.object({
+  patternId: z.string().min(1, 'Pattern ID is required'),
+  name: z.string().min(2).optional(),
+  instructions: z.string().optional(),
+  startTime: z.string().datetime({ offset: true }).or(z.string()).optional(),
+  endTime: z.string().datetime({ offset: true }).or(z.string()).optional(),
+  avoidRecentDays: z.number().min(0).optional(),
+  excludeQuestionIds: z.array(z.string()).optional(),
+});
+
+export const createManualExamSchema = z.object({
+  name: z.string().min(2, 'Exam name must be at least 2 characters'),
+  courseId: z.string().optional(),
+  instructions: z.string().optional(),
+  durationMinutes: z.number().min(1, 'Duration must be at least 1 minute').default(60),
+  startTime: z.string().optional(),
+  endTime: z.string().optional(),
+});
+
+export const updateExamMetadataSchema = z.object({
+  name: z.string().min(2).optional(),
+  instructions: z.string().optional(),
+  durationMinutes: z.number().min(1).optional(),
+  startTime: z.string().nullable().optional(),
+  endTime: z.string().nullable().optional(),
+  status: z.enum(['DRAFT', 'PUBLISHED', 'ONGOING', 'COMPLETED', 'ARCHIVED']).optional(),
+  targetCourseId: z.string().optional(),
+  targetSubjectId: z.string().optional(),
+}).refine(
+  (data) => {
+    if (data.startTime && data.endTime) {
+      return new Date(data.endTime) > new Date(data.startTime);
+    }
+    return true;
+  },
+  {
+    message: 'Scheduled end time must be strictly after start time',
+    path: ['endTime'],
+  }
+);
+
+export const createManualExamSectionSchema = z.object({
+  name: z.string().min(1, 'Section name is required'),
+  subjectId: z.string().optional(),
+  sequenceOrder: z.number().min(0).default(0),
+  marksPerQuestion: z.number().min(0.1).default(1.0),
+  marksCorrect: z.number().min(0.1).optional(),
+  marksWrong: z.number().max(0).optional(),
+  marksUnattempted: z.number().default(0).optional(),
+});
+
+export const addExamQuestionsSchema = z.object({
+  sectionId: z.string().min(1, 'Section ID is required'),
+  questionIds: z.array(z.string().min(1)).min(1, 'At least one question ID is required'),
+});
+
+export const swapExamQuestionSchema = z.object({
+  newQuestionId: z.string().min(1, 'New question ID is required'),
+});
+
+export const reorderExamQuestionsSchema = z.object({
+  sectionId: z.string().min(1, 'Section ID is required'),
+  questionIds: z.array(z.string().min(1)).min(1, 'Question IDs are required'),
+});
+

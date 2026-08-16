@@ -7,14 +7,15 @@ export function validate(schema: ZodSchema) {
     try {
       req.body = await schema.parseAsync(req.body);
       next();
-    } catch (err) {
-      if (err instanceof ZodError) {
+    } catch (err: any) {
+      if (err instanceof ZodError || err?.name === 'ZodError' || Array.isArray(err?.errors) || Array.isArray(err?.issues)) {
+        const issues = err.errors || err.issues || [];
         return next(
           new AppError(
             400,
             'VALIDATION_FAILED',
             'Request validation failed',
-            err.errors.map((e) => ({ path: e.path.join('.'), message: e.message }))
+            issues.map((e: any) => ({ path: e.path ? e.path.join('.') : '', message: e.message }))
           )
         );
       }

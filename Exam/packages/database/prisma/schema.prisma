@@ -68,6 +68,7 @@ model User {
   questions      Question[]      @relation("QuestionCreator")
   preference     UserPreference?
   patternsCreated  ExamPattern[]     @relation("PatternCreator")
+  examsCreated     Exam[]            @relation("ExamCreator")
 
   @@map("users")
 }
@@ -172,6 +173,7 @@ model Course {
   enrollments    Enrollment[]
   questions      Question[]
   examPatterns   ExamPattern[]
+  exams          Exam[]
 
   @@map("courses")
 }
@@ -191,6 +193,7 @@ model Subject {
   questions     Question[]
   examPatternSubjects ExamPatternSubject[]
   examPatternSections ExamPatternSection[]
+  examSections        ExamSection[]
 
   @@unique([courseId, code])
   @@map("subjects")
@@ -256,6 +259,7 @@ model Question {
   versions       QuestionVersion[]
   questionTags   QuestionTag[]
   examUsages     PreviousExamUsage[]
+  examQuestions  ExamQuestion[]
 
   @@map("questions")
 }
@@ -392,6 +396,7 @@ model ExamPattern {
   createdBy       User?                @relation("PatternCreator", fields: [createdById], references: [id], onDelete: SetNull)
   subjects        ExamPatternSubject[]
   sections        ExamPatternSection[]
+  exams           Exam[]
 
   @@map("exam_patterns")
 }
@@ -472,3 +477,74 @@ model ExamPatternSectionDifficulty {
   @@unique([sectionId, difficultyLevel])
   @@map("exam_pattern_section_difficulties")
 }
+
+enum ExamStatus {
+  DRAFT
+  PUBLISHED
+  ONGOING
+  COMPLETED
+  ARCHIVED
+}
+
+model Exam {
+  id              String         @id @default(uuid())
+  patternId       String?
+  courseId        String?
+  name            String
+  instructions    String?
+  durationMinutes Int            @default(60)
+  totalMarks      Float          @default(0.0)
+  startTime       DateTime?
+  endTime         DateTime?
+  status          ExamStatus     @default(DRAFT)
+  createdById     String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  pattern         ExamPattern?   @relation(fields: [patternId], references: [id], onDelete: SetNull)
+  course          Course?        @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  createdBy       User?          @relation("ExamCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  sections        ExamSection[]
+  questions       ExamQuestion[]
+
+  @@map("exams")
+}
+
+model ExamSection {
+  id               String         @id @default(uuid())
+  examId           String
+  name             String
+  sequenceOrder    Int            @default(0)
+  subjectId        String?
+  numQuestions     Int            @default(0)
+  marksPerQuestion Float          @default(1.0)
+  totalMarks       Float          @default(0.0)
+  marksCorrect     Float          @default(1.0)
+  marksWrong       Float          @default(0.0)
+  marksUnattempted Float          @default(0.0)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  exam             Exam           @relation(fields: [examId], references: [id], onDelete: Cascade)
+  subject          Subject?       @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  questions        ExamQuestion[]
+
+  @@map("exam_sections")
+}
+
+model ExamQuestion {
+  id            String       @id @default(uuid())
+  examId        String
+  examSectionId String
+  questionId    String
+  sequenceOrder Int          @default(0)
+  marksCorrect  Float        @default(1.0)
+  marksWrong    Float        @default(0.0)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  exam          Exam         @relation(fields: [examId], references: [id], onDelete: Cascade)
+  examSection   ExamSection  @relation(fields: [examSectionId], references: [id], onDelete: Cascade)
+  question      Question     @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([examId, questionId])
+  @@map("exam_questions")
+}
+

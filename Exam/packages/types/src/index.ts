@@ -466,3 +466,109 @@ export interface ExamPatternValidationResultDTO {
     message?: string;
   }[];
 }
+
+// Phase 5 DTOs (Exam Generator)
+export type ExamStatus = 'DRAFT' | 'PUBLISHED' | 'ONGOING' | 'COMPLETED' | 'ARCHIVED';
+
+export interface ExamDTO {
+  id: string;
+  patternId?: string;
+  courseId?: string;
+  name: string;
+  instructions?: string;
+  durationMinutes: number;
+  totalMarks: number;
+  startTime?: string;
+  endTime?: string;
+  status: ExamStatus;
+  createdById?: string;
+  createdAt: string;
+  updatedAt: string;
+  sections?: ExamSectionDTO[];
+  questions?: ExamQuestionDTO[];
+}
+
+export interface ExamSectionDTO {
+  id: string;
+  examId: string;
+  name: string;
+  sequenceOrder: number;
+  subjectId?: string;
+  numQuestions: number;
+  marksPerQuestion: number;
+  totalMarks: number;
+  marksCorrect: number;
+  marksWrong: number;
+  marksUnattempted: number;
+  createdAt: string;
+  updatedAt: string;
+  questions?: ExamQuestionDTO[];
+}
+
+export interface ExamQuestionDTO {
+  id: string;
+  examId: string;
+  examSectionId: string;
+  questionId: string;
+  sequenceOrder: number;
+  marksCorrect: number;
+  marksWrong: number;
+  question?: QuestionDTO;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GenerateExamDTO {
+  patternId: string;
+  name?: string;
+  instructions?: string;
+  startTime?: string;
+  endTime?: string;
+  avoidRecentDays?: number;
+  excludeQuestionIds?: string[];
+}
+
+export interface CreateManualExamDTO {
+  name: string;
+  courseId?: string;
+  instructions?: string;
+  durationMinutes?: number;
+  startTime?: string;
+  endTime?: string;
+}
+
+export interface UpdateExamMetadataDTO {
+  name?: string;
+  instructions?: string;
+  durationMinutes?: number;
+  startTime?: string;
+  endTime?: string;
+  status?: ExamStatus;
+  targetCourseId?: string;
+  targetSubjectId?: string;
+}
+
+export interface CreateExamSectionDTO {
+  name: string;
+  subjectId?: string;
+  sequenceOrder?: number;
+  marksPerQuestion?: number;
+  marksCorrect?: number;
+  marksWrong?: number;
+  marksUnattempted?: number;
+}
+
+export interface AddExamQuestionsDTO {
+  sectionId: string;
+  questionIds: string[];
+}
+
+export interface SwapExamQuestionDTO {
+  newQuestionId: string;
+}
+
+export interface ReorderExamQuestionsDTO {
+  sectionId: string;
+  questionIds: string[];
+}
+
