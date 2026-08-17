@@ -948,6 +948,9 @@ export const ExamsPage: React.FC = () => {
                   onChange={(e) => setGenName(e.target.value)}
                   style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '8px', borderRadius: '4px' }}
                 />
+                <span style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                  Optional — if provided, must be at least 2 characters
+                </span>
               </div>
 
               <div>
@@ -959,6 +962,9 @@ export const ExamsPage: React.FC = () => {
                   onChange={(e) => setGenAvoidRecentDays(e.target.value)}
                   style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '8px', borderRadius: '4px' }}
                 />
+                <span style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                  Optional — exclude questions used in last N days (min 0)
+                </span>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '12px' }}>
@@ -1058,6 +1064,9 @@ export const ExamsPage: React.FC = () => {
                   onChange={(e) => setEditName(e.target.value)}
                   style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '8px', borderRadius: '4px' }}
                 />
+                <span style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                  Required — must be at least 2 characters
+                </span>
               </div>
 
               <div>
@@ -1070,6 +1079,9 @@ export const ExamsPage: React.FC = () => {
                   onChange={(e) => setEditDuration(e.target.value)}
                   style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '8px', borderRadius: '4px' }}
                 />
+                <span style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                  Required — must be at least 1 minute
+                </span>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
@@ -1081,6 +1093,9 @@ export const ExamsPage: React.FC = () => {
                     onChange={(e) => setEditStartTime(e.target.value)}
                     style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '8px', borderRadius: '4px' }}
                   />
+                  <span style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                    Optional scheduled window
+                  </span>
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>End Time</label>
@@ -1090,6 +1105,9 @@ export const ExamsPage: React.FC = () => {
                     onChange={(e) => setEditEndTime(e.target.value)}
                     style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '8px', borderRadius: '4px' }}
                   />
+                  <span style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                    Must be strictly after start time
+                  </span>
                 </div>
               </div>
 
@@ -1148,6 +1166,9 @@ export const ExamsPage: React.FC = () => {
                   onChange={(e) => setManualName(e.target.value)}
                   style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '8px', borderRadius: '4px' }}
                 />
+                <span style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                  Required — must be at least 2 characters
+                </span>
               </div>
 
               <div>
@@ -1174,6 +1195,9 @@ export const ExamsPage: React.FC = () => {
                   onChange={(e) => setManualDuration(e.target.value)}
                   style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '8px', borderRadius: '4px' }}
                 />
+                <span style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                  Required — must be at least 1 minute
+                </span>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '12px' }}>
@@ -1319,6 +1343,9 @@ export const ExamsPage: React.FC = () => {
                   onChange={(e) => setNewSecName(e.target.value)}
                   style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '8px', borderRadius: '4px' }}
                 />
+                <span style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                  Required — section name
+                </span>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
@@ -1334,6 +1361,9 @@ export const ExamsPage: React.FC = () => {
                     onChange={(e) => setNewSecMarksPerQ(e.target.value)}
                     style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '8px', borderRadius: '4px' }}
                   />
+                  <span style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                    e.g. 1, 2, 2.5, 4 — any positive value (min 0.1)
+                  </span>
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Negative Penalty (0 or negative)</label>
@@ -1346,6 +1376,9 @@ export const ExamsPage: React.FC = () => {
                     onChange={(e) => setNewSecMarksWrong(e.target.value)}
                     style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '8px', borderRadius: '4px' }}
                   />
+                  <span style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                    e.g. -0.25 for -1/4, -0.33 for -1/3, or 0 for no penalty (max 0)
+                  </span>
                 </div>
               </div>
 

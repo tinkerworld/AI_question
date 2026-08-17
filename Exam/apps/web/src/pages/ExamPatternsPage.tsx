@@ -981,6 +981,7 @@ export const ExamPatternsPage: React.FC = () => {
                   onChange={(e) => setSecName(e.target.value)}
                   style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '6px 8px', borderRadius: '4px', fontSize: '12px' }}
                 />
+                <span style={{ display: 'block', fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>Required</span>
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>Subject</label>
@@ -994,6 +995,7 @@ export const ExamPatternsPage: React.FC = () => {
                     <option key={s.id} value={s.id}>{s.name}</option>
                   ))}
                 </select>
+                <span style={{ display: 'block', fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>Optional link</span>
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>Questions</label>
@@ -1004,6 +1006,7 @@ export const ExamPatternsPage: React.FC = () => {
                   onChange={(e) => setNumQuestions(e.target.value)}
                   style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '6px 8px', borderRadius: '4px', fontSize: '12px' }}
                 />
+                <span style={{ display: 'block', fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>Min: 1</span>
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>Marks/Q</label>
@@ -1018,6 +1021,7 @@ export const ExamPatternsPage: React.FC = () => {
                   }}
                   style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '6px 8px', borderRadius: '4px', fontSize: '12px' }}
                 />
+                <span style={{ display: 'block', fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>Min: 0.1</span>
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>Wrong Mark</label>
@@ -1029,6 +1033,7 @@ export const ExamPatternsPage: React.FC = () => {
                   onChange={(e) => setSecMarksWrong(e.target.value)}
                   style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '6px 8px', borderRadius: '4px', fontSize: '12px' }}
                 />
+                <span style={{ display: 'block', fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>Max: 0</span>
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>Unattempted</label>
@@ -1039,6 +1044,7 @@ export const ExamPatternsPage: React.FC = () => {
                   onChange={(e) => setSecMarksUnattempted(e.target.value)}
                   style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '6px 8px', borderRadius: '4px', fontSize: '12px' }}
                 />
+                <span style={{ display: 'block', fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>Default: 0</span>
               </div>
               <button
                 onClick={() => handleAddSection(selectedPattern.id)}
@@ -1469,6 +1475,9 @@ export const ExamPatternsPage: React.FC = () => {
                                   onChange={(e) => setEditMarksCorrect(e.target.value)}
                                   style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '6px 8px', borderRadius: '4px', fontSize: '12px' }}
                                 />
+                                <span style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                                  Must match section marks/Q ({sec.marksPerQuestion}) — min 0.1
+                                </span>
                               </div>
 
                               <div>
@@ -1483,6 +1492,9 @@ export const ExamPatternsPage: React.FC = () => {
                                   onChange={(e) => setEditMarksWrong(e.target.value)}
                                   style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '6px 8px', borderRadius: '4px', fontSize: '12px' }}
                                 />
+                                <span style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                                  e.g. -0.25 for -1/4, -0.33 for -1/3, or 0 for no penalty (max 0)
+                                </span>
                               </div>
 
                               <div>
@@ -1496,6 +1508,9 @@ export const ExamPatternsPage: React.FC = () => {
                                   onChange={(e) => setEditMarksUnattempted(e.target.value)}
                                   style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '6px 8px', borderRadius: '4px', fontSize: '12px' }}
                                 />
+                                <span style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                                  Score for unattempted questions (default: 0)
+                                </span>
                               </div>
                             </div>
 
@@ -1544,6 +1559,9 @@ export const ExamPatternsPage: React.FC = () => {
                   onChange={(e) => setName(e.target.value)}
                   style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '8px', borderRadius: '4px' }}
                 />
+                <span style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                  Required — must be at least 2 characters
+                </span>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
@@ -1567,6 +1585,9 @@ export const ExamPatternsPage: React.FC = () => {
                     onChange={(e) => setDurationMinutes(e.target.value)}
                     style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '8px', borderRadius: '4px' }}
                   />
+                  <span style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                    Required — must be at least 1 minute
+                  </span>
                 </div>
               </div>
 
@@ -1655,6 +1676,9 @@ export const ExamPatternsPage: React.FC = () => {
                   onChange={(e) => setEditName(e.target.value)}
                   style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '8px', borderRadius: '4px' }}
                 />
+                <span style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                  Required — must be at least 2 characters
+                </span>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
@@ -1678,6 +1702,9 @@ export const ExamPatternsPage: React.FC = () => {
                     onChange={(e) => setEditDurationMinutes(e.target.value)}
                     style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '8px', borderRadius: '4px' }}
                   />
+                  <span style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                    Required — must be at least 1 minute
+                  </span>
                 </div>
               </div>
 
