@@ -298,7 +298,23 @@ examPatternRouter.delete(
         return;
       }
 
+      // Cascade delete all child entities of the pattern
+      await pgDb.query(
+        `DELETE FROM "exam_pattern_section_topics" WHERE "sectionId" IN (SELECT "id" FROM "exam_pattern_sections" WHERE "examPatternId" = $1)`,
+        [id]
+      );
+      await pgDb.query(
+        `DELETE FROM "exam_pattern_section_difficulties" WHERE "sectionId" IN (SELECT "id" FROM "exam_pattern_sections" WHERE "examPatternId" = $1)`,
+        [id]
+      );
+      await pgDb.query(
+        `DELETE FROM "exam_pattern_section_rules" WHERE "sectionId" IN (SELECT "id" FROM "exam_pattern_sections" WHERE "examPatternId" = $1)`,
+        [id]
+      );
+      await pgDb.query(`DELETE FROM "exam_pattern_sections" WHERE "examPatternId" = $1`, [id]);
+      await pgDb.query(`DELETE FROM "exam_pattern_subjects" WHERE "examPatternId" = $1`, [id]);
       await pgDb.query(`DELETE FROM "exam_patterns" WHERE "id" = $1`, [id]);
+
       res.status(204).send();
     } catch (err: any) {
       res.status(500).json({ success: false, errorCode: 'INTERNAL_ERROR', message: err.message });

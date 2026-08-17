@@ -183,6 +183,12 @@ async function runPhase5Tests() {
   }, token);
   assert.strictEqual(deficitRes.status, 422, 'Must return 422 Unprocessable Entity on insufficient questions');
   assert.strictEqual(deficitRes.body.errorCode, 'INSUFFICIENT_QUESTIONS');
+  
+  // Immediate cleanup of deficit fixture
+  await request('DELETE', `/exam-patterns/${impossiblePatId}`, null, token);
+  const delIdx = createdPatternIds.indexOf(impossiblePatId);
+  if (delIdx !== -1) createdPatternIds.splice(delIdx, 1);
+  
   console.log(' [PASS] 5.1-U4: Insufficient questions handled gracefully with 422 INSUFFICIENT_QUESTIONS error');
 
   // Test 5.1-U5: SubAdmin Generate Exam Authorization
@@ -361,13 +367,24 @@ async function runPhase5Tests() {
   console.log('====================================================\n');
   } finally {
     // Teardown: Clean up all test fixtures created during the test run
+    console.log('\n--- TEARDOWN: Cleaning up test fixtures ---');
     for (const eid of createdExamIds) {
-      await request('DELETE', `/exams/${eid}`, null, token);
+      try {
+        const delRes = await request('DELETE', `/exams/${eid}`, null, token);
+        console.log(` [TEARDOWN] Deleted test exam: ${eid} (Status: ${delRes.status})`);
+      } catch (e) {
+        console.warn(` [TEARDOWN] Failed to delete test exam: ${eid}`, e.message);
+      }
     }
     for (const pid of createdPatternIds) {
-      // If published, archive first to allow deletion
-      await request('PATCH', `/exam-patterns/${pid}`, { status: 'ARCHIVED' }, token);
-      await request('DELETE', `/exam-patterns/${pid}`, null, token);
+      try {
+        // If published, archive first to allow deletion
+        await request('PATCH', `/exam-patterns/${pid}`, { status: 'ARCHIVED' }, token);
+        const delRes = await request('DELETE', `/exam-patterns/${pid}`, null, token);
+        console.log(` [TEARDOWN] Deleted test pattern: ${pid} (Status: ${delRes.status})`);
+      } catch (e) {
+        console.warn(` [TEARDOWN] Failed to delete test pattern: ${pid}`, e.message);
+      }
     }
   }
 }
