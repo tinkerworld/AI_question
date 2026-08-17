@@ -70,16 +70,21 @@ async function runPhase5Tests() {
   const subAdminToken = subAdminLogin.body.data.accessToken;
 
   // Setup: Create a test Exam Pattern with 2 sections (Mechanics and Optics)
-  console.log('--- Setting up Test Exam Pattern Blueprint ---');
-  const patRes = await request('POST', '/exam-patterns', {
-    name: 'P5 Physics Blueprint Test',
-    courseId: 'c1',
-    durationMinutes: 120,
-    type: 'SINGLE',
-    description: 'Blueprint for Phase 5 Generator Verification',
-  }, token);
-  assert.strictEqual(patRes.status, 201);
-  const patternId = patRes.body.data.id;
+  const createdPatternIds = [];
+  const createdExamIds = [];
+
+  try {
+    console.log('--- Setting up Test Exam Pattern Blueprint ---');
+    const patRes = await request('POST', '/exam-patterns', {
+      name: 'P5 Physics Blueprint Test',
+      courseId: 'c1',
+      durationMinutes: 120,
+      type: 'SINGLE',
+      description: 'Blueprint for Phase 5 Generator Verification',
+    }, token);
+    assert.strictEqual(patRes.status, 201);
+    const patternId = patRes.body.data.id;
+    createdPatternIds.push(patternId);
 
   // Add Section A (Mechanics, 4 questions)
   const secARes = await request('POST', `/exam-patterns/${patternId}/sections`, {
@@ -136,6 +141,7 @@ async function runPhase5Tests() {
   assert.ok(genRes.body.success);
   assert.ok(genRes.body.data.exam.id);
   const generatedExamId = genRes.body.data.exam.id;
+  createdExamIds.push(generatedExamId);
   assert.strictEqual(genRes.body.data.exam.status, 'DRAFT');
   assert.strictEqual(genRes.body.data.exam.name, 'Physics Midterm Automated Exam 2026');
   console.log(' [PASS] 5.1-U1: Generate basic exam from blueprint (Status: DRAFT)');
@@ -166,6 +172,7 @@ async function runPhase5Tests() {
     durationMinutes: 60,
   }, token);
   const impossiblePatId = impossiblePatRes.body.data.id;
+  createdPatternIds.push(impossiblePatId);
   await request('POST', `/exam-patterns/${impossiblePatId}/sections`, {
     name: 'Huge Deficit Section',
     numQuestions: 500,
@@ -184,6 +191,9 @@ async function runPhase5Tests() {
     name: 'SubAdmin Generated Exam',
   }, subAdminToken);
   assert.strictEqual(subAdminGen.status, 201, 'SubAdmin with exams.create must generate exam successfully');
+  if (subAdminGen.body.data?.exam?.id) {
+    createdExamIds.push(subAdminGen.body.data.exam.id);
+  }
   console.log(' [PASS] 5.1-U5: SubAdmin role authorized to execute exam generation');
 
   // ==========================================
@@ -304,6 +314,7 @@ async function runPhase5Tests() {
   assert.strictEqual(manualRes.status, 201);
   assert.ok(manualRes.body.data.exam.id);
   const manualExamId = manualRes.body.data.exam.id;
+  createdExamIds.push(manualExamId);
   assert.strictEqual(manualRes.body.data.exam.patternId, null, 'Manual exam must have null patternId');
   console.log(' [PASS] 5.4-U1: Create blank manual exam without pattern blueprint');
 
@@ -348,6 +359,17 @@ async function runPhase5Tests() {
   console.log('\n====================================================');
   console.log(' Phase 5 Master Test Results: 18/18 Passed');
   console.log('====================================================\n');
+  } finally {
+    // Teardown: Clean up all test fixtures created during the test run
+    for (const eid of createdExamIds) {
+      await request('DELETE', `/exams/${eid}`, null, token);
+    }
+    for (const pid of createdPatternIds) {
+      // If published, archive first to allow deletion
+      await request('PATCH', `/exam-patterns/${pid}`, { status: 'ARCHIVED' }, token);
+      await request('DELETE', `/exam-patterns/${pid}`, null, token);
+    }
+  }
 }
 
 if (require.main === module) {

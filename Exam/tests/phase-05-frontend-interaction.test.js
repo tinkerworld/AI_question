@@ -52,19 +52,28 @@ async function runFrontendInteractionTests() {
   assert.ok(examsPageCode.includes('/publish'), 'Publish handler must call /publish endpoint');
   console.log('   [PASS] Feature 5.3 UI: Settings modal, schedule inputs, and publish CTA fully wired');
 
-  // Test 5.4-UI: Manual Exam Builder & Question Picker Modal
-  console.log('\n4. Testing Feature 5.4 UI (Manual Exam Builder & Question Picker)...');
+  // Test 5.4-UI: Manual Exam Builder, Add Section Modal & Question Picker Modal
+  console.log('\n4. Testing Feature 5.4 UI (Manual Exam Builder, Add Section & Question Picker)...');
   assert.ok(examsPageCode.includes('const [showManualModal, setShowManualModal] = useState'), 'showManualModal state must be declared');
   assert.ok(examsPageCode.includes('id="btn-trigger-manual"'), 'btn-trigger-manual button must exist');
   assert.ok(examsPageCode.includes('setShowManualModal(true)'), 'Manual trigger must set showManualModal(true)');
   assert.ok(examsPageCode.includes('{showManualModal && ('), 'showManualModal conditional block must render form');
   assert.ok(examsPageCode.includes('onSubmit={handleCreateManualExam}'), 'Manual form must connect to handleCreateManualExam');
   assert.ok(examsPageCode.includes("fetch('http://localhost:4000/api/v1/exams/manual'"), 'Manual submit must call POST /api/v1/exams/manual');
+  
+  // Add Section Modal Verification
+  assert.ok(examsPageCode.includes('const [showAddSectionModal, setShowAddSectionModal] = useState'), 'showAddSectionModal state declared');
+  assert.ok(examsPageCode.includes('setShowAddSectionModal(true)'), 'Add Section trigger button must set showAddSectionModal(true)');
+  assert.ok(examsPageCode.includes('{showAddSectionModal && ('), 'Add Section modal conditional block must be rendered in JSX');
+  assert.ok(examsPageCode.includes('onSubmit={handleAddSectionSubmit}'), 'Add Section form must connect to handleAddSectionSubmit');
+  assert.ok(examsPageCode.includes('/sections'), 'Add Section handler must call /sections endpoint');
+
+  // Question Picker Modal Verification
   assert.ok(examsPageCode.includes('const [showQuestionPickerModal, setShowQuestionPickerModal] = useState'), 'showQuestionPickerModal state declared');
   assert.ok(examsPageCode.includes('handleOpenQuestionPicker'), 'handleOpenQuestionPicker must exist');
   assert.ok(examsPageCode.includes('{showQuestionPickerModal && ('), 'Question picker modal conditional block rendered');
   assert.ok(examsPageCode.includes('handleAddPickedQuestions'), 'handleAddPickedQuestions must exist');
-  console.log('   [PASS] Feature 5.4 UI: Manual builder, add section, and question picker modal fully wired');
+  console.log('   [PASS] Feature 5.4 UI: Manual builder, add section modal, and question picker modal fully wired');
 
   // Test 5.5-UI: App.tsx Routing & Navigation Tab
   console.log('\n5. Testing Navigation Integration in App.tsx...');

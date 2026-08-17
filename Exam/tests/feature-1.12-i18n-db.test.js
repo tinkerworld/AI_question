@@ -108,6 +108,12 @@ async function run() {
   } catch (err) {
     console.error('VERIFICATION ERROR:', err);
     process.exit(1);
+  } finally {
+    try {
+      await db.query(`DELETE FROM "translations" WHERE "id" = 'trans_fr_welcome'`);
+      await db.query(`DELETE FROM "languages" WHERE "id" = 'lang_fr_test'`);
+      await db.query(`DELETE FROM "user_preferences" WHERE "id" = 'pref_admin_test'`);
+    } catch (_) {}
   }
 }
 

@@ -74,6 +74,11 @@ async function run() {
   } catch (err) {
     console.error('VERSIONING TEST ERROR:', err);
     process.exit(1);
+  } finally {
+    try {
+      await db.query(`DELETE FROM "question_versions" WHERE "questionId" = 'q_test_v1'`);
+      await db.query(`DELETE FROM "questions" WHERE "id" = 'q_test_v1'`);
+    } catch (_) {}
   }
 }
 

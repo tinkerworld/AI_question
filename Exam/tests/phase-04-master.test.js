@@ -69,6 +69,8 @@ async function runPhase4Tests() {
     }
   }
 
+  let patternId;
+
   try {
     // ----------------------------------------------------
     // Test 4.1 — Exam Pattern CRUD
@@ -82,7 +84,7 @@ async function runPhase4Tests() {
     });
 
     assert(createRes.status === 201 && createRes.body.success, '4.1-U1 — Create single subject exam pattern (Status: DRAFT)');
-    const patternId = createRes.body.data.id;
+    patternId = createRes.body.data.id;
 
     const listRes = await request('GET', '/exam-patterns');
     assert(listRes.status === 200 && Array.isArray(listRes.body.data), '4.1-U2 — List exam patterns with pagination & filters');
@@ -266,6 +268,11 @@ async function runPhase4Tests() {
   } catch (err) {
     console.error('Test execution error:', err);
     process.exit(1);
+  } finally {
+    if (patternId) {
+      await request('PATCH', `/exam-patterns/${patternId}`, { status: 'ARCHIVED' });
+      await request('DELETE', `/exam-patterns/${patternId}`);
+    }
   }
 }
 

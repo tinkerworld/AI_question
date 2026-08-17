@@ -253,6 +253,21 @@ async function runEndToEndTests() {
   assert.ok(logoutRes.body.success);
   console.log('   [PASS] User session revoked and logged out successfully');
 
+  // Teardown: Clean up test patterns
+  console.log('\n--- Teardown: Cleaning Test Patterns ---');
+  const cleanupLogin = await request('POST', '/auth/login', {
+    email: 'admin@examos.com',
+    password: 'Admin@123',
+  });
+  const cleanupToken = cleanupLogin.body.data?.accessToken;
+  if (subAdminCreateRes.body?.data?.id && cleanupToken) {
+    await request('DELETE', `/exam-patterns/${subAdminCreateRes.body.data.id}`, null, cleanupToken);
+  }
+  if (patternId && cleanupToken) {
+    await request('DELETE', `/exam-patterns/${patternId}`, null, cleanupToken);
+  }
+  console.log('   [PASS] All test patterns cleaned up.');
+
   console.log('\n====================================================');
   console.log(' ALL AUTHENTICATION, SUBADMIN & PATTERN BUILDER TESTS PASSED! (12/12)');
   console.log('====================================================\n');

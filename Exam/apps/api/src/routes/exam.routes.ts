@@ -1,4 +1,5 @@
 import { Router, Request, Response, NextFunction } from 'express';
+import { pgDb } from '@repo/database';
 import { authenticate } from '../middleware/auth';
 import { requirePermission } from '../middleware/permission';
 import { validate } from '../middleware/validate';
@@ -316,6 +317,27 @@ examRouter.post(
         data: result,
         message: 'Questions added to section successfully',
       });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+/**
+ * Delete exam paper and cascade sections/questions
+ * DELETE /api/v1/exams/:id
+ */
+examRouter.delete(
+  '/:id',
+  authenticate,
+  requirePermission('exams.create'),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const examId = req.params.id;
+      await pgDb.query(`DELETE FROM "exam_questions" WHERE "examId" = $1`, [examId]);
+      await pgDb.query(`DELETE FROM "exam_sections" WHERE "examId" = $1`, [examId]);
+      await pgDb.query(`DELETE FROM "exams" WHERE "id" = $1`, [examId]);
+      res.json({ success: true, message: 'Exam deleted successfully' });
     } catch (err) {
       next(err);
     }
