@@ -62,6 +62,30 @@ interface ExamDetailResponse {
   };
 }
 
+// Helper to extract granular field-level validation errors or standard messages
+const extractApiErrorMessage = (data: any, fallback: string = 'Operation failed'): string => {
+  if (!data) return fallback;
+  const mainMessage = data.message || data.error?.message || data.error || fallback;
+  
+  // Extract issues / details array from any standard backend format (details, issues, errors)
+  const details = data.details || data.error?.issues || data.error?.details || data.issues || data.errors;
+  if (Array.isArray(details) && details.length > 0) {
+    const formattedIssues = details
+      .map((d: any) => {
+        if (typeof d === 'string') return d;
+        const path = d.path ? (Array.isArray(d.path) ? d.path.join('.') : d.path) : '';
+        const msg = d.message || JSON.stringify(d);
+        return path ? `"${path}": ${msg}` : msg;
+      })
+      .filter(Boolean)
+      .join('; ');
+    if (formattedIssues) {
+      return `${mainMessage} (${formattedIssues})`;
+    }
+  }
+  return mainMessage;
+};
+
 export const ExamsPage: React.FC = () => {
   const { user } = useAuth();
   const { t } = useTranslation();
@@ -89,7 +113,7 @@ export const ExamsPage: React.FC = () => {
   const [genPatternId, setGenPatternId] = useState<string>('');
   const [genName, setGenName] = useState<string>('');
   const [genInstructions, setGenInstructions] = useState<string>('');
-  const [genAvoidRecentDays, setGenAvoidRecentDays] = useState<number>(0);
+  const [genAvoidRecentDays, setGenAvoidRecentDays] = useState<string>('0');
   const [genStartTime, setGenStartTime] = useState<string>('');
   const [genEndTime, setGenEndTime] = useState<string>('');
   const [genError, setGenError] = useState<string | null>(null);
@@ -98,13 +122,13 @@ export const ExamsPage: React.FC = () => {
   // Manual exam creation state
   const [manualName, setManualName] = useState<string>('');
   const [manualCourseId, setManualCourseId] = useState<string>('');
-  const [manualDuration, setManualDuration] = useState<number>(60);
+  const [manualDuration, setManualDuration] = useState<string>('60');
   const [manualInstructions, setManualInstructions] = useState<string>('');
   const [manualError, setManualError] = useState<string | null>(null);
 
   // Settings / Metadata state
   const [editName, setEditName] = useState<string>('');
-  const [editDuration, setEditDuration] = useState<number>(60);
+  const [editDuration, setEditDuration] = useState<string>('60');
   const [editInstructions, setEditInstructions] = useState<string>('');
   const [editStartTime, setEditStartTime] = useState<string>('');
   const [editEndTime, setEditEndTime] = useState<string>('');
@@ -118,8 +142,9 @@ export const ExamsPage: React.FC = () => {
 
   // Add section to manual exam
   const [newSecName, setNewSecName] = useState<string>('');
-  const [newSecMarksPerQ, setNewSecMarksPerQ] = useState<number>(1.0);
-  const [newSecMarksWrong, setNewSecMarksWrong] = useState<number>(0.0);
+  const [newSecMarksPerQ, setNewSecMarksPerQ] = useState<string>('1.0');
+  const [newSecMarksWrong, setNewSecMarksWrong] = useState<string>('0.0');
+  const [sectionError, setSectionError] = useState<string | null>(null);
 
   // Question picker state
   const [targetSectionId, setTargetSectionId] = useState<string>('');
@@ -128,7 +153,7 @@ export const ExamsPage: React.FC = () => {
   const [pickerSearch, setPickerSearch] = useState<string>('');
   const [pickerError, setPickerError] = useState<string | null>(null);
 
-  const token = localStorage.getItem('examos_access_token');
+  const token = localStorage.getItem('token');
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -208,6 +233,7 @@ export const ExamsPage: React.FC = () => {
     setGenerating(true);
 
     try {
+      const avoidDays = parseInt(genAvoidRecentDays, 10);
       const res = await fetch('http://localhost:4000/api/v1/exams/generate', {
         method: 'POST',
         headers,
@@ -215,14 +241,14 @@ export const ExamsPage: React.FC = () => {
           patternId: genPatternId,
           name: genName.trim() || undefined,
           instructions: genInstructions.trim() || undefined,
-          avoidRecentDays: genAvoidRecentDays > 0 ? genAvoidRecentDays : undefined,
+          avoidRecentDays: !isNaN(avoidDays) && avoidDays > 0 ? avoidDays : undefined,
           startTime: genStartTime || undefined,
           endTime: genEndTime || undefined,
         }),
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
-        setGenError(data.error?.message || data.message || 'Generation failed');
+        setGenError(extractApiErrorMessage(data, 'Generation failed'));
         setGenerating(false);
         return;
       }
@@ -251,13 +277,13 @@ export const ExamsPage: React.FC = () => {
         body: JSON.stringify({
           name: manualName.trim(),
           courseId: manualCourseId || undefined,
-          durationMinutes: manualDuration,
+          durationMinutes: parseInt(manualDuration, 10) || 60,
           instructions: manualInstructions.trim() || undefined,
         }),
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
-        setManualError(data.error?.message || data.message || 'Creation failed');
+        setManualError(extractApiErrorMessage(data, 'Creation failed'));
         return;
       }
 
@@ -276,31 +302,34 @@ export const ExamsPage: React.FC = () => {
   const handleOpenSwapModal = async (q: ExamQuestionItem) => {
     setTargetSwapQuestion(q);
     setSwapError(null);
-    setSwapLoading(true);
     setShowSwapModal(true);
+    setSwapLoading(true);
 
     try {
-      const res = await fetch('http://localhost:4000/api/v1/questions?status=PUBLISHED&limit=50', { headers });
+      const res = await fetch(
+        `http://localhost:4000/api/v1/questions?status=PUBLISHED&difficulty=${q.difficulty}&limit=20`,
+        { headers }
+      );
       const data = await res.json();
       if (data.success) {
-        // Exclude questions already in the exam
+        // Filter out existing exam questions to prevent duplicates
         const existingQIds = new Set(
           examDetails?.sections.flatMap((s) => s.questions?.map((item) => item.questionId) || []) || []
         );
-        const candidates = (data.data.items || data.data || []).filter(
-          (cand: any) => !existingQIds.has(cand.id)
+        const available = (data.data.items || data.data || []).filter(
+          (item: any) => item.id !== q.questionId && !existingQIds.has(item.id)
         );
-        setCandidateQuestions(candidates);
+        setCandidateQuestions(available);
       }
     } catch (e) {
-      console.error('Failed to fetch candidates:', e);
+      console.error('Failed to fetch swap candidates:', e);
     } finally {
       setSwapLoading(false);
     }
   };
 
-  // Execute Swap (Feature 5.2)
-  const handleExecuteSwap = async (newQId: string) => {
+  // Handle Swap Question (Feature 5.2)
+  const handleSwapQuestion = async (newQId: string) => {
     if (!selectedExamId || !targetSwapQuestion) return;
     setSwapError(null);
 
@@ -315,7 +344,7 @@ export const ExamsPage: React.FC = () => {
       );
       const data = await res.json();
       if (!res.ok || !data.success) {
-        setSwapError(data.error?.message || data.message || 'Swap failed');
+        setSwapError(extractApiErrorMessage(data, 'Swap failed'));
         return;
       }
 
@@ -325,6 +354,8 @@ export const ExamsPage: React.FC = () => {
       setSwapError(err.message || 'Network error');
     }
   };
+
+  const handleExecuteSwap = handleSwapQuestion;
 
   // Handle Regenerate Section (Feature 5.2)
   const handleRegenerateSection = async (secId: string) => {
@@ -343,10 +374,11 @@ export const ExamsPage: React.FC = () => {
       if (data.success) {
         setExamDetails(data.data);
       } else {
-        alert(data.error?.message || 'Regeneration failed');
+        alert(extractApiErrorMessage(data, 'Regeneration failed'));
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error('Regenerate failed:', e);
+      alert(e.message || 'Regeneration network error');
     }
   };
 
@@ -375,9 +407,12 @@ export const ExamsPage: React.FC = () => {
       const data = await res.json();
       if (data.success) {
         setExamDetails(data.data);
+      } else {
+        alert(extractApiErrorMessage(data, 'Reorder failed'));
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error('Reorder failed:', e);
+      alert(e.message || 'Reorder network error');
     }
   };
 
@@ -386,7 +421,7 @@ export const ExamsPage: React.FC = () => {
     if (!examDetails) return;
     const ex = examDetails.exam;
     setEditName(ex.name);
-    setEditDuration(ex.durationMinutes);
+    setEditDuration(String(ex.durationMinutes || 60));
     setEditInstructions(ex.instructions || '');
     setEditStartTime(ex.startTime ? new Date(ex.startTime).toISOString().slice(0, 16) : '');
     setEditEndTime(ex.endTime ? new Date(ex.endTime).toISOString().slice(0, 16) : '');
@@ -406,7 +441,7 @@ export const ExamsPage: React.FC = () => {
         headers,
         body: JSON.stringify({
           name: editName.trim(),
-          durationMinutes: editDuration,
+          durationMinutes: parseInt(editDuration, 10) || 60,
           instructions: editInstructions.trim() || undefined,
           startTime: editStartTime || null,
           endTime: editEndTime || null,
@@ -414,7 +449,7 @@ export const ExamsPage: React.FC = () => {
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
-        setSettingsError(data.error?.message || data.message || 'Update failed');
+        setSettingsError(extractApiErrorMessage(data, 'Update failed'));
         return;
       }
 
@@ -438,44 +473,53 @@ export const ExamsPage: React.FC = () => {
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
-        alert(data.error?.message || data.message || 'Publishing failed');
+        alert(extractApiErrorMessage(data, 'Publishing failed'));
         return;
       }
 
       setExamDetails(data.data);
       fetchExams();
       alert('Exam successfully published!');
-    } catch (e) {
+    } catch (e: any) {
       console.error('Publish error:', e);
+      alert(e.message || 'Publish network error');
     }
   };
 
   // Handle Add Section (Feature 5.4)
   const handleAddSectionSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedExamId) return;
+    if (!selectedExamId || !newSecName.trim()) return;
+    setSectionError(null);
 
     try {
+      const marksPerQ = parseFloat(newSecMarksPerQ) || 1.0;
+      const penalty = newSecMarksWrong ? -Math.abs(parseFloat(newSecMarksWrong)) : 0.0;
       const res = await fetch(`http://localhost:4000/api/v1/exams/${selectedExamId}/sections`, {
         method: 'POST',
         headers,
         body: JSON.stringify({
           name: newSecName.trim(),
-          marksPerQuestion: newSecMarksPerQ,
-          marksCorrect: newSecMarksPerQ,
-          marksWrong: newSecMarksWrong,
+          marksPerQuestion: marksPerQ,
+          marksCorrect: marksPerQ,
+          marksWrong: penalty,
         }),
       });
       const data = await res.json();
-      if (data.success) {
+      if (res.ok && data.success) {
         setShowAddSectionModal(false);
         setNewSecName('');
+        setNewSecMarksPerQ('1.0');
+        setNewSecMarksWrong('0.0');
+        setSectionError(null);
         setExamDetails(data.data);
+        await fetchExams();
       } else {
-        alert(data.error?.message || 'Failed to add section');
+        setSectionError(extractApiErrorMessage(data, 'Failed to add section'));
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error('Add section error:', e);
+      setSectionError(e.message || 'Add section network error');
     }
   };
 
@@ -516,7 +560,7 @@ export const ExamsPage: React.FC = () => {
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
-        setPickerError(data.error?.message || data.message || 'Failed to add questions');
+        setPickerError(extractApiErrorMessage(data, 'Failed to add questions'));
         return;
       }
 
@@ -839,9 +883,9 @@ export const ExamsPage: React.FC = () => {
                             </button>
                             <button
                               title="Move Down"
-                              disabled={qIdx === sec.questions.length - 1}
+                              disabled={!sec.questions || qIdx === sec.questions.length - 1}
                               onClick={() => handleMoveQuestion(sec.id, qIdx, 'DOWN')}
-                              style={{ background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-muted)', padding: '2px 6px', borderRadius: '3px', cursor: qIdx === sec.questions.length - 1 ? 'not-allowed' : 'pointer' }}
+                              style={{ background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-muted)', padding: '2px 6px', borderRadius: '3px', cursor: (!sec.questions || qIdx === sec.questions.length - 1) ? 'not-allowed' : 'pointer' }}
                             >
                               ▼
                             </button>
@@ -912,7 +956,7 @@ export const ExamsPage: React.FC = () => {
                   type="number"
                   min={0}
                   value={genAvoidRecentDays}
-                  onChange={(e) => setGenAvoidRecentDays(parseInt(e.target.value, 10) || 0)}
+                  onChange={(e) => setGenAvoidRecentDays(e.target.value)}
                   style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '8px', borderRadius: '4px' }}
                 />
               </div>
@@ -1023,7 +1067,7 @@ export const ExamsPage: React.FC = () => {
                   min={1}
                   required
                   value={editDuration}
-                  onChange={(e) => setEditDuration(parseInt(e.target.value, 10) || 60)}
+                  onChange={(e) => setEditDuration(e.target.value)}
                   style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '8px', borderRadius: '4px' }}
                 />
               </div>
@@ -1127,7 +1171,7 @@ export const ExamsPage: React.FC = () => {
                   min={1}
                   required
                   value={manualDuration}
-                  onChange={(e) => setManualDuration(parseInt(e.target.value, 10) || 60)}
+                  onChange={(e) => setManualDuration(e.target.value)}
                   style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '8px', borderRadius: '4px' }}
                 />
               </div>
@@ -1245,6 +1289,83 @@ export const ExamsPage: React.FC = () => {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal 6: Add Section Modal (Feature 5.4) */}
+      {showAddSectionModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: 'var(--panel-bg)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '24px', width: '480px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0, fontFamily: 'JetBrains Mono' }}>+ Add Exam Section</h3>
+              <button onClick={() => setShowAddSectionModal(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>✕</button>
+            </div>
+
+            {sectionError && (
+              <div style={{ padding: '8px 12px', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid #ef4444', color: '#ef4444', borderRadius: '6px', fontSize: '12px', marginBottom: '12px' }}>
+                ⚠️ {sectionError}
+              </div>
+            )}
+
+            <form onSubmit={handleAddSectionSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Section Name *</label>
+                <input
+                  id="input-section-name"
+                  required
+                  placeholder="e.g. Section A (Physics MCQs)"
+                  value={newSecName}
+                  onChange={(e) => setNewSecName(e.target.value)}
+                  style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '8px', borderRadius: '4px' }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Marks per Question *</label>
+                  <input
+                    id="input-section-marks"
+                    type="number"
+                    step="any"
+                    min="0"
+                    required
+                    value={newSecMarksPerQ}
+                    onChange={(e) => setNewSecMarksPerQ(e.target.value)}
+                    style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '8px', borderRadius: '4px' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Negative Penalty (0 or negative)</label>
+                  <input
+                    id="input-section-penalty"
+                    type="number"
+                    step="any"
+                    max="0"
+                    value={newSecMarksWrong}
+                    onChange={(e) => setNewSecMarksWrong(e.target.value)}
+                    style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '8px', borderRadius: '4px' }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '12px' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowAddSectionModal(false)}
+                  style={{ background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  id="btn-submit-add-section"
+                  type="submit"
+                  style={{ background: '#3b82f6', color: '#fff', border: 'none', padding: '8px 16px', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer' }}
+                >
+                  Add Section
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

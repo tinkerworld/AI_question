@@ -84,6 +84,28 @@ const QUESTION_TYPES = [
   { id: 'FILL_IN_BLANKS', label: 'Fill in Blanks' },
 ];
 
+// Helper to extract granular field-level validation errors or standard messages
+const extractApiErrorMessage = (data: any, fallback: string = 'Operation failed'): string => {
+  if (!data) return fallback;
+  const mainMessage = data.message || data.error?.message || data.error || fallback;
+  const details = data.details || data.error?.issues || data.error?.details || data.issues || data.errors;
+  if (Array.isArray(details) && details.length > 0) {
+    const formattedIssues = details
+      .map((d: any) => {
+        if (typeof d === 'string') return d;
+        const path = d.path ? (Array.isArray(d.path) ? d.path.join('.') : d.path) : '';
+        const msg = d.message || JSON.stringify(d);
+        return path ? `"${path}": ${msg}` : msg;
+      })
+      .filter(Boolean)
+      .join('; ');
+    if (formattedIssues) {
+      return `${mainMessage} (${formattedIssues})`;
+    }
+  }
+  return mainMessage;
+};
+
 export const ExamPatternsPage: React.FC = () => {
   const { t } = useTranslation();
   const [patterns, setPatterns] = useState<ExamPattern[]>([]);
@@ -106,10 +128,10 @@ export const ExamPatternsPage: React.FC = () => {
   const [availableSubjects, setAvailableSubjects] = useState<Array<{ id: string; name: string; code: string }>>([]);
   const [availableTopics, setAvailableTopics] = useState<Array<{ id: string; title: string }>>([]);
 
-  // New Pattern Form State
+  // Create Pattern Form State
   const [name, setName] = useState('');
-  const [courseId, setCourseId] = useState('c1');
-  const [durationMinutes, setDurationMinutes] = useState(60);
+  const [courseId, setCourseId] = useState('');
+  const [durationMinutes, setDurationMinutes] = useState('60');
   const [type, setType] = useState<'SINGLE' | 'MULTI'>('SINGLE');
   const [description, setDescription] = useState('');
   const [selectedSubjectIds, setSelectedSubjectIds] = useState<string[]>([]);
@@ -117,7 +139,7 @@ export const ExamPatternsPage: React.FC = () => {
 
   // Edit Pattern Form State
   const [editName, setEditName] = useState('');
-  const [editDurationMinutes, setEditDurationMinutes] = useState(60);
+  const [editDurationMinutes, setEditDurationMinutes] = useState('60');
   const [editType, setEditType] = useState<'SINGLE' | 'MULTI'>('SINGLE');
   const [editDescription, setEditDescription] = useState('');
   const [editSelectedSubjectIds, setEditSelectedSubjectIds] = useState<string[]>([]);
@@ -126,11 +148,11 @@ export const ExamPatternsPage: React.FC = () => {
   // New Section Form State
   const [secName, setSecName] = useState('Section A');
   const [secSubjectId, setSecSubjectId] = useState('');
-  const [numQuestions, setNumQuestions] = useState(10);
-  const [marksPerQuestion, setMarksPerQuestion] = useState(2);
-  const [secMarksCorrect, setSecMarksCorrect] = useState(2);
-  const [secMarksWrong, setSecMarksWrong] = useState(-0.5);
-  const [secMarksUnattempted, setSecMarksUnattempted] = useState(0);
+  const [numQuestions, setNumQuestions] = useState('10');
+  const [marksPerQuestion, setMarksPerQuestion] = useState('2');
+  const [secMarksCorrect, setSecMarksCorrect] = useState('2');
+  const [secMarksWrong, setSecMarksWrong] = useState('-0.5');
+  const [secMarksUnattempted, setSecMarksUnattempted] = useState('0');
 
   // Section Configuration Sub-panel Form States
   // 1. Question Rules (Feature 4.3)
@@ -140,25 +162,25 @@ export const ExamPatternsPage: React.FC = () => {
 
   // 2. Topic Distribution (Feature 4.4)
   const [topicDistType, setTopicDistType] = useState<'COUNT' | 'PERCENT'>('COUNT');
-  const [topicRows, setTopicRows] = useState<Array<{ topicId: string; value: number }>>([
-    { topicId: 'top_mech', value: 5 },
-    { topicId: 'top_optics', value: 5 },
+  const [topicRows, setTopicRows] = useState<Array<{ topicId: string; value: any }>>([
+    { topicId: 'top_mech', value: '5' },
+    { topicId: 'top_optics', value: '5' },
   ]);
 
   // 3. Difficulty Distribution (Feature 4.5)
   const [diffDistType, setDiffDistType] = useState<'COUNT' | 'PERCENT'>('PERCENT');
   const [isDiffAutomatic, setIsDiffAutomatic] = useState<boolean>(false);
-  const [easyVal, setEasyVal] = useState<number>(30);
-  const [medVal, setMedVal] = useState<number>(50);
-  const [hardVal, setHardVal] = useState<number>(20);
+  const [easyVal, setEasyVal] = useState<string>('30');
+  const [medVal, setMedVal] = useState<string>('50');
+  const [hardVal, setHardVal] = useState<string>('20');
 
   // 4. Negative Marking (Feature 4.6)
-  const [editMarksCorrect, setEditMarksCorrect] = useState<number>(2);
-  const [editMarksWrong, setEditMarksWrong] = useState<number>(-0.5);
-  const [editMarksUnattempted, setEditMarksUnattempted] = useState<number>(0);
+  const [editMarksCorrect, setEditMarksCorrect] = useState<string>('2');
+  const [editMarksWrong, setEditMarksWrong] = useState<string>('-0.5');
+  const [editMarksUnattempted, setEditMarksUnattempted] = useState<string>('0');
 
   // 5. Multi-Subject Allocation (Feature 4.7)
-  const [subjectTargetMarks, setSubjectTargetMarks] = useState<Record<string, number>>({});
+  const [subjectTargetMarks, setSubjectTargetMarks] = useState<Record<string, string>>({});
   const [sectionSubjectMap, setSectionSubjectMap] = useState<Record<string, string>>({});
 
   // Status & Notification
@@ -228,9 +250,9 @@ export const ExamPatternsPage: React.FC = () => {
 
         // Populate multi-subject state
         if (pat.subjects) {
-          const targets: Record<string, number> = {};
+          const targets: Record<string, string> = {};
           pat.subjects.forEach((s) => {
-            if (s.targetMarks) targets[s.subjectId] = s.targetMarks;
+            if (s.targetMarks !== undefined) targets[s.subjectId] = String(s.targetMarks);
           });
           setSubjectTargetMarks(targets);
         }
@@ -289,7 +311,7 @@ export const ExamPatternsPage: React.FC = () => {
         body: JSON.stringify({
           name,
           courseId,
-          durationMinutes,
+          durationMinutes: parseInt(durationMinutes, 10) || 60,
           type,
           description: description || undefined,
           subjectIds: selectedSubjectIds.length > 0 ? selectedSubjectIds : undefined,
@@ -307,7 +329,7 @@ export const ExamPatternsPage: React.FC = () => {
           await fetchPatternDetails(body.data.id);
         }
       } else {
-        setFormError(body.message || 'Failed to create exam pattern');
+        setFormError(extractApiErrorMessage(body, 'Failed to create exam pattern'));
       }
     } catch (e: any) {
       console.error('Failed to create pattern', e);
@@ -319,7 +341,7 @@ export const ExamPatternsPage: React.FC = () => {
   const handleOpenEditModal = (pat: ExamPattern) => {
     setEditingPattern(pat);
     setEditName(pat.name);
-    setEditDurationMinutes(pat.durationMinutes);
+    setEditDurationMinutes(String(pat.durationMinutes || 60));
     setEditType(pat.type);
     setEditDescription(pat.description || '');
     setEditSelectedSubjectIds(pat.subjects?.map((s) => s.subjectId) || []);
@@ -339,7 +361,7 @@ export const ExamPatternsPage: React.FC = () => {
         headers: getAuthHeaders(),
         body: JSON.stringify({
           name: editName,
-          durationMinutes: editDurationMinutes,
+          durationMinutes: parseInt(editDurationMinutes, 10) || 60,
           type: editType,
           description: editDescription || undefined,
           subjectIds: editSelectedSubjectIds.length > 0 ? editSelectedSubjectIds : undefined,
@@ -355,7 +377,7 @@ export const ExamPatternsPage: React.FC = () => {
           await fetchPatternDetails(editingPattern.id);
         }
       } else {
-        setEditFormError(body.message || 'Failed to update exam pattern');
+        setEditFormError(extractApiErrorMessage(body, 'Failed to update exam pattern'));
       }
     } catch (e: any) {
       console.error('Failed to update pattern', e);
@@ -408,17 +430,23 @@ export const ExamPatternsPage: React.FC = () => {
   // Endpoint 6: POST /api/v1/exam-patterns/:id/sections — Add Section
   const handleAddSection = async (patternId: string) => {
     try {
+      const qCount = parseInt(numQuestions, 10) || 10;
+      const marksPerQ = parseFloat(marksPerQuestion) || 1.0;
+      const marksCorr = parseFloat(secMarksCorrect) || marksPerQ;
+      const marksWr = parseFloat(secMarksWrong) || 0.0;
+      const marksUnatt = parseFloat(secMarksUnattempted) || 0.0;
+
       const res = await fetch(`http://localhost:4000/api/v1/exam-patterns/${patternId}/sections`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({
           name: secName,
           subjectId: secSubjectId || undefined,
-          numQuestions: Number(numQuestions),
-          marksPerQuestion: Number(marksPerQuestion),
-          marksCorrect: Number(secMarksCorrect || marksPerQuestion),
-          marksWrong: Number(secMarksWrong),
-          marksUnattempted: Number(secMarksUnattempted),
+          numQuestions: qCount,
+          marksPerQuestion: marksPerQ,
+          marksCorrect: marksCorr,
+          marksWrong: marksWr,
+          marksUnattempted: marksUnatt,
         }),
       });
       if (res.ok) {
@@ -482,9 +510,9 @@ export const ExamPatternsPage: React.FC = () => {
   // Open Section Config Sub-panel & load existing rules
   const handleOpenSectionConfig = async (sec: Section) => {
     setExpandedSectionId(sec.id);
-    setEditMarksCorrect(sec.marksCorrect);
-    setEditMarksWrong(sec.marksWrong);
-    setEditMarksUnattempted(sec.marksUnattempted);
+    setEditMarksCorrect(String(sec.marksCorrect));
+    setEditMarksWrong(String(sec.marksWrong));
+    setEditMarksUnattempted(String(sec.marksUnattempted));
 
     // Endpoint 12: GET /api/v1/exam-patterns/:id/sections/:sectionId/rules
     if (selectedPattern) {
@@ -498,11 +526,11 @@ export const ExamPatternsPage: React.FC = () => {
           if (rBody.data) {
             setAllowedTypes(rBody.data.allowedQuestionTypes || ['MCQ_SINGLE']);
             setSelectionMode(rBody.data.selectionMode || 'RANDOM');
-            setTagFilterString(Array.isArray(rBody.data.tags) ? rBody.data.tags.join(', ') : '');
+            setTagFilterString((rBody.data.tags || []).join(', '));
           }
         }
       } catch (e) {
-        console.warn('Could not fetch section rules');
+        console.error('Failed to fetch rules', e);
       }
 
       // Endpoint 14: GET /api/v1/exam-patterns/:id/sections/:sectionId/topics
@@ -528,12 +556,12 @@ export const ExamPatternsPage: React.FC = () => {
       if (sec.difficulties && sec.difficulties.length > 0) {
         setDiffDistType(sec.difficulties[0].distributionType || 'PERCENT');
         setIsDiffAutomatic(sec.difficulties[0].isAutomatic || false);
-        const easy = sec.difficulties.find((d) => d.difficultyLevel === 'EASY')?.value || 0;
-        const med = sec.difficulties.find((d) => d.difficultyLevel === 'MEDIUM')?.value || 0;
-        const hard = sec.difficulties.find((d) => d.difficultyLevel === 'HARD')?.value || 0;
-        setEasyVal(easy);
-        setMedVal(med);
-        setHardVal(hard);
+        const easy = sec.difficulties.find((d) => d.difficultyLevel === 'EASY')?.value ?? 0;
+        const med = sec.difficulties.find((d) => d.difficultyLevel === 'MEDIUM')?.value ?? 0;
+        const hard = sec.difficulties.find((d) => d.difficultyLevel === 'HARD')?.value ?? 0;
+        setEasyVal(String(easy));
+        setMedVal(String(med));
+        setHardVal(String(hard));
       }
     }
   };
@@ -570,7 +598,10 @@ export const ExamPatternsPage: React.FC = () => {
   // Endpoint 13: PUT /api/v1/exam-patterns/:id/sections/:sectionId/topics — Save Topics (Feature 4.4)
   const handleSaveTopicDistribution = async (patternId: string, sectionId: string) => {
     try {
-      const validTopics = topicRows.filter((r) => r.topicId && r.value > 0);
+      const validTopics = topicRows
+        .filter((r) => r.topicId && parseFloat(String(r.value)) > 0)
+        .map((r) => ({ topicId: r.topicId, value: parseFloat(String(r.value)) || 0 }));
+
       const res = await fetch(`http://localhost:4000/api/v1/exam-patterns/${patternId}/sections/${sectionId}/topics`, {
         method: 'PUT',
         headers: getAuthHeaders(),
@@ -601,9 +632,9 @@ export const ExamPatternsPage: React.FC = () => {
 
       if (!isDiffAutomatic) {
         payload.difficulties = [
-          { difficultyLevel: 'EASY', value: Number(easyVal) },
-          { difficultyLevel: 'MEDIUM', value: Number(medVal) },
-          { difficultyLevel: 'HARD', value: Number(hardVal) },
+          { difficultyLevel: 'EASY', value: parseFloat(easyVal) || 0 },
+          { difficultyLevel: 'MEDIUM', value: parseFloat(medVal) || 0 },
+          { difficultyLevel: 'HARD', value: parseFloat(hardVal) || 0 },
         ];
       }
 
@@ -631,9 +662,9 @@ export const ExamPatternsPage: React.FC = () => {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify({
-          marksCorrect: Number(editMarksCorrect),
-          marksWrong: Number(editMarksWrong),
-          marksUnattempted: Number(editMarksUnattempted),
+          marksCorrect: parseFloat(editMarksCorrect) || 0,
+          marksWrong: parseFloat(editMarksWrong) || 0,
+          marksUnattempted: parseFloat(editMarksUnattempted) || 0,
         }),
       });
       const body = await res.json();
@@ -653,7 +684,7 @@ export const ExamPatternsPage: React.FC = () => {
     try {
       const subjectAllocations = Object.entries(subjectTargetMarks).map(([subId, target]) => ({
         subjectId: subId,
-        targetMarks: Number(target),
+        targetMarks: parseFloat(String(target)) || 0,
       }));
 
       const sectionSubjectMappings = Object.entries(sectionSubjectMap).map(([secId, subId]) => ({
@@ -922,7 +953,7 @@ export const ExamPatternsPage: React.FC = () => {
                         min={0}
                         placeholder="Marks"
                         value={subjectTargetMarks[sub.id] || ''}
-                        onChange={(e) => setSubjectTargetMarks({ ...subjectTargetMarks, [sub.id]: parseFloat(e.target.value) || 0 })}
+                        onChange={(e) => setSubjectTargetMarks({ ...subjectTargetMarks, [sub.id]: e.target.value })}
                         style={{ width: '80px', background: 'var(--panel-bg)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '4px 6px', borderRadius: '4px', fontSize: '12px' }}
                       />
                     </div>
@@ -970,10 +1001,7 @@ export const ExamPatternsPage: React.FC = () => {
                   type="number"
                   min={1}
                   value={numQuestions}
-                  onChange={(e) => {
-                    const n = parseInt(e.target.value, 10) || 1;
-                    setNumQuestions(n);
-                  }}
+                  onChange={(e) => setNumQuestions(e.target.value)}
                   style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '6px 8px', borderRadius: '4px', fontSize: '12px' }}
                 />
               </div>
@@ -981,13 +1009,12 @@ export const ExamPatternsPage: React.FC = () => {
                 <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>Marks/Q</label>
                 <input
                   type="number"
-                  min={0.1}
-                  step={0.5}
+                  min={0}
+                  step="any"
                   value={marksPerQuestion}
                   onChange={(e) => {
-                    const m = parseFloat(e.target.value) || 1;
-                    setMarksPerQuestion(m);
-                    setSecMarksCorrect(m);
+                    setMarksPerQuestion(e.target.value);
+                    setSecMarksCorrect(e.target.value);
                   }}
                   style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '6px 8px', borderRadius: '4px', fontSize: '12px' }}
                 />
@@ -997,9 +1024,9 @@ export const ExamPatternsPage: React.FC = () => {
                 <input
                   type="number"
                   max={0}
-                  step={0.25}
+                  step="any"
                   value={secMarksWrong}
-                  onChange={(e) => setSecMarksWrong(parseFloat(e.target.value) || 0)}
+                  onChange={(e) => setSecMarksWrong(e.target.value)}
                   style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '6px 8px', borderRadius: '4px', fontSize: '12px' }}
                 />
               </div>
@@ -1007,9 +1034,9 @@ export const ExamPatternsPage: React.FC = () => {
                 <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>Unattempted</label>
                 <input
                   type="number"
-                  step={0.25}
+                  step="any"
                   value={secMarksUnattempted}
-                  onChange={(e) => setSecMarksUnattempted(parseFloat(e.target.value) || 0)}
+                  onChange={(e) => setSecMarksUnattempted(e.target.value)}
                   style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '6px 8px', borderRadius: '4px', fontSize: '12px' }}
                 />
               </div>
@@ -1295,7 +1322,7 @@ export const ExamPatternsPage: React.FC = () => {
                                     value={row.value}
                                     onChange={(e) => {
                                       const updated = [...topicRows];
-                                      updated[rIdx].value = parseFloat(e.target.value) || 0;
+                                      updated[rIdx].value = e.target.value;
                                       setTopicRows(updated);
                                     }}
                                     style={{ width: '100px', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '6px 8px', borderRadius: '4px', fontSize: '12px' }}
@@ -1312,25 +1339,12 @@ export const ExamPatternsPage: React.FC = () => {
 
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                               <button
-                                onClick={() => setTopicRows([...topicRows, { topicId: 'top_optics', value: 0 }])}
+                                onClick={() => setTopicRows([...topicRows, { topicId: 'top_optics', value: '0' }])}
                                 style={{ background: 'transparent', border: '1px dashed var(--border-color)', color: 'var(--text-muted)', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}
                               >
                                 + Add Topic Rule
                               </button>
 
-                              {/* Sum Indicator */}
-                              {(() => {
-                                const currentSum = topicRows.reduce((a, b) => a + Number(b.value || 0), 0);
-                                const isSumValid = topicDistType === 'COUNT' ? currentSum === sec.numQuestions : Math.abs(currentSum - 100) < 0.01;
-                                return (
-                                  <div style={{ fontSize: '12px', color: isSumValid ? '#10b981' : '#f59e0b' }}>
-                                    Current Sum: <strong>{currentSum}{topicDistType === 'PERCENT' ? '%' : ' Qs'}</strong> / Target: {topicDistType === 'COUNT' ? `${sec.numQuestions} Qs` : '100%'}
-                                  </div>
-                                );
-                              })()}
-                            </div>
-
-                            <div>
                               <button
                                 onClick={() => handleSaveTopicDistribution(selectedPattern.id, sec.id)}
                                 style={{ background: '#06b6d4', color: '#000', border: 'none', padding: '6px 16px', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}
@@ -1344,36 +1358,43 @@ export const ExamPatternsPage: React.FC = () => {
                         {/* Tab Content 3: Difficulty Distribution (Feature 4.5) */}
                         {activeSectionTab === 'difficulty' && (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                            <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
                               <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', cursor: 'pointer' }}>
                                 <input
-                                  type="checkbox"
+                                  type="radio"
+                                  name={`diff-mode-${sec.id}`}
                                   checked={isDiffAutomatic}
-                                  onChange={(e) => setIsDiffAutomatic(e.target.checked)}
+                                  onChange={() => setIsDiffAutomatic(true)}
                                 />
-                                Automatic Mode (Engine selects best balanced difficulty ratio)
+                                Automatic (Question Bank Native)
+                              </label>
+                              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', cursor: 'pointer' }}>
+                                <input
+                                  type="radio"
+                                  name={`diff-mode-${sec.id}`}
+                                  checked={!isDiffAutomatic}
+                                  onChange={() => setIsDiffAutomatic(false)}
+                                />
+                                Stratified Target
                               </label>
                             </div>
 
                             {!isDiffAutomatic && (
                               <>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                                  <label style={{ fontSize: '12px', fontWeight: 'bold' }}>Ratio Type:</label>
+                                <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
                                   <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', cursor: 'pointer' }}>
                                     <input
                                       type="radio"
-                                      name={`diffDist_${sec.id}`}
-                                      value="PERCENT"
+                                      name={`diff-type-${sec.id}`}
                                       checked={diffDistType === 'PERCENT'}
                                       onChange={() => setDiffDistType('PERCENT')}
                                     />
-                                    Percentage Split (Sum = 100%)
+                                    Percentage (% Total = 100%)
                                   </label>
                                   <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', cursor: 'pointer' }}>
                                     <input
                                       type="radio"
-                                      name={`diffDist_${sec.id}`}
-                                      value="COUNT"
+                                      name={`diff-type-${sec.id}`}
                                       checked={diffDistType === 'COUNT'}
                                       onChange={() => setDiffDistType('COUNT')}
                                     />
@@ -1389,7 +1410,7 @@ export const ExamPatternsPage: React.FC = () => {
                                       min={0}
                                       step={diffDistType === 'PERCENT' ? 0.01 : 1}
                                       value={easyVal}
-                                      onChange={(e) => setEasyVal(parseFloat(e.target.value) || 0)}
+                                      onChange={(e) => setEasyVal(e.target.value)}
                                       style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '6px 8px', borderRadius: '4px', fontSize: '12px' }}
                                     />
                                   </div>
@@ -1401,7 +1422,7 @@ export const ExamPatternsPage: React.FC = () => {
                                       min={0}
                                       step={diffDistType === 'PERCENT' ? 0.01 : 1}
                                       value={medVal}
-                                      onChange={(e) => setMedVal(parseFloat(e.target.value) || 0)}
+                                      onChange={(e) => setMedVal(e.target.value)}
                                       style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '6px 8px', borderRadius: '4px', fontSize: '12px' }}
                                     />
                                   </div>
@@ -1413,22 +1434,11 @@ export const ExamPatternsPage: React.FC = () => {
                                       min={0}
                                       step={diffDistType === 'PERCENT' ? 0.01 : 1}
                                       value={hardVal}
-                                      onChange={(e) => setHardVal(parseFloat(e.target.value) || 0)}
+                                      onChange={(e) => setHardVal(e.target.value)}
                                       style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '6px 8px', borderRadius: '4px', fontSize: '12px' }}
                                     />
                                   </div>
                                 </div>
-
-                                {/* Running Sum Indicator */}
-                                {(() => {
-                                  const dSum = Number(easyVal || 0) + Number(medVal || 0) + Number(hardVal || 0);
-                                  const isDValid = diffDistType === 'COUNT' ? dSum === sec.numQuestions : Math.abs(dSum - 100) < 0.01;
-                                  return (
-                                    <div style={{ fontSize: '12px', color: isDValid ? '#10b981' : '#f59e0b' }}>
-                                      Current Difficulty Sum: <strong>{dSum}{diffDistType === 'PERCENT' ? '%' : ' Qs'}</strong> / Target: {diffDistType === 'COUNT' ? `${sec.numQuestions} Qs` : '100%'}
-                                    </div>
-                                  );
-                                })()}
                               </>
                             )}
 
@@ -1453,13 +1463,12 @@ export const ExamPatternsPage: React.FC = () => {
                                 </label>
                                 <input
                                   type="number"
-                                  min={0.1}
-                                  step={0.5}
+                                  min={0}
+                                  step="any"
                                   value={editMarksCorrect}
-                                  onChange={(e) => setEditMarksCorrect(parseFloat(e.target.value) || 0)}
+                                  onChange={(e) => setEditMarksCorrect(e.target.value)}
                                   style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '6px 8px', borderRadius: '4px', fontSize: '12px' }}
                                 />
-                                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Must match section marks/Q ({sec.marksPerQuestion})</span>
                               </div>
 
                               <div>
@@ -1469,12 +1478,11 @@ export const ExamPatternsPage: React.FC = () => {
                                 <input
                                   type="number"
                                   max={0}
-                                  step={0.25}
+                                  step="any"
                                   value={editMarksWrong}
-                                  onChange={(e) => setEditMarksWrong(parseFloat(e.target.value) || 0)}
+                                  onChange={(e) => setEditMarksWrong(e.target.value)}
                                   style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '6px 8px', borderRadius: '4px', fontSize: '12px' }}
                                 />
-                                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>e.g. -0.25 or -1.0</span>
                               </div>
 
                               <div>
@@ -1483,12 +1491,11 @@ export const ExamPatternsPage: React.FC = () => {
                                 </label>
                                 <input
                                   type="number"
-                                  step={0.25}
+                                  step="any"
                                   value={editMarksUnattempted}
-                                  onChange={(e) => setEditMarksUnattempted(parseFloat(e.target.value) || 0)}
+                                  onChange={(e) => setEditMarksUnattempted(e.target.value)}
                                   style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '6px 8px', borderRadius: '4px', fontSize: '12px' }}
                                 />
-                                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Standard default: 0</span>
                               </div>
                             </div>
 
@@ -1557,7 +1564,7 @@ export const ExamPatternsPage: React.FC = () => {
                     required
                     min={1}
                     value={durationMinutes}
-                    onChange={(e) => setDurationMinutes(parseInt(e.target.value, 10))}
+                    onChange={(e) => setDurationMinutes(e.target.value)}
                     style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '8px', borderRadius: '4px' }}
                   />
                 </div>
@@ -1668,7 +1675,7 @@ export const ExamPatternsPage: React.FC = () => {
                     required
                     min={1}
                     value={editDurationMinutes}
-                    onChange={(e) => setEditDurationMinutes(parseInt(e.target.value, 10))}
+                    onChange={(e) => setEditDurationMinutes(e.target.value)}
                     style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '8px', borderRadius: '4px' }}
                   />
                 </div>
