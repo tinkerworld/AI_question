@@ -1,5 +1,5 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { prisma } from '@repo/database';
+import { pgDb } from '@repo/database';
 import { createSyllabusNodeSchema, updateSyllabusNodeSchema, reorderSyllabusNodeSchema } from '@repo/validation';
 import { PERMISSIONS } from '@repo/permissions';
 import { authenticate } from '../middleware/auth';
@@ -7,6 +7,7 @@ import { requirePermission } from '../middleware/permission';
 import { validate } from '../middleware/validate';
 import { auditLog } from '../middleware/audit';
 import { AppError } from '../middleware/error';
+import crypto from 'crypto';
 
 const router = Router({ mergeParams: true });
 
@@ -39,11 +40,15 @@ function buildTree(nodes: any[]): any[] {
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { subjectId } = req.params;
-    const nodes = await prisma.syllabusNode.findMany({
-      where: { subjectId },
-      orderBy: { orderIndex: 'asc' },
-    });
-    res.json({ success: true, data: nodes });
+    let query = `SELECT * FROM "syllabus_nodes"`;
+    const params: any[] = [];
+    if (subjectId) {
+      params.push(subjectId);
+      query += ` WHERE "subjectId" = $1`;
+    }
+    query += ` ORDER BY "orderIndex" ASC`;
+    const nodesRes = await pgDb.query(query, params);
+    res.json({ success: true, data: nodesRes.rows });
   } catch (err) {
     next(err);
   }
@@ -56,17 +61,19 @@ router.get('/tree', async (req: Request, res: Response, next: NextFunction) => {
     const caller = req.user!;
     const isStudent = caller.roles.includes('STUDENT') && !caller.roles.includes('MAIN_ADMIN') && !caller.roles.includes('SUB_ADMIN');
 
-    const where: any = { subjectId };
-    if (isStudent) {
-      where.status = 'PUBLISHED';
+    let query = `SELECT * FROM "syllabus_nodes" WHERE 1=1`;
+    const params: any[] = [];
+    if (subjectId) {
+      params.push(subjectId);
+      query += ` AND "subjectId" = $${params.length}`;
     }
+    if (isStudent) {
+      query += ` AND "status" = 'PUBLISHED'`;
+    }
+    query += ` ORDER BY "orderIndex" ASC`;
 
-    const nodes = await prisma.syllabusNode.findMany({
-      where,
-      orderBy: { orderIndex: 'asc' },
-    });
-
-    const tree = buildTree(nodes);
+    const nodesRes = await pgDb.query(query, params);
+    const tree = buildTree(nodesRes.rows);
     res.json({ success: true, data: tree });
   } catch (err) {
     next(err);
@@ -82,37 +89,43 @@ router.post(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { subjectId } = req.params;
-      const { parentId, title, type, orderIndex, description, learningObjectives, estimatedMinutes, status, tags } = req.body;
+      const { parentId, title, type = 'TOPIC', orderIndex = 0, description, learningObjectives, estimatedMinutes = 60, status = 'PUBLISHED', tags = [] } = req.body;
 
       let depth = 0;
       if (parentId) {
-        const parent = await prisma.syllabusNode.findUnique({ where: { id: parentId } });
-        if (!parent) {
+        const parentRes = await pgDb.query(`SELECT * FROM "syllabus_nodes" WHERE "id" = $1`, [parentId]);
+        if (parentRes.rows.length === 0) {
           throw new AppError(404, 'PARENT_NODE_NOT_FOUND', `Parent node ${parentId} not found`);
         }
+        const parent = parentRes.rows[0];
         depth = parent.depth + 1;
         if (depth > MAX_DEPTH) {
           throw new AppError(400, 'MAX_DEPTH_EXCEEDED', `Maximum syllabus depth limit of 4 levels exceeded`);
         }
       }
 
-      const node = await prisma.syllabusNode.create({
-        data: {
+      const id = `node_${crypto.randomBytes(8).toString('hex')}`;
+      const insertRes = await pgDb.query(
+        `INSERT INTO "syllabus_nodes" ("id", "subjectId", "parentId", "title", "type", "depth", "orderIndex", "description", "learningObjectives", "estimatedMinutes", "status", "tags", "createdAt", "updatedAt")
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW())
+         RETURNING *`,
+        [
+          id,
           subjectId,
-          parentId: parentId || null,
+          parentId || null,
           title,
           type,
           depth,
-          orderIndex: orderIndex || 0,
-          description,
-          learningObjectives,
-          estimatedMinutes: estimatedMinutes || 60,
-          status: status || 'PUBLISHED',
-          tags: tags || [],
-        },
-      });
+          orderIndex,
+          description || null,
+          learningObjectives ? JSON.stringify(learningObjectives) : null,
+          estimatedMinutes,
+          status,
+          tags || [],
+        ]
+      );
 
-      res.status(201).json({ success: true, data: node });
+      res.status(201).json({ success: true, data: insertRes.rows[0] });
     } catch (err) {
       next(err);
     }
@@ -130,20 +143,29 @@ router.patch(
       const { id } = req.params;
       const { title, type, description, learningObjectives, estimatedMinutes, status, tags } = req.body;
 
-      const node = await prisma.syllabusNode.update({
-        where: { id },
-        data: {
-          title,
-          type,
-          description,
-          learningObjectives,
-          estimatedMinutes,
-          status,
-          tags,
-        },
-      });
+      const existingRes = await pgDb.query(`SELECT * FROM "syllabus_nodes" WHERE "id" = $1`, [id]);
+      if (existingRes.rows.length === 0) {
+        throw new AppError(404, 'NODE_NOT_FOUND', 'Node not found');
+      }
+      const existing = existingRes.rows[0];
 
-      res.json({ success: true, data: node });
+      const updatedTitle = title !== undefined ? title : existing.title;
+      const updatedType = type !== undefined ? type : existing.type;
+      const updatedDesc = description !== undefined ? description : existing.description;
+      const updatedLO = learningObjectives !== undefined ? JSON.stringify(learningObjectives) : existing.learningObjectives;
+      const updatedMin = estimatedMinutes !== undefined ? estimatedMinutes : existing.estimatedMinutes;
+      const updatedStatus = status !== undefined ? status : existing.status;
+      const updatedTags = tags !== undefined ? tags : existing.tags;
+
+      const updateRes = await pgDb.query(
+        `UPDATE "syllabus_nodes"
+         SET "title" = $1, "type" = $2, "description" = $3, "learningObjectives" = $4, "estimatedMinutes" = $5, "status" = $6, "tags" = $7, "updatedAt" = NOW()
+         WHERE "id" = $8
+         RETURNING *`,
+        [updatedTitle, updatedType, updatedDesc, updatedLO, updatedMin, updatedStatus, updatedTags, id]
+      );
+
+      res.json({ success: true, data: updateRes.rows[0] });
     } catch (err) {
       next(err);
     }
@@ -159,7 +181,7 @@ router.patch(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
-      const { parentId, orderIndex } = req.body;
+      const { parentId, orderIndex = 0 } = req.body;
 
       // Cyclic parent check
       if (parentId === id) {
@@ -168,24 +190,23 @@ router.patch(
 
       let newDepth = 0;
       if (parentId) {
-        const targetParent = await prisma.syllabusNode.findUnique({ where: { id: parentId } });
-        if (!targetParent) throw new AppError(404, 'TARGET_PARENT_NOT_FOUND', 'Target parent node not found');
-        newDepth = targetParent.depth + 1;
+        const targetRes = await pgDb.query(`SELECT * FROM "syllabus_nodes" WHERE "id" = $1`, [parentId]);
+        if (targetRes.rows.length === 0) throw new AppError(404, 'TARGET_PARENT_NOT_FOUND', 'Target parent node not found');
+        newDepth = targetRes.rows[0].depth + 1;
         if (newDepth > MAX_DEPTH) {
           throw new AppError(400, 'MAX_DEPTH_EXCEEDED', 'Reordering would exceed max depth of 4 levels');
         }
       }
 
-      const updated = await prisma.syllabusNode.update({
-        where: { id },
-        data: {
-          parentId: parentId || null,
-          orderIndex,
-          depth: newDepth,
-        },
-      });
+      const updateRes = await pgDb.query(
+        `UPDATE "syllabus_nodes"
+         SET "parentId" = $1, "orderIndex" = $2, "depth" = $3, "updatedAt" = NOW()
+         WHERE "id" = $4
+         RETURNING *`,
+        [parentId || null, orderIndex, newDepth, id]
+      );
 
-      res.json({ success: true, data: updated });
+      res.json({ success: true, data: updateRes.rows[0] });
     } catch (err) {
       next(err);
     }
@@ -200,7 +221,7 @@ router.delete(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
-      await prisma.syllabusNode.delete({ where: { id } });
+      await pgDb.query(`DELETE FROM "syllabus_nodes" WHERE "id" = $1 OR "parentId" = $1`, [id]);
       res.json({ success: true, message: 'Node and children deleted successfully' });
     } catch (err) {
       next(err);

@@ -1,7 +1,18 @@
 const { PGlite } = require('@electric-sql/pglite');
 const { createVirtualServer } = require('pg-gateway');
 
-const db = new PGlite('./postgres-data');
+const path = require('path');
+const fs = require('fs');
+
+const dataDir = path.resolve(__dirname, '../postgres-data');
+const pidFile = path.join(dataDir, 'postmaster.pid');
+if (fs.existsSync(pidFile)) {
+  try {
+    fs.unlinkSync(pidFile);
+  } catch {}
+}
+
+const db = new PGlite(dataDir);
 
 const server = createVirtualServer({
   async onStartup() {

@@ -1,5 +1,5 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { prisma } from '@repo/database';
+import { pgDb } from '@repo/database';
 import { createSubjectSchema, updateSubjectSchema } from '@repo/validation';
 import { PERMISSIONS } from '@repo/permissions';
 import { authenticate } from '../middleware/auth';
@@ -7,6 +7,7 @@ import { requirePermission } from '../middleware/permission';
 import { validate } from '../middleware/validate';
 import { auditLog } from '../middleware/audit';
 import { AppError } from '../middleware/error';
+import crypto from 'crypto';
 
 const router = Router({ mergeParams: true });
 
@@ -16,11 +17,15 @@ router.use(authenticate);
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { courseId } = req.params;
-    const subjects = await prisma.subject.findMany({
-      where: { courseId },
-      orderBy: { order: 'asc' },
-    });
-    res.json({ success: true, data: subjects });
+    let query = `SELECT * FROM "subjects"`;
+    const params: any[] = [];
+    if (courseId) {
+      params.push(courseId);
+      query += ` WHERE "courseId" = $1`;
+    }
+    query += ` ORDER BY "order" ASC`;
+    const subjectsRes = await pgDb.query(query, params);
+    res.json({ success: true, data: subjectsRes.rows });
   } catch (err) {
     next(err);
   }
@@ -35,38 +40,27 @@ router.post(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { courseId } = req.params;
-      const { name, code, description, credits, order } = req.body;
+      const { name, code, description, credits = 4, order = 0 } = req.body;
 
-      const course = await prisma.course.findUnique({ where: { id: courseId } });
-      if (!course) {
+      const courseRes = await pgDb.query(`SELECT "id" FROM "courses" WHERE "id" = $1`, [courseId]);
+      if (courseRes.rows.length === 0) {
         throw new AppError(404, 'COURSE_NOT_FOUND', `Course ${courseId} not found`);
       }
 
-      const existingCode = await prisma.subject.findUnique({
-        where: {
-          courseId_code: {
-            courseId,
-            code,
-          },
-        },
-      });
-
-      if (existingCode) {
+      const existingRes = await pgDb.query(`SELECT "id" FROM "subjects" WHERE "courseId" = $1 AND "code" = $2`, [courseId, code]);
+      if (existingRes.rows.length > 0) {
         throw new AppError(400, 'DUPLICATE_SUBJECT_CODE', `Subject code '${code}' already exists in this course`);
       }
 
-      const subject = await prisma.subject.create({
-        data: {
-          courseId,
-          name,
-          code,
-          description,
-          credits,
-          order,
-        },
-      });
+      const id = `sub_${crypto.randomBytes(8).toString('hex')}`;
+      const insertRes = await pgDb.query(
+        `INSERT INTO "subjects" ("id", "courseId", "name", "code", "description", "credits", "order", "createdAt", "updatedAt")
+         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+         RETURNING *`,
+        [id, courseId, name, code, description || null, credits, order]
+      );
 
-      res.status(201).json({ success: true, data: subject });
+      res.status(201).json({ success: true, data: insertRes.rows[0] });
     } catch (err) {
       next(err);
     }
@@ -77,14 +71,13 @@ router.post(
 router.get('/subject/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const subject = await prisma.subject.findUnique({
-      where: { id },
-      include: { syllabusNodes: true },
-    });
-
-    if (!subject) {
+    const subRes = await pgDb.query(`SELECT * FROM "subjects" WHERE "id" = $1`, [id]);
+    if (subRes.rows.length === 0) {
       throw new AppError(404, 'SUBJECT_NOT_FOUND', 'Subject not found');
     }
+    const subject = subRes.rows[0];
+    const nodeRes = await pgDb.query(`SELECT * FROM "syllabus_nodes" WHERE "subjectId" = $1 ORDER BY "orderIndex" ASC`, [id]);
+    subject.syllabusNodes = nodeRes.rows;
 
     res.json({ success: true, data: subject });
   } catch (err) {
@@ -103,12 +96,26 @@ router.patch(
       const { id } = req.params;
       const { name, description, credits, order } = req.body;
 
-      const updated = await prisma.subject.update({
-        where: { id },
-        data: { name, description, credits, order },
-      });
+      const subRes = await pgDb.query(`SELECT * FROM "subjects" WHERE "id" = $1`, [id]);
+      if (subRes.rows.length === 0) {
+        throw new AppError(404, 'SUBJECT_NOT_FOUND', 'Subject not found');
+      }
+      const existing = subRes.rows[0];
 
-      res.json({ success: true, data: updated });
+      const updatedName = name !== undefined ? name : existing.name;
+      const updatedDesc = description !== undefined ? description : existing.description;
+      const updatedCredits = credits !== undefined ? credits : existing.credits;
+      const updatedOrder = order !== undefined ? order : existing.order;
+
+      const updateRes = await pgDb.query(
+        `UPDATE "subjects"
+         SET "name" = $1, "description" = $2, "credits" = $3, "order" = $4, "updatedAt" = NOW()
+         WHERE "id" = $5
+         RETURNING *`,
+        [updatedName, updatedDesc, updatedCredits, updatedOrder, id]
+      );
+
+      res.json({ success: true, data: updateRes.rows[0] });
     } catch (err) {
       next(err);
     }
@@ -123,7 +130,7 @@ router.delete(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
-      await prisma.subject.delete({ where: { id } });
+      await pgDb.query(`DELETE FROM "subjects" WHERE "id" = $1`, [id]);
       res.json({ success: true, message: 'Subject deleted successfully' });
     } catch (err) {
       next(err);

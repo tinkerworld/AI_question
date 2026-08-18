@@ -1,13 +1,14 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
-import { prisma } from '@repo/database';
-import { createUserSchema, updateUserSchema, userStatusSchema } from '@repo/validation';
+import { pgDb } from '@repo/database';
+import { createUserSchema, updateUserSchema } from '@repo/validation';
 import { PERMISSIONS } from '@repo/permissions';
 import { authenticate } from '../middleware/auth';
 import { requirePermission } from '../middleware/permission';
 import { validate } from '../middleware/validate';
 import { auditLog } from '../middleware/audit';
 import { AppError } from '../middleware/error';
+import crypto from 'crypto';
 
 const router = Router();
 
@@ -20,26 +21,21 @@ router.get(
   requirePermission(PERMISSIONS.USERS_READ),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const users = await prisma.user.findMany({
-        select: {
-          id: true,
-          email: true,
-          firstName: true,
-          lastName: true,
-          status: true,
-          createdAt: true,
-          updatedAt: true,
-          userRoles: {
-            include: { role: true },
-          },
-        },
-      });
+      const usersRes = await pgDb.query(`SELECT "id", "email", "firstName", "lastName", "status", "createdAt", "updatedAt" FROM "users" ORDER BY "createdAt" DESC`);
+      const formatted = [];
 
-      const formatted = users.map((u) => ({
-        ...u,
-        roles: u.userRoles.map((ur) => ur.role.name),
-        userRoles: undefined,
-      }));
+      for (const u of usersRes.rows) {
+        const rolesRes = await pgDb.query(
+          `SELECT r."name" FROM "roles" r
+           JOIN "user_roles" ur ON ur."roleId" = r."id"
+           WHERE ur."userId" = $1`,
+          [u.id]
+        );
+        formatted.push({
+          ...u,
+          roles: rolesRes.rows.map((r: any) => r.name),
+        });
+      }
 
       res.json({ success: true, data: formatted });
     } catch (err) {
@@ -58,39 +54,44 @@ router.post(
     try {
       const { email, password, firstName, lastName, roleIds } = req.body;
 
-      const existing = await prisma.user.findUnique({ where: { email } });
-      if (existing) {
+      const existingRes = await pgDb.query(`SELECT "id" FROM "users" WHERE "email" = $1`, [email]);
+      if (existingRes.rows.length > 0) {
         throw new AppError(400, 'EMAIL_EXISTS', 'A user with this email already exists');
       }
 
       const passwordHash = await bcrypt.hash(password, 10);
+      const id = `usr_${crypto.randomBytes(8).toString('hex')}`;
 
-      const user = await prisma.user.create({
-        data: {
-          email,
-          passwordHash,
-          firstName,
-          lastName,
-          userRoles: roleIds
-            ? {
-                create: roleIds.map((roleId: string) => ({ roleId })),
-              }
-            : undefined,
-        },
-        include: {
-          userRoles: { include: { role: true } },
-        },
-      });
+      await pgDb.query(
+        `INSERT INTO "users" ("id", "email", "passwordHash", "firstName", "lastName", "status", "createdAt", "updatedAt")
+         VALUES ($1, $2, $3, $4, $5, 'ACTIVE', NOW(), NOW())`,
+        [id, email, passwordHash, firstName, lastName]
+      );
+
+      const roles: string[] = [];
+      if (roleIds && Array.isArray(roleIds)) {
+        for (const roleId of roleIds) {
+          const urId = `ur_${crypto.randomBytes(8).toString('hex')}`;
+          await pgDb.query(
+            `INSERT INTO "user_roles" ("id", "userId", "roleId") VALUES ($1, $2, $3)`,
+            [urId, id, roleId]
+          );
+          const rRes = await pgDb.query(`SELECT "name" FROM "roles" WHERE "id" = $1`, [roleId]);
+          if (rRes.rows.length > 0) {
+            roles.push(rRes.rows[0].name);
+          }
+        }
+      }
 
       res.status(201).json({
         success: true,
         data: {
-          id: user.id,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          status: user.status,
-          roles: user.userRoles.map((ur) => ur.role.name),
+          id,
+          email,
+          firstName,
+          lastName,
+          status: 'ACTIVE',
+          roles,
         },
       });
     } catch (err) {
@@ -108,8 +109,6 @@ router.get(
       const { id } = req.params;
       const caller = req.user!;
 
-      // Ownership vs. Permission check per Section 7 requirement:
-      // Caller must have users.read permission AND caller can access if (a) caller is self, OR (b) caller is admin/sub-admin
       const isSelf = caller.userId === id;
       const isAdmin = caller.roles.includes('MAIN_ADMIN') || caller.roles.includes('SUB_ADMIN');
 
@@ -117,26 +116,28 @@ router.get(
         throw new AppError(403, 'IDOR_DENIED', 'Forbidden: Cannot access resources belonging to another user');
       }
 
-      const user = await prisma.user.findUnique({
-        where: { id },
-        include: { userRoles: { include: { role: true } } },
-      });
+      const userRes = await pgDb.query(
+        `SELECT "id", "email", "firstName", "lastName", "status", "createdAt", "updatedAt" FROM "users" WHERE "id" = $1`,
+        [id]
+      );
 
-      if (!user) {
+      if (userRes.rows.length === 0) {
         throw new AppError(404, 'USER_NOT_FOUND', `User with ID ${id} not found`);
       }
+      const user = userRes.rows[0];
+
+      const rolesRes = await pgDb.query(
+        `SELECT r."name" FROM "roles" r
+         JOIN "user_roles" ur ON ur."roleId" = r."id"
+         WHERE ur."userId" = $1`,
+        [id]
+      );
 
       res.json({
         success: true,
         data: {
-          id: user.id,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          status: user.status,
-          roles: user.userRoles.map((ur) => ur.role.name),
-          createdAt: user.createdAt,
-          updatedAt: user.updatedAt,
+          ...user,
+          roles: rolesRes.rows.map((r: any) => r.name),
         },
       });
     } catch (err) {
@@ -156,7 +157,6 @@ router.patch(
       const { id } = req.params;
       const caller = req.user!;
 
-      // Section 7 Security Gate: IDOR Ownership vs Permission validation
       const isSelf = caller.userId === id;
       const isAdmin = caller.roles.includes('MAIN_ADMIN') || caller.roles.includes('SUB_ADMIN');
 
@@ -166,32 +166,35 @@ router.patch(
 
       const { firstName, lastName, status, roleIds } = req.body;
 
-      const user = await prisma.user.update({
-        where: { id },
-        data: {
-          firstName,
-          lastName,
-          status,
-        },
-        include: { userRoles: { include: { role: true } } },
-      });
+      const userRes = await pgDb.query(`SELECT * FROM "users" WHERE "id" = $1`, [id]);
+      if (userRes.rows.length === 0) {
+        throw new AppError(404, 'USER_NOT_FOUND', 'User not found');
+      }
+      const existing = userRes.rows[0];
 
-      if (roleIds && isAdmin) {
-        await prisma.userRole.deleteMany({ where: { userId: id } });
-        await prisma.userRole.createMany({
-          data: roleIds.map((roleId: string) => ({ userId: id, roleId })),
-        });
+      const updatedFn = firstName !== undefined ? firstName : existing.firstName;
+      const updatedLn = lastName !== undefined ? lastName : existing.lastName;
+      const updatedSt = status !== undefined ? status : existing.status;
+
+      const updateRes = await pgDb.query(
+        `UPDATE "users"
+         SET "firstName" = $1, "lastName" = $2, "status" = $3, "updatedAt" = NOW()
+         WHERE "id" = $4
+         RETURNING "id", "email", "firstName", "lastName", "status"`,
+        [updatedFn, updatedLn, updatedSt, id]
+      );
+
+      if (roleIds && isAdmin && Array.isArray(roleIds)) {
+        await pgDb.query(`DELETE FROM "user_roles" WHERE "userId" = $1`, [id]);
+        for (const roleId of roleIds) {
+          const urId = `ur_${crypto.randomBytes(8).toString('hex')}`;
+          await pgDb.query(`INSERT INTO "user_roles" ("id", "userId", "roleId") VALUES ($1, $2, $3)`, [urId, id, roleId]);
+        }
       }
 
       res.json({
         success: true,
-        data: {
-          id: user.id,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          status: user.status,
-        },
+        data: updateRes.rows[0],
       });
     } catch (err) {
       next(err);
@@ -209,13 +212,13 @@ router.delete(
       const { id } = req.params;
       const caller = req.user!;
 
-      // Section 7 Security Gate: IDOR validation
       const isAdmin = caller.roles.includes('MAIN_ADMIN');
       if (!isAdmin) {
         throw new AppError(403, 'IDOR_DENIED', 'Forbidden: Only MAIN_ADMIN can delete user accounts');
       }
 
-      await prisma.user.delete({ where: { id } });
+      await pgDb.query(`DELETE FROM "user_roles" WHERE "userId" = $1`, [id]);
+      await pgDb.query(`DELETE FROM "users" WHERE "id" = $1`, [id]);
 
       res.json({ success: true, message: 'User deleted successfully' });
     } catch (err) {

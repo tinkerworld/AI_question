@@ -1,5 +1,5 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { prisma, pgDb } from '@repo/database';
+import { pgDb } from '@repo/database';
 import { questionTypeRegistry } from '@repo/question-types';
 import {
   createQuestionSchema,
@@ -14,6 +14,7 @@ import { requirePermission } from '../middleware/permission';
 import { validate } from '../middleware/validate';
 import { auditLog } from '../middleware/audit';
 import { AppError } from '../middleware/error';
+import crypto from 'crypto';
 
 const router = Router();
 
@@ -183,26 +184,32 @@ router.post(
 router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const question = await prisma.question.findUnique({
-      where: { id },
-      include: {
-        questionTags: { include: { tag: true } },
-        versions: { orderBy: { version: 'desc' } },
-        examUsages: true,
-      },
-    });
-
-    if (!question) {
+    const qRes = await pgDb.query(`SELECT * FROM "questions" WHERE "id" = $1`, [id]);
+    if (qRes.rows.length === 0) {
       throw new AppError(404, 'QUESTION_NOT_FOUND', `Question ${id} not found`);
     }
+    const question = qRes.rows[0];
 
-    const formatted = {
-      ...question,
-      tags: question.questionTags.map((qt) => qt.tag.name),
-      questionTags: undefined,
-    };
+    const tagsRes = await pgDb.query(
+      `SELECT t."name" FROM "tags" t
+       JOIN "question_tags" qt ON qt."tagId" = t."id"
+       WHERE qt."questionId" = $1`,
+      [id]
+    );
+    const versionsRes = await pgDb.query(
+      `SELECT * FROM "question_versions" WHERE "questionId" = $1 ORDER BY "version" DESC`,
+      [id]
+    );
+    const usagesRes = await pgDb.query(
+      `SELECT * FROM "previous_exam_usages" WHERE "questionId" = $1 ORDER BY "year" DESC`,
+      [id]
+    );
 
-    res.json({ success: true, data: formatted });
+    question.tags = tagsRes.rows.map((r: any) => r.name);
+    question.versions = versionsRes.rows;
+    question.examUsages = usagesRes.rows;
+
+    res.json({ success: true, data: question });
   } catch (err) {
     next(err);
   }
@@ -221,51 +228,54 @@ router.patch(
       const { id } = req.params;
       const { content, data, difficulty, marks, status, courseId, subjectId, syllabusNodeId } = req.body;
 
-      const existing = await prisma.question.findUnique({ where: { id } });
-      if (!existing) {
+      const qRes = await pgDb.query(`SELECT * FROM "questions" WHERE "id" = $1`, [id]);
+      if (qRes.rows.length === 0) {
         throw new AppError(404, 'QUESTION_NOT_FOUND', 'Question not found');
       }
+      const existing = qRes.rows[0];
 
       const newContent = content !== undefined ? content : existing.content;
-      const newData = data !== undefined ? data : (existing.data as any);
+      const newData = data !== undefined ? (typeof data === 'object' ? JSON.stringify(data) : data) : existing.data;
       const newDiff = difficulty !== undefined ? difficulty : existing.difficulty;
       const newMarks = marks !== undefined ? marks : existing.marks;
       const newStatus = status !== undefined ? status : existing.status;
-      const newVersion = existing.version + 1;
+      const newVersion = (existing.version || 1) + 1;
 
       if (data !== undefined) {
         const handler = questionTypeRegistry.getType(existing.type);
-        if (!handler.validate(newData)) {
+        if (!handler.validate(typeof data === 'string' ? JSON.parse(data) : data)) {
           throw new AppError(400, 'INVALID_TYPE_PAYLOAD', `Invalid type-specific data for '${existing.type}'`);
         }
       }
 
-      const updated = await prisma.question.update({
-        where: { id },
-        data: {
-          content: newContent,
-          data: newData,
-          difficulty: newDiff,
-          marks: newMarks,
-          status: newStatus,
-          courseId,
-          subjectId,
-          syllabusNodeId,
-          version: newVersion,
-          versions: {
-            create: {
-              version: newVersion,
-              content: newContent,
-              data: newData,
-              difficulty: newDiff,
-              marks: newMarks,
-              changedById: req.user!.userId,
-            },
-          },
-        },
-      });
+      const updateRes = await pgDb.query(
+        `UPDATE "questions"
+         SET "content" = $1, "data" = $2, "difficulty" = $3, "marks" = $4, "status" = $5,
+             "courseId" = $6, "subjectId" = $7, "syllabusNodeId" = $8, "version" = $9, "updatedAt" = NOW()
+         WHERE "id" = $10
+         RETURNING *`,
+        [
+          newContent,
+          newData,
+          newDiff,
+          newMarks,
+          newStatus,
+          courseId !== undefined ? courseId : existing.courseId,
+          subjectId !== undefined ? subjectId : existing.subjectId,
+          syllabusNodeId !== undefined ? syllabusNodeId : existing.syllabusNodeId,
+          newVersion,
+          id,
+        ]
+      );
 
-      res.json({ success: true, data: updated });
+      const vId = `qv_${crypto.randomBytes(8).toString('hex')}`;
+      await pgDb.query(
+        `INSERT INTO "question_versions" ("id", "questionId", "version", "content", "data", "difficulty", "marks", "changedById", "createdAt")
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())`,
+        [vId, id, newVersion, newContent, newData, newDiff, newMarks, req.user!.userId]
+      );
+
+      res.json({ success: true, data: updateRes.rows[0] });
     } catch (err) {
       next(err);
     }
@@ -278,11 +288,11 @@ router.patch(
 router.get('/:id/versions', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const versions = await prisma.questionVersion.findMany({
-      where: { questionId: id },
-      orderBy: { version: 'desc' },
-    });
-    res.json({ success: true, data: versions });
+    const versionsRes = await pgDb.query(
+      `SELECT * FROM "question_versions" WHERE "questionId" = $1 ORDER BY "version" DESC`,
+      [id]
+    );
+    res.json({ success: true, data: versionsRes.rows });
   } catch (err) {
     next(err);
   }
@@ -297,39 +307,51 @@ router.post(
       const { id, version } = req.params;
       const targetVersionNum = parseInt(version, 10);
 
-      const targetVersion = await prisma.questionVersion.findFirst({
-        where: { questionId: id, version: targetVersionNum },
-      });
+      const targetRes = await pgDb.query(
+        `SELECT * FROM "question_versions" WHERE "questionId" = $1 AND "version" = $2`,
+        [id, targetVersionNum]
+      );
 
-      if (!targetVersion) {
+      if (targetRes.rows.length === 0) {
         throw new AppError(404, 'VERSION_NOT_FOUND', `Version ${targetVersionNum} not found for question ${id}`);
       }
+      const targetVersion = targetRes.rows[0];
 
-      const current = await prisma.question.findUnique({ where: { id } });
-      const nextVersionNum = (current?.version || 0) + 1;
+      const currentRes = await pgDb.query(`SELECT "version" FROM "questions" WHERE "id" = $1`, [id]);
+      const nextVersionNum = ((currentRes.rows[0]?.version) || 0) + 1;
 
-      const rolledBack = await prisma.question.update({
-        where: { id },
-        data: {
-          content: targetVersion.content,
-          data: targetVersion.data as any,
-          difficulty: targetVersion.difficulty,
-          marks: targetVersion.marks,
-          version: nextVersionNum,
-          versions: {
-            create: {
-              version: nextVersionNum,
-              content: targetVersion.content,
-              data: targetVersion.data as any,
-              difficulty: targetVersion.difficulty,
-              marks: targetVersion.marks,
-              changedById: req.user!.userId,
-            },
-          },
-        },
-      });
+      const updateRes = await pgDb.query(
+        `UPDATE "questions"
+         SET "content" = $1, "data" = $2, "difficulty" = $3, "marks" = $4, "version" = $5, "updatedAt" = NOW()
+         WHERE "id" = $6
+         RETURNING *`,
+        [
+          targetVersion.content,
+          typeof targetVersion.data === 'object' ? JSON.stringify(targetVersion.data) : targetVersion.data,
+          targetVersion.difficulty,
+          targetVersion.marks,
+          nextVersionNum,
+          id,
+        ]
+      );
 
-      res.json({ success: true, data: rolledBack });
+      const vId = `qv_${crypto.randomBytes(8).toString('hex')}`;
+      await pgDb.query(
+        `INSERT INTO "question_versions" ("id", "questionId", "version", "content", "data", "difficulty", "marks", "changedById", "createdAt")
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())`,
+        [
+          vId,
+          id,
+          nextVersionNum,
+          targetVersion.content,
+          typeof targetVersion.data === 'object' ? JSON.stringify(targetVersion.data) : targetVersion.data,
+          targetVersion.difficulty,
+          targetVersion.marks,
+          req.user!.userId,
+        ]
+      );
+
+      res.json({ success: true, data: updateRes.rows[0] });
     } catch (err) {
       next(err);
     }
@@ -349,20 +371,21 @@ router.patch(
       const { id } = req.params;
       const { status } = req.body;
 
-      const existing = await prisma.question.findUnique({ where: { id } });
-      if (!existing) throw new AppError(404, 'QUESTION_NOT_FOUND', 'Question not found');
+      const qRes = await pgDb.query(`SELECT "status" FROM "questions" WHERE "id" = $1`, [id]);
+      if (qRes.rows.length === 0) throw new AppError(404, 'QUESTION_NOT_FOUND', 'Question not found');
+      const existing = qRes.rows[0];
 
       // State machine validation: DRAFT -> REVIEW -> PUBLISHED -> ARCHIVED
       if (existing.status === 'ARCHIVED' && status === 'PUBLISHED') {
         throw new AppError(400, 'INVALID_LIFECYCLE_TRANSITION', 'Cannot transition ARCHIVED question directly to PUBLISHED');
       }
 
-      const updated = await prisma.question.update({
-        where: { id },
-        data: { status },
-      });
+      const updateRes = await pgDb.query(
+        `UPDATE "questions" SET "status" = $1, "updatedAt" = NOW() WHERE "id" = $2 RETURNING *`,
+        [status, id]
+      );
 
-      res.json({ success: true, data: updated });
+      res.json({ success: true, data: updateRes.rows[0] });
     } catch (err) {
       next(err);
     }
@@ -382,16 +405,15 @@ router.post(
       const { id } = req.params;
       const { examName, year, shift } = req.body;
 
-      const usage = await prisma.previousExamUsage.create({
-        data: {
-          questionId: id,
-          examName,
-          year,
-          shift,
-        },
-      });
+      const usageId = `peu_${crypto.randomBytes(8).toString('hex')}`;
+      const insertRes = await pgDb.query(
+        `INSERT INTO "previous_exam_usages" ("id", "questionId", "examName", "year", "shift")
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING *`,
+        [usageId, id, examName, year, shift || null]
+      );
 
-      res.status(201).json({ success: true, data: usage });
+      res.status(201).json({ success: true, data: insertRes.rows[0] });
     } catch (err) {
       next(err);
     }
@@ -401,11 +423,11 @@ router.post(
 router.get('/:id/exam-history', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const history = await prisma.previousExamUsage.findMany({
-      where: { questionId: id },
-      orderBy: { year: 'desc' },
-    });
-    res.json({ success: true, data: history });
+    const historyRes = await pgDb.query(
+      `SELECT * FROM "previous_exam_usages" WHERE "questionId" = $1 ORDER BY "year" DESC`,
+      [id]
+    );
+    res.json({ success: true, data: historyRes.rows });
   } catch (err) {
     next(err);
   }
@@ -421,7 +443,11 @@ router.delete(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
-      await prisma.question.delete({ where: { id } });
+      await pgDb.query(`DELETE FROM "question_tags" WHERE "questionId" = $1`, [id]);
+      await pgDb.query(`DELETE FROM "question_versions" WHERE "questionId" = $1`, [id]);
+      await pgDb.query(`DELETE FROM "previous_exam_usages" WHERE "questionId" = $1`, [id]);
+      await pgDb.query(`DELETE FROM "questions" WHERE "id" = $1`, [id]);
+
       res.json({ success: true, message: 'Question deleted successfully' });
     } catch (err) {
       next(err);

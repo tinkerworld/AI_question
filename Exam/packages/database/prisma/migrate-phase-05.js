@@ -3,18 +3,38 @@ const path = require('path');
 const fs = require('fs');
 
 function getDbPath() {
-  const workspaceRootData = path.resolve(__dirname, '../../../../postgres-data');
-  if (fs.existsSync(workspaceRootData)) {
-    return workspaceRootData;
+  if (process.env.PG_DATA_DIR) {
+    return path.resolve(process.env.PG_DATA_DIR);
   }
-  const cwdData = path.resolve(process.cwd(), 'postgres-data');
-  if (fs.existsSync(cwdData)) {
-    return cwdData;
+  let cur = __dirname;
+  for (let i = 0; i < 8; i++) {
+    if (fs.existsSync(path.join(cur, 'start_all.bat')) || fs.existsSync(path.join(cur, 'ExamOS-Build-Directive.md'))) {
+      const targetDir = path.join(cur, 'postgres-data');
+      if (!fs.existsSync(targetDir)) {
+        fs.mkdirSync(targetDir, { recursive: true });
+      }
+      return targetDir;
+    }
+    const parent = path.dirname(cur);
+    if (parent === cur) break;
+    cur = parent;
   }
-  return path.resolve(__dirname, '../postgres-data');
+  const fallback = path.resolve(process.cwd(), 'postgres-data');
+  if (!fs.existsSync(fallback)) {
+    fs.mkdirSync(fallback, { recursive: true });
+  }
+  return fallback;
 }
 
-const pgDb = new PGlite(getDbPath());
+const dbPath = getDbPath();
+const pidFile = path.join(dbPath, 'postmaster.pid');
+if (fs.existsSync(pidFile)) {
+  try {
+    fs.unlinkSync(pidFile);
+  } catch {}
+}
+
+const pgDb = new PGlite(dbPath);
 
 async function applyMigration() {
   console.log('Applying Phase 5 PostgreSQL DDL migration to PGlite database:', getDbPath());

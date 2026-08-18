@@ -2,21 +2,37 @@ const { PGlite } = require('@electric-sql/pglite');
 const path = require('path');
 const fs = require('fs');
 function getDbPath() {
-  if (process.env.PG_DATA_DIR && fs.existsSync(process.env.PG_DATA_DIR)) {
-    return process.env.PG_DATA_DIR;
+  if (process.env.PG_DATA_DIR) {
+    return path.resolve(process.env.PG_DATA_DIR);
   }
-  const workspaceRootData = path.resolve(__dirname, '../../../../postgres-data');
-  if (fs.existsSync(workspaceRootData)) {
-    return workspaceRootData;
+  let cur = __dirname;
+  for (let i = 0; i < 8; i++) {
+    if (fs.existsSync(path.join(cur, 'start_all.bat')) || fs.existsSync(path.join(cur, 'ExamOS-Build-Directive.md'))) {
+      const targetDir = path.join(cur, 'postgres-data');
+      if (!fs.existsSync(targetDir)) {
+        fs.mkdirSync(targetDir, { recursive: true });
+      }
+      return targetDir;
+    }
+    const parent = path.dirname(cur);
+    if (parent === cur) break;
+    cur = parent;
   }
-  const cwdData = path.resolve(process.cwd(), 'postgres-data');
-  if (fs.existsSync(cwdData)) {
-    return cwdData;
+  const fallback = path.resolve(process.cwd(), 'postgres-data');
+  if (!fs.existsSync(fallback)) {
+    fs.mkdirSync(fallback, { recursive: true });
   }
-  return path.resolve(__dirname, 'postgres-data');
+  return fallback;
 }
 
 const dbPath = getDbPath();
+const pidFile = path.join(dbPath, 'postmaster.pid');
+if (fs.existsSync(pidFile)) {
+  try {
+    fs.unlinkSync(pidFile);
+  } catch {}
+}
+
 const db = new PGlite(dbPath);
 
 async function migrate() {
