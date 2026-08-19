@@ -1,3 +1,18 @@
+/**
+ * LEGACY / REFERENCE ONLY
+ * ----------------------------------------------------------------------------
+ * NOTE: This standalone TCP proxy server on port 5432 is NO LONGER invoked by
+ * `start_all.bat` or any live application runtime service.
+ *
+ * ExamOS has unified its database access layer to use embedded `pgDb` (PGlite)
+ * directly in-process within `apps/api` (zero TCP overhead, zero port conflicts,
+ * and zero multi-process file locking collisions).
+ *
+ * This file is retained solely for standalone debugging or external PostgreSQL
+ * GUI clients (e.g., DBeaver / pgAdmin) when the API server is offline.
+ * ----------------------------------------------------------------------------
+ */
+
 const { PGlite } = require('@electric-sql/pglite');
 const { createVirtualServer } = require('pg-gateway');
 
@@ -38,6 +53,6 @@ const server = createVirtualServer({
 const PORT = 5432;
 server.listen(PORT, () => {
   console.log(`====================================================`);
-  console.log(` Native PostgreSQL 16 Engine running on port ${PORT}`);
+  console.log(` [DEBUG/LEGACY] PostgreSQL 16 Engine running on port ${PORT}`);
   console.log(`====================================================`);
 });

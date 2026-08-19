@@ -1,8 +1,5 @@
-import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 import { pgDb } from '../src/index';
-
-const prisma = new PrismaClient();
 
 export const PERMISSIONS = [
   { id: 'p1', key: 'users.create', description: 'Create user accounts', module: 'users' },
@@ -2460,12 +2457,63 @@ export async function runSeed() {
     }
   }
 
+  console.log('8. Seeding standard authentic JEE Main Exam Pattern blueprint...');
+  await pgDb.query(`
+    INSERT INTO "exam_patterns" (
+      "id", "name", "courseId", "durationMinutes", "description", "status", "type", "totalMarks", "version", "createdById", "createdAt", "updatedAt"
+    ) VALUES (
+      'pat_jee_main_standard',
+      'JEE Main Grand Blueprint (PCM)',
+      'c1',
+      180,
+      'Standard 3-hour examination covering Physics, Chemistry, and Mathematics (30 questions each, +4 / -1)',
+      'PUBLISHED',
+      'MULTI',
+      300.0,
+      1,
+      'usr_admin_test',
+      CURRENT_TIMESTAMP,
+      CURRENT_TIMESTAMP
+    ) ON CONFLICT ("id") DO UPDATE SET
+      "name" = EXCLUDED."name",
+      "status" = 'PUBLISHED',
+      "totalMarks" = 300.0
+  `);
+
+  for (const sub of [{ id: 'sub_phy', marks: 100 }, { id: 'sub_chem', marks: 100 }, { id: 'sub_math', marks: 100 }]) {
+    await pgDb.query(`
+      INSERT INTO "exam_pattern_subjects" ("examPatternId", "subjectId", "targetMarks")
+      VALUES ('pat_jee_main_standard', $1, $2)
+      ON CONFLICT ("examPatternId", "subjectId") DO UPDATE SET "targetMarks" = EXCLUDED."targetMarks"
+    `, [sub.id, sub.marks]);
+  }
+
+  const baselineSections = [
+    { id: 'sec_jee_phy', name: 'Section A: Physics', subjectId: 'sub_phy', numQ: 10, marks: 4.0, wrong: -1.0, order: 1 },
+    { id: 'sec_jee_chem', name: 'Section B: Chemistry', subjectId: 'sub_chem', numQ: 10, marks: 4.0, wrong: -1.0, order: 2 },
+    { id: 'sec_jee_math', name: 'Section C: Mathematics', subjectId: 'sub_math', numQ: 10, marks: 4.0, wrong: -1.0, order: 3 },
+  ];
+
+  for (const s of baselineSections) {
+    await pgDb.query(`
+      INSERT INTO "exam_pattern_sections" (
+        "id", "examPatternId", "subjectId", "name", "sequenceOrder", "numQuestions", "marksPerQuestion", "totalMarks", "marksCorrect", "marksWrong", "marksUnattempted", "createdAt", "updatedAt"
+      ) VALUES ($1, 'pat_jee_main_standard', $2, $3, $4, $5, $6, $7, $8, $9, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      ON CONFLICT ("id") DO UPDATE SET
+        "name" = EXCLUDED."name",
+        "numQuestions" = EXCLUDED."numQuestions",
+        "marksPerQuestion" = EXCLUDED."marksPerQuestion",
+        "totalMarks" = EXCLUDED."totalMarks"
+    `, [s.id, s.subjectId, s.name, s.order, s.numQ, s.marks, s.numQ * s.marks, s.marks, s.wrong]);
+  }
+
   console.log('================================================================');
   console.log(`✅ DATABASE SEED COMPLETE:`);
-  console.log(`   - Courses: ${SEED_COURSES.length}`);
+  console.log(`   - Courses: ${SEED_COURSES.length} (Engineering Entrance & Medical Foundation)`);
   console.log(`   - Subjects: ${SEED_SUBJECTS.length} (Physics, Chemistry, Mathematics, Biology)`);
-  console.log(`   - Topics: ${SEED_TOPICS.length}`);
-  console.log(`   - Questions: ${questionCount} published questions seeded across all topics & difficulties (EASY, MEDIUM, HARD)`);
+  console.log(`   - Topics: ${SEED_TOPICS.length} syllabus topics`);
+  console.log(`   - Questions: ${questionCount} published questions seeded across all 12 topics (10 per topic: 3 EASY, 4 MEDIUM, 3 HARD)`);
+  console.log(`   - Blueprints: 1 standard authentic JEE Main Grand Blueprint (pat_jee_main_standard) with 3 sections`);
   console.log(`   - Languages: ${BASELINE_LANGUAGES.length} (Full 23-language Indian baseline)`);
   console.log(`   - Translations: ${totalTranslationsSeeded}`);
   console.log('================================================================');
@@ -2473,11 +2521,11 @@ export async function runSeed() {
 
 if (require.main === module) {
   runSeed()
+    .then(() => {
+      process.exit(0);
+    })
     .catch((e) => {
       console.error(e);
       process.exit(1);
-    })
-    .finally(async () => {
-      await prisma.$disconnect();
     });
 }

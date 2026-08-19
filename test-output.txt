@@ -1,0 +1,151 @@
+====================================================
+ EXAMOS PHASE 1 (FOUNDATION) — MASTER TEST SUITE
+ Testing Features 1.1 to 1.12 & Section 7 Security Gate
+====================================================
+
+[PASS] 1.1-U1 — Monorepo pnpm workspace & turbo config
+[PASS] 1.1-U2 — TypeScript base config has strict: true
+[PASS] 1.2-U1 — Prisma Schema definitions for core entities
+[PASS] 1.2-U2 — Prisma client singleton export
+[PASS] 1.3-U1 — @repo/types exports AuthContext and DTOs
+[PASS] 1.4-U1 — @repo/validation Zod schemas
+[PASS] 1.5-U1 — @repo/permissions atomic permissions & helper
+[PASS] 1.6-U1 — Authentication endpoints (login, refresh, logout, me)
+[PASS] 1.7-U1 — User CRUD endpoints with IDOR ownership checks
+[PASS] 1.8-U1 — Role & Permission management endpoints
+[PASS] 1.9-U1 — Audit logging endpoints & middleware
+[PASS] 1.10-U1 — API Middleware Stack assembly
+[PASS] 1.11-U1 — Frontend Foundation App & Vite setup
+[PASS] 1.12-U1 — 3-Theme Switcher (LIGHT, GRAY slate, DARK)
+[PASS] 1.12-U2 — 23-Language Database-Driven Multilingual Engine (ADR-013)
+[PASS] SEC-01 — Security Gate: Ownership vs. Permission IDOR Separation
+[PASS] SEC-02 — Security Gate: JWT Revocation & Refresh Rotation
+[PASS] SEC-03 — Security Gate: 100% Request Validation Pipeline
+
+====================================================
+ Master Test Results: 18/18 Passed
+====================================================
+
+====================================================
+ EXAMOS PHASE 2 (ACADEMIC STRUCTURE) — MASTER TEST SUITE
+ Testing Features 2.1 to 2.6
+====================================================
+
+[PASS] 2.1-U1 — Course Schema & DTO definitions
+[PASS] 2.1-U2 — Course CRUD API Endpoints & State Machine Validation
+[PASS] 2.2-U1 — Subject Schema & Unique Constraints
+[PASS] 2.2-U2 — Subject CRUD API Endpoints
+[PASS] 2.3-U1 — SyllabusNode Adjacency List & Depth Constraints
+[PASS] 2.3-U2 — Syllabus Tree API, Max Depth & Cyclic Check
+[PASS] 2.4-U1 — Syllabus Node Metadata & Student Visibility Filter
+[PASS] 2.5-U1 — Frontend Admin Layout & Academic Component Integration
+[PASS] 2.6-U1 — Enrollment Schema & Unique Constraint
+[PASS] 2.6-U2 — Enrollment API Endpoints & Duplicate Prevention
+
+====================================================
+ Phase 2 Master Test Results: 10/10 Passed
+====================================================
+
+====================================================
+ EXAMOS PHASE 3 (QUESTION BANK) — MASTER TEST SUITE
+ Testing Features 3.1 to 3.8
+====================================================
+
+[PASS] 3.1-U1 — Question Type System & Built-in Handlers
+[PASS] 3.2-U1 — Question Schema & DTO definitions
+[PASS] 3.2-U2 — Question CRUD API Endpoints & Filter Queries
+[PASS] 3.3-U1 — Question Versioning & Rollback Logic
+[PASS] 3.4-U1 — Question Tag System & Autocomplete Endpoint
+[PASS] 3.5-U1 — Question Lifecycle State Machine Validation
+[PASS] 3.6-U1 — Previous Exam Usage History Tracking
+[PASS] 3.7-U1 — Frontend Question Bank Integration
+[PASS] 3.8-U1 — Question Bank Analytics & Syllabus Coverage Calculation
+
+====================================================
+ Phase 3 Master Test Results: 9/9 Passed
+====================================================
+
+◇ injected env (0) from .env // tip: ⌘ override existing { override: true }
+====================================================
+ EXAMOS PHASE 4 (EXAM PATTERN) — MASTER TEST SUITE
+ Testing Features 4.1 to 4.10
+====================================================
+
+[PASS] 4.1-U1 — Create single subject exam pattern (Status: DRAFT)
+[PASS] 4.1-U2 — List exam patterns with pagination & filters
+[PASS] 4.1-U3 — Get pattern details by ID
+[PASS] 4.1-U4 — Transition pattern DRAFT -> PUBLISHED
+[PASS] 4.1-U5 — Block deleting PUBLISHED exam pattern (409 Conflict)
+[PASS] 4.2-U1 — Add Section A with auto-calculated section total marks (20 × 4 = 80)
+[PASS] 4.2-U2 — Add Section B (10 × 4 = 40)
+[PASS] 4.2-U3 — Pattern total marks auto-recomputed across sections (80 + 40 = 120)
+[PASS] 4.2-U4 — Reorder sections sequence order via API
+[PASS] 4.3-U1 — Set Section Question Rules (MCQ, RANDOM, tags)
+[PASS] 4.3-U2 — Fetch persisted Section Question Rules
+[PASS] 4.4-U1 — Set valid COUNT topic distribution (10 + 10 = 20 total questions)
+[PASS] 4.4-U2 — Reject topic count sum discrepancy (5+5 != 20) with 400 Bad Request
+[PASS] 4.5-U1 — Set valid PERCENT difficulty distribution (30% + 50% + 20% = 100%)
+[PASS] 4.5-U2 — Accept 3-way floating-point percentage split (33.33 + 33.33 + 33.34 = 100%)
+[PASS] 4.5-U3 — Reject invalid difficulty percent sum (!= 100%) with 400 Bad Request
+[PASS] 4.6-U1 — Configure negative marking scheme (+4 / -1 / 0)
+[PASS] 4.6-U2 — Reject marksCorrect mismatch with section marksPerQuestion (5.0 != 4.0)
+[PASS] 4.7-U1 — Multi-Subject allocation and section mapping
+[PASS] 4.8-U1 — Execute Validation Engine against Question Bank
+[PASS] 4.9-U1 — Editing PUBLISHED pattern auto-increments version and saves snapshot
+[PASS] 4.9-U2 — Fetch pattern entity version history snapshot
+[PASS] 4.10-U1 — State Check: showCreateModal is declared
+[PASS] 4.10-U2 — Trigger Check: "+ Create Exam Pattern" button toggles showCreateModal(true)
+[PASS] 4.10-U3 — DOM Render Check: {showCreateModal && (...)} conditional block exists in JSX
+[PASS] 4.10-U4 — Form Handler Check: Create Pattern form connected to handleCreatePattern submit handler
+
+====================================================
+ Phase 4 Master Test Results: 26/26 Passed
+====================================================
+
+
+◇ injected env (4) from Exam\.env // tip: ⌘ override existing { override: true }
+====================================================
+ EXAMOS PHASE 5 (EXAM GENERATOR) — MASTER TEST SUITE
+ Testing Features 5.1 to 5.4
+====================================================
+
+--- Setting up Test Exam Pattern Blueprint ---
+Blueprint setup complete! Pattern ID: pat_1787157213885_3cyl9
+
+--- Feature 5.1: Exam Generation Engine ---
+ [PASS] 5.1-U1: Generate basic exam from blueprint (Status: DRAFT)
+ [PASS] 5.1-U2: Questions accurately balanced and allocated across sections
+ [PASS] 5.1-U3: Duplicate prevention verified (100% unique question IDs across paper)
+ [PASS] 5.1-U4: Insufficient questions handled gracefully with 422 INSUFFICIENT_QUESTIONS error
+ [PASS] 5.1-U5: SubAdmin role authorized to execute exam generation
+
+--- Feature 5.2: Draft Exam Inspection & Editing ---
+ [PASS] 5.2-U1: Retrieve draft exam inspection details and distribution statistics
+ [PASS] 5.2-U2: Question swap replaces item and updates section structure
+ [PASS] 5.2-U3: Duplicate question rejected on swap attempt (409 Conflict)
+ [PASS] 5.2-U4: Regenerate section replaces all section questions according to rules
+ [PASS] 5.2-U5: Manual question reordering updates sequenceOrder indices
+
+--- Feature 5.3: Exam Metadata & Publishing ---
+ [PASS] 5.3-U1: Update operational metadata (name, duration, instructions, schedule)
+ [PASS] 5.3-U2: Scheduling validator rejects end time earlier than start time
+ [PASS] 5.3-U3: Finalize exam transitions DRAFT -> PUBLISHED and saves snapshot
+ [PASS] 5.3-U4: Modifications blocked on PUBLISHED exam to guarantee academic integrity
+
+--- Feature 5.4: Manual Exam Creation ---
+ [PASS] 5.4-U1: Create blank manual exam without pattern blueprint
+ [PASS] 5.4-U2: Add manual section with custom scoring scheme
+ [PASS] 5.4-U3: Add specific questions from bank directly and auto-recalculate totals
+ [PASS] 5.4-U4: Reject duplicate question in manual exam (409 Conflict)
+
+====================================================
+ Phase 5 Master Test Results: 18/18 Passed
+====================================================
+
+
+--- TEARDOWN: Cleaning up test fixtures ---
+ [TEARDOWN] Deleted test exam: exam_1787157213951_up0rv (Status: 200)
+ [TEARDOWN] Deleted test exam: exam_1787157214166_plw4a (Status: 200)
+ [TEARDOWN] Deleted test exam: exam_1787157214407_uy9r9 (Status: 200)
+ [TEARDOWN] Deleted test pattern: pat_1787157213885_3cyl9 (Status: 204)
+
