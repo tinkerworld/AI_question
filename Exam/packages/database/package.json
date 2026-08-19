@@ -11,7 +11,7 @@
     "db:seed": "ts-node --transpile-only prisma/seed.ts"
   },
   "dependencies": {
-    "@prisma/client": "^5.11.0"
+    "@electric-sql/pglite": "^0.5.5"
   },
   "devDependencies": {
     "@repo/permissions": "workspace:*",

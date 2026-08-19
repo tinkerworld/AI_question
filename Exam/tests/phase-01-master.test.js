@@ -46,9 +46,9 @@ test('1.2-U1', 'Prisma Schema definitions for core entities', () => {
   assert.ok(schema.includes('model EntityVersion'));
 });
 
-test('1.2-U2', 'Prisma client singleton export', () => {
+test('1.2-U2', 'Database client singleton export', () => {
   const dbIndex = fs.readFileSync(path.join(rootDir, 'packages/database/src/index.ts'), 'utf8');
-  assert.ok(dbIndex.includes('export const prisma'));
+  assert.ok(dbIndex.includes('export const pgDb'));
 });
 
 // Feature 1.3 Tests

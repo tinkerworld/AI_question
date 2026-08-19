@@ -13,6 +13,7 @@
 
 ### 1.1 In-Process PostgreSQL 16 Engine (`pgDb`)
 ExamOS unifies all database operations onto `@electric-sql/pglite` (embedded WebAssembly PostgreSQL 16 engine).
+- **Explicit Dependency**: `@electric-sql/pglite` (version `^0.5.5`) is explicitly defined in [`packages/database/package.json:14`](file:///D:/Download/Company/Software/Test%20os/Exam/Exam/packages/database/package.json#L14) and tracked in [`pnpm-lock.yaml`](file:///D:/Download/Company/Software/Test%20os/Exam/Exam/pnpm-lock.yaml).
 - **Primary Live Engine**: All active Express API routes query [`pgDb`](file:///D:/Download/Company/Software/Test%20os/Exam/Exam/packages/database/src/index.ts#L41) directly:
   - [`course.routes.ts`](file:///D:/Download/Company/Software/Test%20os/Exam/Exam/apps/api/src/routes/course.routes.ts#L2): lines 27, 47, 65, 87, 107.
   - [`subject.routes.ts`](file:///D:/Download/Company/Software/Test%20os/Exam/Exam/apps/api/src/routes/subject.routes.ts#L2): lines 26, 46, 64, 87, 107.
@@ -24,8 +25,9 @@ ExamOS unifies all database operations onto `@electric-sql/pglite` (embedded Web
   - [`question.routes.ts`](file:///D:/Download/Company/Software/Test%20os/Exam/Exam/apps/api/src/routes/question.routes.ts#L2): lines 27, 30, 38, 46, 74, 121, 153, 172, 185, 190, 195, 200, 222, 237, 248, 260, 273, 290, 298, 306, 342, 349, 375, 388, 403-406.
   - [`exam.routes.ts`](file:///D:/Download/Company/Software/Test%20os/Exam/Exam/apps/api/src/routes/exam.routes.ts#L2): lines 30, 53, 76, 99, 122, 145, 168, 191, 214, 237, 260, 283, 306, 329.
 - **Zero TCP / Port 5432 Dependencies**: Zero runtime endpoints connect through an external TCP port 5432 daemon.
-- **Dead Code Audit**:
-  - `export const prisma = new PrismaClient()` in [`packages/database/src/index.ts`](file:///D:/Download/Company/Software/Test%20os/Exam/Exam/packages/database/src/index.ts#L46) is retained exclusively as a static export to satisfy Phase 1 test assertion Test 1.2-U2 in [`tests/phase-01-master.test.js`](file:///D:/Download/Company/Software/Test%20os/Exam/Exam/tests/phase-01-master.test.js#L49-L52). Zero runtime API handlers invoke `prisma`.
+- **Dead Code Cleanup**:
+  - Fully removed `export const prisma = new PrismaClient()` and `@prisma/client` from [`packages/database/src/index.ts`](file:///D:/Download/Company/Software/Test%20os/Exam/Exam/packages/database/src/index.ts).
+  - Updated Test 1.2-U2 in [`tests/phase-01-master.test.js:49-52`](file:///D:/Download/Company/Software/Test%20os/Exam/Exam/tests/phase-01-master.test.js#L49-L52) to assert `export const pgDb` (the unified in-process database singleton). The server now boots cleanly on fresh installs with 0 `prisma generate` dependencies.
   - [`tools/postgres-server.js`](file:///D:/Download/Company/Software/Test%20os/Exam/tools/postgres-server.js#L1-L12) is removed from [`start_all.bat`](file:///D:/Download/Company/Software/Test%20os/Exam/start_all.bat#L1-L30) and marked with a top-level notice as legacy/reference-only for offline debugging.
 
 ### 1.2 Multi-Process Lock Collision & PID Auto-Cleanup

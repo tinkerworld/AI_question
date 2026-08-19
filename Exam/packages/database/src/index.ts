@@ -1,4 +1,3 @@
-import { PrismaClient } from '@prisma/client';
 import { PGlite } from '@electric-sql/pglite';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -40,9 +39,3 @@ if (fs.existsSync(pidFile)) {
 
 // Primary in-process PostgreSQL 16 engine for all runtime services and routes
 export const pgDb = new PGlite(dbPath);
-
-// Compatibility export retained for Phase 1 architectural contract (Test 1.2-U2).
-// All active API routes and services query pgDb directly.
-export const prisma = new PrismaClient();
-export * from '@prisma/client';
-

@@ -21,6 +21,7 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
+    "@electric-sql/pglite": "^0.5.5",
     "@prisma/client": "^5.11.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.19",

@@ -6,7 +6,7 @@
 [PASS] 1.1-U1 — Monorepo pnpm workspace & turbo config
 [PASS] 1.1-U2 — TypeScript base config has strict: true
 [PASS] 1.2-U1 — Prisma Schema definitions for core entities
-[PASS] 1.2-U2 — Prisma client singleton export
+[PASS] 1.2-U2 — Database client singleton export
 [PASS] 1.3-U1 — @repo/types exports AuthContext and DTOs
 [PASS] 1.4-U1 — @repo/validation Zod schemas
 [PASS] 1.5-U1 — @repo/permissions atomic permissions & helper
@@ -65,7 +65,7 @@
  Phase 3 Master Test Results: 9/9 Passed
 ====================================================
 
-◇ injected env (0) from .env // tip: ◈ encrypted .env [www.dotenvx.com]
+◇ injected env (0) from .env // tip: ⌘ override existing { override: true }
 ====================================================
  EXAMOS PHASE 4 (EXAM PATTERN) — MASTER TEST SUITE
  Testing Features 4.1 to 4.10
@@ -103,14 +103,14 @@
 ====================================================
 
 
-◇ injected env (4) from Exam\.env // tip: ⌘ suppress logs { quiet: true }
+◇ injected env (4) from Exam\.env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
 ====================================================
  EXAMOS PHASE 5 (EXAM GENERATOR) — MASTER TEST SUITE
  Testing Features 5.1 to 5.4
 ====================================================
 
 --- Setting up Test Exam Pattern Blueprint ---
-Blueprint setup complete! Pattern ID: pat_1787168768505_wqggp
+Blueprint setup complete! Pattern ID: pat_1787169599958_z9fkj
 
 --- Feature 5.1: Exam Generation Engine ---
  [PASS] 5.1-U1: Generate basic exam from blueprint (Status: DRAFT)
@@ -144,8 +144,8 @@ Blueprint setup complete! Pattern ID: pat_1787168768505_wqggp
 
 
 --- TEARDOWN: Cleaning up test fixtures ---
- [TEARDOWN] Deleted test exam: exam_1787168768565_o860k (Status: 200)
- [TEARDOWN] Deleted test exam: exam_1787168768730_slaby (Status: 200)
- [TEARDOWN] Deleted test exam: exam_1787168768964_91k3h (Status: 200)
- [TEARDOWN] Deleted test pattern: pat_1787168768505_wqggp (Status: 204)
+ [TEARDOWN] Deleted test exam: exam_1787169600049_88e20 (Status: 200)
+ [TEARDOWN] Deleted test exam: exam_1787169600221_fji2y (Status: 200)
+ [TEARDOWN] Deleted test exam: exam_1787169600457_pg6hb (Status: 200)
+ [TEARDOWN] Deleted test pattern: pat_1787169599958_z9fkj (Status: 204)
 
