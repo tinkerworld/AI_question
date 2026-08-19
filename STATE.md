@@ -1,6 +1,6 @@
 # ExamOS Build State
 
-**Last updated:** 2026-08-19T22:30:00+05:30  
+**Last updated:** 2026-08-20T01:18:00+05:30  
 **Current phase:** Phase 5 — Exam Generator (with Phase 2 & 3 Frontend Workbenches Completed)  
 **Task Status:**
 - **Task 2.5 (Course-Subject-Syllabus Frontend)**: `tested` in [`tools/build-tracker/state.json:154-160`](file:///D:/Download/Company/Software/Test%20os/Exam/tools/build-tracker/state.json#L154-L160) (Implemented, end-to-end wired, pending reviewer sign-off).
@@ -83,11 +83,44 @@ ExamOS unifies all database operations onto `@electric-sql/pglite` (embedded Web
 - **Component**: [`apps/web/src/pages/CoursesPage.tsx`](file:///D:/Download/Company/Software/Test%20os/Exam/Exam/apps/web/src/pages/CoursesPage.tsx) (Wired in [`App.tsx:212`](file:///D:/Download/Company/Software/Test%20os/Exam/Exam/apps/web/src/App.tsx#L212)).
 - **Implemented Features**:
   1. **Central Course Listing**: Displays all courses with codes, descriptions, and statuses (`DRAFT`, `PUBLISHED`, `ARCHIVED`). Consumes `GET /api/v1/courses`, `POST /api/v1/courses`, `PATCH /api/v1/courses/:id`, and `DELETE /api/v1/courses/:id`.
-  2. **Course Detail View & Subject Management**: Two-pane workbench with breadcrumb navigation (`Courses > [Course] > [Subject]`). Lists subjects and provides modals to add/edit/delete subjects under a course via `GET/POST /api/v1/courses/:courseId/subjects` and `PATCH/DELETE /api/v1/courses/subject/:id`.
+  2. **Course Detail View & Subject Management**: Two-pane workbench with breadcrumb navigation (`Courses > [Course] > [Subject]`). Lists subjects and provides modals to add/edit/delete subjects under a course via `GET/POST /api/v1/courses/:courseId/subjects` and `PATCH/DELETE /api/v1/subject/:id`.
   3. **Expandable/Collapsible 4-Level Syllabus Tree**: Visual tree renderer for `UNIT` (Level 0), `TOPIC` (Level 1), `SUBTOPIC` (Level 2), and `CONCEPT` (Level 3) consuming `GET /api/v1/syllabus/tree?subjectId=...`. Includes depth badges, estimated minutes, and collapsible chevrons.
   4. **Syllabus Node Authoring & Metadata Editing**: Modals to create and edit syllabus nodes (title, type, description, estimated minutes, learning objectives, status, tags) consuming `POST /api/v1/subjects/:subjectId/syllabus` and `PATCH /api/v1/syllabus/node/:id`.
   5. **Node Reordering**: Up/Down reordering controls calling `PATCH /api/v1/syllabus/node/:id/reorder` with `{ parentId, orderIndex }`.
   6. **Node Deletion**: Deletes nodes via `DELETE /api/v1/syllabus/node/:id`.
+
+### 3.3 Routing Bug Fix & Complete Frontend URL Cross-Check
+A routing path mismatch in [`CoursesPage.tsx`](file:///D:/Download/Company/Software/Test%20os/Exam/Exam/apps/web/src/pages/CoursesPage.tsx) was identified and resolved:
+- **Subject Edit**:
+  - *Before*: `PATCH http://localhost:4000/api/v1/courses/subject/${editingSubject.id}` (404 Not Found)
+  - *After*: `PATCH http://localhost:4000/api/v1/subject/${editingSubject.id}` ([`CoursesPage.tsx:310`](file:///D:/Download/Company/Software/Test%20os/Exam/Exam/apps/web/src/pages/CoursesPage.tsx#L310), matches `server.ts:49` -> `subject.routes.ts:90`)
+- **Subject Delete**:
+  - *Before*: `DELETE http://localhost:4000/api/v1/courses/subject/${subjectId}` (404 Not Found)
+  - *After*: `DELETE http://localhost:4000/api/v1/subject/${subjectId}` ([`CoursesPage.tsx:348`](file:///D:/Download/Company/Software/Test%20os/Exam/Exam/apps/web/src/pages/CoursesPage.tsx#L348), matches `server.ts:49` -> `subject.routes.ts:114`)
+
+**Full Frontend URL Audit Table**:
+| Caller / Line | Method & URL | Mount in `server.ts` | Route Handler in Controller | Verified Status |
+| :--- | :--- | :--- | :--- | :--- |
+| `CoursesPage.tsx:107` | `GET /api/v1/courses` | `server.ts:47` (`/api/v1/courses`) | `course.routes.ts:18` (`/`) | ✅ Verified (200 OK) |
+| `CoursesPage.tsx:127` | `GET /api/v1/courses/:id/subjects` | `server.ts:48` (`/api/v1/courses/:courseId/subjects`) | `subject.routes.ts:18` (`/`) | ✅ Verified (200 OK) |
+| `CoursesPage.tsx:153` | `GET /api/v1/syllabus/tree?subjectId=...` | `server.ts:51` (`/api/v1/syllabus`) | `syllabus.routes.ts:58` (`/tree`) | ✅ Verified (200 OK) |
+| `CoursesPage.tsx:216` | `PATCH /api/v1/courses/:id` | `server.ts:47` (`/api/v1/courses`) | `course.routes.ts:87` (`/:id`) | ✅ Verified (200 OK) |
+| `CoursesPage.tsx:230` | `POST /api/v1/courses` | `server.ts:47` (`/api/v1/courses`) | `course.routes.ts:48` (`/`) | ✅ Verified (201 Created) |
+| `CoursesPage.tsx:254` | `DELETE /api/v1/courses/:id` | `server.ts:47` (`/api/v1/courses`) | `course.routes.ts:107` (`/:id`) | ✅ Verified (200 OK) |
+| `CoursesPage.tsx:310` | `PATCH /api/v1/subject/:id` | `server.ts:49` (`/api/v1`) | `subject.routes.ts:90` (`/subject/:id`) | ✅ Verified (200 OK) |
+| `CoursesPage.tsx:324` | `POST /api/v1/courses/:id/subjects` | `server.ts:48` (`/api/v1/courses/:courseId/subjects`) | `subject.routes.ts:47` (`/`) | ✅ Verified (201 Created) |
+| `CoursesPage.tsx:348` | `DELETE /api/v1/subject/:id` | `server.ts:49` (`/api/v1`) | `subject.routes.ts:114` (`/subject/:id`) | ✅ Verified (200 OK) |
+| `CoursesPage.tsx:423` | `PATCH /api/v1/syllabus/node/:id` | `server.ts:51` (`/api/v1/syllabus`) | `syllabus.routes.ts:137` (`/node/:id`) | ✅ Verified (200 OK) |
+| `CoursesPage.tsx:438` | `POST /api/v1/subjects/:id/syllabus` | `server.ts:50` (`/api/v1/subjects/:subjectId/syllabus`) | `syllabus.routes.ts:84` (`/`) | ✅ Verified (201 Created) |
+| `CoursesPage.tsx:462` | `DELETE /api/v1/syllabus/node/:id` | `server.ts:51` (`/api/v1/syllabus`) | `syllabus.routes.ts:208` (`/node/:id`) | ✅ Verified (200 OK) |
+| `CoursesPage.tsx:483` | `PATCH /api/v1/syllabus/node/:id/reorder`| `server.ts:51` (`/api/v1/syllabus`) | `syllabus.routes.ts:177` (`/node/:id/reorder`) | ✅ Verified (200 OK) |
+
+**Live Roundtrip Verification**:
+Real network roundtrips were executed against a running API server:
+1. `POST /api/v1/courses/:courseId/subjects` -> **201 Created** (persisted `sub_c99937b4cec6f35b`).
+2. `GET /api/v1/courses/:courseId/subjects` -> **200 OK** (retrieved array with subject).
+3. `PATCH /api/v1/subject/:id` -> **200 OK** (updated name to `"Theoretical Astrophysics & General Relativity"`).
+4. `DELETE /api/v1/subject/:id` -> **200 OK** (message: `"Subject deleted successfully"`).
 
 ---
 
@@ -96,13 +129,14 @@ ExamOS unifies all database operations onto `@electric-sql/pglite` (embedded Web
 | Item | Context | Status / Resolution |
 | :--- | :--- | :--- |
 | **Task 2.5 & Task 3.7 Frontend State** | Phase 2 and Phase 3 Frontend tasks previously marked deferred | **Resolved**: Full interactive workbenches implemented in [`CoursesPage.tsx`](file:///D:/Download/Company/Software/Test%20os/Exam/Exam/apps/web/src/pages/CoursesPage.tsx) and [`QuestionBankPage.tsx`](file:///D:/Download/Company/Software/Test%20os/Exam/Exam/apps/web/src/pages/QuestionBankPage.tsx), wired into [`App.tsx`](file:///D:/Download/Company/Software/Test%20os/Exam/Exam/apps/web/src/App.tsx). Tasks 2.5 and 3.7 updated to `tested` in `state.json`. |
+| **Routing URL Correction** | Subject Edit/Delete URLs had extra `courses/` prefix | **Resolved**: Fixed to `PATCH /api/v1/subject/:id` and `DELETE /api/v1/subject/:id` in `CoursesPage.tsx`. Full audit performed. |
 | **Backend Gap: Bulk Operations** | Feature 3.7 spec mentions bulk tagging / bulk status changes | **Documented Gap**: Dedicated atomic bulk endpoints (`POST /api/v1/questions/bulk-tag` and `PATCH /api/v1/questions/bulk-status`) are absent from `question.routes.ts`. The UI provides per-question status transitions and tag inspection without faking non-existent bulk endpoints. |
 
 ---
 
 ## 5. Live Master Test Results (Cold Run Evidence)
 
-Raw execution output from executing all 5 master test suites sequentially against a freshly seeded embedded PostgreSQL instance is captured in [`test-output.txt`](file:///D:/Download/Company/Software/Test%20os/Exam/test-output.txt) (7,947 bytes).
+Raw execution output from executing all 5 master test suites sequentially against a freshly seeded embedded PostgreSQL instance is captured in [`test-output.txt`](file:///D:/Download/Company/Software/Test%20os/Exam/test-output.txt) (7,940 bytes).
 
 | Test Suite | File | Tests Run | Result |
 | :--- | :--- | :--- | :--- |

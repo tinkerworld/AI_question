@@ -307,7 +307,7 @@ export const CoursesPage: React.FC = () => {
       };
 
       if (editingSubject) {
-        const res = await fetch(`http://localhost:4000/api/v1/courses/subject/${editingSubject.id}`, {
+        const res = await fetch(`http://localhost:4000/api/v1/subject/${editingSubject.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify(payload),
@@ -345,7 +345,7 @@ export const CoursesPage: React.FC = () => {
     if (!window.confirm('Delete this subject and all its syllabus tree nodes?')) return;
     try {
       setError(null);
-      const res = await fetch(`http://localhost:4000/api/v1/courses/subject/${subjectId}`, {
+      const res = await fetch(`http://localhost:4000/api/v1/subject/${subjectId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
