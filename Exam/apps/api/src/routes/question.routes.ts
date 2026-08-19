@@ -169,6 +169,13 @@ router.post(
         ]
       );
 
+      const vId = `qv_${crypto.randomBytes(8).toString('hex')}`;
+      await pgDb.query(
+        `INSERT INTO "question_versions" ("id", "questionId", "version", "content", "data", "difficulty", "marks", "changedById", "createdAt")
+         VALUES ($1, $2, 1, $3, $4, $5, $6, $7, NOW())`,
+        [vId, qId, content, payloadData, difficulty || 'MEDIUM', marks || 1.0, req.user!.userId]
+      );
+
       const createdRes = await pgDb.query(`SELECT * FROM "questions" WHERE "id" = $1`, [qId]);
 
       res.status(201).json({ success: true, data: createdRes.rows[0] });

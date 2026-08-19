@@ -65,7 +65,7 @@
  Phase 3 Master Test Results: 9/9 Passed
 ====================================================
 
-◇ injected env (0) from .env // tip: ⌘ override existing { override: true }
+◇ injected env (0) from .env // tip: ⌁ auth for agents [www.vestauth.com]
 ====================================================
  EXAMOS PHASE 4 (EXAM PATTERN) — MASTER TEST SUITE
  Testing Features 4.1 to 4.10
@@ -103,14 +103,14 @@
 ====================================================
 
 
-◇ injected env (4) from Exam\.env // tip: ⌘ override existing { override: true }
+◇ injected env (4) from Exam\.env // tip: ⌁ auth for agents [www.vestauth.com]
 ====================================================
  EXAMOS PHASE 5 (EXAM GENERATOR) — MASTER TEST SUITE
  Testing Features 5.1 to 5.4
 ====================================================
 
 --- Setting up Test Exam Pattern Blueprint ---
-Blueprint setup complete! Pattern ID: pat_1787157213885_3cyl9
+Blueprint setup complete! Pattern ID: pat_1787158739855_i71hi
 
 --- Feature 5.1: Exam Generation Engine ---
  [PASS] 5.1-U1: Generate basic exam from blueprint (Status: DRAFT)
@@ -144,8 +144,8 @@ Blueprint setup complete! Pattern ID: pat_1787157213885_3cyl9
 
 
 --- TEARDOWN: Cleaning up test fixtures ---
- [TEARDOWN] Deleted test exam: exam_1787157213951_up0rv (Status: 200)
- [TEARDOWN] Deleted test exam: exam_1787157214166_plw4a (Status: 200)
- [TEARDOWN] Deleted test exam: exam_1787157214407_uy9r9 (Status: 200)
- [TEARDOWN] Deleted test pattern: pat_1787157213885_3cyl9 (Status: 204)
+ [TEARDOWN] Deleted test exam: exam_1787158739910_v391s (Status: 200)
+ [TEARDOWN] Deleted test exam: exam_1787158740041_jpg7w (Status: 200)
+ [TEARDOWN] Deleted test exam: exam_1787158740234_fokcr (Status: 200)
+ [TEARDOWN] Deleted test pattern: pat_1787158739855_i71hi (Status: 204)
 

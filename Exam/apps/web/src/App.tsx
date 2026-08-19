@@ -7,6 +7,8 @@ import { LanguageSelector } from './components/LanguageSelector';
 import { LoginPage } from './pages/LoginPage';
 import { ExamPatternsPage } from './pages/ExamPatternsPage';
 import { ExamsPage } from './pages/ExamsPage';
+import { QuestionBankPage } from './pages/QuestionBankPage';
+import { CoursesPage } from './pages/CoursesPage';
 import './styles/theme.css';
 
 const MainLayout: React.FC = () => {
@@ -196,18 +198,40 @@ const MainLayout: React.FC = () => {
                   cursor: 'pointer',
                 }}
               >
-                {item === 'exams' ? 'Exam Generator & Papers' : t(item)}
+                {item === 'exams'
+                  ? 'Exam Generator & Papers'
+                  : item === 'question_bank'
+                  ? 'Question Bank'
+                  : item === 'courses'
+                  ? 'Academic Structure'
+                  : t(item)}
               </div>
             ))}
           </nav>
         </aside>
 
         {/* Content Body */}
-        <main style={{ flex: 1, padding: activeTab === 'exams' || activeTab === 'exam_patterns' ? '0' : '28px', display: 'flex' }}>
+        <main
+          style={{
+            flex: 1,
+            padding:
+              activeTab === 'exams' ||
+              activeTab === 'exam_patterns' ||
+              activeTab === 'question_bank' ||
+              activeTab === 'courses'
+                ? '0'
+                : '28px',
+            display: 'flex',
+          }}
+        >
           {activeTab === 'exams' ? (
             <ExamsPage />
           ) : activeTab === 'exam_patterns' ? (
             <ExamPatternsPage />
+          ) : activeTab === 'question_bank' ? (
+            <QuestionBankPage />
+          ) : activeTab === 'courses' ? (
+            <CoursesPage />
           ) : (
             <div
               style={{
