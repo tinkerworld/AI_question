@@ -1,6 +1,7 @@
 const { PGlite } = require('@electric-sql/pglite');
 const path = require('path');
 const fs = require('fs');
+
 function getDbPath() {
   if (process.env.PG_DATA_DIR) {
     return path.resolve(process.env.PG_DATA_DIR);
@@ -36,10 +37,13 @@ if (fs.existsSync(pidFile)) {
 const db = new PGlite(dbPath);
 
 async function migrate() {
-  console.log('Applying native PostgreSQL 16 DDL schema with JSONB and ENUM types...');
+  console.log('Applying native PostgreSQL 16 DDL schema to PGlite database:', dbPath);
 
   await db.exec(`
     -- Drop existing tables if present
+    DROP TABLE IF EXISTS "exam_questions" CASCADE;
+    DROP TABLE IF EXISTS "exam_sections" CASCADE;
+    DROP TABLE IF EXISTS "exams" CASCADE;
     DROP TABLE IF EXISTS "exam_pattern_section_difficulties" CASCADE;
     DROP TABLE IF EXISTS "exam_pattern_section_topics" CASCADE;
     DROP TABLE IF EXISTS "exam_pattern_section_rules" CASCADE;
@@ -68,6 +72,7 @@ async function migrate() {
     DROP TABLE IF EXISTS "roles" CASCADE;
     DROP TABLE IF EXISTS "users" CASCADE;
 
+    DROP TYPE IF EXISTS "ExamStatus" CASCADE;
     DROP TYPE IF EXISTS "DistributionType" CASCADE;
     DROP TYPE IF EXISTS "ExamPatternType" CASCADE;
     DROP TYPE IF EXISTS "ExamPatternStatus" CASCADE;
@@ -90,6 +95,7 @@ async function migrate() {
     CREATE TYPE "ExamPatternStatus" AS ENUM ('DRAFT', 'PUBLISHED', 'ARCHIVED');
     CREATE TYPE "ExamPatternType" AS ENUM ('SINGLE', 'MULTI');
     CREATE TYPE "DistributionType" AS ENUM ('COUNT', 'PERCENT');
+    CREATE TYPE "ExamStatus" AS ENUM ('DRAFT', 'PUBLISHED', 'ONGOING', 'COMPLETED', 'ARCHIVED');
 
     -- Create Tables with native JSONB columns
     CREATE TABLE "users" (
@@ -99,6 +105,9 @@ async function migrate() {
       "firstName" TEXT NOT NULL,
       "lastName" TEXT NOT NULL,
       "status" "UserStatus" NOT NULL DEFAULT 'ACTIVE',
+      "phone" TEXT,
+      "metadata" JSONB,
+      "version" INT NOT NULL DEFAULT 1,
       "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       "updatedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
@@ -134,10 +143,10 @@ async function migrate() {
 
     CREATE TABLE "refresh_tokens" (
       "id" TEXT PRIMARY KEY,
-      "userId" TEXT NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
       "token" TEXT UNIQUE NOT NULL,
-      "revoked" BOOLEAN NOT NULL DEFAULT false,
+      "userId" TEXT NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
       "expiresAt" TIMESTAMP NOT NULL,
+      "revoked" BOOLEAN NOT NULL DEFAULT false,
       "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
 
@@ -145,7 +154,7 @@ async function migrate() {
       "id" TEXT PRIMARY KEY,
       "userId" TEXT REFERENCES "users"("id") ON DELETE SET NULL,
       "action" TEXT NOT NULL,
-      "resource" TEXT NOT NULL,
+      "resource" TEXT,
       "resourceId" TEXT,
       "details" JSONB,
       "ipAddress" TEXT,
@@ -161,13 +170,14 @@ async function migrate() {
       "data" JSONB NOT NULL,
       "changeSummary" TEXT NOT NULL,
       "createdBy" TEXT NOT NULL,
-      "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE("entityType", "entityId", "version")
     );
 
     CREATE TABLE "courses" (
       "id" TEXT PRIMARY KEY,
-      "name" TEXT NOT NULL,
       "code" TEXT UNIQUE NOT NULL,
+      "name" TEXT NOT NULL,
       "description" TEXT,
       "status" "CourseStatus" NOT NULL DEFAULT 'DRAFT',
       "thumbnailUrl" TEXT,
@@ -195,14 +205,14 @@ async function migrate() {
       "subjectId" TEXT NOT NULL REFERENCES "subjects"("id") ON DELETE CASCADE,
       "parentId" TEXT REFERENCES "syllabus_nodes"("id") ON DELETE CASCADE,
       "title" TEXT NOT NULL,
-      "type" "SyllabusNodeType" NOT NULL DEFAULT 'UNIT',
-      "orderIndex" INT NOT NULL DEFAULT 0,
+      "type" "SyllabusNodeType" NOT NULL DEFAULT 'TOPIC',
       "depth" INT NOT NULL DEFAULT 0,
+      "orderIndex" INT NOT NULL DEFAULT 0,
       "description" TEXT,
       "learningObjectives" JSONB,
       "estimatedMinutes" INT NOT NULL DEFAULT 60,
       "status" "CourseStatus" NOT NULL DEFAULT 'PUBLISHED',
-      "tags" TEXT[] DEFAULT ARRAY[]::TEXT[],
+      "tags" JSONB,
       "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       "updatedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
@@ -213,7 +223,7 @@ async function migrate() {
       "courseId" TEXT NOT NULL REFERENCES "courses"("id") ON DELETE CASCADE,
       "status" "EnrollmentStatus" NOT NULL DEFAULT 'ACTIVE',
       "enrolledAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      "completedAt" TIMESTAMP,
+      "updatedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       UNIQUE("userId", "courseId")
     );
 
@@ -242,14 +252,14 @@ async function migrate() {
       "data" JSONB NOT NULL,
       "difficulty" "QuestionDifficulty" NOT NULL,
       "marks" DOUBLE PRECISION NOT NULL,
-      "changedById" TEXT,
-      "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      "changedById" TEXT NOT NULL,
+      "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE("questionId", "version")
     );
 
     CREATE TABLE "tags" (
       "id" TEXT PRIMARY KEY,
-      "name" TEXT UNIQUE NOT NULL,
-      "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      "name" TEXT UNIQUE NOT NULL
     );
 
     CREATE TABLE "question_tags" (
@@ -272,6 +282,8 @@ async function migrate() {
       "code" TEXT UNIQUE NOT NULL,
       "name" TEXT NOT NULL,
       "nativeName" TEXT NOT NULL,
+      "isRTL" BOOLEAN NOT NULL DEFAULT false,
+      "isActive" BOOLEAN NOT NULL DEFAULT true,
       "isDefault" BOOLEAN NOT NULL DEFAULT false,
       "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       "updatedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -280,8 +292,9 @@ async function migrate() {
     CREATE TABLE "translation_keys" (
       "id" TEXT PRIMARY KEY,
       "key" TEXT UNIQUE NOT NULL,
-      "description" TEXT,
+      "category" TEXT NOT NULL DEFAULT 'general',
       "module" TEXT NOT NULL DEFAULT 'common',
+      "description" TEXT,
       "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
 
@@ -364,7 +377,7 @@ async function migrate() {
       "distributionType" "DistributionType" NOT NULL DEFAULT 'COUNT',
       "value" DOUBLE PRECISION NOT NULL,
       "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      UNIQUE("sectionId", "topicId")
+      UNIQUE ("sectionId", "topicId")
     );
 
     CREATE TABLE "exam_pattern_section_difficulties" (
@@ -375,11 +388,58 @@ async function migrate() {
       "value" DOUBLE PRECISION NOT NULL,
       "isAutomatic" BOOLEAN NOT NULL DEFAULT false,
       "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      UNIQUE("sectionId", "difficultyLevel")
+      UNIQUE ("sectionId", "difficultyLevel")
+    );
+
+    -- Phase 5 Tables (Exam Generator & Publishing)
+    CREATE TABLE "exams" (
+      "id" TEXT PRIMARY KEY,
+      "patternId" TEXT REFERENCES "exam_patterns"("id") ON DELETE SET NULL,
+      "courseId" TEXT REFERENCES "courses"("id") ON DELETE SET NULL,
+      "name" TEXT NOT NULL,
+      "instructions" TEXT,
+      "durationMinutes" INT NOT NULL DEFAULT 60,
+      "totalMarks" DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+      "startTime" TIMESTAMP,
+      "endTime" TIMESTAMP,
+      "status" "ExamStatus" NOT NULL DEFAULT 'DRAFT',
+      "createdById" TEXT REFERENCES "users"("id") ON DELETE SET NULL,
+      "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE "exam_sections" (
+      "id" TEXT PRIMARY KEY,
+      "examId" TEXT NOT NULL REFERENCES "exams"("id") ON DELETE CASCADE,
+      "name" TEXT NOT NULL,
+      "sequenceOrder" INT NOT NULL DEFAULT 0,
+      "subjectId" TEXT REFERENCES "subjects"("id") ON DELETE SET NULL,
+      "numQuestions" INT NOT NULL DEFAULT 0,
+      "marksPerQuestion" DOUBLE PRECISION NOT NULL DEFAULT 1.0,
+      "totalMarks" DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+      "marksCorrect" DOUBLE PRECISION NOT NULL DEFAULT 1.0,
+      "marksWrong" DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+      "marksUnattempted" DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+      "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE "exam_questions" (
+      "id" TEXT PRIMARY KEY,
+      "examId" TEXT NOT NULL REFERENCES "exams"("id") ON DELETE CASCADE,
+      "examSectionId" TEXT NOT NULL REFERENCES "exam_sections"("id") ON DELETE CASCADE,
+      "questionId" TEXT NOT NULL REFERENCES "questions"("id") ON DELETE CASCADE,
+      "sequenceOrder" INT NOT NULL DEFAULT 0,
+      "marksCorrect" DOUBLE PRECISION NOT NULL DEFAULT 1.0,
+      "marksWrong" DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+      "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE("examId", "questionId")
     );
   `);
 
   console.log('PostgreSQL 16 Schema Migration Completed Successfully!');
+  process.exit(0);
 }
 
 migrate().catch((e) => {

@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 const API_BASE = 'http://localhost:4000/api/v1';
-const JWT_SECRET = process.env.JWT_SECRET || 'examos_super_secret_jwt_key_2026_production';
+const JWT_SECRET = process.env.JWT_SECRET || 'examos_super_secret_jwt_key_2026';
 
 const AUTH_TOKEN = jwt.sign(
   { sub: 'usr_admin_test', email: 'admin@examos.com', roles: ['MAIN_ADMIN'], permissions: ['*'] },
@@ -59,12 +59,16 @@ async function runPhase4Tests() {
   let passed = 0;
   let failed = 0;
 
-  function assert(condition, message) {
+  function assert(condition, message, res) {
     if (condition) {
       console.log(`[PASS] ${message}`);
       passed++;
     } else {
       console.error(`[FAIL] ${message}`);
+      if (res) {
+        console.error('Response Status:', res.status);
+        console.error('Response Body:', JSON.stringify(res.body, null, 2));
+      }
       failed++;
     }
   }
@@ -83,8 +87,8 @@ async function runPhase4Tests() {
       type: 'SINGLE',
     });
 
-    assert(createRes.status === 201 && createRes.body.success, '4.1-U1 — Create single subject exam pattern (Status: DRAFT)');
-    patternId = createRes.body.data.id;
+    assert(createRes.status === 201 && createRes.body && createRes.body.success, '4.1-U1 — Create single subject exam pattern (Status: DRAFT)', createRes);
+    patternId = createRes.body && createRes.body.data ? createRes.body.data.id : undefined;
 
     const listRes = await request('GET', '/exam-patterns');
     assert(listRes.status === 200 && Array.isArray(listRes.body.data), '4.1-U2 — List exam patterns with pagination & filters');

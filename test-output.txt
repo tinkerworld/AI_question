@@ -25,7 +25,6 @@
 ====================================================
  Master Test Results: 18/18 Passed
 ====================================================
-
 ====================================================
  EXAMOS PHASE 2 (ACADEMIC STRUCTURE) — MASTER TEST SUITE
  Testing Features 2.1 to 2.6
@@ -45,7 +44,6 @@
 ====================================================
  Phase 2 Master Test Results: 10/10 Passed
 ====================================================
-
 ====================================================
  EXAMOS PHASE 3 (QUESTION BANK) — MASTER TEST SUITE
  Testing Features 3.1 to 3.8
@@ -64,8 +62,7 @@
 ====================================================
  Phase 3 Master Test Results: 9/9 Passed
 ====================================================
-
-◇ injected env (0) from .env // tip: ⌘ override existing { override: true }
+◇ injected env (4) from .env // tip: ⌘ override existing { override: true }
 ====================================================
  EXAMOS PHASE 4 (EXAM PATTERN) — MASTER TEST SUITE
  Testing Features 4.1 to 4.10
@@ -102,15 +99,14 @@
  Phase 4 Master Test Results: 26/26 Passed
 ====================================================
 
-
-◇ injected env (4) from Exam\.env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+◇ injected env (4) from .env // tip: ⌘ enable debugging { debug: true }
 ====================================================
  EXAMOS PHASE 5 (EXAM GENERATOR) — MASTER TEST SUITE
  Testing Features 5.1 to 5.4
 ====================================================
 
 --- Setting up Test Exam Pattern Blueprint ---
-Blueprint setup complete! Pattern ID: pat_1787169599958_z9fkj
+Blueprint setup complete! Pattern ID: pat_1787192217001_cg1s3
 
 --- Feature 5.1: Exam Generation Engine ---
  [PASS] 5.1-U1: Generate basic exam from blueprint (Status: DRAFT)
@@ -144,8 +140,7 @@ Blueprint setup complete! Pattern ID: pat_1787169599958_z9fkj
 
 
 --- TEARDOWN: Cleaning up test fixtures ---
- [TEARDOWN] Deleted test exam: exam_1787169600049_88e20 (Status: 200)
- [TEARDOWN] Deleted test exam: exam_1787169600221_fji2y (Status: 200)
- [TEARDOWN] Deleted test exam: exam_1787169600457_pg6hb (Status: 200)
- [TEARDOWN] Deleted test pattern: pat_1787169599958_z9fkj (Status: 204)
-
+ [TEARDOWN] Deleted test exam: exam_1787192217049_byw0i (Status: 200)
+ [TEARDOWN] Deleted test exam: exam_1787192217127_w6zu5 (Status: 200)
+ [TEARDOWN] Deleted test exam: exam_1787192217244_0ai3m (Status: 200)
+ [TEARDOWN] Deleted test pattern: pat_1787192217001_cg1s3 (Status: 204)

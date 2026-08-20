@@ -153,15 +153,15 @@ D:\Download\Company\Software\Test os\Exam\
 # 1. Install Dependencies
 pnpm install
 
-# 2. Spin up PostgreSQL 16 & Redis 7
-docker compose up -d
-
-# 3. Migrate Database & Seed Initial Data
+# 2. Migrate Database Schema (Native PostgreSQL 16 Engine / PGlite)
 pnpm db:migrate
+
+# 3. Seed Personas, Academic Syllabus, 120 Question Bank Items & JEE Main Blueprint
 pnpm db:seed
 
-# 4. Start Monorepo Services
+# 4. Start Monorepo Services (API, Web UI, Build Tracker)
 pnpm dev
+# (or run start_all.bat on Windows)
 
 # 5. Execute Test Suites across Workspace
 pnpm test

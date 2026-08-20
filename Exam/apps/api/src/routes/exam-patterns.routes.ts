@@ -595,7 +595,7 @@ examPatternRouter.get(
 
 // PUT /api/v1/exam-patterns/:id/sections/:sectionId/topics — Set Topic Distribution
 examPatternRouter.put(
-  '/:id/sections/:sectionId/topics',
+  ['/:id/sections/:sectionId/topics', '/:id/sections/:sectionId/topics-distribution'],
   authenticate,
   requirePermission('exams.create'),
   async (req: Request, res: Response): Promise<void> => {
@@ -659,7 +659,7 @@ examPatternRouter.put(
 
 // GET /api/v1/exam-patterns/:id/sections/:sectionId/topics — Get Topic Distribution
 examPatternRouter.get(
-  '/:id/sections/:sectionId/topics',
+  ['/:id/sections/:sectionId/topics', '/:id/sections/:sectionId/topics-distribution'],
   authenticate,
   requirePermission('exams.read'),
   async (req: Request, res: Response): Promise<void> => {
@@ -679,7 +679,7 @@ examPatternRouter.get(
 
 // PUT /api/v1/exam-patterns/:id/sections/:sectionId/difficulty — Set Difficulty Distribution
 examPatternRouter.put(
-  '/:id/sections/:sectionId/difficulty',
+  ['/:id/sections/:sectionId/difficulty', '/:id/sections/:sectionId/difficulties', '/:id/sections/:sectionId/difficulties-distribution'],
   authenticate,
   requirePermission('exams.create'),
   async (req: Request, res: Response): Promise<void> => {
@@ -740,6 +740,22 @@ examPatternRouter.put(
         res.status(400).json({ success: false, errorCode: 'VALIDATION_ERROR', message: err.errors[0].message });
         return;
       }
+      res.status(500).json({ success: false, errorCode: 'INTERNAL_ERROR', message: err.message });
+    }
+  }
+);
+
+// GET /api/v1/exam-patterns/:id/sections/:sectionId/difficulty — Get Difficulty Distribution
+examPatternRouter.get(
+  ['/:id/sections/:sectionId/difficulty', '/:id/sections/:sectionId/difficulties', '/:id/sections/:sectionId/difficulties-distribution'],
+  authenticate,
+  requirePermission('exams.read'),
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { sectionId } = req.params;
+      const result = await pgDb.query(`SELECT * FROM "exam_pattern_section_difficulties" WHERE "sectionId" = $1`, [sectionId]);
+      res.json({ success: true, data: result.rows });
+    } catch (err: any) {
       res.status(500).json({ success: false, errorCode: 'INTERNAL_ERROR', message: err.message });
     }
   }
