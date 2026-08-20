@@ -1,0 +1,10 @@
+2026-08-20_09-18-36 | passed=8 failed=10 skipped=0 flaky=0 duration=108.7s | report=reports\2026-08-20_09-18-36
+2026-08-20_09-43-56 | passed=8 failed=10 skipped=0 flaky=0 duration=122.5s | report=reports\2026-08-20_09-43-56
+2026-08-20_09-48-03 | passed=9 failed=9 skipped=0 flaky=0 duration=119.4s | report=reports\2026-08-20_09-48-03
+2026-08-20_09-57-53 | passed=9 failed=9 skipped=0 flaky=0 duration=131.5s | report=reports\2026-08-20_09-57-53
+2026-08-20_10-20-10 | passed=19 failed=4 skipped=0 flaky=0 duration=87.4s | report=reports\2026-08-20_10-20-10
+2026-08-20_10-31-21 | passed=19 failed=4 skipped=0 flaky=0 duration=87.7s | report=reports\2026-08-20_10-31-21
+2026-08-20_10-46-32 | passed=18 failed=5 skipped=0 flaky=0 duration=103.1s | report=reports\2026-08-20_10-46-32
+2026-08-20_11-03-18 | passed=20 failed=3 skipped=0 flaky=0 duration=56.8s | report=reports\2026-08-20_11-03-18
+2026-08-20_11-12-05 | passed=22 failed=1 skipped=0 flaky=0 duration=48.1s | report=reports\2026-08-20_11-12-05
+2026-08-20_13-14-02 | passed=23 failed=0 skipped=0 flaky=0 duration=59.1s | report=reports\2026-08-20_13-14-02

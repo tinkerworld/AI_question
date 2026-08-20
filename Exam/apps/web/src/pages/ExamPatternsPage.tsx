@@ -300,10 +300,28 @@ export const ExamPatternsPage: React.FC = () => {
     }
   };
 
+  // Open Create Pattern Modal
+  const handleOpenCreateModal = () => {
+    setName('');
+    setCourseId('');
+    setDurationMinutes('60');
+    setType('SINGLE');
+    setDescription('');
+    setSelectedSubjectIds([]);
+    setFormError(null);
+    const allSubs = courses.flatMap((c: any) => c.subjects || []);
+    setAvailableSubjects(allSubs);
+    setShowCreateModal(true);
+  };
+
   // Endpoint 1: POST /api/v1/exam-patterns — Create Pattern
   const handleCreatePattern = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
+    if (!courseId) {
+      setFormError('Course is required');
+      return;
+    }
     try {
       const res = await fetch('http://localhost:4000/api/v1/exam-patterns', {
         method: 'POST',
@@ -321,6 +339,7 @@ export const ExamPatternsPage: React.FC = () => {
       if (res.ok && body.success) {
         setShowCreateModal(false);
         setName('');
+        setCourseId('');
         setDescription('');
         setSelectedSubjectIds([]);
         setStatusNotice(`Created pattern "${body.data.name}" successfully.`);
@@ -776,7 +795,7 @@ export const ExamPatternsPage: React.FC = () => {
           </div>
         </div>
         <button
-          onClick={() => setShowCreateModal(true)}
+          onClick={handleOpenCreateModal}
           style={{
             background: 'linear-gradient(135deg, #06b6d4, #3b82f6)',
             color: '#fff',
@@ -822,7 +841,14 @@ export const ExamPatternsPage: React.FC = () => {
             ) : (
               patterns.map((p) => (
                 <tr key={p.id} style={{ borderBottom: '1px solid var(--border-color)', background: selectedPattern?.id === p.id ? 'rgba(6, 182, 212, 0.05)' : 'transparent' }}>
-                  <td style={{ padding: '12px 16px', fontWeight: 'bold' }}>{p.name}</td>
+                  <td style={{ padding: '12px 16px', fontWeight: 'bold' }}>
+                    <div>{p.name}</div>
+                    {p.courseName && (
+                      <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 'normal', marginTop: '2px' }}>
+                        Course: {p.courseName}
+                      </div>
+                    )}
+                  </td>
                   <td style={{ padding: '12px 16px' }}>
                     <span style={{
                       padding: '3px 8px',
@@ -1551,6 +1577,38 @@ export const ExamPatternsPage: React.FC = () => {
             )}
             <form onSubmit={handleCreatePattern} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div>
+                <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>
+                  Course <span style={{ color: '#ef4444' }}>*</span>
+                </label>
+                <select
+                  required
+                  value={courseId}
+                  onChange={(e) => {
+                    const selectedId = e.target.value;
+                    setCourseId(selectedId);
+                    const selectedCourse = courses.find((c) => c.id === selectedId);
+                    if (selectedCourse && selectedCourse.subjects) {
+                      setAvailableSubjects(selectedCourse.subjects);
+                    } else {
+                      const allSubs = courses.flatMap((c: any) => c.subjects || []);
+                      setAvailableSubjects(allSubs);
+                    }
+                    setSelectedSubjectIds([]);
+                  }}
+                  style={{ width: '100%', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-main)', padding: '8px', borderRadius: '4px' }}
+                >
+                  <option value="">-- Select Course --</option>
+                  {courses.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} ({c.code})
+                    </option>
+                  ))}
+                </select>
+                <span style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                  Required — blueprint must belong to a target curriculum course
+                </span>
+              </div>
+              <div>
                 <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>Pattern Name</label>
                 <input
                   required
@@ -1638,7 +1696,16 @@ export const ExamPatternsPage: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  style={{ background: 'var(--accent-color)', color: '#000', border: 'none', padding: '8px 16px', fontWeight: 'bold', borderRadius: '4px', cursor: 'pointer' }}
+                  disabled={!courseId || !name.trim()}
+                  style={{
+                    background: !courseId || !name.trim() ? 'rgba(6, 182, 212, 0.4)' : 'var(--accent-color)',
+                    color: !courseId || !name.trim() ? '#888' : '#000',
+                    border: 'none',
+                    padding: '8px 16px',
+                    fontWeight: 'bold',
+                    borderRadius: '4px',
+                    cursor: !courseId || !name.trim() ? 'not-allowed' : 'pointer',
+                  }}
                 >
                   Create Pattern
                 </button>

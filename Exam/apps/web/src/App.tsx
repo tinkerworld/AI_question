@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ThemeProvider } from './context/ThemeContext';
 import { I18nProvider, useTranslation } from './context/I18nContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -11,10 +11,43 @@ import { QuestionBankPage } from './pages/QuestionBankPage';
 import { CoursesPage } from './pages/CoursesPage';
 import './styles/theme.css';
 
+interface NavTabConfig {
+  id: string;
+  label?: string;
+  requiredPermission?: string;
+}
+
+const NAV_ITEMS: NavTabConfig[] = [
+  { id: 'dashboard' },
+  { id: 'exams', label: 'Exam Generator & Papers', requiredPermission: 'exams.create' },
+  { id: 'exam_patterns', requiredPermission: 'exams.create' },
+  { id: 'question_bank', label: 'Question Bank', requiredPermission: 'questions.read' },
+  { id: 'courses', label: 'Academic Structure', requiredPermission: 'courses.create' },
+  { id: 'users', requiredPermission: 'users.read' },
+  { id: 'analytics' },
+];
+
+const hasPermission = (userPermissions: string[] | undefined, requiredPermission?: string): boolean => {
+  if (!requiredPermission) return true;
+  if (!userPermissions || !Array.isArray(userPermissions)) return false;
+  return userPermissions.includes(requiredPermission) || userPermissions.includes('*');
+};
+
 const MainLayout: React.FC = () => {
   const { t } = useTranslation();
   const { user, isAuthenticated, isLoading, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<string>('exams');
+
+  const userPermissions = user?.permissions || [];
+  const visibleNavItems = NAV_ITEMS.filter((item) =>
+    hasPermission(userPermissions, item.requiredPermission)
+  );
+
+  useEffect(() => {
+    if (visibleNavItems.length > 0 && !visibleNavItems.some((item) => item.id === activeTab)) {
+      setActiveTab(visibleNavItems[0].id);
+    }
+  }, [user, activeTab]);
 
   if (isLoading) {
     return (
@@ -182,29 +215,23 @@ const MainLayout: React.FC = () => {
             MODULES
           </div>
           <nav style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            {['dashboard', 'exams', 'exam_patterns', 'question_bank', 'courses', 'users', 'analytics'].map((item) => (
+            {visibleNavItems.map((item) => (
               <div
-                key={item}
-                id={`nav-tab-${item}`}
-                onClick={() => setActiveTab(item)}
+                key={item.id}
+                id={`nav-tab-${item.id}`}
+                onClick={() => setActiveTab(item.id)}
                 style={{
                   padding: '9px 12px',
                   borderRadius: '6px',
-                  background: activeTab === item ? 'rgba(6, 182, 212, 0.15)' : 'transparent',
-                  border: activeTab === item ? '1px solid var(--accent-color)' : '1px solid transparent',
-                  color: activeTab === item ? 'var(--accent-color)' : 'var(--text-main)',
-                  fontWeight: activeTab === item ? 'bold' : 'normal',
+                  background: activeTab === item.id ? 'rgba(6, 182, 212, 0.15)' : 'transparent',
+                  border: activeTab === item.id ? '1px solid var(--accent-color)' : '1px solid transparent',
+                  color: activeTab === item.id ? 'var(--accent-color)' : 'var(--text-main)',
+                  fontWeight: activeTab === item.id ? 'bold' : 'normal',
                   fontSize: '13px',
                   cursor: 'pointer',
                 }}
               >
-                {item === 'exams'
-                  ? 'Exam Generator & Papers'
-                  : item === 'question_bank'
-                  ? 'Question Bank'
-                  : item === 'courses'
-                  ? 'Academic Structure'
-                  : t(item)}
+                {item.label || t(item.id)}
               </div>
             ))}
           </nav>

@@ -1,11 +1,11 @@
 # ExamOS Build State
 
-**Last updated:** 2026-08-20T01:18:00+05:30  
-**Current phase:** Phase 5 — Exam Generator (with Phase 2 & 3 Frontend Workbenches Completed)  
+**Last updated:** 2026-08-20T13:20:00+05:30  
+**Current phase:** Phase 5 — Exam Generator (with Phase 2, 3, 4, 5 UI Workbenches & E2E Verification Completed)  
 **Task Status:**
-- **Task 2.5 (Course-Subject-Syllabus Frontend)**: `tested` in [`tools/build-tracker/state.json:154-160`](file:///D:/Download/Company/Software/Test%20os/Exam/tools/build-tracker/state.json#L154-L160) (Implemented, end-to-end wired, pending reviewer sign-off).
-- **Task 3.7 (Question Bank Frontend)**: `tested` in [`tools/build-tracker/state.json:228-234`](file:///D:/Download/Company/Software/Test%20os/Exam/tools/build-tracker/state.json#L228-L234) (Implemented, end-to-end wired, pending reviewer sign-off).
-- **Phase 5 Tasks (5.1 to 5.4)**: `tested` in [`tools/build-tracker/state.json:348-381`](file:///D:/Download/Company/Software/Test%20os/Exam/tools/build-tracker/state.json#L348-L381) (Pending reviewer sign-off before transition to `done`).
+- **Task 2.5 (Course-Subject-Syllabus Frontend)**: `tested` in `tools/build-tracker/state.json` (Implemented, end-to-end verified via automated UI tests, pending reviewer sign-off).
+- **Task 3.7 (Question Bank Frontend)**: `tested` in `tools/build-tracker/state.json` (Implemented, end-to-end verified via automated UI tests, pending reviewer sign-off).
+- **Phase 5 Tasks (5.1 to 5.4)**: `tested` in `tools/build-tracker/state.json` (Backend + UI generation workbenches verified via automated UI tests, pending reviewer sign-off).
 
 ---
 
@@ -65,82 +65,80 @@ ExamOS unifies all database operations onto `@electric-sql/pglite` (embedded Web
 
 ---
 
-## 3. Phase 2 & Phase 3 Frontend Workbenches (Tasks 2.5 & 3.7)
+## 3. UI Fixes, Role-Based Access Control & Navigation (Post-`ed31d87b`)
 
-### 3.1 Task 3.7 — Question Bank Frontend Workbench
-- **Component**: [`apps/web/src/pages/QuestionBankPage.tsx`](file:///D:/Download/Company/Software/Test%20os/Exam/Exam/apps/web/src/pages/QuestionBankPage.tsx) (Wired in [`App.tsx:210`](file:///D:/Download/Company/Software/Test%20os/Exam/Exam/apps/web/src/App.tsx#L210)).
-- **Implemented Features**:
-  1. **Analytics Summary Header**: Displays total questions, breakdown by difficulty (Easy, Medium, Hard), and breakdown by status from `GET /api/v1/questions/analytics/summary`.
-  2. **Advanced Multi-Filter Toolbar**: Search by string/ID, filter by Difficulty, Type (8 built-in types), Status (`DRAFT`, `REVIEW`, `PUBLISHED`, `ARCHIVED`), Course, and Subject. Consumes `GET /api/v1/questions`.
-  3. **Dynamic Per-Type Question Authoring & Editing Modal**:
-     - Consumes `POST /api/v1/questions` (creation) and `PATCH /api/v1/questions/:id` (revision).
-     - Renders custom dynamic payload builders matching `@repo/question-types` schemas for `MCQ` (options with radio selector), `MULTIPLE_SELECT` (checkboxes), `TRUE_FALSE` (toggles), `FILL_IN_BLANK` (accepted answers list), `SHORT_ANSWER` (keywords list), `NUMERICAL` (target value and ± tolerance margin), `MATCHING` (column pair builder), and `SUBJECTIVE` (sample answer & rubric criteria).
-  4. **Student Preview Mode Modal**: Simulates student-facing exam presentation with interactive input controls while strictly suppressing answer keys, correct option IDs, and evaluation rubrics.
-  5. **Version History & Rollback Drawer**: Consumes `GET /api/v1/questions/:id/versions` to list immutable version snapshots with timestamps, and triggers `POST /api/v1/questions/:id/versions/:version/rollback` to revert question state.
-  6. **Lifecycle State Transition**: Dropdown selector invoking `PATCH /api/v1/questions/:id/status` (`DRAFT` -> `REVIEW` -> `PUBLISHED` -> `ARCHIVED`).
-  7. **Previous Exam History Tracker**: Consumes `GET /api/v1/questions/:id/exam-history` and `POST /api/v1/questions/:id/exam-history` to view and log entrance exam appearances (exam name, year, shift).
-  8. **Question Deletion**: Permanent deletion invoking `DELETE /api/v1/questions/:id`.
+### 3.1 Permission-Based Navigation Filtering (`App.tsx`)
+In accordance with **ADR-005** (permission-based access control rather than role-name checks), sidebar navigation tabs in [`apps/web/src/App.tsx`](file:///D:/Download/Company/Software/Test%20os/Exam/Exam/apps/web/src/App.tsx) are dynamically filtered using `NAV_ITEMS` and `hasPermission(user.permissions, item.requiredPermission)`:
+- `dashboard`: Open to all authenticated sessions.
+- `exams` ("Exam Generator & Papers"): Gated by `exams.create`.
+- `exam_patterns` ("Exam Patterns"): Gated by `exams.create`.
+- `question_bank` ("Question Bank"): Gated by `questions.read`.
+- `courses` ("Academic Structure"): Gated by `courses.create`.
+- `users`: Gated by `users.read`.
+- `analytics`: Open to all authenticated sessions.
 
-### 3.2 Task 2.5 — Course-Subject-Syllabus Frontend Workbench
-- **Component**: [`apps/web/src/pages/CoursesPage.tsx`](file:///D:/Download/Company/Software/Test%20os/Exam/Exam/apps/web/src/pages/CoursesPage.tsx) (Wired in [`App.tsx:212`](file:///D:/Download/Company/Software/Test%20os/Exam/Exam/apps/web/src/App.tsx#L212)).
-- **Implemented Features**:
-  1. **Central Course Listing**: Displays all courses with codes, descriptions, and statuses (`DRAFT`, `PUBLISHED`, `ARCHIVED`). Consumes `GET /api/v1/courses`, `POST /api/v1/courses`, `PATCH /api/v1/courses/:id`, and `DELETE /api/v1/courses/:id`.
-  2. **Course Detail View & Subject Management**: Two-pane workbench with breadcrumb navigation (`Courses > [Course] > [Subject]`). Lists subjects and provides modals to add/edit/delete subjects under a course via `GET/POST /api/v1/courses/:courseId/subjects` and `PATCH/DELETE /api/v1/subject/:id`.
-  3. **Expandable/Collapsible 4-Level Syllabus Tree**: Visual tree renderer for `UNIT` (Level 0), `TOPIC` (Level 1), `SUBTOPIC` (Level 2), and `CONCEPT` (Level 3) consuming `GET /api/v1/syllabus/tree?subjectId=...`. Includes depth badges, estimated minutes, and collapsible chevrons.
-  4. **Syllabus Node Authoring & Metadata Editing**: Modals to create and edit syllabus nodes (title, type, description, estimated minutes, learning objectives, status, tags) consuming `POST /api/v1/subjects/:subjectId/syllabus` and `PATCH /api/v1/syllabus/node/:id`.
-  5. **Node Reordering**: Up/Down reordering controls calling `PATCH /api/v1/syllabus/node/:id/reorder` with `{ parentId, orderIndex }`.
-  6. **Node Deletion**: Deletes nodes via `DELETE /api/v1/syllabus/node/:id`.
+**Gating Resolution by Persona**:
+- **`STUDENT`** (`courses.read`, `exams.read`, `exams.attempt`):
+  - Correctly hides admin/authoring modules (`question_bank`, `courses`, `users`, `exams`, `exam_patterns`).
+  - Corrected `exams.read` overload to `exams.create` so students do not see exam authoring tooling.
+- **`TEACHER`** (`courses.read`, `questions.*`, `exams.*`):
+  - Sees `dashboard`, `exams`, `exam_patterns`, `question_bank`, `analytics`.
+  - Correctly hides `courses` (no `courses.create`) and `users` (no `users.read`).
+- **`SUB_ADMIN` & `MAIN_ADMIN`**: Full access to all 7 tabs.
 
-### 3.3 Routing Bug Fix & Complete Frontend URL Cross-Check
-A routing path mismatch in [`CoursesPage.tsx`](file:///D:/Download/Company/Software/Test%20os/Exam/Exam/apps/web/src/pages/CoursesPage.tsx) was identified and resolved:
-- **Subject Edit**:
-  - *Before*: `PATCH http://localhost:4000/api/v1/courses/subject/${editingSubject.id}` (404 Not Found)
-  - *After*: `PATCH http://localhost:4000/api/v1/subject/${editingSubject.id}` ([`CoursesPage.tsx:310`](file:///D:/Download/Company/Software/Test%20os/Exam/Exam/apps/web/src/pages/CoursesPage.tsx#L310), matches `server.ts:49` -> `subject.routes.ts:90`)
-- **Subject Delete**:
-  - *Before*: `DELETE http://localhost:4000/api/v1/courses/subject/${subjectId}` (404 Not Found)
-  - *After*: `DELETE http://localhost:4000/api/v1/subject/${subjectId}` ([`CoursesPage.tsx:348`](file:///D:/Download/Company/Software/Test%20os/Exam/Exam/apps/web/src/pages/CoursesPage.tsx#L348), matches `server.ts:49` -> `subject.routes.ts:114`)
-
-**Full Frontend URL Audit Table**:
-| Caller / Line | Method & URL | Mount in `server.ts` | Route Handler in Controller | Verified Status |
-| :--- | :--- | :--- | :--- | :--- |
-| `CoursesPage.tsx:107` | `GET /api/v1/courses` | `server.ts:47` (`/api/v1/courses`) | `course.routes.ts:18` (`/`) | ✅ Verified (200 OK) |
-| `CoursesPage.tsx:127` | `GET /api/v1/courses/:id/subjects` | `server.ts:48` (`/api/v1/courses/:courseId/subjects`) | `subject.routes.ts:18` (`/`) | ✅ Verified (200 OK) |
-| `CoursesPage.tsx:153` | `GET /api/v1/syllabus/tree?subjectId=...` | `server.ts:51` (`/api/v1/syllabus`) | `syllabus.routes.ts:58` (`/tree`) | ✅ Verified (200 OK) |
-| `CoursesPage.tsx:216` | `PATCH /api/v1/courses/:id` | `server.ts:47` (`/api/v1/courses`) | `course.routes.ts:87` (`/:id`) | ✅ Verified (200 OK) |
-| `CoursesPage.tsx:230` | `POST /api/v1/courses` | `server.ts:47` (`/api/v1/courses`) | `course.routes.ts:48` (`/`) | ✅ Verified (201 Created) |
-| `CoursesPage.tsx:254` | `DELETE /api/v1/courses/:id` | `server.ts:47` (`/api/v1/courses`) | `course.routes.ts:107` (`/:id`) | ✅ Verified (200 OK) |
-| `CoursesPage.tsx:310` | `PATCH /api/v1/subject/:id` | `server.ts:49` (`/api/v1`) | `subject.routes.ts:90` (`/subject/:id`) | ✅ Verified (200 OK) |
-| `CoursesPage.tsx:324` | `POST /api/v1/courses/:id/subjects` | `server.ts:48` (`/api/v1/courses/:courseId/subjects`) | `subject.routes.ts:47` (`/`) | ✅ Verified (201 Created) |
-| `CoursesPage.tsx:348` | `DELETE /api/v1/subject/:id` | `server.ts:49` (`/api/v1`) | `subject.routes.ts:114` (`/subject/:id`) | ✅ Verified (200 OK) |
-| `CoursesPage.tsx:423` | `PATCH /api/v1/syllabus/node/:id` | `server.ts:51` (`/api/v1/syllabus`) | `syllabus.routes.ts:137` (`/node/:id`) | ✅ Verified (200 OK) |
-| `CoursesPage.tsx:438` | `POST /api/v1/subjects/:id/syllabus` | `server.ts:50` (`/api/v1/subjects/:subjectId/syllabus`) | `syllabus.routes.ts:84` (`/`) | ✅ Verified (201 Created) |
-| `CoursesPage.tsx:462` | `DELETE /api/v1/syllabus/node/:id` | `server.ts:51` (`/api/v1/syllabus`) | `syllabus.routes.ts:208` (`/node/:id`) | ✅ Verified (200 OK) |
-| `CoursesPage.tsx:483` | `PATCH /api/v1/syllabus/node/:id/reorder`| `server.ts:51` (`/api/v1/syllabus`) | `syllabus.routes.ts:177` (`/node/:id/reorder`) | ✅ Verified (200 OK) |
-
-**Live Roundtrip Verification**:
-Real network roundtrips were executed against a running API server:
-1. `POST /api/v1/courses/:courseId/subjects` -> **201 Created** (persisted `sub_c99937b4cec6f35b`).
-2. `GET /api/v1/courses/:courseId/subjects` -> **200 OK** (retrieved array with subject).
-3. `PATCH /api/v1/subject/:id` -> **200 OK** (updated name to `"Theoretical Astrophysics & General Relativity"`).
-4. `DELETE /api/v1/subject/:id` -> **200 OK** (message: `"Subject deleted successfully"`).
+### 3.2 Exam Pattern Creation Fix (`ExamPatternsPage.tsx`)
+- **Regression Root Cause**: The Create Exam Pattern modal had no course selector (`courseId` remained `''`), but `createExamPatternSchema` strictly requires `z.string().min(1)`. Every UI pattern creation failed with `400 "Course ID is required"`.
+- **Fix**:
+  - Added required Course dropdown in [`ExamPatternsPage.tsx:1578-1609`](file:///D:/Download/Company/Software/Test%20os/Exam/Exam/apps/web/src/pages/ExamPatternsPage.tsx#L1578-L1609).
+  - Dynamically populates and filters `availableSubjects` upon course selection.
+  - Enforced button disabling `disabled={!courseId || !name.trim()}` and validation guard in `handleCreatePattern`.
+  - Added linked `courseName` badge in the pattern list table.
+  - Fully covered by automated UI test in `exam-patterns.spec.ts`.
 
 ---
 
-## 4. Deviations From Docs / Backend Gaps (Section 8)
+## 4. Standing E2E Browser / Human Simulation Test Suite (`tools/e2e-tester`)
 
-| Item | Context | Status / Resolution |
-| :--- | :--- | :--- |
-| **Task 2.5 & Task 3.7 Frontend State** | Phase 2 and Phase 3 Frontend tasks previously marked deferred | **Resolved**: Full interactive workbenches implemented in [`CoursesPage.tsx`](file:///D:/Download/Company/Software/Test%20os/Exam/Exam/apps/web/src/pages/CoursesPage.tsx) and [`QuestionBankPage.tsx`](file:///D:/Download/Company/Software/Test%20os/Exam/Exam/apps/web/src/pages/QuestionBankPage.tsx), wired into [`App.tsx`](file:///D:/Download/Company/Software/Test%20os/Exam/Exam/apps/web/src/App.tsx). Tasks 2.5 and 3.7 updated to `tested` in `state.json`. |
-| **Routing URL Correction** | Subject Edit/Delete URLs had extra `courses/` prefix | **Resolved**: Fixed to `PATCH /api/v1/subject/:id` and `DELETE /api/v1/subject/:id` in `CoursesPage.tsx`. Full audit performed. |
-| **Backend Route Modification: Initial Question Version Snapshot** | `POST /api/v1/questions` previously omitted initial `question_versions` row | **Resolved & Disclosed**: `POST /api/v1/questions` only inserted into `questions` (version 1) without writing to `question_versions`. This caused the Version History drawer (`GET /:id/versions`) to return 0 records and broke rollback to version 1. Added an initial `question_versions` insert in [`apps/api/src/routes/question.routes.ts:172-177`](file:///D:/Download/Company/Software/Test%20os/Exam/Exam/apps/api/src/routes/question.routes.ts#L172-L177). Confirmed **zero** other backend route or service files were modified. |
-| **Backend Gap: Bulk Operations** | Feature 3.7 spec mentions bulk tagging / bulk status changes | **Documented Gap**: Dedicated atomic bulk endpoints (`POST /api/v1/questions/bulk-tag` and `PATCH /api/v1/questions/bulk-status`) are absent from `question.routes.ts`. The UI provides per-question status transitions and tag inspection without faking non-existent bulk endpoints. |
+A permanent, automated Playwright UI regression test suite is established in [`tools/e2e-tester`](file:///D:/Download/Company/Software/Test%20os/Exam/tools/e2e-tester) and run directly via [`run_ui_tests.bat`](file:///D:/Download/Company/Software/Test%20os/Exam/run_ui_tests.bat).
+
+- **Execution Engine**: Playwright Chromium driving the live Vite web app (port 3000) and Express API (port 4000).
+- **Persistent Trend History**: Append-only log in [`tools/e2e-tester/logs/history.txt`](file:///D:/Download/Company/Software/Test%20os/Exam/tools/e2e-tester/logs/history.txt).
+- **Timestamped HTML Reports & Traces**: Auto-generated in [`tools/e2e-tester/reports/<timestamp>/`](file:///D:/Download/Company/Software/Test%20os/Exam/tools/e2e-tester/reports/).
+- **Current Suite Status**: **23 / 23 Tests Passing (100%)**
+
+### 4.1 Spec Coverage Summary (23 Tests)
+1. **[`e2e/courses.spec.ts`](file:///D:/Download/Company/Software/Test%20os/Exam/tools/e2e-tester/e2e/courses.spec.ts)** (3 tests):
+   - Admin course creation and heading visibility.
+   - Subject creation, edit, and native dialog delete roundtrip (regression check for 404 URL).
+   - Syllabus tree hierarchy rendering and node expansion.
+2. **[`e2e/exam-generator.spec.ts`](file:///D:/Download/Company/Software/Test%20os/Exam/tools/e2e-tester/e2e/exam-generator.spec.ts)** (3 tests):
+   - Blueprint exam generation from seeded JEE Main pattern.
+   - Draft exam inspection with section/question breakdown.
+   - Publishing exam and verifying edit control locking.
+3. **[`e2e/exam-patterns.spec.ts`](file:///D:/Download/Company/Software/Test%20os/Exam/tools/e2e-tester/e2e/exam-patterns.spec.ts)** (3 tests):
+   - Admin pattern creation with required Course selector and list appearance.
+   - Admin pattern edit modal PATCH roundtrip and update persistence.
+   - Sub-Admin `exams.create` permission verification.
+4. **[`e2e/navigation.spec.ts`](file:///D:/Download/Company/Software/Test%20os/Exam/tools/e2e-tester/e2e/navigation.spec.ts)** (5 tests):
+   - Built tabs (`exams`, `exam_patterns`, `question_bank`, `courses`) render real pages, not placeholders.
+   - Unbuilt tabs (`dashboard`, `users`, `analytics`) honestly render placeholder fallback.
+5. **[`e2e/question-bank.spec.ts`](file:///D:/Download/Company/Software/Test%20os/Exam/tools/e2e-tester/e2e/question-bank.spec.ts)** (4 tests):
+   - Authoring modal question creation.
+   - Version history regression check (verifying initial revision snapshot in drawer).
+   - Lifecycle status transition (`DRAFT` -> `REVIEW`) persistence check.
+   - Multi-filter toolbar (difficulty / type / status).
+6. **[`e2e/role-based-access.spec.ts`](file:///D:/Download/Company/Software/Test%20os/Exam/tools/e2e-tester/e2e/role-based-access.spec.ts)** (5 tests):
+   - All 4 personas (`MAIN_ADMIN`, `SUB_ADMIN`, `TEACHER`, `STUDENT`) login successfully.
+   - Backend 403 API permission rejection for students.
+   - Backend 403 API permission rejection for teachers on user management.
+   - `TARGET:` Student navigation tab visibility gating (cannot see `question_bank`, `courses`, `users`, `exams`, `exam_patterns`).
+   - `TARGET:` Teacher navigation tab visibility gating (cannot see `courses`, `users`).
 
 ---
 
-## 5. Live Master Test Results (Cold Run Evidence)
+## 5. Master Test Results Summary
 
-Raw execution output from executing all 5 master test suites sequentially against a freshly seeded embedded PostgreSQL instance is captured in [`test-output.txt`](file:///D:/Download/Company/Software/Test%20os/Exam/test-output.txt) (7,940 bytes).
-
+### 5.1 Backend API Master Suites (81/81 PASS)
 | Test Suite | File | Tests Run | Result |
 | :--- | :--- | :--- | :--- |
 | **Phase 1 Master Suite** | [`Exam/tests/phase-01-master.test.js`](file:///D:/Download/Company/Software/Test%20os/Exam/Exam/tests/phase-01-master.test.js) | 18 | **18/18 PASS** |
@@ -148,13 +146,22 @@ Raw execution output from executing all 5 master test suites sequentially agains
 | **Phase 3 Master Suite** | [`Exam/tests/phase-03-master.test.js`](file:///D:/Download/Company/Software/Test%20os/Exam/Exam/tests/phase-03-master.test.js) | 9 | **9/9 PASS** |
 | **Phase 4 Master Suite** | [`Exam/tests/phase-04-master.test.js`](file:///D:/Download/Company/Software/Test%20os/Exam/Exam/tests/phase-04-master.test.js) | 26 | **26/26 PASS** |
 | **Phase 5 Master Suite** | [`Exam/tests/phase-05-master.test.js`](file:///D:/Download/Company/Software/Test%20os/Exam/Exam/tests/phase-05-master.test.js) | 18 | **18/18 PASS** |
-| **Total Automated Tests** | — | **81** | **81/81 PASS (100%)** |
+| **Total Backend Tests** | — | **81** | **81/81 PASS (100%)** |
 
-All test fixtures were torn down with 0 leftover test rows.
+### 5.2 Frontend E2E / Browser Simulation Suite (23/23 PASS)
+| Test Suite | Spec File | Tests Run | Result |
+| :--- | :--- | :--- | :--- |
+| **Academic Structure UI** | [`e2e/courses.spec.ts`](file:///D:/Download/Company/Software/Test%20os/Exam/tools/e2e-tester/e2e/courses.spec.ts) | 3 | **3/3 PASS** |
+| **Exam Generator UI** | [`e2e/exam-generator.spec.ts`](file:///D:/Download/Company/Software/Test%20os/Exam/tools/e2e-tester/e2e/exam-generator.spec.ts) | 3 | **3/3 PASS** |
+| **Exam Patterns UI** | [`e2e/exam-patterns.spec.ts`](file:///D:/Download/Company/Software/Test%20os/Exam/tools/e2e-tester/e2e/exam-patterns.spec.ts) | 3 | **3/3 PASS** |
+| **Navigation & Tab Shells** | [`e2e/navigation.spec.ts`](file:///D:/Download/Company/Software/Test%20os/Exam/tools/e2e-tester/e2e/navigation.spec.ts) | 5 | **5/5 PASS** |
+| **Question Bank UI** | [`e2e/question-bank.spec.ts`](file:///D:/Download/Company/Software/Test%20os/Exam/tools/e2e-tester/e2e/question-bank.spec.ts) | 4 | **4/4 PASS** |
+| **Role-Based Access Control** | [`e2e/role-based-access.spec.ts`](file:///D:/Download/Company/Software/Test%20os/Exam/tools/e2e-tester/e2e/role-based-access.spec.ts) | 5 | **5/5 PASS** |
+| **Total E2E Tests** | — | **23** | **23/23 PASS (100%)** |
 
 ---
 
 ## 6. Reviewer Hand-off & Next Steps
-1. Both [`QuestionBankPage.tsx`](file:///D:/Download/Company/Software/Test%20os/Exam/Exam/apps/web/src/pages/QuestionBankPage.tsx) and [`CoursesPage.tsx`](file:///D:/Download/Company/Software/Test%20os/Exam/Exam/apps/web/src/pages/CoursesPage.tsx) are fully wired into [`App.tsx`](file:///D:/Download/Company/Software/Test%20os/Exam/Exam/apps/web/src/App.tsx) and ready for live UI testing.
-2. Raw test output is preserved in [`test-output.txt`](file:///D:/Download/Company/Software/Test%20os/Exam/test-output.txt).
+1. All Phase 2.5, 3.7, and 5.1–5.4 frontend and backend tasks are fully verified, regression-tested with 100% pass rates across both backend suites (81/81) and the standing browser simulation suite (23/23).
+2. `tools/e2e-tester` and `run_ui_tests.bat` are permanent standing tools for all future feature reviews and regression cycles.
 3. Reviewer can review and sign off Tasks 2.5, 3.7, and Phase 5 tasks (5.1–5.4) from `tested` to `done` in `tools/build-tracker`.

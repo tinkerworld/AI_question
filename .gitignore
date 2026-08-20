@@ -25,3 +25,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+review-package.zip
+tree.txt
+git-log.txt
+git-log-oneline.txt
+lockfile-check.txt
+agyssessionid.txt

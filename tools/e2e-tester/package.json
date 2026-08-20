@@ -1,0 +1,15 @@
+{
+  "name": "examos-e2e-tester",
+  "version": "1.0.0",
+  "description": "Standalone UI/human-simulation test tool for ExamOS - separate from the pnpm workspace, mirrors tools/build-tracker's isolation pattern.",
+  "scripts": {
+    "test": "playwright test",
+    "install-browser": "playwright install chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1"
+  },
+  "keywords": ["examos", "e2e", "playwright", "dev-tool"],
+  "author": "ExamOS Core Engineering",
+  "license": "MIT"
+}
