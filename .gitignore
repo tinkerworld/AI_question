@@ -26,8 +26,12 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 review-package.zip
+examos-for-friend.zip
+*.zip
+scratch
 tree.txt
 git-log.txt
 git-log-oneline.txt
 lockfile-check.txt
 agyssessionid.txt
+
