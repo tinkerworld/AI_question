@@ -765,55 +765,68 @@ export const ExamPatternsPage: React.FC = () => {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      {/* Toast Notice */}
-      {statusNotice && (
-        <div style={{
-          background: 'rgba(6, 182, 212, 0.15)',
-          border: '1px solid #06b6d4',
-          color: '#06b6d4',
-          padding: '10px 16px',
-          borderRadius: '6px',
-          fontSize: '13px',
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: 'calc(100vh - 65px)', overflow: 'hidden', padding: '20px 24px 0 24px', boxSizing: 'border-box' }}>
+      {/* Top Section: Header + Toast + Pattern List Table */}
+      <div
+        style={{
+          flex: selectedPattern ? '0 0 38%' : '1',
+          minHeight: '160px',
           display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}>
-          <span>✓ {statusNotice}</span>
-          <button onClick={() => setStatusNotice(null)} style={{ background: 'transparent', border: 'none', color: '#06b6d4', cursor: 'pointer' }}>✕</button>
-        </div>
-      )}
-
-      {/* Header Controls */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h2 style={{ margin: 0, fontFamily: 'JetBrains Mono', fontSize: '20px' }}>
-            {t('exam_patterns')} Management
-          </h2>
-          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>
-            Exam Blueprints, Question Rules, Topic/Difficulty Distribution, Subject Allocation & Validation Engine
-          </div>
-        </div>
-        <button
-          onClick={handleOpenCreateModal}
-          style={{
-            background: 'linear-gradient(135deg, #06b6d4, #3b82f6)',
-            color: '#fff',
-            border: 'none',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          transition: 'flex 0.2s ease',
+        }}
+      >
+        {/* Toast Notice */}
+        {statusNotice && (
+          <div style={{
+            background: 'rgba(6, 182, 212, 0.15)',
+            border: '1px solid #06b6d4',
+            color: '#06b6d4',
+            padding: '8px 14px',
             borderRadius: '6px',
-            padding: '10px 18px',
-            fontWeight: 'bold',
-            fontSize: '13px',
-            cursor: 'pointer',
-          }}
-        >
-          + Create Exam Pattern
-        </button>
-      </div>
+            fontSize: '12px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '10px',
+            flexShrink: 0,
+          }}>
+            <span>✓ {statusNotice}</span>
+            <button onClick={() => setStatusNotice(null)} style={{ background: 'transparent', border: 'none', color: '#06b6d4', cursor: 'pointer' }}>✕</button>
+          </div>
+        )}
 
-      {/* Pattern List Table */}
-      <div style={{ background: 'var(--panel-bg)', border: '1px solid var(--border-color)', borderRadius: '8px', overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
+        {/* Header Controls */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexShrink: 0 }}>
+          <div>
+            <h2 style={{ margin: 0, fontFamily: 'JetBrains Mono', fontSize: '18px' }}>
+              {t('exam_patterns')} Management
+            </h2>
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
+              Exam Blueprints, Question Rules, Topic/Difficulty Distribution, Subject Allocation & Validation Engine
+            </div>
+          </div>
+          <button
+            onClick={handleOpenCreateModal}
+            style={{
+              background: 'linear-gradient(135deg, #06b6d4, #3b82f6)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '6px',
+              padding: '8px 16px',
+              fontWeight: 'bold',
+              fontSize: '12px',
+              cursor: 'pointer',
+            }}
+          >
+            + Create Exam Pattern
+          </button>
+        </div>
+
+        {/* Pattern List Table Scroll Container */}
+        <div style={{ flex: 1, overflowY: 'auto', background: 'var(--panel-bg)', border: '1px solid var(--border-color)', borderRadius: '8px' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
           <thead>
             <tr style={{ background: 'rgba(255, 255, 255, 0.03)', borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)' }}>
               <th style={{ padding: '12px 16px' }}>Pattern Name</th>
@@ -932,16 +945,46 @@ export const ExamPatternsPage: React.FC = () => {
           </tbody>
         </table>
       </div>
+      </div>
 
-      {/* Selected Pattern Section Builder & Multi-Subject Engine */}
+      {/* Selected Pattern Section Builder & Multi-Subject Engine (Docked Bottom Panel) */}
       {selectedPattern && (
-        <div style={{ background: 'var(--panel-bg)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '24px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+        <div
+          id="pattern-builder-section"
+          style={{
+            flex: '1',
+            minHeight: '280px',
+            maxHeight: '62%',
+            display: 'flex',
+            flexDirection: 'column',
+            background: 'var(--panel-bg)',
+            border: '1px solid var(--border-color)',
+            borderTop: '3px solid var(--accent-color)',
+            borderRadius: '12px 12px 0 0',
+            boxShadow: '0 -8px 30px rgba(0, 0, 0, 0.45)',
+            overflow: 'hidden',
+            marginTop: '12px',
+            transition: 'all 0.2s ease',
+          }}
+        >
+          {/* Docked Builder Header */}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '14px 20px',
+              background: 'rgba(255, 255, 255, 0.02)',
+              borderBottom: '1px solid var(--border-color)',
+              flexShrink: 0,
+            }}
+          >
             <div>
-              <h3 style={{ margin: 0, fontFamily: 'JetBrains Mono', fontSize: '18px' }}>
-                Pattern Builder: {selectedPattern.name}
+              <h3 style={{ margin: 0, fontFamily: 'JetBrains Mono', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span>🛠️</span>
+                <span>Pattern Builder: {selectedPattern.name}</span>
               </h3>
-              <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>
+              <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
                 Type: <strong>{selectedPattern.type}</strong> | Duration: {selectedPattern.durationMinutes} mins | Total Blueprint Marks: <strong style={{ color: 'var(--accent-color)' }}>{selectedPattern.totalMarks}</strong> | Status: <strong>{selectedPattern.status}</strong>
               </div>
             </div>
@@ -958,9 +1001,19 @@ export const ExamPatternsPage: React.FC = () => {
               >
                 🧪 Run Validation Engine
               </button>
-              <button onClick={() => setSelectedPattern(null)} style={{ background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-muted)', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}>✕ Close</button>
+              <button
+                id="btn-close-pattern-builder"
+                onClick={() => setSelectedPattern(null)}
+                style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', color: '#ef4444', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}
+                title="Close Pattern Builder panel"
+              >
+                ✕ Close Builder
+              </button>
             </div>
           </div>
+
+          {/* Docked Builder Internal Scrollable Body */}
+          <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
 
           {/* Feature 4.7: Multi-Subject Allocation Sub-Panel (if MULTI or has subjects) */}
           {selectedPattern.type === 'MULTI' && (
@@ -1558,6 +1611,7 @@ export const ExamPatternsPage: React.FC = () => {
             ) : (
               <div style={{ color: 'var(--text-muted)', fontSize: '13px' }}>No sections added yet. Use form above to add sections.</div>
             )}
+          </div>
           </div>
         </div>
       )}

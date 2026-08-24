@@ -4,6 +4,7 @@ import { authenticate } from '../middleware/auth';
 import { requirePermission } from '../middleware/permission';
 import { validate } from '../middleware/validate';
 import { ExamGeneratorService } from '../services/exam-generator.service';
+import { ExamArchiveService } from '../services/exam-archive.service';
 import {
   generateExamSchema,
   createManualExamSchema,
@@ -12,6 +13,9 @@ import {
   addExamQuestionsSchema,
   swapExamQuestionSchema,
   reorderExamQuestionsSchema,
+  updateExamWorkflowStatusSchema,
+  assignExamReviewerSchema,
+  initiateExamCorrectionSchema,
 } from '@repo/validation';
 
 export const examRouter = Router();
@@ -50,9 +54,22 @@ examRouter.get(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { status, courseId, page, limit } = req.query;
+
+      const sessionData = req.impersonation?.sessionData;
+      const restrictedCourses =
+        sessionData?.courseAccess &&
+        (Array.isArray(sessionData.courseAccess)
+          ? !sessionData.courseAccess.includes('*') && sessionData.courseAccess.length > 0
+            ? sessionData.courseAccess
+            : null
+          : sessionData.courseAccess !== '*'
+          ? [sessionData.courseAccess]
+          : null);
+
       const result = await ExamGeneratorService.listExams({
         status: status as string,
         courseId: courseId as string,
+        allowedCourseIds: restrictedCourses || undefined,
         page: page ? parseInt(page as string, 10) : 1,
         limit: limit ? parseInt(limit as string, 10) : 20,
       });
@@ -124,6 +141,7 @@ examRouter.patch(
   validate(swapExamQuestionSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
+      await ExamArchiveService.assertExamMutable(req.params.id);
       const result = await ExamGeneratorService.swapQuestion(
         req.params.id,
         req.params.qId,
@@ -147,6 +165,7 @@ examRouter.post(
   requirePermission('exams.create'),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
+      await ExamArchiveService.assertExamMutable(req.params.id);
       const { oldQuestionId, newQuestionId } = req.body;
       const result = await ExamGeneratorService.swapQuestion(
         req.params.id,
@@ -166,25 +185,27 @@ examRouter.post(
 );
 
 /**
- * Feature 5.2: Regenerate an entire section
- * PATCH /api/v1/exams/:id/sections/:secId/regenerate
- * POST /api/v1/exams/:id/sections/:secId/regenerate
+ * Feature 5.2: Reorder questions within a section
+ * POST /api/v1/exams/:id/questions/reorder
+ * PATCH /api/v1/exams/:id/questions/reorder
  */
-examRouter.all(
-  '/:id/sections/:secId/regenerate',
+examRouter.post(
+  '/:id/questions/reorder',
   authenticate,
   requirePermission('exams.create'),
+  validate(reorderExamQuestionsSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const result = await ExamGeneratorService.regenerateSection(
+      await ExamArchiveService.assertExamMutable(req.params.id);
+      const result = await ExamGeneratorService.reorderQuestions(
         req.params.id,
-        req.params.secId,
+        req.body,
         req.user!.userId
       );
       res.json({
         success: true,
         data: result,
-        message: 'Section regenerated successfully',
+        message: 'Question sequence order updated successfully',
       });
     } catch (err) {
       next(err);
@@ -192,11 +213,30 @@ examRouter.all(
   }
 );
 
-/**
- * Feature 5.2: Reorder questions within a section
- * PATCH /api/v1/exams/:id/reorder
- * PUT /api/v1/exams/:id/reorder
- */
+examRouter.patch(
+  '/:id/questions/reorder',
+  authenticate,
+  requirePermission('exams.create'),
+  validate(reorderExamQuestionsSchema),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      await ExamArchiveService.assertExamMutable(req.params.id);
+      const result = await ExamGeneratorService.reorderQuestions(
+        req.params.id,
+        req.body,
+        req.user!.userId
+      );
+      res.json({
+        success: true,
+        data: result,
+        message: 'Question sequence order updated successfully',
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 examRouter.all(
   '/:id/reorder',
   authenticate,
@@ -204,6 +244,7 @@ examRouter.all(
   validate(reorderExamQuestionsSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
+      await ExamArchiveService.assertExamMutable(req.params.id);
       const result = await ExamGeneratorService.reorderQuestions(
         req.params.id,
         req.body,
@@ -221,8 +262,36 @@ examRouter.all(
 );
 
 /**
+ * Feature 5.2: Regenerate single section questions
+ * PATCH /api/v1/exams/:id/sections/:sectionId/regenerate
+ */
+examRouter.patch(
+  '/:id/sections/:sectionId/regenerate',
+  authenticate,
+  requirePermission('exams.create'),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      await ExamArchiveService.assertExamMutable(req.params.id);
+      const result = await ExamGeneratorService.regenerateSection(
+        req.params.id,
+        req.params.sectionId,
+        req.user!.userId
+      );
+      res.json({
+        success: true,
+        data: result,
+        message: 'Section questions regenerated successfully',
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+/**
  * Feature 5.3: Update exam metadata
  * PATCH /api/v1/exams/:id
+ * PUT /api/v1/exams/:id
  */
 examRouter.patch(
   '/:id',
@@ -231,6 +300,31 @@ examRouter.patch(
   validate(updateExamMetadataSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
+      await ExamArchiveService.assertExamMutable(req.params.id);
+      const result = await ExamGeneratorService.updateExamMetadata(
+        req.params.id,
+        req.body,
+        req.user!.userId
+      );
+      res.json({
+        success: true,
+        data: result,
+        message: 'Exam metadata updated successfully',
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+examRouter.put(
+  '/:id',
+  authenticate,
+  requirePermission('exams.create'),
+  validate(updateExamMetadataSchema),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      await ExamArchiveService.assertExamMutable(req.params.id);
       const result = await ExamGeneratorService.updateExamMetadata(
         req.params.id,
         req.body,
@@ -248,7 +342,7 @@ examRouter.patch(
 );
 
 /**
- * Feature 5.3: Publish finalized exam
+ * Feature 5.3 & 7.1: Publish finalized exam
  * POST /api/v1/exams/:id/publish
  */
 examRouter.post(
@@ -257,11 +351,208 @@ examRouter.post(
   requirePermission('exams.publish'),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const result = await ExamGeneratorService.publishExam(req.params.id, req.user!.userId);
+      const result = await ExamArchiveService.publishAndSnapshotExam(req.params.id, req.user!.userId);
+      const draftDetails = await ExamGeneratorService.getDraftExamDetails(req.params.id);
+      res.json({
+        success: true,
+        data: {
+          ...result,
+          exam: draftDetails.exam,
+        },
+        message: 'Exam published successfully for student attempts and immutable snapshot created',
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+/**
+ * Feature 7.1: Update Exam Workflow Status (DRAFT -> PREVIEW -> REVIEW -> APPROVED -> PUBLISHED)
+ * PUT /api/v1/exams/:id/status
+ */
+examRouter.put(
+  '/:id/status',
+  authenticate,
+  requirePermission('exams.publish'),
+  validate(updateExamWorkflowStatusSchema),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const result = await ExamArchiveService.updateExamStatus(req.params.id, req.body, req.user!.userId);
       res.json({
         success: true,
         data: result,
-        message: 'Exam published successfully for student attempts',
+        message: `Exam status transitioned to ${req.body.status}`,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+/**
+ * Feature 7.1: Assign Reviewer to Exam
+ * POST /api/v1/exams/:id/reviewers
+ */
+examRouter.post(
+  '/:id/reviewers',
+  authenticate,
+  requirePermission('exams.create'),
+  validate(assignExamReviewerSchema),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const result = await ExamArchiveService.assignReviewer(req.params.id, req.body, req.user!.userId);
+      res.status(201).json({
+        success: true,
+        data: result,
+        message: 'Reviewer assigned successfully',
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+/**
+ * Feature 7.1: Get Exam Workflow History & Reviewers
+ * GET /api/v1/exams/:id/workflow-history
+ */
+examRouter.get(
+  '/:id/workflow-history',
+  authenticate,
+  requirePermission('exams.read'),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const result = await ExamArchiveService.getWorkflowHistory(req.params.id);
+      res.json({
+        success: true,
+        data: result,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+/**
+ * Feature 7.2: Get Frozen Exam Snapshot Details
+ * GET /api/v1/exams/:id/snapshot
+ */
+examRouter.get(
+  '/:id/snapshot',
+  authenticate,
+  requirePermission('archive.read'),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const result = await ExamArchiveService.getSnapshotDetails(req.params.id);
+      res.json({
+        success: true,
+        data: result,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+/**
+ * Feature 7.3: Preserved Answer Key Retrieval
+ * GET /api/v1/exams/:id/answer-key
+ */
+examRouter.get(
+  '/:id/answer-key',
+  authenticate,
+  requirePermission('archive.answer_key'),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const result = await ExamArchiveService.getAnswerKey(req.params.id);
+      res.json({
+        success: true,
+        data: result,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+/**
+ * Feature 7.5: Initiate Post-Publish Formal Correction Workflow (V1 -> V2)
+ * POST /api/v1/exams/:id/corrections
+ */
+examRouter.post(
+  '/:id/corrections',
+  authenticate,
+  requirePermission('archive.correct'),
+  validate(initiateExamCorrectionSchema),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const result = await ExamArchiveService.initiateCorrection(req.params.id, req.body, req.user!.userId);
+      res.status(201).json({
+        success: true,
+        data: result,
+        message: 'Post-publish exam correction applied and new version snapshot created',
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+/**
+ * Feature 7.5: View Exam Snapshot Version History
+ * GET /api/v1/exams/:id/history
+ */
+examRouter.get(
+  '/:id/history',
+  authenticate,
+  requirePermission('archive.read'),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const result = await ExamArchiveService.getVersionHistory(req.params.id);
+      res.json({
+        success: true,
+        data: result,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+/**
+ * Feature 7.6: Exam File Management
+ * POST /api/v1/exams/:id/files
+ * GET /api/v1/exams/:id/files
+ */
+examRouter.post(
+  '/:id/files',
+  authenticate,
+  requirePermission('exams.create'),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const result = await ExamArchiveService.uploadFile(req.params.id, req.body, req.user!.userId);
+      res.status(201).json({
+        success: true,
+        data: result,
+        message: 'Exam file asset recorded successfully',
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+examRouter.get(
+  '/:id/files',
+  authenticate,
+  requirePermission('archive.read'),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const result = await ExamArchiveService.listFiles(req.params.id);
+      res.json({
+        success: true,
+        data: result,
       });
     } catch (err) {
       next(err);
@@ -280,6 +571,7 @@ examRouter.post(
   validate(createManualExamSectionSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
+      await ExamArchiveService.assertExamMutable(req.params.id);
       const result = await ExamGeneratorService.addManualSection(
         req.params.id,
         req.body,
@@ -307,6 +599,7 @@ examRouter.post(
   validate(addExamQuestionsSchema),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
+      await ExamArchiveService.assertExamMutable(req.params.id);
       const result = await ExamGeneratorService.addQuestionsToSection(
         req.params.id,
         req.body,
@@ -324,7 +617,7 @@ examRouter.post(
 );
 
 /**
- * Delete exam paper and cascade sections/questions
+ * Delete exam paper and cascade sections/questions (Only permitted on non-published exams)
  * DELETE /api/v1/exams/:id
  */
 examRouter.delete(
@@ -334,6 +627,7 @@ examRouter.delete(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const examId = req.params.id;
+      await ExamArchiveService.assertExamMutable(examId);
       await pgDb.query(`DELETE FROM "exam_questions" WHERE "examId" = $1`, [examId]);
       await pgDb.query(`DELETE FROM "exam_sections" WHERE "examId" = $1`, [examId]);
       await pgDb.query(`DELETE FROM "exams" WHERE "id" = $1`, [examId]);

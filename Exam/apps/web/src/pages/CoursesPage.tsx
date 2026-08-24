@@ -121,7 +121,7 @@ export const CoursesPage: React.FC = () => {
   };
 
   // 2. Fetch Subjects for Selected Course
-  const fetchSubjects = async (courseId: string) => {
+  const fetchSubjects = async (courseId: string, targetSubjectId?: string) => {
     try {
       setError(null);
       const res = await fetch(`http://localhost:4000/api/v1/courses/${courseId}/subjects`, {
@@ -129,10 +129,24 @@ export const CoursesPage: React.FC = () => {
       });
       const data = await res.json();
       if (data.success) {
-        setSubjects(data.data || []);
-        if (data.data && data.data.length > 0) {
-          setSelectedSubject(data.data[0]);
-          fetchSyllabusTree(data.data[0].id);
+        const subjectList: Subject[] = data.data || [];
+        setSubjects(subjectList);
+        if (subjectList.length > 0) {
+          // If a specific target ID was requested (e.g. newly created subject or just edited subject)
+          let toSelect: Subject | undefined;
+          if (targetSubjectId) {
+            toSelect = subjectList.find((s) => s.id === targetSubjectId);
+          }
+
+          // Otherwise, if we already had a subject selected, preserve it if it still exists in the list
+          if (!toSelect && selectedSubject) {
+            toSelect = subjectList.find((s) => s.id === selectedSubject.id);
+          }
+
+          // Fallback to index 0 on initial course load or if selected subject no longer exists
+          const finalSubject = toSelect || subjectList[0];
+          setSelectedSubject(finalSubject);
+          fetchSyllabusTree(finalSubject.id);
         } else {
           setSelectedSubject(null);
           setSyllabusTree([]);
@@ -172,6 +186,8 @@ export const CoursesPage: React.FC = () => {
 
   const handleSelectCourse = (course: Course) => {
     setSelectedCourse(course);
+    setSelectedSubject(null);
+    setSyllabusTree([]);
     fetchSubjects(course.id);
   };
 
@@ -316,7 +332,7 @@ export const CoursesPage: React.FC = () => {
         if (data.success) {
           setSuccessMsg(`Subject ${subjectName} updated`);
           setShowSubjectModal(false);
-          fetchSubjects(selectedCourse.id);
+          fetchSubjects(selectedCourse.id, editingSubject.id);
         } else {
           setError(extractApiErrorMessage(data, 'Failed to update subject'));
         }
@@ -328,9 +344,10 @@ export const CoursesPage: React.FC = () => {
         });
         const data = await res.json();
         if (data.success) {
+          const createdSubjectId = data.data?.id;
           setSuccessMsg(`Subject ${subjectName} added`);
           setShowSubjectModal(false);
-          fetchSubjects(selectedCourse.id);
+          fetchSubjects(selectedCourse.id, createdSubjectId);
         } else {
           setError(extractApiErrorMessage(data, 'Failed to add subject'));
         }
@@ -946,6 +963,7 @@ export const CoursesPage: React.FC = () => {
                 SUBJECTS ({subjects.length})
               </span>
               <button
+                id="btn-add-subject"
                 onClick={openCreateSubjectModal}
                 style={{
                   background: 'none',
@@ -1292,7 +1310,7 @@ export const CoursesPage: React.FC = () => {
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h2 style={{ margin: 0, fontSize: '18px', fontFamily: 'JetBrains Mono' }}>
+              <h2 id="subject-modal-title" style={{ margin: 0, fontSize: '18px', fontFamily: 'JetBrains Mono' }}>
                 {editingSubject ? 'Edit Subject' : `Add Subject to ${selectedCourse?.name}`}
               </h2>
               <button

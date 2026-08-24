@@ -72,6 +72,9 @@ importers:
       '@repo/database':
         specifier: workspace:*
         version: link:../../packages/database
+      '@repo/mastery-engine':
+        specifier: workspace:*
+        version: link:../../packages/mastery-engine
       '@repo/permissions':
         specifier: workspace:*
         version: link:../../packages/permissions
@@ -179,6 +182,16 @@ importers:
         version: 5.9.3
 
   packages/eslint-config: {}
+
+  packages/mastery-engine:
+    dependencies:
+      '@repo/types':
+        specifier: workspace:*
+        version: link:../types
+    devDependencies:
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
 
   packages/permissions:
     dependencies:

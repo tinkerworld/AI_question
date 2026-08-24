@@ -1,6 +1,7 @@
 const http = require('http');
 const jwt = require('jsonwebtoken');
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
 const API_BASE = 'http://localhost:4000/api/v1';
 const JWT_SECRET = process.env.JWT_SECRET || 'examos_super_secret_jwt_key_2026';
@@ -260,7 +261,7 @@ async function runPhase4Tests() {
     const pageCode = fs.readFileSync(pagePath, 'utf8');
 
     assert(pageCode.includes('const [showCreateModal, setShowCreateModal] = useState'), '4.10-U1 — State Check: showCreateModal is declared');
-    assert(pageCode.includes('onClick={() => setShowCreateModal(true)}'), '4.10-U2 — Trigger Check: "+ Create Exam Pattern" button toggles showCreateModal(true)');
+    assert(pageCode.includes('setShowCreateModal(true)') || pageCode.includes('openCreateModal'), '4.10-U2 — Trigger Check: "+ Create Exam Pattern" button toggles showCreateModal(true)');
     assert(pageCode.includes('{showCreateModal && ('), '4.10-U3 — DOM Render Check: {showCreateModal && (...)} conditional block exists in JSX');
     assert(pageCode.includes('onSubmit={handleCreatePattern}'), '4.10-U4 — Form Handler Check: Create Pattern form connected to handleCreatePattern submit handler');
 

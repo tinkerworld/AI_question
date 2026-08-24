@@ -219,8 +219,14 @@ router.get('/me', authenticate, async (req: Request, res: Response, next: NextFu
     });
 
     const roles = Array.from(rolesSet);
+    if (roles.length === 0 && req.user?.roles) {
+      roles.push(...req.user.roles);
+    }
     if (roles.includes('MAIN_ADMIN')) {
       permissionsSet.add('*');
+    }
+    if (permissionsSet.size === 0 && req.user?.permissions) {
+      req.user.permissions.forEach((p: string) => permissionsSet.add(p));
     }
 
     res.json({

@@ -1,5 +1,9 @@
 import * as bcrypt from 'bcryptjs';
 import { pgDb } from '../src/index';
+import { ExamGeneratorService } from '../../../apps/api/src/services/exam-generator.service';
+import { ExamArchiveService } from '../../../apps/api/src/services/exam-archive.service';
+import { AttemptService } from '../../../apps/api/src/services/attempt.service';
+import { analyticsService } from '../../../apps/api/src/services/analytics.service';
 
 export const PERMISSIONS = [
   { id: 'p1', key: 'users.create', description: 'Create user accounts', module: 'users' },
@@ -22,6 +26,38 @@ export const PERMISSIONS = [
   { id: 'p18', key: 'exams.read', description: 'View exam patterns, drafts and exams', module: 'exams' },
   { id: 'p19', key: 'exams.publish', description: 'Publish exams and manage schedules', module: 'exams' },
   { id: 'p20', key: 'exams.attempt', description: 'Attempt student exams', module: 'exams' },
+  { id: 'p21', key: 'results.read_own', description: 'Read own exam attempt results', module: 'results' },
+  { id: 'p22', key: 'results.flag', description: 'Flag attempt result for teacher review', module: 'results' },
+  { id: 'p23', key: 'archive.read', description: 'View published exam archive and snapshots', module: 'archive' },
+  { id: 'p24', key: 'archive.answer_key', description: 'View preserved answer keys in archive', module: 'archive' },
+  { id: 'p25', key: 'archive.correct', description: 'Initiate post-publish correction workflow', module: 'archive' },
+  { id: 'p26', key: 'archive.export', description: 'Export and download archived exam assets', module: 'archive' },
+  { id: 'p27', key: 'analytics.read_own', description: 'View own student analytics and mastery dashboard', module: 'analytics' },
+  { id: 'p28', key: 'analytics.read', description: 'View class and student analytics dashboards', module: 'analytics' },
+  { id: 'p29', key: 'practice.create', description: 'Generate personalized practice papers from weaknesses', module: 'practice' },
+  { id: 'p30', key: 'practice.read', description: 'View practice papers, weakness pools and history', module: 'practice' },
+  { id: 'p31', key: 'practice.attempt', description: 'Take and submit personalized practice tests', module: 'practice' },
+  { id: 'p32', key: 'practice.evaluate', description: 'Evaluate practice answers and update mastery streaks', module: 'practice' },
+  { id: 'p33', key: 'preview.use', description: 'Activate and use student preview mode', module: 'preview' },
+  { id: 'p34', key: 'preview.config', description: 'Configure preview plans and environments', module: 'preview' },
+  { id: 'p35', key: 'impersonate.use', description: 'Impersonate real students with audit justification', module: 'preview' },
+  { id: 'p36', key: 'preview.audit_read', description: 'View impersonation and preview audit logs', module: 'preview' },
+  { id: 'p37', key: 'ai.modify', description: 'Use AI to generate question variations', module: 'ai' },
+  { id: 'p38', key: 'ai.generate', description: 'Use AI to generate new questions from blueprint', module: 'ai' },
+  { id: 'p39', key: 'ai.batch', description: 'Queue batch AI question generation jobs', module: 'ai' },
+  { id: 'p40', key: 'ai.review', description: 'Review, approve, and reject AI generated drafts', module: 'ai' },
+  { id: 'p41', key: 'ai.usage_read', description: 'View AI credit balance and usage history', module: 'ai' },
+  { id: 'p42', key: 'ai.admin_config', description: 'Configure AI gateway providers and rate limits', module: 'ai' },
+  { id: 'p43', key: 'interview.attempt', description: 'Take and participate in AI interview sessions', module: 'interview' },
+  { id: 'p44', key: 'interview.read_own', description: 'View own interview transcripts and evaluations', module: 'interview' },
+  { id: 'p45', key: 'interview.manage', description: 'Create and configure interview rubrics and templates', module: 'interview' },
+  { id: 'p46', key: 'interview.evaluate', description: 'Review and evaluate interview transcripts', module: 'interview' },
+  { id: 'p47', key: 'subscriptions.read', description: 'View subscription plans and own subscription', module: 'subscriptions' },
+  { id: 'p48', key: 'subscriptions.manage', description: 'Create, modify and manage subscription plans', module: 'subscriptions' },
+  { id: 'p49', key: 'entitlements.read', description: 'View user and plan feature entitlements', module: 'entitlements' },
+  { id: 'p50', key: 'entitlements.manage', description: 'Configure dynamic entitlement rules and limits per plan', module: 'entitlements' },
+  { id: 'p51', key: 'billing.read_own', description: 'View own payment receipts and invoices', module: 'billing' },
+  { id: 'p52', key: 'billing.manage', description: 'Process refunds, inspect financial transactions and manage billing', module: 'billing' },
 ];
 
 export const ROLES = [
@@ -42,6 +78,14 @@ export const ROLES = [
       'courses.read', 'courses.create', 'courses.update',
       'questions.read', 'questions.create', 'questions.update',
       'exams.read', 'exams.create', 'exams.publish', 'audit.read',
+      'results.read_own', 'results.flag',
+      'archive.read', 'archive.answer_key', 'archive.correct', 'archive.export',
+      'analytics.read_own', 'analytics.read',
+      'practice.create', 'practice.read', 'practice.attempt', 'practice.evaluate',
+      'preview.use', 'preview.config', 'impersonate.use', 'preview.audit_read',
+      'ai.modify', 'ai.generate', 'ai.batch', 'ai.review', 'ai.usage_read', 'ai.admin_config',
+      'interview.attempt', 'interview.read_own', 'interview.manage', 'interview.evaluate',
+      'subscriptions.read', 'subscriptions.manage', 'entitlements.read', 'entitlements.manage', 'billing.read_own', 'billing.manage',
     ],
   },
   {
@@ -52,6 +96,14 @@ export const ROLES = [
     permissions: [
       'courses.read', 'questions.read', 'questions.create',
       'questions.update', 'exams.read', 'exams.create', 'exams.publish',
+      'results.read_own',
+      'archive.read', 'archive.answer_key', 'archive.export',
+      'analytics.read_own', 'analytics.read',
+      'practice.create', 'practice.read', 'practice.attempt', 'practice.evaluate',
+      'preview.use', 'preview.config',
+      'ai.modify', 'ai.generate', 'ai.review', 'ai.usage_read',
+      'interview.attempt', 'interview.read_own', 'interview.manage', 'interview.evaluate',
+      'subscriptions.read', 'entitlements.read', 'billing.read_own',
     ],
   },
   {
@@ -59,7 +111,15 @@ export const ROLES = [
     name: 'STUDENT',
     description: 'Enrolled learner persona',
     isSystem: true,
-    permissions: ['courses.read', 'exams.read', 'exams.attempt'],
+    permissions: [
+      'courses.read', 'exams.read', 'exams.attempt', 'results.read_own', 'results.flag',
+      'archive.read', 'archive.export',
+      'analytics.read_own',
+      'practice.create', 'practice.read', 'practice.attempt', 'practice.evaluate',
+      'ai.usage_read',
+      'interview.attempt', 'interview.read_own',
+      'subscriptions.read', 'entitlements.read', 'billing.read_own',
+    ],
   },
 ];
 
@@ -100,6 +160,15 @@ export const USERS = [
     roleId: 'r4',
     roleName: 'STUDENT',
   },
+  {
+    id: 'usr_student_2_test',
+    email: 'student2@examos.com',
+    password: 'Student2@123',
+    firstName: 'Priya',
+    lastName: 'Patel',
+    roleId: 'r4',
+    roleName: 'STUDENT',
+  },
 ];
 
 export const BASELINE_LANGUAGES = [
@@ -137,17 +206,14 @@ export const TRANSLATION_KEYS = [
   { key: 'question_bank', description: 'Navigation question bank label', module: 'navigation' },
   { key: 'exam_patterns', description: 'Navigation exam patterns label', module: 'navigation' },
   { key: 'exams', description: 'Navigation exams generator label', module: 'navigation' },
+  { key: 'archive', description: 'Navigation published exam archive label', module: 'navigation' },
   { key: 'analytics', description: 'Navigation student analytics label', module: 'navigation' },
 ];
 
 export const SEED_TRANSLATIONS: Record<string, Record<string, string>> = {
-  en: { welcome: 'Welcome to ExamOS Platform', app_title: 'ExamOS // Adaptive Learning Platform', dashboard: 'Dashboard', users: 'User Management', courses: 'Academic Courses', question_bank: 'Question Bank', exam_patterns: 'Exam Patterns', exams: 'Exam Generator', analytics: 'Student Analytics' },
-  hi: { welcome: 'ExamOS प्लेटफॉर्म में आपका स्वागत है', app_title: 'ExamOS // अनुकूलनीय शिक्षण मंच', dashboard: 'डैशबोर्ड', users: 'उपयोगकर्ता प्रबंधन', courses: 'अकादमिक पाठ्यक्रम', question_bank: 'प्रश्न बैंक', exam_patterns: 'परीक्षा पैटर्न', exams: 'परीक्षा जनरेटर', analytics: 'छात्र विश्लेषण' },
-  bn: { welcome: 'ExamOS প্ল্যাটফর্মে স্বাগতম', app_title: 'ExamOS // অ্যাডাপ্টিভ লার্নিং প্ল্যাটফর্ম', dashboard: 'ড্যাশবোর্ড', users: 'ব্যবহারকারী পরিচালনা', courses: 'একাডেমিক কোর্স', question_bank: 'প্রশ্ন ব্যাংক', exam_patterns: 'পরীক্ষার প্যাটার্ন', exams: 'পরীক্ষা জেনারেটর', analytics: 'ছাত্র অ্যানালিটিক্স' },
-  te: { welcome: 'ExamOS ప్లాట్‌ఫారమ్‌కు స్వాగతం', app_title: 'ExamOS // అడాప్టివ్ లెర్నింగ్ ప్లాట్‌ఫారమ్', dashboard: 'డాష్‌బోర్డ్', users: 'వినియోగదారు నిర్వహణ', courses: 'అకాడమిక్ కోర్సులు', question_bank: 'ప్రశ్నల బ్యాంక్', exam_patterns: 'పరీక్షా సరళి', exams: 'పరీక్ష జనరేటర్', analytics: 'విద్యార్థుల విశ్లేషణ' },
-  mr: { welcome: 'ExamOS प्लॅटफॉर्मवर आपले स्वागत आहे', app_title: 'ExamOS // अ‍ॅडॉप्टिव्ह लर्निंग प्लॅटफॉर्म', dashboard: 'डॅशबोर्ड', users: 'वापरकर्ता व्यवस्थापन', courses: 'शैक्षणिक अभ्यासक्रम', question_bank: 'प्रश्न संच', exam_patterns: 'परीक्षा पद्धती', exams: 'परीक्षा जनरेटर', analytics: 'विद्यार्थी विश्लेषण' },
-  ta: { welcome: 'ExamOS தளத்திற்கு உங்களை வரவேற்கிறோம்', app_title: 'ExamOS // தகவமைப்பு கற்றல் தளம்', dashboard: 'டாஷ்போர்டு', users: 'பயனர் நிர்வாகம்', courses: 'கல்விப் பாடங்கள்', question_bank: 'வினா வங்கி', exam_patterns: 'தேர்வு முறைகள்', exams: 'தேர்வு ஜெனரேட்டர்', analytics: 'மாணவர் பகுப்பாய்வு' },
-  ur: { welcome: 'ExamOS پلیٹ فارم میں خوش آمدید', app_title: 'ExamOS // موافقانہ تعلیمی پلیٹ فارم', dashboard: 'ڈیش بورڈ', users: 'صارفین کا انتظام', courses: 'تعليمى نصاب', question_bank: 'سوالات کا بنک', exam_patterns: 'امتحانی پیٹرن', exams: 'امتحان جنریٹر', analytics: 'طالب علم کا تجزیہ' },
+  en: { welcome: 'Welcome to ExamOS Platform', app_title: 'ExamOS // Adaptive Learning Platform', dashboard: 'Dashboard', users: 'User Management', courses: 'Academic Courses', question_bank: 'Question Bank', exam_patterns: 'Exam Patterns', exams: 'Exam Generator', archive: 'Published Archive', analytics: 'Student Analytics' },
+  hi: { welcome: 'ExamOS प्लेटफॉर्म में आपका स्वागत है', app_title: 'ExamOS // अनुकूलनीय शिक्षण मंच', dashboard: 'डैशबोर्ड', users: 'उपयोगकर्ता प्रबंधन', courses: 'अकादमिक पाठ्यक्रम', question_bank: 'प्रश्न बैंक', exam_patterns: 'परीक्षा पैटर्न', exams: 'परीक्षा जनरेटर', archive: 'प्रकाशित अभिलेखागार', analytics: 'छात्र विश्लेषण' },
+  bn: { welcome: 'ExamOS প্ল্যাটফর্মে স্বাগতম', app_title: 'ExamOS // অ্যাডাপ্টিভ লার্নিং প্ল্যাটফর্ম', dashboard: 'ড্যাশবোর্ড', users: 'ব্যবহারকারী পরিচালনা', courses: 'একাডেমিক কোর্স', question_bank: 'প্রশ্ন ব্যাংক', exam_patterns: 'পরীক্ষার প্যাটার্ন', exams: 'পরীক্ষা জেনারেটর', archive: 'প্রকাশিত সংরক্ষণাগার', analytics: 'ছাত্র অ্যানালিটিক্স' },
   gu: { welcome: 'ExamOS પ્લેટફોર્મ પર આપનું સ્વાગત છે', app_title: 'ExamOS // અનુકૂલનશીલ શિક્ષણ પ્લેટફોર્મ', dashboard: 'ડેશબોર્ડ', users: 'વપરાશકર્તા સંચાલન', courses: 'શૈક્ષણિક અભ્યાસક્રમો', question_bank: 'પ્રશ્ન બેંક', exam_patterns: 'પરીક્ષા પેટર્ન', exams: 'પરીક્ષા જનરેટર', analytics: 'વિદ્યાર્થી પૃથ્થકરણ' },
   kn: { welcome: 'ExamOS ವೇದಿಕೆಗೆ ನಿಮಗೆ ಸುಸ್ವಾಗತ', app_title: 'ExamOS // ಅಡಾಪ್ಟಿವ್ ಕಲಿಕಾ ವೇದಿಕೆ', dashboard: 'ಡ್ಯಾಶ್‌ಬೋರ್ಡ್', users: 'ಬಳಕೆದಾರರ ನಿರ್ವಹಣೆ', courses: 'ಶೈಕ್ಷಣಿಕ ಕೋರ್ಸ್‌ಗಳು', question_bank: 'ಪ್ರಶ್ನೆ ಬ್ಯಾಂಕ್', exam_patterns: 'ಪರೀಕ್ಷಾ ಮಾದರಿಗಳು', exams: 'ಪರೀಕ್ಷಾ ಜನರೇಟರ್', analytics: 'ವಿದ್ಯಾರ್ಥಿ ವಿಶ್ಲೇಷಣೆ' },
   ml: { welcome: 'ExamOS പ്ലാറ്റ്‌ഫോമിലേക്ക് സ്വാgatam', app_title: 'ExamOS // അഡാപ്റ്റീവ് ലേണിംഗ് പ്ലാറ്റ്‌ഫോം', dashboard: 'ഡാഷ്‌ബോർഡ്', users: 'ഉപയോക്തൃ മാനേജ്മെന്റ്', courses: 'അക്കാദമിക് കോഴ്‌സുകൾ', question_bank: 'ചോദ്യ ബാങ്ക്', exam_patterns: 'പരീക്ഷാ പാറ്റേൺ', exams: 'പരീക്ഷാ ജനറേറ്റർ', analytics: 'വിദ്യാർത്ഥി വിശകലനം' },
@@ -169,6 +235,41 @@ export const SEED_TRANSLATIONS: Record<string, Record<string, string>> = {
 export const SEED_COURSES = [
   { id: 'c1', name: 'Engineering Entrance Course (JEE)', code: 'ENG-101', description: 'Comprehensive JEE Main & Advanced Engineering Foundation', durationMonths: 12 },
   { id: 'c2', name: 'Medical Entrance Course (NEET)', code: 'MED-101', description: 'Comprehensive NEET Medical Foundation Course', durationMonths: 12 },
+  { id: 'c3', name: 'Civil Services & Public Administration (UPSC)', code: 'UPSC-101', description: 'Comprehensive Civil Services & Personality Test Foundation', durationMonths: 12 },
+  { id: 'c4', name: 'IELTS Academic English Mastery', code: 'IELTS-101', description: 'Comprehensive IELTS Academic Band 8+ Foundation & Speaking Prep', durationMonths: 6 },
+];
+
+export const SEED_ENROLLMENTS = [
+  {
+    id: 'enr_student_1_jee',
+    userId: 'usr_student_test',
+    courseId: 'c1',
+    status: 'ACTIVE',
+  },
+  {
+    id: 'enr_student_1_neet',
+    userId: 'usr_student_test',
+    courseId: 'c2',
+    status: 'ACTIVE',
+  },
+  {
+    id: 'enr_student_2_jee',
+    userId: 'usr_student_2_test',
+    courseId: 'c1',
+    status: 'ACTIVE',
+  },
+  {
+    id: 'enr_student_2_upsc',
+    userId: 'usr_student_2_test',
+    courseId: 'c3',
+    status: 'ACTIVE',
+  },
+  {
+    id: 'enr_student_2_ielts',
+    userId: 'usr_student_2_test',
+    courseId: 'c4',
+    status: 'ACTIVE',
+  },
 ];
 
 export const SEED_SUBJECTS = [
@@ -176,6 +277,8 @@ export const SEED_SUBJECTS = [
   { id: 'sub_chem', courseId: 'c1', name: 'Chemistry', code: 'CHEM-101', description: 'Physical, Inorganic & Organic Chemistry', credits: 4, order: 2 },
   { id: 'sub_math', courseId: 'c1', name: 'Mathematics', code: 'MATH-101', description: 'Calculus, Algebra & Coordinate Geometry', credits: 4, order: 3 },
   { id: 'sub_bio', courseId: 'c2', name: 'Biology', code: 'BIO-101', description: 'Genetics, Physiology & Ecology', credits: 4, order: 1 },
+  { id: 'sub_upsc_interview', courseId: 'c3', name: 'Personality Test & Ethics', code: 'UPSC-PT', description: 'UPSC Board Interview & Ethical Dilemmas', credits: 4, order: 1 },
+  { id: 'sub_ielts_speaking', courseId: 'c4', name: 'IELTS Speaking & Oral Fluency', code: 'IELTS-SPK', description: 'IELTS 3-Part Speaking Assessment', credits: 4, order: 1 },
 ];
 
 export const SEED_TOPICS = [
@@ -194,6 +297,9 @@ export const SEED_TOPICS = [
   { id: 'top_algebra', subjectId: 'sub_math', title: 'Linear Algebra & Matrices', orderIndex: 2 },
   { id: 'top_coordinate_geom', subjectId: 'sub_math', title: 'Coordinate Geometry & Vectors', orderIndex: 3 },
   { id: 'top_probability', subjectId: 'sub_math', title: 'Probability, Permutations & Statistics', orderIndex: 4 },
+  // UPSC & IELTS Interview Topics
+  { id: 'top_upsc_ethics', subjectId: 'sub_upsc_interview', title: 'Ethical Decision Making & Public Policy', orderIndex: 1 },
+  { id: 'top_ielts_fluency', subjectId: 'sub_ielts_speaking', title: 'Academic Discussion & Abstract Themes', orderIndex: 1 },
 ];
 
 // Rich Question Bank seed dataset: 120 authentic questions across 12 topics (10 questions per topic: 3 EASY, 4 MEDIUM, 3 HARD)
@@ -2384,6 +2490,16 @@ export async function runSeed() {
     );
   }
 
+  console.log('4b. Seeding Student Course Enrollments into PostgreSQL...');
+  for (const e of SEED_ENROLLMENTS) {
+    await pgDb.query(
+      `INSERT INTO "enrollments" ("id", "userId", "courseId", "status", "enrolledAt", "updatedAt")
+       VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+       ON CONFLICT ("userId", "courseId") DO UPDATE SET "status" = EXCLUDED."status"`,
+      [e.id, e.userId, e.courseId, e.status]
+    );
+  }
+
   console.log(`5. Seeding ${SEED_QUESTIONS.length} rich Question Bank items across 3 subjects & 12 topics with mixed difficulties...`);
   let questionCount = 0;
   for (const q of SEED_QUESTIONS) {
@@ -2409,6 +2525,129 @@ export async function runSeed() {
         "subjectId" = EXCLUDED."subjectId",
         "syllabusNodeId" = EXCLUDED."syllabusNodeId"`,
       [q.id, q.type, q.content, dataPayload, q.difficulty, q.marks, q.subjectId, q.topicId]
+    );
+    questionCount++;
+  }
+
+  console.log('5b. Seeding authentic Phase 12 AI Interview Questions into PostgreSQL...');
+  const interviewQuestions = [
+    {
+      id: 'q_interview_upsc_01',
+      type: 'INTERVIEW',
+      content: 'You are the District Magistrate overseeing a major infrastructure project. Local indigenous communities are protesting displacement, but stopping the project will incur massive public funds default. How do you resolve this conflict?',
+      difficulty: 'HARD',
+      marks: 100.0,
+      status: 'PUBLISHED',
+      courseId: 'c3',
+      subjectId: 'sub_upsc_interview',
+      syllabusNodeId: 'top_upsc_ethics',
+      data: {
+        scenario: 'You are facing the UPSC Personality Test Board. The Chairperson asks how you balance public interest, constitutional rights of vulnerable groups, and economic development in a high-stakes administrative crisis.',
+        preset: 'UPSC_PERSONALITY',
+        maxTurns: 4,
+        expectedDurationMinutes: 15,
+        systemInstructions: 'You are the Chairperson of the UPSC Interview Board. Listen to the candidate rationale, challenge their assumptions with realistic administrative constraints, and probe for ethical firmness, balance of judgment, and constitutional adherence.',
+        openingQuestion: 'Candidate, balancing sovereign development with indigenous community welfare is a recurring dilemma for administrators. Walk us through your immediate framework to address this protest without compromising public accountability.',
+        rubric: [
+          {
+            id: 'integrity',
+            name: 'Ethical Integrity & Public Service Commitment',
+            description: 'Constitutional compliance, empathy for vulnerable groups, and personal impartiality.',
+            maxScore: 25,
+            criteria: ['Empathy for displaced populations', 'Strict adherence to due process of law', 'Incorruptible public trust'],
+          },
+          {
+            id: 'decision_making',
+            name: 'Administrative Balance & Feasibility',
+            description: 'Pragmatic problem solving, stakeholder mediation, and resource optimization.',
+            maxScore: 25,
+            criteria: ['Viability of rehabilitation package', 'Conflict de-escalation tactics', 'Financial prudence'],
+          },
+          {
+            id: 'communication',
+            name: 'Clarity, Composure & Articulation',
+            description: 'Structured argumentation, polite firmness, and mental poise under scrutiny.',
+            maxScore: 25,
+            criteria: ['Concise logical structure', 'Composure under aggressive follow-up questioning', 'Professional vocabulary'],
+          },
+          {
+            id: 'critical_thinking',
+            name: 'Analytical Depth & Multi-Dimensional View',
+            description: 'Anticipation of second-order consequences, policy foresight, and holistic perspectives.',
+            maxScore: 25,
+            criteria: ['Awareness of systemic socio-economic factors', 'Evaluation of legal precedents'],
+          },
+        ],
+      },
+    },
+    {
+      id: 'q_interview_ielts_01',
+      type: 'INTERVIEW',
+      content: 'Describe a significant technological innovation that has reshaped modern education in your country. Discuss both its transformative advantages and potential risks.',
+      difficulty: 'MEDIUM',
+      marks: 9.0,
+      status: 'PUBLISHED',
+      courseId: 'c4',
+      subjectId: 'sub_ielts_speaking',
+      syllabusNodeId: 'top_ielts_fluency',
+      data: {
+        scenario: 'IELTS Speaking Part 3 Discussion: The examiner asks you to critically discuss the impact of artificial intelligence and digital platforms on learning autonomy and critical thinking.',
+        preset: 'IELTS_SPEAKING',
+        maxTurns: 4,
+        expectedDurationMinutes: 12,
+        systemInstructions: 'You are a certified IELTS Speaking Examiner. Ask probing follow-up questions evaluating the candidate vocabulary range, complex grammatical structures, and depth of argumentation.',
+        openingQuestion: 'Let us discuss technological changes in learning. In your view, has the rapid adoption of digital tools enhanced genuine critical thinking among young students, or made them overly reliant on automated shortcuts?',
+        rubric: [
+          {
+            id: 'fluency',
+            name: 'Fluency & Coherence',
+            description: 'Speaks at length with ease, logical sequencing of ideas, and smooth connectives.',
+            maxScore: 9,
+            criteria: ['Natural discourse flow', 'Minimal hesitation or repetition', 'Clear paragraphing in speech'],
+          },
+          {
+            id: 'lexical',
+            name: 'Lexical Resource',
+            description: 'Uses a wide range of academic and idiomatic vocabulary with precision.',
+            maxScore: 9,
+            criteria: ['Varied vocabulary on abstract topics', 'Accurate collocations', 'Appropriate register'],
+          },
+          {
+            id: 'grammar',
+            name: 'Grammatical Range & Accuracy',
+            description: 'Uses a mix of simple and complex sentence structures with high accuracy.',
+            maxScore: 9,
+            criteria: ['Complex clauses (conditionals, passive, relative)', 'Low error density'],
+          },
+          {
+            id: 'pronunciation',
+            name: 'Pronunciation & Intonation',
+            description: 'Intelligible pronunciation with expressive stress, rhythm, and intonation.',
+            maxScore: 9,
+            criteria: ['Phonological features used effectively', 'Effortless comprehensibility'],
+          },
+        ],
+      },
+    },
+  ];
+
+  for (const iq of interviewQuestions) {
+    await pgDb.query(
+      `INSERT INTO "questions" (
+        "id", "type", "content", "data", "difficulty", "marks", "status", "version",
+        "courseId", "subjectId", "syllabusNodeId", "createdById", "createdAt", "updatedAt"
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, 1, $8, $9, $10, 'usr_admin_test', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      ON CONFLICT ("id") DO UPDATE SET
+        "type" = EXCLUDED."type",
+        "content" = EXCLUDED."content",
+        "data" = EXCLUDED."data",
+        "difficulty" = EXCLUDED."difficulty",
+        "marks" = EXCLUDED."marks",
+        "status" = EXCLUDED."status",
+        "courseId" = EXCLUDED."courseId",
+        "subjectId" = EXCLUDED."subjectId",
+        "syllabusNodeId" = EXCLUDED."syllabusNodeId"`,
+      [iq.id, iq.type, iq.content, JSON.stringify(iq.data), iq.difficulty, iq.marks, iq.status, iq.courseId, iq.subjectId, iq.syllabusNodeId]
     );
     questionCount++;
   }
@@ -2507,6 +2746,431 @@ export async function runSeed() {
     `, [s.id, s.subjectId, s.name, s.order, s.numQ, s.marks, s.numQ * s.marks, s.marks, s.wrong]);
   }
 
+  console.log('9. Pre-generating and publishing 3 authentic demo exams via real service pipeline...');
+  const examTitles = [
+    'JEE Main Grand Mock Exam 1 (All India Test Series)',
+    'JEE Main Grand Mock Exam 2 (Physics & Chemistry Intensive)',
+    'JEE Main Grand Mock Exam 3 (Full Syllabus Simulation)',
+  ];
+  const generatedExams: any[] = [];
+  for (const name of examTitles) {
+    const generated: any = await ExamGeneratorService.generateExam(
+      { patternId: 'pat_jee_main_standard', name },
+      'usr_admin_test'
+    );
+    await ExamArchiveService.publishAndSnapshotExam(generated.exam.id, 'usr_admin_test');
+    generatedExams.push(generated.exam);
+  }
+
+  console.log('10. Seeding contrasting student attempt profiles across seeded exams...');
+  const attemptService = new AttemptService();
+
+  const studentProfiles = [
+    {
+      userId: 'usr_student_test',
+      email: 'student@examos.com',
+      strengths: ['top_mech', 'top_physical_chem'],
+      weaknesses: ['top_organic', 'top_probability'],
+    },
+    {
+      userId: 'usr_student_2_test',
+      email: 'student2@examos.com',
+      strengths: ['top_organic', 'top_probability'],
+      weaknesses: ['top_mech', 'top_physical_chem'],
+    },
+  ];
+
+  for (const profile of studentProfiles) {
+    for (let examIdx = 0; examIdx < 2; examIdx++) {
+      const targetExam = generatedExams[examIdx];
+      const attemptState = await attemptService.startAttempt(targetExam.id, profile.userId, { bypassLimits: true });
+      const attemptId = attemptState.id || (attemptState as any).attemptId;
+
+      const answers = [];
+      for (const q of attemptState.questions) {
+        const qRowRes = await pgDb.query(
+          `SELECT "syllabusNodeId", "data" FROM "questions" WHERE "id" = $1`,
+          [q.questionId]
+        );
+        const qRow = qRowRes.rows[0] as any;
+        const topicId = qRow?.syllabusNodeId;
+        const qData = typeof qRow?.data === 'string' ? JSON.parse(qRow.data) : qRow?.data;
+        const correctOptId = qData?.correctOptionId;
+        const wrongOpt = qData?.options?.find((o: any) => o.id !== correctOptId) || qData?.options?.[0];
+
+        let chosenAnswer = null;
+        if (profile.strengths.includes(topicId)) {
+          // 100% correct in strengths
+          chosenAnswer = correctOptId;
+        } else if (profile.weaknesses.includes(topicId)) {
+          // 100% wrong in weaknesses
+          chosenAnswer = wrongOpt?.id || 'opt_wrong';
+        } else {
+          // 65% correct for remaining topics
+          chosenAnswer = (q.sequenceOrder % 3 !== 0) ? correctOptId : (wrongOpt?.id || 'opt_wrong');
+        }
+
+        answers.push({
+          questionId: q.questionId,
+          studentAnswer: chosenAnswer,
+          isMarkedForReview: false,
+          timeSpentSeconds: 45,
+        });
+      }
+
+      await attemptService.syncAnswers(attemptId, profile.userId, { answers });
+      await attemptService.submitAttempt(attemptId, profile.userId);
+    }
+  }
+
+  // Mark seeded historical attempts with past timestamp so active subscription starts fresh
+  await pgDb.query(`UPDATE "exam_attempts" SET "createdAt" = CURRENT_TIMESTAMP - INTERVAL '7 days'`);
+
+  console.log('11. Deriving analytics via real Mastery Engine recalculation...');
+  await analyticsService.recalculateStudentMastery('usr_student_test');
+  await analyticsService.recalculateStudentMastery('usr_student_2_test');
+
+  console.log('12. Seeding Phase 11: AI Gateway Providers, Prompt Templates, and User Credits...');
+  const defaultProviders = [
+    // Scope: question_authoring
+    {
+      id: 'prov_cloud_groq',
+      name: 'Groq Cloud Provider (Llama 3.3 70B Versatile)',
+      type: 'CLOUD',
+      modelId: 'llama-3.3-70b-versatile',
+      baseUrl: 'https://api.groq.com/openai/v1',
+      priority: 1,
+      scope: 'question_authoring',
+      isActive: false,
+    },
+    {
+      id: 'prov_cloud_gemini',
+      name: 'Google Gemini Provider (Flash 1.5 OpenAI-Compatible)',
+      type: 'CLOUD',
+      modelId: 'gemini-1.5-flash',
+      baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
+      priority: 2,
+      scope: 'question_authoring',
+      isActive: false,
+    },
+    {
+      id: 'prov_cloud_openrouter',
+      name: 'OpenRouter Provider (Free Meta/Mistral Cascade)',
+      type: 'CLOUD',
+      modelId: 'meta-llama/llama-3.3-70b-instruct:free',
+      baseUrl: 'https://openrouter.ai/api/v1',
+      priority: 3,
+      scope: 'question_authoring',
+      isActive: false,
+    },
+    {
+      id: 'prov_cloud_01',
+      name: 'OpenAI Cloud Provider (GPT-4o Mini / GPT-4o)',
+      type: 'CLOUD',
+      modelId: 'gpt-4o-mini',
+      baseUrl: 'https://api.openai.com/v1',
+      priority: 4,
+      scope: 'question_authoring',
+      isActive: false,
+    },
+    {
+      id: 'prov_local_01',
+      name: 'Local LLM (Ollama / LocalAI)',
+      type: 'LOCAL',
+      modelId: 'llama3:8b',
+      baseUrl: 'http://localhost:11434',
+      priority: 10,
+      scope: 'question_authoring',
+      isActive: false,
+    },
+    {
+      id: 'prov_mock_01',
+      name: 'Deterministic Fallback Mock Engine (Offline Safety Net)',
+      type: 'MOCK',
+      modelId: 'mock-gpt-4o-deterministic',
+      baseUrl: 'http://localhost:4000/internal/ai/mock',
+      priority: 999,
+      scope: 'question_authoring',
+      isActive: true,
+    },
+    // Scope: interview (preparatory isolation)
+    {
+      id: 'prov_interview_cloud_groq',
+      name: 'Groq Cloud Provider (Interview Socratic Evaluator)',
+      type: 'CLOUD',
+      modelId: 'llama-3.3-70b-versatile',
+      baseUrl: 'https://api.groq.com/openai/v1',
+      priority: 1,
+      scope: 'interview',
+      isActive: false,
+    },
+    {
+      id: 'prov_interview_cloud_gemini',
+      name: 'Google Gemini Provider (Flash 1.5 Interview Agent)',
+      type: 'CLOUD',
+      modelId: 'gemini-1.5-flash',
+      baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
+      priority: 2,
+      scope: 'interview',
+      isActive: false,
+    },
+    {
+      id: 'prov_interview_cloud_openrouter',
+      name: 'OpenRouter Provider (Free Meta/Mistral Interview Socratic)',
+      type: 'CLOUD',
+      modelId: 'meta-llama/llama-3.3-70b-instruct:free',
+      baseUrl: 'https://openrouter.ai/api/v1',
+      priority: 3,
+      scope: 'interview',
+      isActive: false,
+    },
+    {
+      id: 'prov_interview_cloud_01',
+      name: 'OpenAI Cloud Provider (Interview & Oral Grading)',
+      type: 'CLOUD',
+      modelId: 'gpt-4o-mini',
+      baseUrl: 'https://api.openai.com/v1',
+      priority: 4,
+      scope: 'interview',
+      isActive: false,
+    },
+    {
+      id: 'prov_interview_local_01',
+      name: 'Local LLM (Interview & Viva Voce)',
+      type: 'LOCAL',
+      modelId: 'llama3:8b',
+      baseUrl: 'http://localhost:11434',
+      priority: 10,
+      scope: 'interview',
+      isActive: false,
+    },
+    {
+      id: 'prov_interview_mock_01',
+      name: 'Deterministic Mock Engine (Interview Scope)',
+      type: 'MOCK',
+      modelId: 'mock-interview-v1',
+      baseUrl: 'http://localhost:4000/internal/ai/mock-interview',
+      priority: 999,
+      scope: 'interview',
+      isActive: true,
+    },
+  ];
+
+  for (const prov of defaultProviders) {
+    await pgDb.query(
+      `INSERT INTO "ai_providers" ("id", "name", "type", "modelId", "baseUrl", "priority", "scope", "isActive")
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       ON CONFLICT ("id") DO UPDATE SET "name" = EXCLUDED."name", "priority" = EXCLUDED."priority", "scope" = EXCLUDED."scope", "isActive" = EXCLUDED."isActive"`,
+      [prov.id, prov.name, prov.type, prov.modelId, prov.baseUrl, prov.priority, prov.scope, prov.isActive]
+    );
+  }
+
+  const defaultTemplates = [
+    {
+      id: 'tmpl_gen_01',
+      featureKey: 'question_generation',
+      version: 1,
+      dailyLimit: 50,
+      systemPrompt: 'You are an expert exam item writer and curriculum specialist. Generate rigorous, concept-aligned examination questions strictly adhering to the JSON schema provided.',
+      userPromptTemplate: 'Generate a {difficulty} question for Subject "{subject}" and Topic "{topic}". Type: {type}. Marks: {marks}. Follow curriculum depth accurately.',
+      expectedSchema: JSON.stringify({
+        type: 'object',
+        properties: {
+          content: { type: 'string' },
+          type: { type: 'string' },
+          difficulty: { type: 'string' },
+          marks: { type: 'number' },
+          data: { type: 'object' },
+        },
+        required: ['content', 'type', 'difficulty', 'marks', 'data'],
+      }),
+    },
+    {
+      id: 'tmpl_mod_01',
+      featureKey: 'question_modification',
+      version: 1,
+      dailyLimit: 100,
+      systemPrompt: 'You are an expert exam author. Create high-quality pedagogical variations of the given reference question by modifying numerical values, scenarios, or phrasing while strictly preserving the underlying concept and answer validity.',
+      userPromptTemplate: 'Create an alternative variation of this question: "{originalQuestion}". Instructions: {instructions}. Variance level: {varianceLevel}.',
+      expectedSchema: JSON.stringify({
+        type: 'object',
+        properties: {
+          content: { type: 'string' },
+          type: { type: 'string' },
+          difficulty: { type: 'string' },
+          marks: { type: 'number' },
+          data: { type: 'object' },
+        },
+        required: ['content', 'type', 'difficulty', 'marks', 'data'],
+      }),
+    },
+    {
+      id: 'tmpl_interview_01',
+      featureKey: 'interview',
+      version: 1,
+      dailyLimit: 25,
+      systemPrompt: 'You are an expert oral examination evaluator conducting a socratic interview assessment.',
+      userPromptTemplate: 'Evaluate candidate response for interview question: "{interviewQuestion}". Student answer: "{studentAnswer}".',
+      expectedSchema: JSON.stringify({
+        type: 'object',
+        properties: {
+          score: { type: 'number' },
+          feedback: { type: 'string' },
+          followUpQuestion: { type: 'string' },
+        },
+        required: ['score', 'feedback'],
+      }),
+    },
+  ];
+
+  for (const tmpl of defaultTemplates) {
+    await pgDb.query(
+      `INSERT INTO "ai_prompt_templates" ("id", "featureKey", "version", "systemPrompt", "userPromptTemplate", "expectedSchema", "dailyLimit", "isActive")
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       ON CONFLICT ("id") DO UPDATE SET "systemPrompt" = EXCLUDED."systemPrompt", "userPromptTemplate" = EXCLUDED."userPromptTemplate", "dailyLimit" = EXCLUDED."dailyLimit"`,
+      [tmpl.id, tmpl.featureKey, tmpl.version, tmpl.systemPrompt, tmpl.userPromptTemplate, tmpl.expectedSchema, tmpl.dailyLimit, true]
+    );
+  }
+
+  const initialUserCredits = [
+    { userId: 'usr_admin_test', included: 100, purchased: 500, cap: 1000000 },
+    { userId: 'usr_subadmin_test', included: 50, purchased: 200, cap: 500000 },
+    { userId: 'usr_teacher_test', included: 50, purchased: 100, cap: 500000 },
+    { userId: 'usr_student_test', included: 20, purchased: 30, cap: 200000 },
+    { userId: 'usr_student_2_test', included: 20, purchased: 0, cap: 200000 },
+  ];
+
+  for (const c of initialUserCredits) {
+    await pgDb.query(
+      `INSERT INTO "user_ai_credits" ("id", "userId", "includedDailyCredits", "dailyCreditsUsed", "purchasedCredits", "monthlyTokenCap", "tokensUsedThisMonth", "isCapped")
+       VALUES ($1, $2, $3, 0, $4, $5, 0, false)
+       ON CONFLICT ("userId") DO UPDATE SET "includedDailyCredits" = EXCLUDED."includedDailyCredits", "purchasedCredits" = EXCLUDED."purchasedCredits"`,
+      [`crd_${c.userId}`, c.userId, c.included, c.purchased, c.cap]
+    );
+  }
+
+  // 13. Seeding Phase 13: Subscription Plans, Entitlement Rules, and Credit Packages...
+  console.log('13. Seeding Phase 13: Subscription Plans, Entitlement Rules, and Credit Packages into PostgreSQL...');
+
+  const defaultPlans = [
+    {
+      id: 'plan_free',
+      code: 'FREE',
+      name: 'Free Starter',
+      price: 0.0,
+      billingCycle: 'monthly',
+      description: 'Basic tier with 2 mock tests, 1 sample interview, and 5 daily AI credits',
+      features: ['2 Mock Tests Total', '1 Sample Interview (5 min)', 'Basic Scorecard & Rank', '5 Daily AI Credits'],
+    },
+    {
+      id: 'plan_premium',
+      code: 'PREMIUM',
+      name: 'Premium Scholar',
+      price: 29.99,
+      billingCycle: 'monthly',
+      description: 'Full assessment suite, unlimited tests, personalized practice, and daily AI interviews',
+      features: ['Unlimited Mock Tests', '2 AI Interviews/day (30 min)', 'Full Rubric Assessment', 'Personalized Practice Papers', '20 Daily AI Credits', 'Custom Practice Topics'],
+    },
+    {
+      id: 'plan_premium_plus',
+      code: 'PREMIUM_PLUS',
+      name: 'Premium+ Master',
+      price: 59.99,
+      billingCycle: 'monthly',
+      description: 'High-capacity oral examination quotas, full analytics, and priority cloud AI routing',
+      features: ['Unlimited Mock Tests', '10 AI Interviews/day (60 min)', 'Full Rubric Assessment', 'Personalized Practice Papers', '50 Daily AI Credits', 'Priority AI Model Routing', 'AI Question Variations'],
+    },
+  ];
+
+  for (const p of defaultPlans) {
+    await pgDb.query(
+      `INSERT INTO "plans" ("id", "code", "name", "price", "billingCycle", "description", "features", "isActive")
+       VALUES ($1, $2, $3, $4, $5, $6, $7, true)
+       ON CONFLICT ("code") DO UPDATE SET "name" = EXCLUDED."name", "price" = EXCLUDED."price", "description" = EXCLUDED."description", "features" = EXCLUDED."features"`,
+      [p.id, p.code, p.name, p.price, p.billingCycle, p.description, p.features]
+    );
+  }
+
+  const defaultEntitlementRules = [
+    // FREE
+    { planCode: 'FREE', key: 'mock_tests', type: 'NUMBER', value: '2' },
+    { planCode: 'FREE', key: 'ai_interview_daily', type: 'NUMBER', value: '1' },
+    { planCode: 'FREE', key: 'demo_duration', type: 'NUMBER', value: '5' },
+    { planCode: 'FREE', key: 'daily_ai_credits', type: 'NUMBER', value: '5' },
+    { planCode: 'FREE', key: 'full_assessment', type: 'BOOLEAN', value: 'false' },
+    { planCode: 'FREE', key: 'personalized_practice', type: 'BOOLEAN', value: 'false' },
+    { planCode: 'FREE', key: 'custom_topic', type: 'BOOLEAN', value: 'false' },
+    { planCode: 'FREE', key: 'ai_question_modify', type: 'BOOLEAN', value: 'false' },
+    { planCode: 'FREE', key: 'priority_ai', type: 'BOOLEAN', value: 'false' },
+    // PREMIUM
+    { planCode: 'PREMIUM', key: 'mock_tests', type: 'NUMBER', value: '999999' },
+    { planCode: 'PREMIUM', key: 'ai_interview_daily', type: 'NUMBER', value: '2' },
+    { planCode: 'PREMIUM', key: 'demo_duration', type: 'NUMBER', value: '30' },
+    { planCode: 'PREMIUM', key: 'daily_ai_credits', type: 'NUMBER', value: '20' },
+    { planCode: 'PREMIUM', key: 'full_assessment', type: 'BOOLEAN', value: 'true' },
+    { planCode: 'PREMIUM', key: 'personalized_practice', type: 'BOOLEAN', value: 'true' },
+    { planCode: 'PREMIUM', key: 'custom_topic', type: 'BOOLEAN', value: 'true' },
+    { planCode: 'PREMIUM', key: 'ai_question_modify', type: 'BOOLEAN', value: 'true' },
+    { planCode: 'PREMIUM', key: 'priority_ai', type: 'BOOLEAN', value: 'false' },
+    // PREMIUM_PLUS
+    { planCode: 'PREMIUM_PLUS', key: 'mock_tests', type: 'NUMBER', value: '999999' },
+    { planCode: 'PREMIUM_PLUS', key: 'ai_interview_daily', type: 'NUMBER', value: '10' },
+    { planCode: 'PREMIUM_PLUS', key: 'demo_duration', type: 'NUMBER', value: '60' },
+    { planCode: 'PREMIUM_PLUS', key: 'daily_ai_credits', type: 'NUMBER', value: '50' },
+    { planCode: 'PREMIUM_PLUS', key: 'full_assessment', type: 'BOOLEAN', value: 'true' },
+    { planCode: 'PREMIUM_PLUS', key: 'personalized_practice', type: 'BOOLEAN', value: 'true' },
+    { planCode: 'PREMIUM_PLUS', key: 'custom_topic', type: 'BOOLEAN', value: 'true' },
+    { planCode: 'PREMIUM_PLUS', key: 'ai_question_modify', type: 'BOOLEAN', value: 'true' },
+    { planCode: 'PREMIUM_PLUS', key: 'priority_ai', type: 'BOOLEAN', value: 'true' },
+  ];
+
+  for (const r of defaultEntitlementRules) {
+    await pgDb.query(
+      `INSERT INTO "entitlement_rules" ("id", "planCode", "entitlementKey", "entitlementType", "entitlementValue")
+       VALUES ($1, $2, $3, $4, $5)
+       ON CONFLICT ("planCode", "entitlementKey") DO UPDATE SET "entitlementValue" = EXCLUDED."entitlementValue"`,
+      [`ent_${r.planCode.toLowerCase()}_${r.key}`, r.planCode, r.key, r.type, r.value]
+    );
+  }
+
+  const creditPackages = [
+    { id: 'pkg_1', name: 'Single Booster', creditsCount: 1, price: 2.99, currency: 'USD' },
+    { id: 'pkg_5', name: 'Sprint Pack (5 Credits)', creditsCount: 5, price: 9.99, currency: 'USD' },
+    { id: 'pkg_20', name: 'Scholar Vault (20 Credits)', creditsCount: 20, price: 29.99, currency: 'USD' },
+  ];
+
+  for (const pkg of creditPackages) {
+    await pgDb.query(
+      `INSERT INTO "ai_credit_packages" ("id", "name", "creditsCount", "price", "currency", "isActive")
+       VALUES ($1, $2, $3, $4, $5, true)
+       ON CONFLICT ("id") DO UPDATE SET "name" = EXCLUDED."name", "price" = EXCLUDED."price", "creditsCount" = EXCLUDED."creditsCount"`,
+      [pkg.id, pkg.name, pkg.creditsCount, pkg.price, pkg.currency]
+    );
+  }
+
+  // Seed Subscriptions for test personas
+  // Student 1 -> FREE tier
+  await pgDb.query(
+    `INSERT INTO "subscriptions" ("id", "userId", "planCode", "status", "startDate", "endDate")
+     VALUES ('sub_student_1', 'usr_student_test', 'FREE', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '1 year')
+     ON CONFLICT ("id") DO UPDATE SET "planCode" = EXCLUDED."planCode", "status" = EXCLUDED."status"`
+  );
+
+  // Student 2 -> PREMIUM tier
+  await pgDb.query(
+    `INSERT INTO "subscriptions" ("id", "userId", "planCode", "status", "startDate", "endDate")
+     VALUES ('sub_student_2', 'usr_student_2_test', 'PREMIUM', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '1 month')
+     ON CONFLICT ("id") DO UPDATE SET "planCode" = EXCLUDED."planCode", "status" = EXCLUDED."status"`
+  );
+
+  // Seed sample invoice for Student 2
+  await pgDb.query(
+    `INSERT INTO "invoices" ("id", "userId", "amount", "currency", "items", "status", "externalId")
+     VALUES ('inv_student_2_init', 'usr_student_2_test', 29.99, 'USD', $1, 'PAID', 'ch_mock_sub_01')
+     ON CONFLICT ("id") DO NOTHING`,
+    [JSON.stringify([{ name: 'Premium Scholar Subscription (Monthly)', amount: 29.99, quantity: 1, type: 'SUBSCRIPTION' }])]
+  );
+
   console.log('================================================================');
   console.log(`✅ DATABASE SEED COMPLETE:`);
   console.log(`   - Courses: ${SEED_COURSES.length} (Engineering Entrance & Medical Foundation)`);
@@ -2514,8 +3178,11 @@ export async function runSeed() {
   console.log(`   - Topics: ${SEED_TOPICS.length} syllabus topics`);
   console.log(`   - Questions: ${questionCount} published questions seeded across all 12 topics (10 per topic: 3 EASY, 4 MEDIUM, 3 HARD)`);
   console.log(`   - Blueprints: 1 standard authentic JEE Main Grand Blueprint (pat_jee_main_standard) with 3 sections`);
+  console.log(`   - Pre-published Exams: ${generatedExams.length} published exams with immutable snapshots in archive`);
+  console.log(`   - Enrolled Students: ${studentProfiles.length} students with contrasting evaluated mastery profiles`);
   console.log(`   - Languages: ${BASELINE_LANGUAGES.length} (Full 23-language Indian baseline)`);
   console.log(`   - Translations: ${totalTranslationsSeeded}`);
+  console.log(`   - Plans & Entitlements: ${defaultPlans.length} plans, ${defaultEntitlementRules.length} rules, ${creditPackages.length} credit packages`);
   console.log('================================================================');
 }
 

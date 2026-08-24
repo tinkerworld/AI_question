@@ -13,7 +13,10 @@
       "@repo/types": ["../../packages/types/src/index.ts"],
       "@repo/validation": ["../../packages/validation/src/index.ts"],
       "@repo/permissions": ["../../packages/permissions/src/index.ts"],
-      "@repo/question-types": ["../../packages/question-types/src/index.ts"]
+      "@repo/question-types": ["../../packages/question-types/src/index.ts"],
+      "@repo/mastery-engine": ["../../packages/mastery-engine/src/index.ts"],
+      "@repo/ai-client": ["../../packages/ai-client/src/index.ts"],
+      "@repo/entitlement-engine": ["../../packages/entitlement-engine/src/index.ts"]
     },
     "rootDir": "src",
     "outDir": "dist"

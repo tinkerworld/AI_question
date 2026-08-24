@@ -90,6 +90,23 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     const params: any[] = [];
     let paramIdx = 1;
 
+    const sessionData = req.impersonation?.sessionData;
+    const isDraftPreview = sessionData?.contentVersion === 'DRAFT';
+    const restrictedCourses =
+      sessionData?.courseAccess &&
+      (Array.isArray(sessionData.courseAccess)
+        ? !sessionData.courseAccess.includes('*') && sessionData.courseAccess.length > 0
+          ? sessionData.courseAccess
+          : null
+        : sessionData.courseAccess !== '*'
+        ? [sessionData.courseAccess]
+        : null);
+
+    if (restrictedCourses) {
+      whereClause += ` AND "courseId" = ANY($${paramIdx++})`;
+      params.push(restrictedCourses);
+    }
+
     if (courseId) {
       whereClause += ` AND "courseId" = $${paramIdx++}`;
       params.push(courseId);
@@ -171,9 +188,9 @@ router.post(
 
       const vId = `qv_${crypto.randomBytes(8).toString('hex')}`;
       await pgDb.query(
-        `INSERT INTO "question_versions" ("id", "questionId", "version", "content", "data", "difficulty", "marks", "changedById", "createdAt")
-         VALUES ($1, $2, 1, $3, $4, $5, $6, $7, NOW())`,
-        [vId, qId, content, payloadData, difficulty || 'MEDIUM', marks || 1.0, req.user!.userId]
+        `INSERT INTO "question_versions" ("id", "questionId", "version", "content", "data", "difficulty", "marks", "changeSummary", "changedById", "createdAt")
+         VALUES ($1, $2, 1, $3, $4, $5, $6, $7, $8, NOW())`,
+        [vId, qId, content, payloadData, difficulty || 'MEDIUM', marks || 1.0, 'Initial question created', req.user!.userId]
       );
 
       const createdRes = await pgDb.query(`SELECT * FROM "questions" WHERE "id" = $1`, [qId]);
@@ -184,6 +201,77 @@ router.post(
     }
   }
 );
+
+function inferQuestionChangeSummary(
+  existing: any,
+  updates: {
+    content?: string;
+    data?: any;
+    difficulty?: string;
+    marks?: number | string;
+    status?: string;
+    courseId?: string | null;
+    subjectId?: string | null;
+    syllabusNodeId?: string | null;
+  }
+): string {
+  const changes: string[] = [];
+
+  if (updates.difficulty !== undefined && updates.difficulty !== existing.difficulty) {
+    changes.push(`Difficulty changed ${existing.difficulty} -> ${updates.difficulty}`);
+  }
+
+  if (updates.marks !== undefined && parseFloat(String(updates.marks)) !== parseFloat(String(existing.marks))) {
+    changes.push(`Marks changed ${existing.marks} -> ${updates.marks}`);
+  }
+
+  if (updates.status !== undefined && updates.status !== existing.status) {
+    changes.push(`Status changed ${existing.status} -> ${updates.status}`);
+  }
+
+  if (updates.content !== undefined && updates.content !== existing.content) {
+    changes.push('Content edited');
+  }
+
+  if (updates.data !== undefined) {
+    try {
+      const oldData = typeof existing.data === 'string' ? JSON.parse(existing.data) : (existing.data || {});
+      const newData = typeof updates.data === 'string' ? JSON.parse(updates.data) : (updates.data || {});
+
+      if (
+        JSON.stringify(oldData.correctAnswer) !== JSON.stringify(newData.correctAnswer) ||
+        oldData.correctOptionId !== newData.correctOptionId ||
+        JSON.stringify(oldData.correctOptionIds) !== JSON.stringify(newData.correctOptionIds)
+      ) {
+        changes.push('Correct answer changed');
+      }
+      if (JSON.stringify(oldData.options) !== JSON.stringify(newData.options)) {
+        changes.push('Options updated');
+      }
+      if (oldData.explanation !== newData.explanation) {
+        changes.push('Explanation updated');
+      }
+      if (
+        changes.filter((c) => c.includes('answer') || c.includes('Options') || c.includes('Explanation')).length === 0 &&
+        JSON.stringify(oldData) !== JSON.stringify(newData)
+      ) {
+        changes.push('Question data updated');
+      }
+    } catch {
+      changes.push('Question data updated');
+    }
+  }
+
+  if (
+    (updates.courseId !== undefined && updates.courseId !== existing.courseId) ||
+    (updates.subjectId !== undefined && updates.subjectId !== existing.subjectId) ||
+    (updates.syllabusNodeId !== undefined && updates.syllabusNodeId !== existing.syllabusNodeId)
+  ) {
+    changes.push('Syllabus mapping updated');
+  }
+
+  return changes.length > 0 ? changes.join(', ') : 'Question updated';
+}
 
 // ----------------------------------------------------------------------------
 // Feature 3.2 — Get Question Details
@@ -255,6 +343,17 @@ router.patch(
         }
       }
 
+      const changeSummary = inferQuestionChangeSummary(existing, {
+        content: newContent,
+        data: newData,
+        difficulty: newDiff,
+        marks: newMarks,
+        status: newStatus,
+        courseId,
+        subjectId,
+        syllabusNodeId,
+      });
+
       const updateRes = await pgDb.query(
         `UPDATE "questions"
          SET "content" = $1, "data" = $2, "difficulty" = $3, "marks" = $4, "status" = $5,
@@ -277,9 +376,9 @@ router.patch(
 
       const vId = `qv_${crypto.randomBytes(8).toString('hex')}`;
       await pgDb.query(
-        `INSERT INTO "question_versions" ("id", "questionId", "version", "content", "data", "difficulty", "marks", "changedById", "createdAt")
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())`,
-        [vId, id, newVersion, newContent, newData, newDiff, newMarks, req.user!.userId]
+        `INSERT INTO "question_versions" ("id", "questionId", "version", "content", "data", "difficulty", "marks", "changeSummary", "changedById", "createdAt")
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())`,
+        [vId, id, newVersion, newContent, newData, newDiff, newMarks, changeSummary, req.user!.userId]
       );
 
       res.json({ success: true, data: updateRes.rows[0] });
@@ -327,6 +426,8 @@ router.post(
       const currentRes = await pgDb.query(`SELECT "version" FROM "questions" WHERE "id" = $1`, [id]);
       const nextVersionNum = ((currentRes.rows[0]?.version) || 0) + 1;
 
+      const rollbackSummary = `Rollback to version ${targetVersionNum}`;
+
       const updateRes = await pgDb.query(
         `UPDATE "questions"
          SET "content" = $1, "data" = $2, "difficulty" = $3, "marks" = $4, "version" = $5, "updatedAt" = NOW()
@@ -344,8 +445,8 @@ router.post(
 
       const vId = `qv_${crypto.randomBytes(8).toString('hex')}`;
       await pgDb.query(
-        `INSERT INTO "question_versions" ("id", "questionId", "version", "content", "data", "difficulty", "marks", "changedById", "createdAt")
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())`,
+        `INSERT INTO "question_versions" ("id", "questionId", "version", "content", "data", "difficulty", "marks", "changeSummary", "changedById", "createdAt")
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())`,
         [
           vId,
           id,
@@ -354,6 +455,7 @@ router.post(
           typeof targetVersion.data === 'object' ? JSON.stringify(targetVersion.data) : targetVersion.data,
           targetVersion.difficulty,
           targetVersion.marks,
+          rollbackSummary,
           req.user!.userId,
         ]
       );

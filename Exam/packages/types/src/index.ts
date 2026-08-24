@@ -572,3 +572,974 @@ export interface ReorderExamQuestionsDTO {
   questionIds: string[];
 }
 
+// Phase 6 DTOs (Exam System & Attempts Engine)
+export type AttemptStatus = 'IN_PROGRESS' | 'SUBMITTED' | 'EVALUATED' | 'PENDING_REVIEW';
+
+export interface ExamAttemptDTO {
+  id: string;
+  examId: string;
+  userId: string;
+  shuffleSeed: string;
+  startTime: string;
+  endTime?: string | null;
+  status: AttemptStatus;
+  totalScore?: number | null;
+  percentage?: number | null;
+  totalQuestions: number;
+  correctAnswers: number;
+  wrongAnswers: number;
+  unattempted: number;
+  marksObtained?: number | null;
+  maxMarks?: number | null;
+  isFlagged: boolean;
+  flagReason?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  exam?: ExamDTO;
+  sections?: AttemptSectionSummaryDTO[];
+  questions?: AttemptQuestionItemDTO[];
+}
+
+export interface AttemptSectionSummaryDTO {
+  id: string;
+  name: string;
+  sequenceOrder: number;
+  totalQuestions: number;
+  marksCorrect: number;
+  marksWrong: number;
+  totalMarks: number;
+}
+
+export interface AttemptQuestionItemDTO {
+  id: string; // questionAttemptId
+  questionId: string;
+  examSectionId?: string | null;
+  sectionName?: string;
+  sequenceOrder: number;
+  type: string;
+  content: string;
+  difficulty: string;
+  marks: number;
+  marksCorrect: number;
+  marksWrong: number;
+  options?: { id: string; text: string }[];
+  pairs?: { left: string; right: string }[];
+  studentAnswer?: any;
+  isMarkedForReview: boolean;
+  timeSpentSeconds: number;
+  isCorrect?: boolean | null;
+  marksAwarded?: number;
+  correctAnswer?: any;
+  explanation?: string;
+  evaluatorComments?: string | null;
+}
+
+export interface StartAttemptDTO {
+  examId: string;
+}
+
+export interface SyncAttemptDTO {
+  questionId?: string;
+  studentAnswer?: any;
+  isMarkedForReview?: boolean;
+  timeSpentSeconds?: number;
+  answers?: {
+    questionId: string;
+    studentAnswer?: any;
+    isMarkedForReview?: boolean;
+    timeSpentSeconds?: number;
+  }[];
+}
+
+export interface FlagAttemptDTO {
+  reason: string;
+}
+
+export interface AttemptResultSummaryDTO {
+  attemptId: string;
+  examId: string;
+  examName: string;
+  userId: string;
+  userName?: string;
+  startTime: string;
+  endTime: string;
+  durationMinutes: number;
+  timeSpentSeconds: number;
+  status: AttemptStatus;
+  totalScore: number;
+  maxMarks: number;
+  percentage: number;
+  accuracy: number;
+  totalQuestions: number;
+  correctAnswers: number;
+  wrongAnswers: number;
+  unattempted: number;
+  isFlagged: boolean;
+  flagReason?: string | null;
+  sectionScores: {
+    sectionId: string;
+    sectionName: string;
+    totalQuestions: number;
+    attemptedCount: number;
+    correctCount: number;
+    wrongCount: number;
+    score: number;
+    maxScore: number;
+  }[];
+  questions: AttemptQuestionItemDTO[];
+}
+
+// Phase 7 DTOs (Published Exam Archive & Immutability Engine)
+export type ExamWorkflowStatus = 'DRAFT' | 'PREVIEW' | 'REVIEW' | 'APPROVED' | 'PUBLISHED' | 'ARCHIVED';
+
+export interface UpdateExamWorkflowStatusDTO {
+  status: ExamWorkflowStatus;
+  notes?: string;
+}
+
+export interface AssignExamReviewerDTO {
+  reviewerId: string;
+}
+
+export interface ExamWorkflowLogDTO {
+  id: string;
+  examId: string;
+  fromStatus: string;
+  toStatus: string;
+  userId?: string | null;
+  userName?: string | null;
+  notes?: string | null;
+  createdAt: string;
+}
+
+export interface ExamSnapshotDTO {
+  id: string;
+  examId: string;
+  academicYear: string;
+  courseId?: string | null;
+  courseName?: string | null;
+  subjectId?: string | null;
+  subjectName?: string | null;
+  examName: string;
+  patternSnapshot: Record<string, any>;
+  instructions?: string | null;
+  durationMinutes: number;
+  totalMarks: number;
+  storagePath?: string | null;
+  publishedAt: string;
+  publishedById?: string | null;
+  publishedByName?: string | null;
+  version: number;
+  status: string;
+  createdAt: string;
+  sections?: ExamSnapshotSectionDTO[];
+  questionsCount?: number;
+}
+
+export interface ExamSnapshotSectionDTO {
+  id: string;
+  snapshotId: string;
+  name: string;
+  sequenceOrder: number;
+  subjectId?: string | null;
+  subjectName?: string | null;
+  numQuestions: number;
+  marksPerQuestion: number;
+  totalMarks: number;
+  marksCorrect: number;
+  marksWrong: number;
+  marksUnattempted: number;
+  sectionRules?: Record<string, any> | null;
+  questions?: ExamSnapshotQuestionDTO[];
+}
+
+export interface ExamSnapshotQuestionDTO {
+  id: string;
+  snapshotSectionId: string;
+  snapshotId: string;
+  originalQuestionId: string;
+  questionVersion: number;
+  questionType: string;
+  questionContent: Record<string, any>;
+  answerKey?: Record<string, any>;
+  marks: number;
+  negativeMarks: number;
+  displayOrder: number;
+  createdAt: string;
+}
+
+export interface ExamAnswerKeyDTO {
+  snapshotId: string;
+  examName: string;
+  version: number;
+  publishedAt: string;
+  sections: {
+    sectionId: string;
+    sectionName: string;
+    questions: {
+      questionId: string;
+      originalQuestionId: string;
+      displayOrder: number;
+      questionType: string;
+      marks: number;
+      negativeMarks: number;
+      answerKey: Record<string, any>;
+      explanation?: string;
+    }[];
+  }[];
+}
+
+export interface InitiateExamCorrectionDTO {
+  reason: string;
+  changes: {
+    questionId: string;
+    correctedAnswerKey: Record<string, any>;
+    explanation?: string;
+  }[];
+}
+
+export interface ExamCorrectionDTO {
+  id: string;
+  originalSnapshotId: string;
+  correctedSnapshotId?: string | null;
+  version: number;
+  reason: string;
+  changesSummary: Record<string, any>;
+  initiatedById: string;
+  initiatedByName?: string;
+  status: string;
+  createdAt: string;
+}
+
+export interface ExamFileDTO {
+  id: string;
+  examId: string;
+  snapshotId?: string | null;
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  storagePath: string;
+  downloadUrl?: string;
+  createdById?: string | null;
+  createdAt: string;
+}
+
+// Phase 8: Student Analytics & Mastery Engine DTOs
+export type MasteryStatus =
+  | 'MASTERED'
+  | 'STRONG'
+  | 'DEVELOPING'
+  | 'NEEDS_PRACTICE'
+  | 'WEAK'
+  | 'NOT_ATTEMPTED'
+  | 'GREY';
+
+export type MasteryColor = 'GREEN' | 'BLUE' | 'YELLOW' | 'ORANGE' | 'RED' | 'GREY';
+
+export interface StudentMasteryDTO {
+  id: string;
+  userId: string;
+  overallProficiency: number;
+  totalExamsTaken: number;
+  totalQuestionsAttempted: number;
+  strongCount?: number;
+  weakCount?: number;
+  status: MasteryStatus;
+  color: MasteryColor;
+  updatedAt: string;
+}
+
+export interface TopicProgressDTO {
+  id: string;
+  userId: string;
+  syllabusNodeId: string;
+  nodeTitle?: string;
+  nodeType?: string;
+  subjectId?: string;
+  subjectName?: string;
+  courseId?: string;
+  proficiencyScore: number;
+  attemptsCount: number;
+  correctCount: number;
+  status: MasteryStatus;
+  color: MasteryColor;
+  statusChangedAt: string;
+  lastEvaluatedAt: string;
+}
+
+export interface StudentStrengthDTO {
+  id: string;
+  userId: string;
+  syllabusNodeId: string;
+  nodeTitle: string;
+  nodeType: string;
+  subjectName?: string;
+  masteryScore: number;
+  attemptsCount: number;
+  status: MasteryStatus;
+  color: MasteryColor;
+}
+
+export interface StudentWeaknessDTO {
+  id: string;
+  userId: string;
+  syllabusNodeId: string;
+  nodeTitle: string;
+  nodeType: string;
+  subjectName?: string;
+  proficiencyScore: number;
+  errorRate: number;
+  severity: 'CRITICAL' | 'MODERATE' | 'MINOR';
+  daysInWeakness: number;
+  status: MasteryStatus;
+  color: MasteryColor;
+}
+
+export interface SyllabusProficiencyNodeDTO {
+  id: string;
+  title: string;
+  type: string;
+  orderIndex: number;
+  depth: number;
+  proficiencyScore: number;
+  attemptsCount: number;
+  status: MasteryStatus;
+  color: MasteryColor;
+  completionPercentage: number;
+  children: SyllabusProficiencyNodeDTO[];
+}
+
+export interface ProgressDatapointDTO {
+  date: string;
+  score: number;
+  examCount: number;
+  questionsCount: number;
+}
+
+export interface StudentProgressDTO {
+  trend: 'IMPROVING' | 'DEGRADING' | 'PLATEAU';
+  trendDelta: number;
+  timeseries: ProgressDatapointDTO[];
+  totalAttempts: number;
+}
+
+export interface ClassAnalyticsDTO {
+  courseId: string;
+  courseName: string;
+  totalStudents: number;
+  averageMastery: number;
+  passRate: number;
+  masteryDistribution: {
+    mastered: number;
+    strong: number;
+    developing: number;
+    needsPractice: number;
+    weak: number;
+    unattempted: number;
+  };
+  topWeakTopics: Array<{
+    syllabusNodeId: string;
+    title: string;
+    averageScore: number;
+    failureRate: number;
+    affectedStudentsCount: number;
+  }>;
+  students: Array<{
+    userId: string;
+    name: string;
+    email: string;
+    overallProficiency: number;
+    examsTaken: number;
+    status: MasteryStatus;
+    color: MasteryColor;
+    weaknessesCount: number;
+  }>;
+}
+
+// ==========================================
+// Phase 9: Personalized Practice & Adaptive Mastery
+// ==========================================
+
+export type PracticePaperStatus = 'GENERATED' | 'IN_PROGRESS' | 'COMPLETED';
+export type PracticeAttemptStatus = 'IN_PROGRESS' | 'COMPLETED' | 'ABANDONED';
+
+export interface PracticePaperDTO {
+  id: string;
+  userId: string;
+  title: string;
+  courseId?: string | null;
+  targetNodeIds: string[];
+  totalQuestions: number;
+  status: PracticePaperStatus;
+  createdAt: string;
+  updatedAt: string;
+  questions?: PracticeQuestionDTO[];
+}
+
+export interface PracticeQuestionDTO {
+  id: string;
+  practicePaperId: string;
+  questionId: string;
+  syllabusNodeId?: string | null;
+  topicTitle?: string;
+  difficulty: 'EASY' | 'MEDIUM' | 'HARD';
+  displayOrder: number;
+  versionNum: number;
+  content: string;
+  questionType: 'MCQ_SINGLE' | 'MCQ_MULTIPLE' | 'NUMERICAL';
+  options?: Array<{
+    id: string;
+    text: string;
+    order: number;
+  }>;
+  explanation?: string;
+  correctAnswer?: any;
+  marks?: number;
+  negativeMarks?: number;
+}
+
+export interface PracticeAttemptDTO {
+  id: string;
+  practicePaperId: string;
+  userId: string;
+  status: PracticeAttemptStatus;
+  score: number;
+  accuracyPercentage: number;
+  correctCount: number;
+  totalAttempted: number;
+  startedAt: string;
+  completedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  answers?: PracticeAttemptAnswerDTO[];
+}
+
+export interface PracticeAttemptAnswerDTO {
+  id: string;
+  attemptId: string;
+  questionId: string;
+  selectedOption?: string | null;
+  selectedOptions?: string[] | null;
+  numericalAnswer?: string | null;
+  isCorrect: boolean;
+  timeSpentSeconds: number;
+  createdAt: string;
+}
+
+export interface MasteryTrackingDTO {
+  id: string;
+  userId: string;
+  syllabusNodeId: string;
+  topicTitle?: string;
+  consecutiveCorrect: number;
+  masteryThreshold: number;
+  isMastered: boolean;
+  masteredAt?: string | null;
+  lastAttemptedAt: string;
+}
+
+export interface WeaknessPoolItemDTO {
+  id: string;
+  userId: string;
+  syllabusNodeId: string;
+  topicName: string;
+  subjectName?: string;
+  courseName?: string;
+  severity: 'CRITICAL' | 'MODERATE' | 'MILD';
+  errorRate: number;
+  failureCount: number;
+  isActive: boolean;
+  consecutiveCorrect: number;
+  masteryThreshold: number;
+  isMastered: boolean;
+  lastAttemptDate: string;
+}
+
+export interface GeneratePracticeDTO {
+  targetNodeIds?: string[];
+  count?: number;
+  difficulty?: 'EASY' | 'MEDIUM' | 'HARD' | 'ADAPTIVE';
+  courseId?: string;
+  title?: string;
+}
+
+export interface SubmitPracticeAnswerDTO {
+  questionId: string;
+  selectedOption?: string;
+  selectedOptions?: string[];
+  numericalAnswer?: string;
+  timeSpentSeconds?: number;
+}
+
+export interface EvaluatePracticeResultDTO {
+  isCorrect: boolean;
+  correctAnswer?: any;
+  explanation?: string;
+  consecutiveCorrect: number;
+  masteryThreshold: number;
+  isMastered: boolean;
+  topicTitle?: string;
+}
+
+// ============================================================================
+// Phase 10: Preview & Impersonation System Types
+// ============================================================================
+
+export type BillingPlan = 'FREE' | 'PREMIUM' | 'PREMIUM_PLUS';
+export type ContentVersion = 'DRAFT' | 'REVIEW' | 'PUBLISHED';
+export type UsageMode = 'NORMAL' | 'UNLIMITED_QA';
+export type ImpersonationMode = 'PREVIEW_STUDENT' | 'IMPERSONATE_REAL_STUDENT';
+
+export interface PreviewProfileDTO {
+  id: string;
+  name: string;
+  createdById: string;
+  billingPlan: BillingPlan;
+  contentVersion: ContentVersion;
+  usageMode: UsageMode;
+  courseAccess: string[];
+  featureFlags: Record<string, boolean>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreatePreviewProfileDTO {
+  name: string;
+  billingPlan?: BillingPlan;
+  contentVersion?: ContentVersion;
+  usageMode?: UsageMode;
+  courseAccess?: string[];
+  featureFlags?: Record<string, boolean>;
+}
+
+export interface UpdatePreviewProfileDTO {
+  name?: string;
+  billingPlan?: BillingPlan;
+  contentVersion?: ContentVersion;
+  usageMode?: UsageMode;
+  courseAccess?: string[];
+  featureFlags?: Record<string, boolean>;
+}
+
+export interface StartPreviewSessionDTO {
+  profileId?: string;
+  billingPlan?: BillingPlan;
+  contentVersion?: ContentVersion;
+  usageMode?: UsageMode;
+  courseAccess?: string[];
+  featureFlags?: Record<string, boolean>;
+  preset?: 'FREE' | 'PREMIUM' | 'PREMIUM_PLUS' | 'DRAFT_REVIEWER';
+}
+
+export interface StartImpersonationDTO {
+  targetUserId: string;
+  reason: string;
+}
+
+export interface ImpersonationSessionDTO {
+  id: string;
+  token: string;
+  actorUserId: string;
+  actorEmail?: string;
+  effectiveUserId: string;
+  effectiveEmail?: string;
+  mode: ImpersonationMode;
+  reason?: string;
+  sessionData: {
+    simulatedPlan: BillingPlan;
+    contentVersion: ContentVersion;
+    usageMode: UsageMode;
+    courseAccess: string[];
+    featureFlags: Record<string, boolean>;
+  };
+  startedAt: string;
+  expiresAt: string;
+  isActive: boolean;
+}
+
+export interface PreviewAuditLogDTO {
+  id: string;
+  actorUserId: string;
+  actorEmail?: string;
+  effectiveUserId: string;
+  effectiveEmail?: string;
+  mode: ImpersonationMode;
+  action: string;
+  resource?: string;
+  resourceId?: string;
+  details?: any;
+  ipAddress?: string;
+  userAgent?: string;
+  createdAt: string;
+}
+
+// ==========================================
+// Phase 11: AI Question System & Gateway
+// ==========================================
+
+export type AIProviderType = 'LOCAL' | 'CLOUD' | 'MOCK';
+export type AIJobType = 'SINGLE_GENERATE' | 'BATCH_GENERATE' | 'MODIFY_VARIATION';
+export type AIJobStatus = 'QUEUED' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+export type AICreditStatus = 'CONSUMED' | 'REFUNDED';
+export type AIGatewayStatus = 'SUCCESS' | 'FAILED' | 'RETRY' | 'CIRCUIT_BROKEN';
+
+export interface AIProviderDTO {
+  id: string;
+  name: string;
+  type: AIProviderType;
+  modelId: string;
+  baseUrl?: string;
+  apiKey?: string;
+  priority: number;
+  scope: string;
+  isActive: boolean;
+  circuitBroken: boolean;
+  failureCount: number;
+  lastFailureAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AIPromptTemplateDTO {
+  id: string;
+  featureKey: string;
+  version: number;
+  systemPrompt: string;
+  userPromptTemplate: string;
+  expectedSchema?: any;
+  dailyLimit?: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AIGatewayLogDTO {
+  id: string;
+  userId?: string;
+  featureKey: string;
+  providerId?: string;
+  modelUsed: string;
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+  estimatedCost: number;
+  latencyMs: number;
+  status: AIGatewayStatus;
+  errorMessage?: string;
+  createdAt: string;
+}
+
+export interface UserAICreditsDTO {
+  id: string;
+  userId: string;
+  includedDailyCredits: number;
+  dailyCreditsUsed: number;
+  remainingDailyCredits: number;
+  purchasedCredits: number;
+  totalAvailableCredits: number;
+  monthlyTokenCap: number;
+  tokensUsedThisMonth: number;
+  isCapped: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AIUsageHistoryDTO {
+  id: string;
+  userId: string;
+  feature: string;
+  creditType: 'INCLUDED' | 'PURCHASED';
+  creditsDeducted: number;
+  tokensUsed: number;
+  status: AICreditStatus;
+  jobId?: string;
+  createdAt: string;
+}
+
+export interface AIGenerationJobDTO {
+  id: string;
+  userId: string;
+  type: AIJobType;
+  params: {
+    subjectId?: string;
+    topicId?: string;
+    conceptId?: string;
+    difficulty?: 'EASY' | 'MEDIUM' | 'HARD';
+    type?: string;
+    marks?: number;
+    count?: number;
+    questionId?: string;
+    instructions?: string;
+    varianceLevel?: 'LOW' | 'MEDIUM' | 'HIGH';
+  };
+  status: AIJobStatus;
+  totalCount: number;
+  completedCount: number;
+  progress: number;
+  resultQuestionIds: string[];
+  errorMessage?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ModifyQuestionAIDTO {
+  questionId: string;
+  count?: number;
+  varianceLevel?: 'LOW' | 'MEDIUM' | 'HIGH';
+  instructions?: string;
+}
+
+export interface GenerateQuestionsAIDTO {
+  subjectId: string;
+  topicId?: string;
+  conceptId?: string;
+  difficulty?: 'EASY' | 'MEDIUM' | 'HARD';
+  type?: string;
+  marks?: number;
+  count: number;
+  customPrompt?: string;
+}
+
+export interface ReviewDraftQuestionDTO {
+  action: 'APPROVE' | 'REJECT';
+  rejectionReason?: string;
+}
+
+// Phase 12 DTOs (AI Interview System)
+export type InterviewMode = 'PRACTICE' | 'EXAM';
+export type InterviewStatus = 'IN_PROGRESS' | 'COMPLETED' | 'ABANDONED';
+export type InterviewSpeaker = 'AI' | 'CANDIDATE';
+
+export interface InterviewRubricItemDTO {
+  id: string;
+  name: string;
+  description?: string;
+  maxScore: number;
+  weight?: number;
+  score?: number;
+  feedback?: string;
+  criteria?: string[];
+}
+
+export interface InterviewTurnDTO {
+  id: string;
+  sessionId: string;
+  turnNumber: number;
+  speaker: InterviewSpeaker;
+  message: string;
+  audioUrl?: string | null;
+  durationSeconds?: number | null;
+  evaluationNotes?: string | null;
+  createdAt: string;
+}
+
+export interface InterviewEvaluationDTO {
+  finalScore: number;
+  maxScore: number;
+  percentage: number;
+  gradeBand?: string;
+  rubricScores: InterviewRubricItemDTO[];
+  feedback: string;
+  strengths: string[];
+  weaknesses: string[];
+  recommendations: string[];
+}
+
+export interface InterviewSessionDTO {
+  id: string;
+  userId: string;
+  questionId: string;
+  courseId?: string | null;
+  mode: InterviewMode;
+  status: InterviewStatus;
+  currentTurn: number;
+  maxTurns: number;
+  startedAt: string;
+  completedAt?: string | null;
+  finalScore?: number | null;
+  maxScore?: number | null;
+  rubricScores?: InterviewRubricItemDTO[] | null;
+  feedback?: string | null;
+  strengths?: string[] | null;
+  weaknesses?: string[] | null;
+  recommendations?: string[] | null;
+  turns?: InterviewTurnDTO[];
+  question?: {
+    id: string;
+    content: string;
+    type: string;
+    data: any;
+    courseId?: string | null;
+    subjectId?: string | null;
+    courseName?: string;
+    subjectName?: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface StartInterviewDTO {
+  questionId: string;
+  mode?: InterviewMode;
+  courseId?: string;
+}
+
+export interface SubmitInterviewTurnDTO {
+  message: string;
+  audioUrl?: string;
+  durationSeconds?: number;
+}
+
+export interface InterviewEligibilityDTO {
+  isEligible: boolean;
+  eligibleCourseIds: string[];
+  eligibleCourses: Array<{ id: string; name: string; code: string; interviewQuestionCount: number }>;
+  availableQuestions: Array<{
+    id: string;
+    content: string;
+    difficulty: string;
+    courseId?: string;
+    subjectId?: string;
+    courseName?: string;
+    subjectName?: string;
+    preset?: string;
+    maxTurns?: number;
+  }>;
+}
+
+// Phase 13 DTOs (Subscriptions, Entitlements & Billing)
+export type SubscriptionPlanTier = 'FREE' | 'PREMIUM' | 'PREMIUM_PLUS';
+export type SubscriptionStatus = 'ACTIVE' | 'EXPIRED' | 'CANCELLED';
+export type EntitlementRuleType = 'BOOLEAN' | 'NUMBER';
+export type InvoiceStatus = 'PAID' | 'PENDING' | 'REFUNDED' | 'FAILED';
+export type RefundStatus = 'INITIATED' | 'COMPLETED' | 'FAILED';
+
+export interface PlanDTO {
+  id: string;
+  name: string;
+  code: string;
+  price: number;
+  billingCycle: 'monthly' | 'annual';
+  description?: string | null;
+  features: string[];
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreatePlanDTO {
+  name: string;
+  code: string;
+  price: number;
+  billingCycle?: 'monthly' | 'annual';
+  description?: string;
+  features?: string[];
+  isActive?: boolean;
+}
+
+export interface UpdatePlanDTO {
+  name?: string;
+  price?: number;
+  billingCycle?: 'monthly' | 'annual';
+  description?: string;
+  features?: string[];
+  isActive?: boolean;
+}
+
+export interface SubscriptionDTO {
+  id: string;
+  userId: string;
+  planCode: string;
+  status: SubscriptionStatus;
+  startDate: string;
+  endDate: string;
+  cancelledAt?: string | null;
+  plan?: PlanDTO;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SubscribeRequestDTO {
+  planCode: string;
+  billingCycle?: 'monthly' | 'annual';
+}
+
+export interface EntitlementRuleDTO {
+  id: string;
+  planCode: string;
+  entitlementKey: string;
+  entitlementType: EntitlementRuleType;
+  entitlementValue: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UpdateEntitlementRuleDTO {
+  entitlementValue: string;
+}
+
+export interface EntitlementCheckDTO {
+  allowed: boolean;
+  key: string;
+  planTier: string;
+  limit: number | null;
+  value: boolean | number;
+  currentUsage?: number;
+  remaining?: number | null;
+  reason?: string;
+}
+
+export interface AICreditPackageDTO {
+  id: string;
+  name: string;
+  creditsCount: number;
+  price: number;
+  currency: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface PurchaseCreditPackageDTO {
+  packageId: string;
+}
+
+export interface InvoiceDTO {
+  id: string;
+  userId: string;
+  amount: number;
+  currency: string;
+  items: Array<{ name: string; amount: number; quantity?: number; type: 'SUBSCRIPTION' | 'CREDIT_PACKAGE' | 'SERVICE' }>;
+  status: InvoiceStatus;
+  externalId?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RefundTransactionDTO {
+  id: string;
+  subscriptionId?: string | null;
+  userId: string;
+  actorUserId: string;
+  gateway: string;
+  gatewayPaymentId: string;
+  gatewayRefundId: string;
+  originalAmount: number;
+  refundAmount: number;
+  currency: string;
+  isPartial: boolean;
+  clawbackCreditsCount: number;
+  status: RefundStatus;
+  reason: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProcessRefundRequestDTO {
+  gatewayPaymentId?: string;
+  subscriptionId?: string;
+  amount: number;
+  reason: string;
+  clawbackCredits?: boolean;
+}
+
+

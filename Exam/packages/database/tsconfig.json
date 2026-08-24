@@ -5,7 +5,16 @@
     "moduleResolution": "node",
     "esModuleInterop": true,
     "strict": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@repo/database": ["src/index.ts"],
+      "@repo/types": ["../types/src/index.ts"],
+      "@repo/validation": ["../validation/src/index.ts"],
+      "@repo/permissions": ["../permissions/src/index.ts"],
+      "@repo/question-types": ["../question-types/src/index.ts"],
+      "@repo/mastery-engine": ["../mastery-engine/src/index.ts"]
+    }
   },
   "include": ["src/**/*", "prisma/**/*"]
 }

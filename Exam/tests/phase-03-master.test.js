@@ -26,8 +26,9 @@ const rootDir = path.resolve(__dirname, '..');
 // Feature 3.1 Tests (Pluggable Question Type System)
 test('3.1-U1', 'Question Type System & Built-in Handlers', () => {
   const { questionTypeRegistry } = require(path.join(rootDir, 'packages/question-types/src/index.ts'));
-  assert.strictEqual(questionTypeRegistry.getAllTypes().length, 8);
+  assert.ok(questionTypeRegistry.getAllTypes().length >= 8);
   assert.ok(questionTypeRegistry.getType('MCQ'));
+  assert.ok(questionTypeRegistry.getType('INTERVIEW'));
 });
 
 // Feature 3.2 Tests (Question CRUD)

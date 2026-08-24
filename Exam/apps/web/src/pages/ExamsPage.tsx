@@ -87,7 +87,7 @@ const extractApiErrorMessage = (data: any, fallback: string = 'Operation failed'
 };
 
 export const ExamsPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, startPreview, previewReturnExamId, setPreviewReturnExamId } = useAuth();
   const { t } = useTranslation();
 
   const [exams, setExams] = useState<ExamItem[]>([]);
@@ -226,6 +226,14 @@ export const ExamsPage: React.FC = () => {
     fetchPatternsAndCourses();
   }, [statusFilter]);
 
+  useEffect(() => {
+    if (previewReturnExamId) {
+      const retId = previewReturnExamId;
+      setPreviewReturnExamId(null);
+      fetchExamDetails(retId);
+    }
+  }, [previewReturnExamId]);
+
   // Handle Generate Exam Submit (Feature 5.1)
   const handleGenerateExam = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -257,7 +265,7 @@ export const ExamsPage: React.FC = () => {
       setGenerating(false);
       await fetchExams();
       if (data.data && data.data.exam) {
-        fetchExamDetails(data.data.exam.id);
+        await fetchExamDetails(data.data.exam.id);
       }
     } catch (err: any) {
       setGenError(err.message || 'Network error during generation');
@@ -719,6 +727,38 @@ export const ExamsPage: React.FC = () => {
                 </div>
 
                 <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    id="btn-preview-exam"
+                    data-testid="btn-preview-exam"
+                    onClick={() => {
+                      startPreview({
+                        billingPlan: 'PREMIUM_PLUS',
+                        contentVersion: 'DRAFT',
+                        usageMode: 'UNLIMITED_QA',
+                        courseAccess: examDetails.exam.courseId ? [examDetails.exam.courseId] : ['*'],
+                        featureFlags: {},
+                        targetExamId: examDetails.exam.id,
+                        returnTab: 'exams',
+                        returnExamId: examDetails.exam.id,
+                      });
+                    }}
+                    style={{
+                      background: 'rgba(217, 119, 6, 0.15)',
+                      border: '1px solid #d97706',
+                      color: '#d97706',
+                      padding: '6px 12px',
+                      borderRadius: '4px',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                    }}
+                  >
+                    ⚡ Preview as Student
+                  </button>
+
                   <button
                     id="btn-edit-exam-settings"
                     onClick={handleOpenSettings}

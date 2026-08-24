@@ -6,7 +6,27 @@ export type BuiltInQuestionType =
   | 'SHORT_ANSWER'
   | 'NUMERICAL'
   | 'MATCHING'
-  | 'SUBJECTIVE';
+  | 'SUBJECTIVE'
+  | 'INTERVIEW';
+
+export interface InterviewRubricCriterion {
+  id: string;
+  name: string;
+  description?: string;
+  maxScore: number;
+  weight?: number;
+  criteria?: string[];
+}
+
+export interface InterviewQuestionData {
+  scenario: string;
+  rubric: InterviewRubricCriterion[];
+  preset?: 'IELTS_SPEAKING' | 'UPSC_PERSONALITY' | 'TECH_SYSTEM_DESIGN' | 'GENERAL_HR' | 'CUSTOM' | string;
+  maxTurns?: number;
+  expectedDurationMinutes?: number;
+  systemInstructions?: string;
+  openingQuestion?: string;
+}
 
 export interface EvaluationResult {
   isCorrect: boolean;
@@ -278,6 +298,59 @@ export const SubjectiveHandler: QuestionTypeHandler<{
   },
 };
 
+// 9. Interview / Oral Assessment Handler
+export const InterviewHandler: QuestionTypeHandler<InterviewQuestionData> = {
+  type: 'INTERVIEW',
+  validate(data) {
+    if (!data || typeof data !== 'object') return false;
+    if (typeof data.scenario !== 'string' || data.scenario.trim() === '') return false;
+    if (!Array.isArray(data.rubric) || data.rubric.length === 0) return false;
+    for (const r of data.rubric) {
+      if (!r || typeof r !== 'object') return false;
+      if (!r.id || !r.name || typeof r.maxScore !== 'number' || r.maxScore <= 0) return false;
+    }
+    return true;
+  },
+  evaluate(data, userAnswer) {
+    // userAnswer format: full conversation transcript or evaluation payload
+    const hasTurns = Array.isArray(userAnswer)
+      ? userAnswer.length > 0
+      : userAnswer && typeof userAnswer === 'object'
+      ? Array.isArray(userAnswer.turns) && userAnswer.turns.length > 0
+      : typeof userAnswer === 'string' && userAnswer.trim().length > 0;
+
+    return {
+      isCorrect: Boolean(hasTurns),
+      score: hasTurns ? 1.0 : 0,
+      feedback: hasTurns
+        ? 'Interview session recorded and submitted for multi-criteria AI rubric evaluation'
+        : 'No interview turns or transcript submitted',
+    };
+  },
+  serialize(data) {
+    return {
+      scenario: data.scenario,
+      rubric: data.rubric,
+      preset: data.preset,
+      maxTurns: data.maxTurns || 5,
+      expectedDurationMinutes: data.expectedDurationMinutes || 15,
+      systemInstructions: data.systemInstructions,
+      openingQuestion: data.openingQuestion,
+    };
+  },
+  deserialize(json) {
+    return {
+      scenario: json.scenario || '',
+      rubric: json.rubric || [],
+      preset: json.preset,
+      maxTurns: Number(json.maxTurns || 5),
+      expectedDurationMinutes: Number(json.expectedDurationMinutes || 15),
+      systemInstructions: json.systemInstructions,
+      openingQuestion: json.openingQuestion,
+    };
+  },
+};
+
 // ============================================================================
 // PLUGGABLE QUESTION TYPE REGISTRY ENGINE
 // ============================================================================
@@ -294,6 +367,7 @@ export class QuestionTypeRegistry {
     this.registerType(NumericalHandler);
     this.registerType(MatchingHandler);
     this.registerType(SubjectiveHandler);
+    this.registerType(InterviewHandler);
   }
 
   public registerType(handler: QuestionTypeHandler): void {

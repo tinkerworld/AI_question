@@ -19,18 +19,35 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     const caller = req.user!;
     const isStudent = caller.roles.includes('STUDENT') && !caller.roles.includes('MAIN_ADMIN') && !caller.roles.includes('SUB_ADMIN');
 
+    const sessionData = req.impersonation?.sessionData;
+    const isDraftPreview = sessionData?.contentVersion === 'DRAFT';
+    const restrictedCourses =
+      sessionData?.courseAccess &&
+      (Array.isArray(sessionData.courseAccess)
+        ? !sessionData.courseAccess.includes('*') && sessionData.courseAccess.length > 0
+          ? sessionData.courseAccess
+          : null
+        : sessionData.courseAccess !== '*'
+        ? [sessionData.courseAccess]
+        : null);
+
     const statusFilter = req.query.status as string;
     const search = req.query.search as string;
 
     let query = `SELECT * FROM "courses" WHERE 1=1`;
     const params: any[] = [];
 
-    if (isStudent) {
+    if (isStudent && !isDraftPreview) {
       params.push('PUBLISHED');
       query += ` AND "status" = $${params.length}`;
     } else if (statusFilter) {
       params.push(statusFilter);
       query += ` AND "status" = $${params.length}`;
+    }
+
+    if (restrictedCourses) {
+      params.push(restrictedCourses);
+      query += ` AND "id" = ANY($${params.length})`;
     }
 
     if (search) {
@@ -86,6 +103,22 @@ router.post(
 router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
+
+    const sessionData = req.impersonation?.sessionData;
+    const restrictedCourses =
+      sessionData?.courseAccess &&
+      (Array.isArray(sessionData.courseAccess)
+        ? !sessionData.courseAccess.includes('*') && sessionData.courseAccess.length > 0
+          ? sessionData.courseAccess
+          : null
+        : sessionData.courseAccess !== '*'
+        ? [sessionData.courseAccess]
+        : null);
+
+    if (restrictedCourses && !restrictedCourses.includes(id)) {
+      throw new AppError(403, 'COURSE_ACCESS_RESTRICTED', `Access to course ${id} is restricted in current preview session`);
+    }
+
     const courseRes = await pgDb.query(`SELECT * FROM "courses" WHERE "id" = $1`, [id]);
     if (courseRes.rows.length === 0) {
       throw new AppError(404, 'COURSE_NOT_FOUND', `Course with ID ${id} not found`);

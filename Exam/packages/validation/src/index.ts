@@ -315,3 +315,236 @@ export const reorderExamQuestionsSchema = z.object({
   questionIds: z.array(z.string().min(1)).min(1, 'Question IDs are required'),
 });
 
+// Phase 6 Validation Schemas (Exam System & Attempts Engine)
+export const startAttemptSchema = z.object({
+  examId: z.string().min(1, 'Exam ID is required').optional(),
+  exam_id: z.string().min(1, 'Exam ID is required').optional(),
+}).refine((data) => Boolean(data.examId || data.exam_id), {
+  message: 'Exam ID is required (examId or exam_id)',
+  path: ['examId'],
+});
+
+export const syncAnswerItemSchema = z.object({
+  questionId: z.string().min(1, 'Question ID is required'),
+  studentAnswer: z.any().optional(),
+  isMarkedForReview: z.boolean().optional(),
+  timeSpentSeconds: z.number().min(0).optional(),
+});
+
+export const syncAttemptSchema = z.object({
+  questionId: z.string().min(1).optional(),
+  studentAnswer: z.any().optional(),
+  isMarkedForReview: z.boolean().optional(),
+  timeSpentSeconds: z.number().min(0).optional(),
+  answers: z.array(syncAnswerItemSchema).optional(),
+}).refine((data) => Boolean(data.questionId || (data.answers && data.answers.length > 0)), {
+  message: 'Either questionId and answer or answers array is required for sync',
+  path: ['questionId'],
+});
+
+export const flagAttemptSchema = z.object({
+  reason: z.string().min(1, 'Reason for flagging result is required'),
+});
+
+// Phase 7 Validation Schemas (Published Exam Archive & Immutability Engine)
+export const updateExamWorkflowStatusSchema = z.object({
+  status: z.enum(['DRAFT', 'PREVIEW', 'REVIEW', 'APPROVED', 'PUBLISHED', 'ARCHIVED']),
+  notes: z.string().optional(),
+});
+
+export const assignExamReviewerSchema = z.object({
+  reviewerId: z.string().min(1, 'Reviewer ID is required'),
+});
+
+export const initiateExamCorrectionSchema = z.object({
+  reason: z.string().min(3, 'Reason for post-publish correction is required'),
+  changes: z.array(
+    z.object({
+      questionId: z.string().min(1, 'Question ID is required'),
+      correctedAnswerKey: z.record(z.any()),
+      explanation: z.string().optional(),
+    })
+  ).min(1, 'At least one question correction is required'),
+});
+
+// Phase 9 Validation Schemas (Personalized Practice & Adaptive Mastery)
+export const generatePracticePaperSchema = z.object({
+  targetNodeIds: z.array(z.string()).optional(),
+  count: z.number().min(1).max(50).optional().default(10),
+  difficulty: z.enum(['EASY', 'MEDIUM', 'HARD', 'ADAPTIVE']).optional().default('ADAPTIVE'),
+  courseId: z.string().optional(),
+  title: z.string().optional(),
+});
+
+export const submitPracticeAnswerSchema = z.object({
+  questionId: z.string().min(1, 'Question ID is required'),
+  selectedOption: z.string().optional(),
+  selectedOptions: z.array(z.string()).optional(),
+  numericalAnswer: z.string().optional(),
+  timeSpentSeconds: z.number().min(0).optional().default(0),
+});
+
+export const evaluatePracticeSubmissionSchema = z.object({
+  answers: z.array(submitPracticeAnswerSchema).optional(),
+});
+
+// Phase 10 Validation Schemas (Preview & Impersonation System)
+export const createPreviewProfileSchema = z.object({
+  name: z.string().min(2, 'Profile name must be at least 2 characters'),
+  billingPlan: z.enum(['FREE', 'PREMIUM', 'PREMIUM_PLUS']).default('FREE'),
+  contentVersion: z.enum(['DRAFT', 'REVIEW', 'PUBLISHED']).default('PUBLISHED'),
+  usageMode: z.enum(['NORMAL', 'UNLIMITED_QA']).default('NORMAL'),
+  courseAccess: z.array(z.string()).default([]),
+  featureFlags: z.record(z.boolean()).default({}),
+});
+
+export const updatePreviewProfileSchema = z.object({
+  name: z.string().min(2).optional(),
+  billingPlan: z.enum(['FREE', 'PREMIUM', 'PREMIUM_PLUS']).optional(),
+  contentVersion: z.enum(['DRAFT', 'REVIEW', 'PUBLISHED']).optional(),
+  usageMode: z.enum(['NORMAL', 'UNLIMITED_QA']).optional(),
+  courseAccess: z.array(z.string()).optional(),
+  featureFlags: z.record(z.boolean()).optional(),
+});
+
+export const startPreviewSessionSchema = z.object({
+  profileId: z.string().optional(),
+  billingPlan: z.enum(['FREE', 'PREMIUM', 'PREMIUM_PLUS']).optional(),
+  contentVersion: z.enum(['DRAFT', 'REVIEW', 'PUBLISHED']).optional(),
+  usageMode: z.enum(['NORMAL', 'UNLIMITED_QA']).optional(),
+  courseAccess: z.array(z.string()).optional(),
+  featureFlags: z.record(z.boolean()).optional(),
+  preset: z.enum(['FREE', 'PREMIUM', 'PREMIUM_PLUS', 'DRAFT_REVIEWER']).optional(),
+});
+
+export const startImpersonationSchema = z.object({
+  targetUserId: z.string().min(1, 'Target user ID is required'),
+  reason: z.string().min(10, 'Reason for impersonation must be at least 10 characters for audit compliance'),
+});
+
+// Phase 11 Validation Schemas (AI Question System & Gateway)
+export const modifyQuestionAISchema = z.object({
+  questionId: z.string().min(1, 'Question ID is required'),
+  count: z.number().min(1).max(5).default(1),
+  varianceLevel: z.enum(['LOW', 'MEDIUM', 'HIGH']).default('MEDIUM'),
+  instructions: z.string().optional(),
+});
+
+export const generateQuestionsAISchema = z.object({
+  subjectId: z.string().min(1, 'Subject ID is required'),
+  topicId: z.string().optional(),
+  conceptId: z.string().optional(),
+  difficulty: z.enum(['EASY', 'MEDIUM', 'HARD']).default('MEDIUM'),
+  type: z.string().default('SINGLE_CHOICE'),
+  marks: z.number().min(0.5).max(100).default(4),
+  count: z.number().min(1).max(20).default(1),
+  customPrompt: z.string().optional(),
+});
+
+export const reviewDraftQuestionSchema = z.object({
+  action: z.enum(['APPROVE', 'REJECT']),
+  rejectionReason: z.string().optional(),
+});
+
+export const updateAIProviderSchema = z.object({
+  name: z.string().optional(),
+  modelId: z.string().optional(),
+  baseUrl: z.string().optional(),
+  apiKey: z.string().optional(),
+  priority: z.number().optional(),
+  isActive: z.boolean().optional(),
+  circuitBroken: z.boolean().optional(),
+});
+
+// Phase 12 Validation Schemas (AI Interview System)
+export const startInterviewSchema = z.object({
+  questionId: z.string().min(1, 'Question ID is required'),
+  mode: z.enum(['PRACTICE', 'EXAM']).default('PRACTICE'),
+  courseId: z.string().optional(),
+});
+
+export const submitInterviewTurnSchema = z.object({
+  message: z.string().min(1, 'Response message is required'),
+  audioUrl: z.string().optional(),
+  durationSeconds: z.number().optional(),
+});
+
+export const interviewQuestionDataSchema = z.object({
+  scenario: z.string().min(5, 'Interview opening scenario is required'),
+  rubric: z
+    .array(
+      z.object({
+        id: z.string().min(1, 'Rubric criterion ID is required'),
+        name: z.string().min(1, 'Rubric criterion name is required'),
+        description: z.string().optional(),
+        maxScore: z.number().min(0.5, 'Max score must be positive'),
+        weight: z.number().optional(),
+        criteria: z.array(z.string()).optional(),
+      })
+    )
+    .min(1, 'At least one rubric criterion is required'),
+  preset: z.string().optional(),
+  maxTurns: z.number().min(1).max(20).default(5),
+  expectedDurationMinutes: z.number().min(1).max(120).default(15),
+  systemInstructions: z.string().optional(),
+  openingQuestion: z.string().optional(),
+});
+
+// Phase 13 Validation Schemas (Subscriptions, Entitlements & Billing)
+export const createPlanSchema = z.object({
+  name: z.string().min(1, 'Plan name is required'),
+  code: z.string().min(1, 'Plan code is required'),
+  price: z.number().min(0, 'Price must be non-negative'),
+  billingCycle: z.enum(['monthly', 'annual']).default('monthly'),
+  description: z.string().optional(),
+  features: z.array(z.string()).default([]),
+  isActive: z.boolean().default(true),
+});
+
+export const updatePlanSchema = z.object({
+  name: z.string().optional(),
+  price: z.number().min(0).optional(),
+  billingCycle: z.enum(['monthly', 'annual']).optional(),
+  description: z.string().optional(),
+  features: z.array(z.string()).optional(),
+  isActive: z.boolean().optional(),
+});
+
+export const subscribeSchema = z.object({
+  planCode: z.string().min(1, 'Plan code is required'),
+  billingCycle: z.enum(['monthly', 'annual']).default('monthly'),
+});
+
+export const updateSubscriptionStatusSchema = z.object({
+  status: z.enum(['ACTIVE', 'EXPIRED', 'CANCELLED']),
+  endDate: z.string().optional(),
+});
+
+export const updateEntitlementRuleSchema = z.object({
+  entitlementValue: z.string().min(1, 'Entitlement value is required'),
+});
+
+export const entitlementCheckSchema = z.object({
+  key: z.string().min(1, 'Entitlement key is required'),
+  currentUsage: z.number().optional().default(0),
+});
+
+export const purchaseCreditPackageSchema = z.object({
+  packageId: z.string().min(1, 'Package ID is required'),
+});
+
+export const checkoutSchema = z.object({
+  itemType: z.enum(['SUBSCRIPTION', 'CREDIT_PACKAGE']),
+  itemId: z.string().min(1, 'Item ID is required'),
+  billingCycle: z.enum(['monthly', 'annual']).default('monthly'),
+});
+
+export const processRefundSchema = z.object({
+  gatewayPaymentId: z.string().optional(),
+  subscriptionId: z.string().optional(),
+  amount: z.number().min(0.01, 'Refund amount must be greater than zero'),
+  reason: z.string().min(3, 'Valid reason for refund is required'),
+  clawbackCredits: z.boolean().default(true),
+});
+
+

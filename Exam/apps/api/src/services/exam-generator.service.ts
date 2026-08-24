@@ -1,21 +1,21 @@
 import { pgDb } from '@repo/database';
-import { AppError } from '../middleware/error';
 import {
   GenerateExamDTO,
-  CreateManualExamDTO,
-  UpdateExamMetadataDTO,
-  CreateExamSectionDTO,
-  AddExamQuestionsDTO,
   SwapExamQuestionDTO,
   ReorderExamQuestionsDTO,
+  UpdateExamMetadataDTO,
+  CreateManualExamDTO,
+  CreateExamSectionDTO,
+  AddExamQuestionsDTO,
 } from '@repo/types';
+import { AppError } from '../middleware/error';
 
 export class ExamGeneratorService {
   /**
-   * Feature 5.1: Automatically generate an exam paper from an Exam Pattern blueprint
+   * Feature 5.1: Automatic Exam Generation from Exam Pattern Blueprint
    */
   static async generateExam(dto: GenerateExamDTO, actorUserId: string) {
-    // 1. Fetch Exam Pattern with course and configuration
+    // 1. Fetch pattern blueprint
     const patternRes = await pgDb.query(
       `SELECT * FROM "exam_patterns" WHERE "id" = $1`,
       [dto.patternId]
@@ -25,7 +25,7 @@ export class ExamGeneratorService {
       throw new AppError(404, 'NOT_FOUND', 'Exam pattern not found');
     }
 
-    const pattern = patternRes.rows[0];
+    const pattern = patternRes.rows[0] as any;
     if (pattern.status === 'ARCHIVED') {
       throw new AppError(400, 'INVALID_PATTERN_STATUS', 'Cannot generate exam from an ARCHIVED pattern');
     }
@@ -40,7 +40,7 @@ export class ExamGeneratorService {
       throw new AppError(400, 'NO_SECTIONS', 'Exam pattern has no sections configured for generation');
     }
 
-    const sections = sectionsRes.rows;
+    const sections = sectionsRes.rows as any[];
     const globalUsedQuestionIds = new Set<string>(dto.excludeQuestionIds || []);
 
     // 3. If avoidRecentDays configured, query recently used questions to exclude
@@ -65,7 +65,7 @@ export class ExamGeneratorService {
         `SELECT * FROM "exam_pattern_section_rules" WHERE "sectionId" = $1`,
         [sec.id]
       );
-      const rule = ruleRes.rows[0] || null;
+      const rule = (ruleRes.rows[0] as any) || null;
 
       // Fetch topic distributions
       const topicsRes = await pgDb.query(
@@ -75,14 +75,14 @@ export class ExamGeneratorService {
          WHERE t."sectionId" = $1`,
         [sec.id]
       );
-      const topicConfigs = topicsRes.rows;
+      const topicConfigs = topicsRes.rows as any[];
 
       // Fetch difficulty distributions
       const diffsRes = await pgDb.query(
         `SELECT * FROM "exam_pattern_section_difficulties" WHERE "sectionId" = $1`,
         [sec.id]
       );
-      const diffConfigs = diffsRes.rows;
+      const diffConfigs = diffsRes.rows as any[];
 
       const numQuestionsNeeded = sec.numQuestions || 10;
       const sectionSelectedQuestions: any[] = [];
@@ -125,56 +125,26 @@ export class ExamGeneratorService {
         queryParams
       );
 
-      const allEligible = eligibleRes.rows.filter(
-        (q: any) => !globalUsedQuestionIds.has(q.id) && !sectionUsedIds.has(q.id)
+      const allEligibleQuestions = (eligibleRes.rows as any[]).filter(
+        (q: any) => !globalUsedQuestionIds.has(q.id)
       );
 
-      // Stratified balancing algorithm
-      // Step A: Fulfill configured topic distributions
+      // A) First satisfy Topic-Specific counts if configured
       if (topicConfigs.length > 0) {
         for (const tc of topicConfigs) {
-          let neededCount = 0;
-          if (tc.distributionType === 'PERCENT') {
-            neededCount = Math.max(1, Math.round((tc.value / 100) * numQuestionsNeeded));
-          } else {
-            neededCount = Math.round(tc.value);
+          let neededForTopic = 0;
+          if (tc.distributionType === 'COUNT' && tc.count) {
+            neededForTopic = tc.count;
+          } else if (tc.distributionType === 'PERCENT' && tc.percentage) {
+            neededForTopic = Math.round((tc.percentage / 100) * numQuestionsNeeded);
           }
 
-          const topicMatches = allEligible.filter(
-            (q: any) => q.syllabusNodeId === tc.topicId && !sectionUsedIds.has(q.id)
-          );
-
-          const picked = topicMatches.slice(0, neededCount);
-          picked.forEach((q: any) => {
-            sectionSelectedQuestions.push(q);
-            sectionUsedIds.add(q.id);
-            globalUsedQuestionIds.add(q.id);
-          });
-        }
-      }
-
-      // Step B: Fulfill configured difficulty distributions for remaining slots
-      if (diffConfigs.length > 0 && sectionSelectedQuestions.length < numQuestionsNeeded) {
-        for (const dc of diffConfigs) {
-          if (sectionSelectedQuestions.length >= numQuestionsNeeded) break;
-
-          let neededDiffCount = 0;
-          if (dc.distributionType === 'PERCENT') {
-            neededDiffCount = Math.max(1, Math.round((dc.value / 100) * numQuestionsNeeded));
-          } else {
-            neededDiffCount = Math.round(dc.value);
-          }
-
-          const currentDiffCount = sectionSelectedQuestions.filter(
-            (q) => q.difficulty === dc.difficultyLevel
-          ).length;
-          const diffSlotsNeeded = Math.max(0, neededDiffCount - currentDiffCount);
-
-          if (diffSlotsNeeded > 0) {
-            const diffMatches = allEligible.filter(
-              (q: any) => q.difficulty === dc.difficultyLevel && !sectionUsedIds.has(q.id)
+          if (neededForTopic > 0) {
+            const topicCandidates = allEligibleQuestions.filter(
+              (q: any) => q.syllabusNodeId === tc.topicId && !sectionUsedIds.has(q.id)
             );
-            const picked = diffMatches.slice(0, diffSlotsNeeded);
+
+            const picked = topicCandidates.slice(0, neededForTopic);
             picked.forEach((q: any) => {
               sectionSelectedQuestions.push(q);
               sectionUsedIds.add(q.id);
@@ -184,19 +154,52 @@ export class ExamGeneratorService {
         }
       }
 
-      // Step C: Fill any remaining slots from eligible pool
+      // B) Second satisfy Difficulty-Specific counts if configured
+      if (diffConfigs.length > 0 && sectionSelectedQuestions.length < numQuestionsNeeded) {
+        for (const dc of diffConfigs) {
+          let neededForDiff = 0;
+          if (dc.distributionType === 'COUNT' && dc.count) {
+            neededForDiff = dc.count;
+          } else if (dc.distributionType === 'PERCENT' && dc.percentage) {
+            neededForDiff = Math.round((dc.percentage / 100) * numQuestionsNeeded);
+          }
+
+          // Adjust for already picked questions of this difficulty
+          const alreadyPicked = sectionSelectedQuestions.filter((q) => q.difficulty === dc.difficulty).length;
+          const remainingNeeded = Math.max(0, neededForDiff - alreadyPicked);
+
+          if (remainingNeeded > 0) {
+            const diffCandidates = allEligibleQuestions.filter(
+              (q: any) => q.difficulty === dc.difficulty && !sectionUsedIds.has(q.id)
+            );
+
+            const picked = diffCandidates.slice(0, remainingNeeded);
+            picked.forEach((q: any) => {
+              if (sectionSelectedQuestions.length < numQuestionsNeeded) {
+                sectionSelectedQuestions.push(q);
+                sectionUsedIds.add(q.id);
+                globalUsedQuestionIds.add(q.id);
+              }
+            });
+          }
+        }
+      }
+
+      // C) Fill remaining slots from general eligible pool
       const remainingSlots = numQuestionsNeeded - sectionSelectedQuestions.length;
       if (remainingSlots > 0) {
-        const remainingCandidates = allEligible.filter((q: any) => !sectionUsedIds.has(q.id));
-        const filler = remainingCandidates.slice(0, remainingSlots);
-        filler.forEach((q: any) => {
+        const remainingCandidates = allEligibleQuestions.filter(
+          (q: any) => !sectionUsedIds.has(q.id)
+        );
+
+        const fillPicked = remainingCandidates.slice(0, remainingSlots);
+        fillPicked.forEach((q: any) => {
           sectionSelectedQuestions.push(q);
           sectionUsedIds.add(q.id);
           globalUsedQuestionIds.add(q.id);
         });
       }
 
-      // Validation: Ensure exact count requirement is fulfilled
       if (sectionSelectedQuestions.length < numQuestionsNeeded) {
         throw new AppError(
           422,
@@ -239,13 +242,8 @@ export class ExamGeneratorService {
 
     let secOrder = 1;
     for (const plan of sectionGenerationPlan) {
-      const sec = plan.section;
       const examSectionId = `exsec_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
-      const marksPerQ = sec.marksPerQuestion || 1.0;
-      const secTotalMarks = plan.selectedQuestions.length * marksPerQ;
-      const marksCorrect = sec.marksCorrect !== undefined ? sec.marksCorrect : marksPerQ;
-      const marksWrong = sec.marksWrong !== undefined ? sec.marksWrong : 0.0;
-      const marksUnattempted = sec.marksUnattempted !== undefined ? sec.marksUnattempted : 0.0;
+      const sec = plan.section;
 
       await pgDb.query(
         `INSERT INTO "exam_sections" (
@@ -257,13 +255,13 @@ export class ExamGeneratorService {
           examId,
           sec.name,
           secOrder++,
-          sec.subjectId || null,
+          sec.subjectId,
           plan.selectedQuestions.length,
-          marksPerQ,
-          secTotalMarks,
-          marksCorrect,
-          marksWrong,
-          marksUnattempted,
+          sec.marksPerQuestion || 1.0,
+          sec.totalMarks || plan.selectedQuestions.length * (sec.marksPerQuestion || 1.0),
+          sec.marksCorrect || sec.marksPerQuestion || 1.0,
+          sec.marksWrong || 0.0,
+          sec.marksUnattempted || 0.0,
         ]
       );
 
@@ -274,12 +272,28 @@ export class ExamGeneratorService {
           `INSERT INTO "exam_questions" (
             "id", "examId", "examSectionId", "questionId", "sequenceOrder", "marksCorrect", "marksWrong", "createdAt", "updatedAt"
           ) VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-          [eqId, examId, examSectionId, q.id, qOrder++, marksCorrect, marksWrong]
+          [
+            eqId,
+            examId,
+            examSectionId,
+            q.id,
+            qOrder++,
+            sec.marksCorrect || sec.marksPerQuestion || 1.0,
+            sec.marksWrong || 0.0,
+          ]
+        );
+
+        // Record usage history
+        const usageId = `usage_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+        await pgDb.query(
+          `INSERT INTO "previous_exam_usages" ("id", "questionId", "examName", "year", "createdAt")
+           VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)`,
+          [usageId, q.id, examName, new Date().getFullYear()]
         );
       }
     }
 
-    // Record audit log
+    // 6. Record audit log
     const auditId = `aud_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
     await pgDb.query(
       `INSERT INTO "audit_logs" ("id", "userId", "action", "resource", "resourceId", "details")
@@ -296,14 +310,23 @@ export class ExamGeneratorService {
   }
 
   /**
-   * Feature 5.2: Get full draft exam details including sections, questions, and stats
+   * Fetch full draft exam structure, sections, assigned questions, and validation statistics
    */
   static async getDraftExamDetails(examId: string) {
-    const examRes = await pgDb.query(`SELECT * FROM "exams" WHERE "id" = $1`, [examId]);
+    const examRes = await pgDb.query(
+      `SELECT e.*, c.name as "courseName", p.name as "patternName"
+       FROM "exams" e
+       LEFT JOIN "courses" c ON e."courseId" = c.id
+       LEFT JOIN "exam_patterns" p ON e."patternId" = p.id
+       WHERE e."id" = $1`,
+      [examId]
+    );
+
     if (examRes.rows.length === 0) {
       throw new AppError(404, 'NOT_FOUND', 'Exam not found');
     }
-    const exam = examRes.rows[0];
+
+    const exam = examRes.rows[0] as any;
 
     const sectionsRes = await pgDb.query(
       `SELECT es.*, s.name as "subjectName"
@@ -313,48 +336,85 @@ export class ExamGeneratorService {
        ORDER BY es."sequenceOrder" ASC, es."createdAt" ASC`,
       [examId]
     );
-    const sections = sectionsRes.rows;
 
-    const questionsRes = await pgDb.query(
-      `SELECT eq.*, q.content, q.type, q.data, q.difficulty, q.marks, q."syllabusNodeId",
-              sn.title as "topicTitle", s.name as "subjectName"
-       FROM "exam_questions" eq
-       JOIN "questions" q ON eq."questionId" = q.id
-       LEFT JOIN "syllabus_nodes" sn ON q."syllabusNodeId" = sn.id
-       LEFT JOIN "subjects" s ON q."subjectId" = s.id
-       WHERE eq."examId" = $1
-       ORDER BY eq."sequenceOrder" ASC`,
-      [examId]
-    );
-    const allQuestions = questionsRes.rows;
-
-    const sectionsWithQuestions = sections.map((sec: any) => {
-      const secQuestions = allQuestions.filter((q: any) => q.examSectionId === sec.id);
-      return {
-        ...sec,
-        questions: secQuestions,
-      };
-    });
-
-    // Compute distribution statistics
-    const topicStats: Record<string, { topicId: string; topicTitle: string; count: number; marks: number }> = {};
+    const sectionsWithQuestions = [];
+    const allQuestions = [];
+    const topicStats: Record<string, { topicId: string; topicTitle: string; count: number }> = {};
     const difficultyStats: Record<string, number> = { EASY: 0, MEDIUM: 0, HARD: 0 };
     const typeStats: Record<string, number> = {};
 
-    allQuestions.forEach((q: any) => {
-      const tTitle = q.topicTitle || 'General';
-      const tId = q.syllabusNodeId || 'general';
-      if (!topicStats[tId]) {
-        topicStats[tId] = { topicId: tId, topicTitle: tTitle, count: 0, marks: 0 };
-      }
-      topicStats[tId].count++;
-      topicStats[tId].marks += q.marksCorrect || 1.0;
+    for (const sec of sectionsRes.rows as any[]) {
+      const questionsRes = await pgDb.query(
+        `SELECT eq."id" as "examQuestionId", eq."sequenceOrder", eq."marksCorrect", eq."marksWrong",
+                q."id" as "questionId", q."type", q."content", q."data", q."difficulty", q."marks", q."status",
+                q."syllabusNodeId", sn.title as "topicTitle", s.name as "subjectName"
+         FROM "exam_questions" eq
+         JOIN "questions" q ON eq."questionId" = q."id"
+         LEFT JOIN "syllabus_nodes" sn ON q."syllabusNodeId" = sn.id
+         LEFT JOIN "subjects" s ON q."subjectId" = s.id
+         WHERE eq."examSectionId" = $1
+         ORDER BY eq."sequenceOrder" ASC, eq."createdAt" ASC`,
+        [sec.id]
+      );
 
-      if (q.difficulty && difficultyStats[q.difficulty] !== undefined) {
-        difficultyStats[q.difficulty]++;
-      }
-      typeStats[q.type] = (typeStats[q.type] || 0) + 1;
-    });
+      const qs = questionsRes.rows.map((q: any) => {
+        allQuestions.push(q);
+
+        // Aggregate topic stats
+        if (q.syllabusNodeId) {
+          if (!topicStats[q.syllabusNodeId]) {
+            topicStats[q.syllabusNodeId] = {
+              topicId: q.syllabusNodeId,
+              topicTitle: q.topicTitle || 'Unknown Topic',
+              count: 0,
+            };
+          }
+          topicStats[q.syllabusNodeId].count++;
+        }
+
+        // Aggregate difficulty stats
+        if (q.difficulty) {
+          difficultyStats[q.difficulty] = (difficultyStats[q.difficulty] || 0) + 1;
+        }
+
+        // Aggregate type stats
+        if (q.type) {
+          typeStats[q.type] = (typeStats[q.type] || 0) + 1;
+        }
+
+        return {
+          id: q.examQuestionId,
+          questionId: q.questionId,
+          sequenceOrder: q.sequenceOrder,
+          marksCorrect: q.marksCorrect,
+          marksWrong: q.marksWrong,
+          type: q.type,
+          content: q.content,
+          difficulty: q.difficulty,
+          marks: q.marks,
+          status: q.status,
+          topicId: q.syllabusNodeId,
+          topicTitle: q.topicTitle,
+          subjectName: q.subjectName,
+          options: q.data?.options || [],
+        };
+      });
+
+      sectionsWithQuestions.push({
+        id: sec.id,
+        name: sec.name,
+        sequenceOrder: sec.sequenceOrder,
+        subjectId: sec.subjectId,
+        subjectName: sec.subjectName,
+        numQuestions: sec.numQuestions,
+        marksPerQuestion: sec.marksPerQuestion,
+        totalMarks: sec.totalMarks,
+        marksCorrect: sec.marksCorrect,
+        marksWrong: sec.marksWrong,
+        marksUnattempted: sec.marksUnattempted,
+        questions: qs,
+      });
+    }
 
     return {
       exam,
@@ -377,7 +437,7 @@ export class ExamGeneratorService {
     if (examRes.rows.length === 0) {
       throw new AppError(404, 'NOT_FOUND', 'Exam not found');
     }
-    const exam = examRes.rows[0];
+    const exam = examRes.rows[0] as any;
     if (exam.status !== 'DRAFT') {
       throw new AppError(400, 'INVALID_EXAM_STATUS', 'Only DRAFT exams can have questions swapped');
     }
@@ -389,7 +449,7 @@ export class ExamGeneratorService {
     if (eqRes.rows.length === 0) {
       throw new AppError(404, 'QUESTION_NOT_IN_EXAM', 'Question does not exist in this exam');
     }
-    const existingEq = eqRes.rows[0];
+    const existingEq = eqRes.rows[0] as any;
 
     // Check duplicate in current exam
     const dupCheck = await pgDb.query(
@@ -405,10 +465,10 @@ export class ExamGeneratorService {
       `SELECT * FROM "questions" WHERE "id" = $1`,
       [dto.newQuestionId]
     );
-    if (newQRes.rows.length === 0 || newQRes.rows[0].status !== 'PUBLISHED') {
+    if (newQRes.rows.length === 0 || (newQRes.rows[0] as any).status !== 'PUBLISHED') {
       throw new AppError(400, 'INVALID_QUESTION', 'Replacement question must be an active, PUBLISHED question');
     }
-    const newQ = newQRes.rows[0];
+    const newQ = newQRes.rows[0] as any;
 
     // Update the question link
     await pgDb.query(
@@ -438,7 +498,7 @@ export class ExamGeneratorService {
   static async regenerateSection(examId: string, sectionId: string, actorUserId: string) {
     const examRes = await pgDb.query(`SELECT * FROM "exams" WHERE "id" = $1`, [examId]);
     if (examRes.rows.length === 0) throw new AppError(404, 'NOT_FOUND', 'Exam not found');
-    const exam = examRes.rows[0];
+    const exam = examRes.rows[0] as any;
     if (exam.status !== 'DRAFT') {
       throw new AppError(400, 'INVALID_EXAM_STATUS', 'Only DRAFT exams can be regenerated');
     }
@@ -448,14 +508,14 @@ export class ExamGeneratorService {
       [sectionId, examId]
     );
     if (secRes.rows.length === 0) throw new AppError(404, 'NOT_FOUND', 'Exam section not found');
-    const sec = secRes.rows[0];
+    const sec = secRes.rows[0] as any;
 
     // Collect questions used in OTHER sections to prevent cross-section duplicates
     const otherQsRes = await pgDb.query(
       `SELECT "questionId" FROM "exam_questions" WHERE "examId" = $1 AND "examSectionId" != $2`,
       [examId, sectionId]
     );
-    const excludeIds = new Set<string>(otherQsRes.rows.map((r: any) => r.questionId));
+    const excludeIds = new Set<string>((otherQsRes.rows as any[]).map((r: any) => r.questionId));
 
     // Query eligible questions for this section
     const numQuestionsNeeded = sec.numQuestions || 10;
@@ -468,7 +528,7 @@ export class ExamGeneratorService {
     query += ` ORDER BY RANDOM()`;
 
     const candidatesRes = await pgDb.query(query, params);
-    const eligible = candidatesRes.rows.filter((q: any) => !excludeIds.has(q.id));
+    const eligible = (candidatesRes.rows as any[]).filter((q: any) => !excludeIds.has(q.id));
 
     if (eligible.length < numQuestionsNeeded) {
       throw new AppError(
@@ -504,7 +564,7 @@ export class ExamGeneratorService {
   static async reorderQuestions(examId: string, dto: ReorderExamQuestionsDTO, actorUserId: string) {
     const examRes = await pgDb.query(`SELECT * FROM "exams" WHERE "id" = $1`, [examId]);
     if (examRes.rows.length === 0) throw new AppError(404, 'NOT_FOUND', 'Exam not found');
-    if (examRes.rows[0].status !== 'DRAFT') {
+    if ((examRes.rows[0] as any).status !== 'DRAFT') {
       throw new AppError(400, 'INVALID_EXAM_STATUS', 'Only DRAFT exams can be reordered');
     }
 
@@ -527,7 +587,7 @@ export class ExamGeneratorService {
   static async updateExamMetadata(examId: string, dto: UpdateExamMetadataDTO, actorUserId: string) {
     const examRes = await pgDb.query(`SELECT * FROM "exams" WHERE "id" = $1`, [examId]);
     if (examRes.rows.length === 0) throw new AppError(404, 'NOT_FOUND', 'Exam not found');
-    const existing = examRes.rows[0];
+    const existing = examRes.rows[0] as any;
 
     const name = dto.name !== undefined ? dto.name : existing.name;
     const instructions = dto.instructions !== undefined ? dto.instructions : existing.instructions;
@@ -561,7 +621,7 @@ export class ExamGeneratorService {
   static async publishExam(examId: string, actorUserId: string) {
     const examRes = await pgDb.query(`SELECT * FROM "exams" WHERE "id" = $1`, [examId]);
     if (examRes.rows.length === 0) throw new AppError(404, 'NOT_FOUND', 'Exam not found');
-    const exam = examRes.rows[0];
+    const exam = examRes.rows[0] as any;
 
     if (exam.status === 'PUBLISHED') {
       return this.getDraftExamDetails(examId);
@@ -586,7 +646,7 @@ export class ExamGeneratorService {
       throw new AppError(422, 'INCOMPLETE_EXAM', 'Cannot publish exam without any sections');
     }
 
-    for (const sec of sectionsRes.rows) {
+    for (const sec of sectionsRes.rows as any[]) {
       if (parseInt(sec.qCount, 10) === 0) {
         throw new AppError(422, 'INCOMPLETE_EXAM', `Section "${sec.name}" contains zero questions`);
       }
@@ -651,7 +711,7 @@ export class ExamGeneratorService {
   static async addManualSection(examId: string, dto: CreateExamSectionDTO, actorUserId: string) {
     const examRes = await pgDb.query(`SELECT * FROM "exams" WHERE "id" = $1`, [examId]);
     if (examRes.rows.length === 0) throw new AppError(404, 'NOT_FOUND', 'Exam not found');
-    if (examRes.rows[0].status !== 'DRAFT') {
+    if ((examRes.rows[0] as any).status !== 'DRAFT') {
       throw new AppError(400, 'INVALID_EXAM_STATUS', 'Only DRAFT exams can have sections added');
     }
 
@@ -688,7 +748,7 @@ export class ExamGeneratorService {
   static async addQuestionsToSection(examId: string, dto: AddExamQuestionsDTO, actorUserId: string) {
     const examRes = await pgDb.query(`SELECT * FROM "exams" WHERE "id" = $1`, [examId]);
     if (examRes.rows.length === 0) throw new AppError(404, 'NOT_FOUND', 'Exam not found');
-    if (examRes.rows[0].status !== 'DRAFT') {
+    if ((examRes.rows[0] as any).status !== 'DRAFT') {
       throw new AppError(400, 'INVALID_EXAM_STATUS', 'Only DRAFT exams can have questions added');
     }
 
@@ -697,7 +757,7 @@ export class ExamGeneratorService {
       [dto.sectionId, examId]
     );
     if (secRes.rows.length === 0) throw new AppError(404, 'NOT_FOUND', 'Exam section not found');
-    const sec = secRes.rows[0];
+    const sec = secRes.rows[0] as any;
 
     // Check duplicate questions across the exam
     for (const qId of dto.questionIds) {
@@ -715,7 +775,7 @@ export class ExamGeneratorService {
       `SELECT COALESCE(MAX("sequenceOrder"), 0) as "maxOrder" FROM "exam_questions" WHERE "examSectionId" = $1`,
       [dto.sectionId]
     );
-    let currOrder = parseInt(maxOrderRes.rows[0].maxOrder, 10) + 1;
+    let currOrder = parseInt((maxOrderRes.rows[0] as any).maxOrder, 10) + 1;
 
     for (const qId of dto.questionIds) {
       const eqId = `eq_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
@@ -732,8 +792,8 @@ export class ExamGeneratorService {
       `SELECT COUNT(*) as "qCount", SUM("marksCorrect") as "sumMarks" FROM "exam_questions" WHERE "examSectionId" = $1`,
       [dto.sectionId]
     );
-    const newCount = parseInt(countRes.rows[0].qCount, 10);
-    const newSecMarks = parseFloat(countRes.rows[0].sumMarks || '0');
+    const newCount = parseInt((countRes.rows[0] as any).qCount, 10);
+    const newSecMarks = parseFloat((countRes.rows[0] as any).sumMarks || '0');
 
     await pgDb.query(
       `UPDATE "exam_sections" SET "numQuestions" = $1, "totalMarks" = $2, "updatedAt" = CURRENT_TIMESTAMP WHERE "id" = $3`,
@@ -745,7 +805,7 @@ export class ExamGeneratorService {
       `SELECT SUM("totalMarks") as "examMarks" FROM "exam_sections" WHERE "examId" = $1`,
       [examId]
     );
-    const newExamMarks = parseFloat(examTotalRes.rows[0].examMarks || '0');
+    const newExamMarks = parseFloat((examTotalRes.rows[0] as any).examMarks || '0');
 
     await pgDb.query(
       `UPDATE "exams" SET "totalMarks" = $1, "updatedAt" = CURRENT_TIMESTAMP WHERE "id" = $2`,
@@ -758,7 +818,7 @@ export class ExamGeneratorService {
   /**
    * List all exams with filtering and pagination
    */
-  static async listExams(filters: { status?: string; courseId?: string; page?: number; limit?: number }) {
+  static async listExams(filters: { status?: string; courseId?: string; allowedCourseIds?: string[]; page?: number; limit?: number }) {
     const page = Math.max(1, filters.page || 1);
     const limit = Math.max(1, Math.min(100, filters.limit || 20));
     const offset = (page - 1) * limit;
@@ -775,12 +835,16 @@ export class ExamGeneratorService {
       whereClause += ` AND e."courseId" = $${paramIdx++}`;
       params.push(filters.courseId);
     }
+    if (filters.allowedCourseIds && filters.allowedCourseIds.length > 0) {
+      whereClause += ` AND e."courseId" = ANY($${paramIdx++})`;
+      params.push(filters.allowedCourseIds);
+    }
 
     const countRes = await pgDb.query(
       `SELECT COUNT(*) as total FROM "exams" e ${whereClause}`,
       params
     );
-    const total = parseInt(countRes.rows[0].total, 10);
+    const total = parseInt((countRes.rows[0] as any).total, 10);
 
     const listRes = await pgDb.query(
       `SELECT e.*, c.name as "courseName", p.name as "patternName",

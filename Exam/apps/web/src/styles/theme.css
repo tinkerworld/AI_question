@@ -36,3 +36,24 @@ body {
   padding: 0;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
+
+/* Native select and dropdown option visibility rules */
+[data-theme="dark"] select,
+[data-theme="gray"] select {
+  color-scheme: dark;
+}
+
+[data-theme="dark"] option,
+[data-theme="gray"] option {
+  background: var(--panel-bg);
+  color: var(--text-main);
+}
+
+[data-theme="light"] select {
+  color-scheme: light;
+}
+
+[data-theme="light"] option {
+  background: var(--panel-bg);
+  color: var(--text-main);
+}

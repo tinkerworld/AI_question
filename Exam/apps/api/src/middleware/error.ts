@@ -19,6 +19,15 @@ export function errorHandler(
   res: Response,
   next: NextFunction
 ) {
+  if (err.name === 'ZodError' || (err.issues && Array.isArray(err.issues))) {
+    return res.status(400).json({
+      success: false,
+      errorCode: 'VALIDATION_ERROR',
+      message: err.issues?.[0]?.message || 'Validation failed',
+      details: err.issues,
+    });
+  }
+
   const statusCode = err.statusCode || 500;
   const response: ApiErrorResponse = {
     success: false,

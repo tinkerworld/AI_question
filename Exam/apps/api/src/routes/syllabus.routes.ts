@@ -39,7 +39,7 @@ function buildTree(nodes: any[]): any[] {
 // Get flat list of syllabus nodes
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { subjectId } = req.params;
+    const subjectId = (req.params as any).subjectId || (req.query as any).subjectId;
     let query = `SELECT * FROM "syllabus_nodes"`;
     const params: any[] = [];
     if (subjectId) {
@@ -57,7 +57,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 // Get nested tree structure for syllabus
 router.get('/tree', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { subjectId } = req.params;
+    const subjectId = (req.params as any).subjectId || (req.query as any).subjectId;
     const caller = req.user!;
     const isStudent = caller.roles.includes('STUDENT') && !caller.roles.includes('MAIN_ADMIN') && !caller.roles.includes('SUB_ADMIN');
 

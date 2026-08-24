@@ -265,16 +265,17 @@ model Question {
 }
 
 model QuestionVersion {
-  id          String             @id @default(uuid())
-  questionId  String
-  version     Int
-  content     String
-  data        Json
-  difficulty  QuestionDifficulty
-  marks       Float
-  changedById String?
-  createdAt   DateTime           @default(now())
-  question    Question           @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  id            String             @id @default(uuid())
+  questionId    String
+  version       Int
+  content       String
+  data          Json
+  difficulty    QuestionDifficulty
+  marks         Float
+  changeSummary String?
+  changedById   String?
+  createdAt     DateTime           @default(now())
+  question      Question           @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
   @@map("question_versions")
 }
@@ -547,4 +548,199 @@ model ExamQuestion {
   @@unique([examId, questionId])
   @@map("exam_questions")
 }
+
+enum AttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+  EVALUATED
+  PENDING_REVIEW
+}
+
+model ExamAttempt {
+  id              String            @id @default(uuid())
+  examId          String
+  userId          String
+  shuffleSeed     String
+  startTime       DateTime          @default(now())
+  endTime         DateTime?
+  status          AttemptStatus     @default(IN_PROGRESS)
+  totalScore      Float?
+  percentage      Float?
+  totalQuestions  Int               @default(0)
+  correctAnswers  Int               @default(0)
+  wrongAnswers    Int               @default(0)
+  unattempted     Int               @default(0)
+  marksObtained   Float?
+  maxMarks        Float?
+  isFlagged       Boolean           @default(false)
+  flagReason      String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  exam            Exam              @relation(fields: [examId], references: [id], onDelete: Cascade)
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  answers         QuestionAttempt[]
+
+  @@map("exam_attempts")
+}
+
+model QuestionAttempt {
+  id                String       @id @default(uuid())
+  attemptId         String
+  questionId        String
+  examSectionId     String?
+  sequenceOrder     Int          @default(0)
+  questionSnapshot  Json
+  studentAnswer     Json?
+  isMarkedForReview Boolean      @default(false)
+  timeSpentSeconds  Int          @default(0)
+  isCorrect         Boolean?
+  marksAwarded      Float        @default(0.0)
+  evaluatorComments String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  attempt           ExamAttempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question          Question     @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  examSection       ExamSection? @relation(fields: [examSectionId], references: [id], onDelete: SetNull)
+
+  @@unique([attemptId, questionId])
+  @@map("question_attempts")
+}
+
+model InterviewSession {
+  id              String          @id @default(uuid())
+  userId          String
+  questionId      String
+  courseId        String?
+  mode            String          @default("PRACTICE")
+  status          String          @default("IN_PROGRESS")
+  currentTurn     Int             @default(0)
+  maxTurns        Int             @default(5)
+  startedAt       DateTime        @default(now())
+  completedAt     DateTime?
+  finalScore      Float?
+  maxScore        Float?
+  rubricScores    Json?
+  feedback        String?
+  strengths       String[]        @default([])
+  weaknesses      String[]        @default([])
+  recommendations String[]        @default([])
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question        Question        @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  course          Course?         @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  turns           InterviewTurn[]
+
+  @@map("interview_sessions")
+}
+
+model InterviewTurn {
+  id              String           @id @default(uuid())
+  sessionId       String
+  turnNumber      Int
+  speaker         String
+  message         String
+  audioUrl        String?
+  durationSeconds Int?
+  evaluationNotes String?
+  createdAt       DateTime         @default(now())
+  session         InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("interview_turns")
+}
+
+model Plan {
+  id           String            @id @default(uuid())
+  name         String
+  code         String            @unique
+  price        Float             @default(0.0)
+  billingCycle String            @default("monthly")
+  description  String?
+  features     String[]          @default([])
+  isActive     Boolean           @default(true)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  rules        EntitlementRule[]
+
+  @@map("plans")
+}
+
+model EntitlementRule {
+  id               String   @id @default(uuid())
+  planCode         String
+  entitlementKey   String
+  entitlementType  String   @default("BOOLEAN")
+  entitlementValue String   @default("false")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  plan             Plan     @relation(fields: [planCode], references: [code], onDelete: Cascade)
+
+  @@unique([planCode, entitlementKey])
+  @@map("entitlement_rules")
+}
+
+model Subscription {
+  id          String    @id @default(uuid())
+  userId      String
+  planCode    String    @default("FREE")
+  status      String    @default("ACTIVE")
+  startDate   DateTime  @default(now())
+  endDate     DateTime
+  cancelledAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}
+
+model AICreditPackage {
+  id           String   @id @default(uuid())
+  name         String
+  creditsCount Int      @default(5)
+  price        Float    @default(9.99)
+  currency     String   @default("USD")
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  @@map("ai_credit_packages")
+}
+
+model Invoice {
+  id         String   @id @default(uuid())
+  userId     String
+  amount     Float    @default(0.0)
+  currency   String   @default("USD")
+  items      Json     @default("[]")
+  status     String   @default("PAID")
+  externalId String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("invoices")
+}
+
+model RefundTransaction {
+  id                   String   @id @default(uuid())
+  subscriptionId       String?
+  userId               String
+  actorUserId          String
+  gateway              String   @default("MOCK")
+  gatewayPaymentId     String
+  gatewayRefundId      String
+  originalAmount       Float
+  refundAmount         Float
+  currency             String   @default("USD")
+  isPartial            Boolean  @default(false)
+  clawbackCreditsCount Int      @default(0)
+  status               String   @default("COMPLETED")
+  reason               String
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refund_transactions")
+}
+
 

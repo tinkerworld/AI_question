@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from '../context/I18nContext';
+import { EntityDiffViewer } from '../components/EntityDiffViewer';
+import { AIGeneratorModal } from '../components/ai/AIGeneratorModal';
+import { AIQuestionModifierModal } from '../components/ai/AIQuestionModifierModal';
+import { AIUsageModal } from '../components/ai/AIUsageModal';
 
 interface Question {
   id: string;
@@ -13,6 +17,8 @@ interface Question {
   courseId?: string | null;
   subjectId?: string | null;
   syllabusNodeId?: string | null;
+  isAiGenerated?: boolean;
+  derivedFromId?: string | null;
   tags?: string[];
   versions?: QuestionVersion[];
   examUsages?: PreviousExamUsage[];
@@ -28,6 +34,7 @@ interface QuestionVersion {
   data: any;
   difficulty: 'EASY' | 'MEDIUM' | 'HARD';
   marks: number;
+  changeSummary?: string | null;
   changedById: string;
   createdAt: string;
 }
@@ -62,6 +69,7 @@ const QUESTION_TYPES = [
   { id: 'NUMERICAL', label: 'Numerical Value' },
   { id: 'MATCHING', label: 'Matrix Matching' },
   { id: 'SUBJECTIVE', label: 'Subjective / Long Answer' },
+  { id: 'INTERVIEW', label: 'AI Interview / Oral Assessment' },
 ];
 
 const extractApiErrorMessage = (data: any, fallback: string = 'Operation failed'): string => {
@@ -110,11 +118,22 @@ export const QuestionBankPage: React.FC = () => {
   const [previewQuestion, setPreviewQuestion] = useState<Question | null>(null);
   const [versionDrawerQuestion, setVersionDrawerQuestion] = useState<Question | null>(null);
   const [versionsList, setVersionsList] = useState<QuestionVersion[]>([]);
+  const [diffBaseVersion, setDiffBaseVersion] = useState<QuestionVersion | null>(null);
+  const [diffTargetVersion, setDiffTargetVersion] = useState<QuestionVersion | null>(null);
+  const [showDiffView, setShowDiffView] = useState<boolean>(false);
   const [examHistoryQuestion, setExamHistoryQuestion] = useState<Question | null>(null);
   const [examHistoryList, setExamHistoryList] = useState<PreviousExamUsage[]>([]);
   const [newExamName, setNewExamName] = useState<string>('JEE Main');
   const [newExamYear, setNewExamYear] = useState<number>(2024);
   const [newExamShift, setNewExamShift] = useState<string>('Shift 1');
+
+  // Phase 11: AI Modals & Subtabs
+  const [showAIGeneratorModal, setShowAIGeneratorModal] = useState<boolean>(false);
+  const [modifyingQuestion, setModifyingQuestion] = useState<Question | null>(null);
+  const [showAIUsageModal, setShowAIUsageModal] = useState<boolean>(false);
+  const [activeSubtab, setActiveSubtab] = useState<'ALL' | 'DRAFT_REVIEW'>('ALL');
+  const [draftQuestions, setDraftQuestions] = useState<any[]>([]);
+  const [loadingDrafts, setLoadingDrafts] = useState<boolean>(false);
 
   // Form State for Create / Edit
   const [formType, setFormType] = useState<string>('MCQ');
@@ -148,6 +167,69 @@ export const QuestionBankPage: React.FC = () => {
   ]);
   const [subRubric, setSubRubric] = useState<string[]>(['Accuracy of reasoning']);
   const [subSampleAnswer, setSubSampleAnswer] = useState<string>('');
+
+  // Phase 12: Interview Question Type Form States
+  const [interviewScenario, setInterviewScenario] = useState<string>('');
+  const [interviewPreset, setInterviewPreset] = useState<string>('UPSC_PERSONALITY');
+  const [interviewMaxTurns, setInterviewMaxTurns] = useState<number>(4);
+  const [interviewDuration, setInterviewDuration] = useState<number>(15);
+  const [interviewInstructions, setInterviewInstructions] = useState<string>('');
+  const [interviewOpeningQuestion, setInterviewOpeningQuestion] = useState<string>('');
+  const [interviewRubric, setInterviewRubric] = useState<Array<{ id: string; name: string; description: string; maxScore: number }>>([
+    { id: 'integrity', name: 'Ethical Integrity & Public Service', description: 'Constitutional compliance and impartiality', maxScore: 25 },
+    { id: 'decision_making', name: 'Administrative Problem Solving', description: 'Practical stakeholder resolution', maxScore: 25 },
+    { id: 'communication', name: 'Clarity, Articulation & Poise', description: 'Logical structure and calm composure', maxScore: 25 },
+    { id: 'critical_thinking', name: 'Analytical Depth & Foresight', description: 'Multi-dimensional policy view', maxScore: 25 },
+  ]);
+
+  const loadInterviewPreset = (preset: string) => {
+    setInterviewPreset(preset);
+    if (preset === 'IELTS_SPEAKING') {
+      setInterviewDuration(12);
+      setInterviewMaxTurns(4);
+      setFormMarks(9);
+      setInterviewInstructions('You are a certified IELTS Speaking Examiner. Evaluate lexical resource, grammatical range, fluency, and pronunciation.');
+      setInterviewRubric([
+        { id: 'fluency', name: 'Fluency & Coherence', description: 'Speaks at length with ease, logical sequencing and smooth connectives', maxScore: 9 },
+        { id: 'lexical', name: 'Lexical Resource', description: 'Uses wide range of academic and idiomatic vocabulary with precision', maxScore: 9 },
+        { id: 'grammar', name: 'Grammatical Range & Accuracy', description: 'Uses mix of simple and complex sentence structures with high accuracy', maxScore: 9 },
+        { id: 'pronunciation', name: 'Pronunciation & Intonation', description: 'Intelligible pronunciation with expressive rhythm and intonation', maxScore: 9 },
+      ]);
+    } else if (preset === 'UPSC_PERSONALITY') {
+      setInterviewDuration(15);
+      setInterviewMaxTurns(4);
+      setFormMarks(100);
+      setInterviewInstructions('You are the Chairperson of the UPSC Interview Board. Probe for ethical balance, constitutional adherence, and administrative realism.');
+      setInterviewRubric([
+        { id: 'integrity', name: 'Ethical Integrity & Public Service', description: 'Constitutional compliance and impartiality', maxScore: 25 },
+        { id: 'decision_making', name: 'Administrative Problem Solving', description: 'Practical stakeholder resolution and resource optimization', maxScore: 25 },
+        { id: 'communication', name: 'Clarity, Articulation & Poise', description: 'Logical structure and calm composure under scrutiny', maxScore: 25 },
+        { id: 'critical_thinking', name: 'Analytical Depth & Foresight', description: 'Multi-dimensional socio-economic and policy understanding', maxScore: 25 },
+      ]);
+    } else if (preset === 'TECH_SYSTEM_DESIGN') {
+      setInterviewDuration(20);
+      setInterviewMaxTurns(5);
+      setFormMarks(50);
+      setInterviewInstructions('You are a Principal Software Architect. Conduct a rigorous technical system design interview.');
+      setInterviewRubric([
+        { id: 'architecture', name: 'Architectural Rigor & Scalability', description: 'Handling load, partitioning, and high availability', maxScore: 15 },
+        { id: 'tradeoffs', name: 'Trade-off Evaluation', description: 'Weighing CAP theorem, latency vs throughput, consistency models', maxScore: 15 },
+        { id: 'data_modeling', name: 'Data Storage & Caching Strategy', description: 'Database schema, caching layers, queueing systems', maxScore: 10 },
+        { id: 'communication', name: 'Technical Articulation & Defense', description: 'Explaining design decisions clearly and concisely', maxScore: 10 },
+      ]);
+    } else if (preset === 'GENERAL_HR') {
+      setInterviewDuration(15);
+      setInterviewMaxTurns(4);
+      setFormMarks(40);
+      setInterviewInstructions('You are an Executive Hiring Manager. Conduct a behavioral STAR-method interview.');
+      setInterviewRubric([
+        { id: 'leadership', name: 'Leadership & Conflict Resolution', description: 'Handling team disagreement and guiding outcomes', maxScore: 10 },
+        { id: 'adaptability', name: 'Adaptability & Problem Solving', description: 'Navigating ambiguity and unexpected blockers', maxScore: 10 },
+        { id: 'communication', name: 'Interpersonal Articulation', description: 'Structured STAR method response clarity', maxScore: 10 },
+        { id: 'cultural_fit', name: 'Values Alignment & Ownership', description: 'Demonstrating extreme ownership and integrity', maxScore: 10 },
+      ]);
+    }
+  };
 
   const token = localStorage.getItem('token') || '';
 
@@ -231,9 +313,49 @@ export const QuestionBankPage: React.FC = () => {
     } catch {}
   };
 
+  const fetchDraftQuestions = async () => {
+    try {
+      setLoadingDrafts(true);
+      const res = await fetch('http://localhost:4000/api/v1/ai/questions/drafts?isAiOnly=true', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.success) {
+        setDraftQuestions(data.data || []);
+      }
+    } catch {
+    } finally {
+      setLoadingDrafts(false);
+    }
+  };
+
+  const handleReviewDraft = async (questionId: string, action: 'APPROVE' | 'REJECT', rejectionReason?: string) => {
+    try {
+      const res = await fetch(`http://localhost:4000/api/v1/ai/questions/drafts/${questionId}/review`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ action, rejectionReason }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setActionSuccess(action === 'APPROVE' ? `Question ${questionId} approved and published!` : `Draft ${questionId} rejected.`);
+        fetchDraftQuestions();
+        fetchQuestions();
+      } else {
+        setError(extractApiErrorMessage(data, 'Failed to review draft'));
+      }
+    } catch (err: any) {
+      setError(err.message || 'Error processing review action');
+    }
+  };
+
   useEffect(() => {
     fetchQuestions();
     fetchMetadata();
+    fetchDraftQuestions();
   }, [filterDifficulty, filterType, filterStatus, filterCourseId, filterSubjectId, filterSyllabusNodeId]);
 
   const resetForm = () => {
@@ -266,6 +388,18 @@ export const QuestionBankPage: React.FC = () => {
     ]);
     setSubRubric(['Accuracy of reasoning']);
     setSubSampleAnswer('');
+    setInterviewScenario('');
+    setInterviewPreset('UPSC_PERSONALITY');
+    setInterviewMaxTurns(4);
+    setInterviewDuration(15);
+    setInterviewInstructions('');
+    setInterviewOpeningQuestion('');
+    setInterviewRubric([
+      { id: 'integrity', name: 'Ethical Integrity & Public Service', description: 'Constitutional compliance and impartiality', maxScore: 25 },
+      { id: 'decision_making', name: 'Administrative Problem Solving', description: 'Practical stakeholder resolution', maxScore: 25 },
+      { id: 'communication', name: 'Clarity, Articulation & Poise', description: 'Logical structure and calm composure', maxScore: 25 },
+      { id: 'critical_thinking', name: 'Analytical Depth & Foresight', description: 'Multi-dimensional policy view', maxScore: 25 },
+    ]);
     setEditingQuestion(null);
   };
 
@@ -308,6 +442,14 @@ export const QuestionBankPage: React.FC = () => {
     } else if (q.type === 'SUBJECTIVE') {
       setSubRubric(d.rubricCriteria || ['']);
       setSubSampleAnswer(d.sampleAnswer || '');
+    } else if (q.type === 'INTERVIEW') {
+      setInterviewScenario(d.scenario || '');
+      setInterviewPreset(d.preset || 'CUSTOM');
+      setInterviewMaxTurns(Number(d.maxTurns || 4));
+      setInterviewDuration(Number(d.expectedDurationMinutes || 15));
+      setInterviewInstructions(d.systemInstructions || '');
+      setInterviewOpeningQuestion(d.openingQuestion || '');
+      setInterviewRubric(d.rubric || []);
     }
 
     setShowCreateModal(true);
@@ -331,6 +473,16 @@ export const QuestionBankPage: React.FC = () => {
         return { pairs: matchPairs.filter((p) => p.left.trim() && p.right.trim()) };
       case 'SUBJECTIVE':
         return { rubricCriteria: subRubric.filter((r) => r.trim().length > 0), sampleAnswer: subSampleAnswer };
+      case 'INTERVIEW':
+        return {
+          scenario: interviewScenario.trim(),
+          preset: interviewPreset,
+          maxTurns: Number(interviewMaxTurns || 4),
+          expectedDurationMinutes: Number(interviewDuration || 15),
+          systemInstructions: interviewInstructions.trim(),
+          openingQuestion: interviewOpeningQuestion.trim(),
+          rubric: interviewRubric.filter((r) => r.name.trim().length > 0),
+        };
       default:
         return {};
     }
@@ -523,7 +675,46 @@ export const QuestionBankPage: React.FC = () => {
             Author, version, tag, review, and organize curriculum question assets
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <button
+            id="open-ai-usage-btn"
+            onClick={() => setShowAIUsageModal(true)}
+            style={{
+              background: 'rgba(99, 102, 241, 0.1)',
+              border: '1px solid #6366f1',
+              color: '#818cf8',
+              padding: '8px 14px',
+              borderRadius: '6px',
+              fontWeight: '600',
+              fontSize: '12px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+          >
+            <span>⚡</span> AI Credits
+          </button>
+          <button
+            id="open-ai-generator-btn"
+            onClick={() => setShowAIGeneratorModal(true)}
+            style={{
+              background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+              border: 'none',
+              color: '#fff',
+              padding: '8px 16px',
+              borderRadius: '6px',
+              fontWeight: 'bold',
+              fontSize: '12px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              boxShadow: '0 4px 12px rgba(99, 102, 241, 0.25)',
+            }}
+          >
+            <span>✨</span> AI Generator
+          </button>
           <button
             onClick={openCreateModal}
             style={{
@@ -543,6 +734,62 @@ export const QuestionBankPage: React.FC = () => {
             <span>+</span> Create Question
           </button>
         </div>
+      </div>
+
+      {/* Subtab Navigation */}
+      <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
+        <button
+          id="qb-subtab-all"
+          onClick={() => setActiveSubtab('ALL')}
+          style={{
+            background: activeSubtab === 'ALL' ? 'var(--primary-color)' : 'transparent',
+            color: activeSubtab === 'ALL' ? '#fff' : 'var(--text-muted)',
+            border: '1px solid ' + (activeSubtab === 'ALL' ? 'var(--primary-color)' : 'var(--border-color)'),
+            padding: '6px 14px',
+            borderRadius: '6px',
+            fontSize: '12px',
+            fontWeight: '600',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+          }}
+        >
+          <span>📚</span> All Questions ({questions.length})
+        </button>
+        <button
+          id="qb-subtab-review-queue"
+          onClick={() => setActiveSubtab('DRAFT_REVIEW')}
+          style={{
+            background: activeSubtab === 'DRAFT_REVIEW' ? '#6366f1' : 'transparent',
+            color: activeSubtab === 'DRAFT_REVIEW' ? '#fff' : 'var(--text-muted)',
+            border: '1px solid ' + (activeSubtab === 'DRAFT_REVIEW' ? '#6366f1' : 'var(--border-color)'),
+            padding: '6px 14px',
+            borderRadius: '6px',
+            fontSize: '12px',
+            fontWeight: '600',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+          }}
+        >
+          <span>✨</span> AI Draft Review Queue
+          {draftQuestions.length > 0 && (
+            <span
+              style={{
+                background: activeSubtab === 'DRAFT_REVIEW' ? '#fff' : '#6366f1',
+                color: activeSubtab === 'DRAFT_REVIEW' ? '#6366f1' : '#fff',
+                fontSize: '10px',
+                padding: '1px 6px',
+                borderRadius: '10px',
+                fontWeight: 'bold',
+              }}
+            >
+              {draftQuestions.length}
+            </span>
+          )}
+        </button>
       </div>
 
       {/* Analytics Summary Widget */}
@@ -754,27 +1001,183 @@ export const QuestionBankPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Question Cards Grid / List */}
-      {loading ? (
-        <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
-          Loading Question Bank...
-        </div>
-      ) : filteredQuestions.length === 0 ? (
-        <div
-          style={{
-            padding: '40px',
-            textAlign: 'center',
-            background: 'var(--panel-bg)',
-            borderRadius: '8px',
-            border: '1px dashed var(--border-color)',
-            color: 'var(--text-muted)',
-          }}
-        >
-          No questions match the current filter selection. Click "+ Create Question" to author new questions.
+      {/* Question Cards Grid / List or AI Draft Review Queue */}
+      {activeSubtab === 'DRAFT_REVIEW' ? (
+        <div id="ai-draft-review-container" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(99, 102, 241, 0.1)', border: '1px solid rgba(99, 102, 241, 0.3)', borderRadius: '8px', padding: '12px 16px' }}>
+            <div>
+              <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', color: '#c7d2fe' }}>
+                ✨ AI Generated Draft Review Queue
+              </h3>
+              <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: 'var(--text-muted)' }}>
+                All AI-generated questions and modified variations default to DRAFT. Human educators must review and approve them before they are active.
+              </p>
+            </div>
+            <button
+              onClick={fetchDraftQuestions}
+              style={{
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid var(--border-color)',
+                color: 'var(--text-main)',
+                padding: '6px 12px',
+                borderRadius: '6px',
+                fontSize: '12px',
+                cursor: 'pointer',
+              }}
+            >
+              🔄 Refresh Queue
+            </button>
+          </div>
+
+          {loadingDrafts ? (
+            <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+              Loading draft queue...
+            </div>
+          ) : draftQuestions.length === 0 ? (
+            <div style={{ padding: '40px', textAlign: 'center', background: 'var(--panel-bg)', borderRadius: '8px', border: '1px dashed var(--border-color)', color: 'var(--text-muted)' }}>
+              🎉 All AI drafts have been reviewed! Click "✨ AI Generator" or "✨ AI Variation" to create more.
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {draftQuestions.map((dq) => {
+                const dqData = typeof dq.data === 'string' ? JSON.parse(dq.data) : dq.data;
+                return (
+                  <div
+                    key={dq.id}
+                    className="ai-draft-card"
+                    id={`draft-card-${dq.id}`}
+                    style={{
+                      background: 'var(--panel-bg)',
+                      border: '1px solid rgba(99, 102, 241, 0.4)',
+                      borderRadius: '8px',
+                      padding: '16px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '12px',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontFamily: 'JetBrains Mono', fontSize: '11px', color: '#818cf8', fontWeight: 'bold' }}>
+                          {dq.id}
+                        </span>
+                        <span style={{ padding: '2px 8px', borderRadius: '4px', fontSize: '11px', background: 'rgba(99, 102, 241, 0.15)', color: '#c7d2fe', border: '1px solid rgba(99, 102, 241, 0.3)' }}>
+                          ✨ AI {dq.derivedFromId ? 'Variation' : 'Generated'}
+                        </span>
+                        {dq.derivedFromId && (
+                          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                            Derived from: <span style={{ fontFamily: 'JetBrains Mono', color: '#818cf8' }}>{dq.derivedFromId}</span>
+                          </span>
+                        )}
+                        <span style={{ padding: '2px 8px', borderRadius: '4px', fontSize: '11px', background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', border: '1px solid #f59e0b' }}>
+                          {dq.difficulty}
+                        </span>
+                        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                          Subject: {dq.subjectName || dq.subjectId} | Topic: {dq.topicName || dq.syllabusNodeId || 'General'}
+                        </span>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                          id={`approve-draft-btn-${dq.id}`}
+                          onClick={() => handleReviewDraft(dq.id, 'APPROVE')}
+                          style={{
+                            background: 'rgba(16, 185, 129, 0.15)',
+                            border: '1px solid #10b981',
+                            color: '#10b981',
+                            padding: '5px 12px',
+                            borderRadius: '5px',
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          ✅ Approve & Publish
+                        </button>
+                        <button
+                          id={`reject-draft-btn-${dq.id}`}
+                          onClick={() => handleReviewDraft(dq.id, 'REJECT', 'Rejected during human review')}
+                          style={{
+                            background: 'rgba(239, 68, 68, 0.15)',
+                            border: '1px solid #ef4444',
+                            color: '#ef4444',
+                            padding: '5px 12px',
+                            borderRadius: '5px',
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          ❌ Reject (Archive)
+                        </button>
+                      </div>
+                    </div>
+
+                    <div style={{ fontSize: '13px', color: 'var(--text-main)', lineHeight: '1.5', background: 'var(--bg-color)', padding: '12px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+                      {dq.content}
+                    </div>
+
+                    {dqData?.options && (
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '8px' }}>
+                        {dqData.options.map((opt: any) => {
+                          const isCorrect = opt.id === dqData.correctOptionId;
+                          return (
+                            <div
+                              key={opt.id}
+                              style={{
+                                padding: '8px 12px',
+                                borderRadius: '6px',
+                                background: isCorrect ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.02)',
+                                border: '1px solid ' + (isCorrect ? '#10b981' : 'var(--border-color)'),
+                                fontSize: '12px',
+                                color: isCorrect ? '#10b981' : 'var(--text-main)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                              }}
+                            >
+                              <span>{isCorrect ? '✓' : '•'}</span>
+                              <span>{opt.text}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {dqData?.explanation && (
+                      <div style={{ fontSize: '11px', color: 'var(--text-muted)', background: 'rgba(255,255,255,0.02)', padding: '8px', borderRadius: '4px', border: '1px solid var(--border-color)' }}>
+                        <span style={{ fontWeight: 'bold', color: 'var(--accent-color)' }}>Solution / Explanation: </span>
+                        {dqData.explanation}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {filteredQuestions.map((q) => (
+        <>
+          {loading ? (
+            <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+              Loading Question Bank...
+            </div>
+          ) : filteredQuestions.length === 0 ? (
+            <div
+              style={{
+                padding: '40px',
+                textAlign: 'center',
+                background: 'var(--panel-bg)',
+                borderRadius: '8px',
+                border: '1px dashed var(--border-color)',
+                color: 'var(--text-muted)',
+              }}
+            >
+              No questions match the current filter selection. Click "+ Create Question" to author new questions.
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {filteredQuestions.map((q) => (
             <div
               key={q.id}
               style={{
@@ -859,10 +1262,42 @@ export const QuestionBankPage: React.FC = () => {
                   <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
                     Marks: {q.marks} | v{q.version}
                   </span>
+                  {q.isAiGenerated && (
+                    <span
+                      style={{
+                        padding: '2px 8px',
+                        borderRadius: '4px',
+                        fontSize: '11px',
+                        fontFamily: 'JetBrains Mono',
+                        background: 'rgba(99, 102, 241, 0.2)',
+                        border: '1px solid #6366f1',
+                        color: '#a5b4fc',
+                        fontWeight: 'bold',
+                      }}
+                    >
+                      ✨ AI {q.derivedFromId ? 'Variation' : 'Generated'}
+                    </span>
+                  )}
                 </div>
 
                 {/* Actions */}
                 <div style={{ display: 'flex', gap: '6px' }}>
+                  <button
+                    id={`ai-modify-btn-${q.id}`}
+                    onClick={() => setModifyingQuestion(q)}
+                    style={{
+                      background: 'rgba(99, 102, 241, 0.15)',
+                      border: '1px solid #6366f1',
+                      color: '#818cf8',
+                      padding: '4px 10px',
+                      borderRadius: '5px',
+                      fontSize: '11px',
+                      cursor: 'pointer',
+                      fontWeight: '600',
+                    }}
+                  >
+                    ✨ AI Variation
+                  </button>
                   <button
                     onClick={() => setPreviewQuestion(q)}
                     style={{
@@ -990,6 +1425,8 @@ export const QuestionBankPage: React.FC = () => {
           ))}
         </div>
       )}
+    </>
+  )}
 
       {/* CREATE / EDIT QUESTION MODAL */}
       {showCreateModal && (
@@ -1043,6 +1480,7 @@ export const QuestionBankPage: React.FC = () => {
                     Question Type
                   </label>
                   <select
+                    id="select-question-type"
                     value={formType}
                     disabled={Boolean(editingQuestion)}
                     onChange={(e) => setFormType(e.target.value)}
@@ -1157,62 +1595,115 @@ export const QuestionBankPage: React.FC = () => {
                     <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
                       Define options and specify the correct key(s):
                     </div>
-                    {mcqOptions.map((opt, idx) => (
-                      <div key={opt.id} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                        {formType === 'MCQ' ? (
-                          <input
-                            type="radio"
-                            name="correctOpt"
-                            checked={mcqCorrectOptionId === opt.id}
-                            onChange={() => setMcqCorrectOptionId(opt.id)}
-                            title="Mark as correct answer"
-                          />
-                        ) : (
-                          <input
-                            type="checkbox"
-                            checked={multiCorrectOptionIds.includes(opt.id)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setMultiCorrectOptionIds([...multiCorrectOptionIds, opt.id]);
-                              } else {
-                                setMultiCorrectOptionIds(multiCorrectOptionIds.filter((id) => id !== opt.id));
-                              }
-                            }}
-                            title="Mark as correct option"
-                          />
-                        )}
-                        <span style={{ fontSize: '11px', fontFamily: 'JetBrains Mono', width: '40px' }}>{opt.id}</span>
-                        <input
-                          type="text"
-                          value={opt.text}
-                          onChange={(e) => {
-                            const copy = [...mcqOptions];
-                            copy[idx].text = e.target.value;
-                            setMcqOptions(copy);
-                          }}
-                          placeholder={`Option ${idx + 1} text...`}
+                    {mcqOptions.map((opt, idx) => {
+                      const isCorrect = formType === 'MCQ'
+                        ? mcqCorrectOptionId === opt.id
+                        : multiCorrectOptionIds.includes(opt.id);
+
+                      return (
+                        <div
+                          key={opt.id}
                           style={{
-                            flex: 1,
-                            padding: '6px 10px',
-                            background: 'var(--bg-color)',
-                            border: '1px solid var(--border-color)',
-                            color: 'var(--text-main)',
-                            borderRadius: '4px',
-                            fontSize: '12px',
+                            display: 'flex',
+                            gap: '10px',
+                            alignItems: 'center',
+                            padding: '8px 12px',
+                            borderRadius: '6px',
+                            background: isCorrect ? 'rgba(16, 185, 129, 0.08)' : 'rgba(255, 255, 255, 0.02)',
+                            border: isCorrect ? '1px solid #10b981' : '1px solid var(--border-color)',
+                            borderLeft: isCorrect ? '4px solid #10b981' : '1px solid var(--border-color)',
+                            transition: 'all 0.15s ease',
                           }}
-                          required
-                        />
-                        {mcqOptions.length > 2 && (
-                          <button
-                            type="button"
-                            onClick={() => setMcqOptions(mcqOptions.filter((_, i) => i !== idx))}
-                            style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}
+                        >
+                          <label
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              cursor: 'pointer',
+                              userSelect: 'none',
+                            }}
                           >
-                            ✕
-                          </button>
-                        )}
-                      </div>
-                    ))}
+                            {formType === 'MCQ' ? (
+                              <input
+                                type="radio"
+                                name="correctOpt"
+                                checked={isCorrect}
+                                onChange={() => setMcqCorrectOptionId(opt.id)}
+                                style={{ cursor: 'pointer', accentColor: '#10b981' }}
+                                title="Mark as correct answer"
+                              />
+                            ) : (
+                              <input
+                                type="checkbox"
+                                checked={isCorrect}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setMultiCorrectOptionIds([...multiCorrectOptionIds, opt.id]);
+                                  } else {
+                                    setMultiCorrectOptionIds(multiCorrectOptionIds.filter((id) => id !== opt.id));
+                                  }
+                                }}
+                                style={{ cursor: 'pointer', accentColor: '#10b981' }}
+                                title="Mark as correct option"
+                              />
+                            )}
+                            <span
+                              style={{
+                                fontSize: '11px',
+                                fontWeight: 'bold',
+                                fontFamily: 'JetBrains Mono',
+                                padding: '2px 6px',
+                                borderRadius: '4px',
+                                background: isCorrect ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                                color: isCorrect ? '#10b981' : 'var(--text-muted)',
+                                border: isCorrect ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid transparent',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                              }}
+                            >
+                              {isCorrect ? '✓ Correct Answer' : 'Mark Correct'}
+                            </span>
+                          </label>
+
+                          <span style={{ fontSize: '11px', fontFamily: 'JetBrains Mono', width: '45px', color: isCorrect ? '#10b981' : 'var(--text-muted)' }}>
+                            {opt.id}
+                          </span>
+
+                          <input
+                            type="text"
+                            value={opt.text}
+                            onChange={(e) => {
+                              const copy = [...mcqOptions];
+                              copy[idx].text = e.target.value;
+                              setMcqOptions(copy);
+                            }}
+                            placeholder={`Option ${idx + 1} text...`}
+                            style={{
+                              flex: 1,
+                              padding: '6px 10px',
+                              background: 'var(--bg-color)',
+                              border: isCorrect ? '1px solid rgba(16, 185, 129, 0.5)' : '1px solid var(--border-color)',
+                              color: 'var(--text-main)',
+                              borderRadius: '4px',
+                              fontSize: '12px',
+                            }}
+                            required
+                          />
+                          {mcqOptions.length > 2 && (
+                            <button
+                              type="button"
+                              onClick={() => setMcqOptions(mcqOptions.filter((_, i) => i !== idx))}
+                              style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '13px' }}
+                              title="Delete option"
+                            >
+                              ✕
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
                     <button
                       type="button"
                       onClick={() =>
@@ -1435,6 +1926,278 @@ export const QuestionBankPage: React.FC = () => {
                     </button>
                   </div>
                 )}
+
+                {/* INTERVIEW TYPE CONFIGURATION */}
+                {formType === 'INTERVIEW' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    {/* Preset & Parameters Grid */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+                      <div>
+                        <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                          Rubric Preset
+                        </label>
+                        <select
+                          id="select-rubric-preset"
+                          value={interviewPreset}
+                          onChange={(e) => loadInterviewPreset(e.target.value)}
+                          style={{
+                            width: '100%',
+                            padding: '6px 10px',
+                            background: 'var(--bg-color)',
+                            border: '1px solid var(--border-color)',
+                            color: 'var(--text-main)',
+                            borderRadius: '4px',
+                            fontSize: '12px',
+                          }}
+                        >
+                          <option value="UPSC_PERSONALITY">UPSC Personality Test (4 Criteria)</option>
+                          <option value="IELTS_SPEAKING">IELTS Speaking (4 Bands)</option>
+                          <option value="TECH_SYSTEM_DESIGN">Technical System Design (4 Criteria)</option>
+                          <option value="GENERAL_HR">Behavioral / HR Interview (4 Criteria)</option>
+                          <option value="CUSTOM">Custom Rubric</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                          Max Turns
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="15"
+                          value={interviewMaxTurns}
+                          onChange={(e) => setInterviewMaxTurns(Number(e.target.value))}
+                          style={{
+                            width: '100%',
+                            padding: '6px 10px',
+                            background: 'var(--bg-color)',
+                            border: '1px solid var(--border-color)',
+                            color: 'var(--text-main)',
+                            borderRadius: '4px',
+                            fontSize: '12px',
+                          }}
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                          Expected Duration (min)
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="120"
+                          value={interviewDuration}
+                          onChange={(e) => setInterviewDuration(Number(e.target.value))}
+                          style={{
+                            width: '100%',
+                            padding: '6px 10px',
+                            background: 'var(--bg-color)',
+                            border: '1px solid var(--border-color)',
+                            color: 'var(--text-main)',
+                            borderRadius: '4px',
+                            fontSize: '12px',
+                          }}
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    {/* Opening Scenario */}
+                    <div>
+                      <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                        Interview Scenario & Context <span style={{ color: '#ef4444' }}>*</span>
+                      </label>
+                      <textarea
+                        rows={2}
+                        value={interviewScenario}
+                        onChange={(e) => setInterviewScenario(e.target.value)}
+                        placeholder="e.g. You are facing the UPSC Personality Test Board discussing public administration and ethical crisis management..."
+                        style={{
+                          width: '100%',
+                          padding: '8px',
+                          background: 'var(--bg-color)',
+                          border: '1px solid var(--border-color)',
+                          color: 'var(--text-main)',
+                          borderRadius: '4px',
+                          fontSize: '12px',
+                        }}
+                        required
+                      />
+                    </div>
+
+                    {/* Opening Examiner Question */}
+                    <div>
+                      <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                        Initial Examiner Question / Opening Prompt
+                      </label>
+                      <input
+                        type="text"
+                        value={interviewOpeningQuestion}
+                        onChange={(e) => setInterviewOpeningQuestion(e.target.value)}
+                        placeholder="e.g. Candidate, please introduce your immediate framework to address this crisis..."
+                        style={{
+                          width: '100%',
+                          padding: '6px 10px',
+                          background: 'var(--bg-color)',
+                          border: '1px solid var(--border-color)',
+                          color: 'var(--text-main)',
+                          borderRadius: '4px',
+                          fontSize: '12px',
+                        }}
+                      />
+                    </div>
+
+                    {/* Persona / System Instructions */}
+                    <div>
+                      <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                        Examiner AI Persona & Socratic Instructions
+                      </label>
+                      <textarea
+                        rows={2}
+                        value={interviewInstructions}
+                        onChange={(e) => setInterviewInstructions(e.target.value)}
+                        placeholder="e.g. You are the Chairperson of the board. Challenge candidate assumptions with realistic administrative constraints..."
+                        style={{
+                          width: '100%',
+                          padding: '8px',
+                          background: 'var(--bg-color)',
+                          border: '1px solid var(--border-color)',
+                          color: 'var(--text-main)',
+                          borderRadius: '4px',
+                          fontSize: '12px',
+                        }}
+                      />
+                    </div>
+
+                    {/* Dynamic Rubric Builder */}
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                        <label style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                          Grading Rubric Criteria ({interviewRubric.length})
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setInterviewRubric([
+                              ...interviewRubric,
+                              {
+                                id: `crit_${Date.now()}`,
+                                name: 'New Criterion',
+                                description: '',
+                                maxScore: 25,
+                              },
+                            ])
+                          }
+                          style={{
+                            background: 'none',
+                            border: '1px dashed var(--border-color)',
+                            color: 'var(--accent-color)',
+                            padding: '2px 8px',
+                            borderRadius: '4px',
+                            fontSize: '11px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          + Add Criterion
+                        </button>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {interviewRubric.map((crit, idx) => (
+                          <div
+                            key={crit.id || idx}
+                            style={{
+                              display: 'grid',
+                              gridTemplateColumns: '2fr 1fr 3fr auto',
+                              gap: '8px',
+                              alignItems: 'center',
+                              padding: '8px',
+                              background: 'var(--bg-secondary)',
+                              border: '1px solid var(--border-color)',
+                              borderRadius: '6px',
+                            }}
+                          >
+                            <input
+                              type="text"
+                              value={crit.name}
+                              onChange={(e) => {
+                                const copy = [...interviewRubric];
+                                copy[idx].name = e.target.value;
+                                setInterviewRubric(copy);
+                              }}
+                              placeholder="Criterion Name (e.g. Fluency)"
+                              style={{
+                                padding: '4px 8px',
+                                background: 'var(--bg-color)',
+                                border: '1px solid var(--border-color)',
+                                color: 'var(--text-main)',
+                                borderRadius: '4px',
+                                fontSize: '12px',
+                              }}
+                              required
+                            />
+                            <input
+                              type="number"
+                              min="0.5"
+                              value={crit.maxScore}
+                              onChange={(e) => {
+                                const copy = [...interviewRubric];
+                                copy[idx].maxScore = Number(e.target.value);
+                                setInterviewRubric(copy);
+                              }}
+                              placeholder="Max Score"
+                              style={{
+                                padding: '4px 8px',
+                                background: 'var(--bg-color)',
+                                border: '1px solid var(--border-color)',
+                                color: 'var(--text-main)',
+                                borderRadius: '4px',
+                                fontSize: '12px',
+                              }}
+                              required
+                            />
+                            <input
+                              type="text"
+                              value={crit.description || ''}
+                              onChange={(e) => {
+                                const copy = [...interviewRubric];
+                                copy[idx].description = e.target.value;
+                                setInterviewRubric(copy);
+                              }}
+                              placeholder="Criterion Description / Descriptors"
+                              style={{
+                                padding: '4px 8px',
+                                background: 'var(--bg-color)',
+                                border: '1px solid var(--border-color)',
+                                color: 'var(--text-main)',
+                                borderRadius: '4px',
+                                fontSize: '12px',
+                              }}
+                            />
+                            {interviewRubric.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => setInterviewRubric(interviewRubric.filter((_, i) => i !== idx))}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  color: '#ef4444',
+                                  cursor: 'pointer',
+                                  padding: '4px',
+                                }}
+                              >
+                                ✕
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Submit Buttons */}
@@ -1639,6 +2402,88 @@ export const QuestionBankPage: React.FC = () => {
                   />
                 </div>
               )}
+
+              {previewQuestion.type === 'INTERVIEW' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {previewQuestion.data?.scenario && (
+                    <div
+                      style={{
+                        padding: '12px',
+                        background: 'rgba(6, 182, 212, 0.08)',
+                        border: '1px solid rgba(6, 182, 212, 0.25)',
+                        borderRadius: '6px',
+                        fontSize: '12px',
+                        color: 'var(--text-main)',
+                      }}
+                    >
+                      <strong style={{ color: '#06b6d4', display: 'block', marginBottom: '4px' }}>
+                        🎙️ Oral Assessment Scenario:
+                      </strong>
+                      {previewQuestion.data.scenario}
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', gap: '12px', fontSize: '11px', color: 'var(--text-muted)' }}>
+                    <span>
+                      Max Conversation Turns: <strong style={{ color: 'var(--text-main)' }}>{previewQuestion.data?.maxTurns || 4}</strong>
+                    </span>
+                    <span>•</span>
+                    <span>
+                      Duration: <strong style={{ color: 'var(--text-main)' }}>{previewQuestion.data?.expectedDurationMinutes || 15} mins</strong>
+                    </span>
+                    <span>•</span>
+                    <span>
+                      Preset: <strong style={{ color: 'var(--accent-color)' }}>{previewQuestion.data?.preset || 'CUSTOM'}</strong>
+                    </span>
+                  </div>
+
+                  {Array.isArray(previewQuestion.data?.rubric) && previewQuestion.data.rubric.length > 0 && (
+                    <div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '6px' }}>
+                        Evaluator Grading Rubric:
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
+                        {previewQuestion.data.rubric.map((r: any, idx: number) => (
+                          <div
+                            key={r.id || idx}
+                            style={{
+                              padding: '8px 10px',
+                              background: 'var(--bg-secondary)',
+                              border: '1px solid var(--border-color)',
+                              borderRadius: '6px',
+                              fontSize: '11px',
+                            }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, color: 'var(--text-main)' }}>
+                              <span>{r.name}</span>
+                              <span style={{ color: '#10b981' }}>{r.maxScore} marks</span>
+                            </div>
+                            {r.description && (
+                              <div style={{ color: 'var(--text-muted)', fontSize: '10px', marginTop: '2px' }}>
+                                {r.description}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div
+                    style={{
+                      padding: '10px',
+                      background: 'rgba(59, 130, 246, 0.08)',
+                      border: '1px dashed rgba(59, 130, 246, 0.3)',
+                      borderRadius: '6px',
+                      fontSize: '11px',
+                      color: 'var(--text-muted)',
+                      textAlign: 'center',
+                    }}
+                  >
+                    Interactive Multi-Turn AI Audio/Text Interview room launches upon student attempt.
+                  </div>
+                </div>
+              )}
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
@@ -1698,18 +2543,119 @@ export const QuestionBankPage: React.FC = () => {
                 Version History: {versionDrawerQuestion.id}
               </h2>
               <button
-                onClick={() => setVersionDrawerQuestion(null)}
+                onClick={() => {
+                  setVersionDrawerQuestion(null);
+                  setShowDiffView(false);
+                  setDiffBaseVersion(null);
+                  setDiffTargetVersion(null);
+                }}
                 style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '18px', cursor: 'pointer' }}
               >
                 ✕
               </button>
             </div>
 
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-              Inspect immutable audit snapshots and rollback to any previous version.
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                Inspect immutable audit snapshots, compare diffs, and rollback to any version.
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  onClick={() => setShowDiffView(false)}
+                  style={{
+                    background: !showDiffView ? 'var(--primary-color)' : 'transparent',
+                    color: !showDiffView ? '#fff' : 'var(--text-muted)',
+                    border: '1px solid var(--border-color)',
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    fontSize: '11px',
+                    cursor: 'pointer',
+                    fontWeight: 'bold',
+                  }}
+                >
+                  📜 Revisions ({versionsList.length})
+                </button>
+                <button
+                  onClick={() => {
+                    if (versionsList.length > 0) {
+                      setDiffBaseVersion(versionsList[0]);
+                      setDiffTargetVersion(null);
+                      setShowDiffView(true);
+                    }
+                  }}
+                  style={{
+                    background: showDiffView ? 'var(--primary-color)' : 'transparent',
+                    color: showDiffView ? '#fff' : 'var(--text-muted)',
+                    border: '1px solid var(--border-color)',
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    fontSize: '11px',
+                    cursor: 'pointer',
+                    fontWeight: 'bold',
+                  }}
+                >
+                  🔍 Compare / Diff
+                </button>
+              </div>
             </div>
 
-            {versionsList.length === 0 ? (
+            {showDiffView ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'center', background: 'var(--bg-color)', padding: '10px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+                    <label style={{ fontSize: '11px', color: '#ef4444', fontWeight: 'bold' }}>Base Version (Old):</label>
+                    <select
+                      value={diffBaseVersion?.version || ''}
+                      onChange={(e) => {
+                        const vNum = parseInt(e.target.value, 10);
+                        const match = versionsList.find((v) => v.version === vNum);
+                        if (match) setDiffBaseVersion(match);
+                      }}
+                      style={{ padding: '6px 8px', borderRadius: '4px', background: 'var(--panel-bg)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '12px' }}
+                    >
+                      {versionsList.map((v) => (
+                        <option key={v.id} value={v.version}>
+                          v{v.version} — {v.changeSummary || new Date(v.createdAt).toLocaleDateString()}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+                    <label style={{ fontSize: '11px', color: '#10b981', fontWeight: 'bold' }}>Compare Against (New):</label>
+                    <select
+                      value={diffTargetVersion ? String(diffTargetVersion.version) : 'LIVE'}
+                      onChange={(e) => {
+                        if (e.target.value === 'LIVE') {
+                          setDiffTargetVersion(null);
+                        } else {
+                          const vNum = parseInt(e.target.value, 10);
+                          const match = versionsList.find((v) => v.version === vNum);
+                          if (match) setDiffTargetVersion(match);
+                        }
+                      }}
+                      style={{ padding: '6px 8px', borderRadius: '4px', background: 'var(--panel-bg)', color: 'var(--text-main)', border: '1px solid var(--border-color)', fontSize: '12px' }}
+                    >
+                      <option value="LIVE">⭐ Current Live Question</option>
+                      {versionsList.map((v) => (
+                        <option key={v.id} value={v.version}>
+                          v{v.version} — {v.changeSummary || new Date(v.createdAt).toLocaleDateString()}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <EntityDiffViewer
+                  title={`Field-Level Diff: Version ${diffBaseVersion?.version || 1} vs ${diffTargetVersion ? `Version ${diffTargetVersion.version}` : 'Current Live'}`}
+                  oldLabel={`v${diffBaseVersion?.version || 1}`}
+                  newLabel={diffTargetVersion ? `v${diffTargetVersion.version}` : 'Live Question'}
+                  oldEntity={diffBaseVersion}
+                  newEntity={diffTargetVersion || versionDrawerQuestion}
+                  entityType="Question"
+                />
+              </div>
+            ) : versionsList.length === 0 ? (
               <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>
                 No prior revisions recorded for this question.
               </div>
@@ -1744,21 +2690,62 @@ export const QuestionBankPage: React.FC = () => {
                           {new Date(v.createdAt).toLocaleString()}
                         </span>
                       </div>
-                      <button
-                        onClick={() => handleRollback(versionDrawerQuestion.id, v.version)}
-                        style={{
-                          background: 'rgba(139, 92, 246, 0.15)',
-                          border: '1px solid #8b5cf6',
-                          color: '#8b5cf6',
-                          padding: '3px 8px',
-                          borderRadius: '4px',
-                          fontSize: '11px',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        Rollback to v{v.version}
-                      </button>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <button
+                          onClick={() => {
+                            setDiffBaseVersion(v);
+                            setDiffTargetVersion(null);
+                            setShowDiffView(true);
+                          }}
+                          style={{
+                            background: 'rgba(56, 189, 248, 0.15)',
+                            border: '1px solid #38bdf8',
+                            color: '#38bdf8',
+                            padding: '3px 8px',
+                            borderRadius: '4px',
+                            fontSize: '11px',
+                            cursor: 'pointer',
+                            fontWeight: '500',
+                          }}
+                        >
+                          🔍 Compare
+                        </button>
+                        <button
+                          onClick={() => handleRollback(versionDrawerQuestion.id, v.version)}
+                          style={{
+                            background: 'rgba(139, 92, 246, 0.15)',
+                            border: '1px solid #8b5cf6',
+                            color: '#8b5cf6',
+                            padding: '3px 8px',
+                            borderRadius: '4px',
+                            fontSize: '11px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Rollback to v{v.version}
+                        </button>
+                      </div>
                     </div>
+
+                    {/* Inline Commit Message / Change Summary */}
+                    <div
+                      style={{
+                        fontSize: '11px',
+                        fontFamily: 'JetBrains Mono',
+                        color: '#38bdf8',
+                        background: 'rgba(56, 189, 248, 0.08)',
+                        border: '1px solid rgba(56, 189, 248, 0.2)',
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                      }}
+                    >
+                      <span>📝</span>
+                      <span style={{ fontWeight: 'bold' }}>{v.changeSummary || 'Initial version / No commit summary'}</span>
+                    </div>
+
                     <div style={{ fontSize: '12px', color: 'var(--text-main)', lineHeight: '1.4' }}>
                       {v.content}
                     </div>
@@ -1927,6 +2914,37 @@ export const QuestionBankPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* PHASE 11: AI GENERATOR MODAL */}
+      <AIGeneratorModal
+        isOpen={showAIGeneratorModal}
+        onClose={() => setShowAIGeneratorModal(false)}
+        subjects={subjects}
+        syllabusNodes={syllabusNodes}
+        onSuccess={(msg) => {
+          setActionSuccess(msg);
+          fetchDraftQuestions();
+          fetchQuestions();
+        }}
+      />
+
+      {/* PHASE 11: AI QUESTION VARIATION MODIFIER MODAL */}
+      <AIQuestionModifierModal
+        isOpen={Boolean(modifyingQuestion)}
+        onClose={() => setModifyingQuestion(null)}
+        question={modifyingQuestion}
+        onSuccess={(msg) => {
+          setActionSuccess(msg);
+          fetchDraftQuestions();
+          fetchQuestions();
+        }}
+      />
+
+      {/* PHASE 11: AI USAGE & CREDITS DASHBOARD MODAL */}
+      <AIUsageModal
+        isOpen={showAIUsageModal}
+        onClose={() => setShowAIUsageModal(false)}
+      />
     </div>
   );
 };

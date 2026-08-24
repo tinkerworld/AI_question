@@ -9,7 +9,7 @@ function getDbPath(): string {
   if (process.env.PG_DATA_DIR) {
     return path.resolve(process.env.PG_DATA_DIR);
   }
-  let cur = __dirname;
+  let cur = typeof __dirname !== 'undefined' ? __dirname : process.cwd();
   for (let i = 0; i < 8; i++) {
     if (fs.existsSync(path.join(cur, 'start_all.bat')) || fs.existsSync(path.join(cur, 'ExamOS-Build-Directive.md'))) {
       const targetDir = path.join(cur, 'postgres-data');

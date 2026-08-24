@@ -9,7 +9,10 @@
     "test": "node --test"
   },
   "dependencies": {
+    "@repo/ai-client": "workspace:*",
     "@repo/database": "workspace:*",
+    "@repo/entitlement-engine": "workspace:*",
+    "@repo/mastery-engine": "workspace:*",
     "@repo/permissions": "workspace:*",
     "@repo/types": "workspace:*",
     "@repo/validation": "workspace:*",
