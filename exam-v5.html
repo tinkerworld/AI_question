@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ExamOS — Exam Layout Reference v5 (Mouse-Driven Zoom + Native Scroll)</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    height: 100%;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: #05070d;
+    color: #f3f4f6;
+    overflow: hidden; /* the page itself never scrolls - each region scrolls on its own */
+  }
+
+  /* ============ Discussion header ============ */
+  .discuss-bar {
+    background: #131b2e;
+    border-bottom: 2px solid #06b6d4;
+    padding: 12px 24px;
+  }
+  .discuss-bar h1 {
+    margin: 0 0 4px;
+    font-size: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    color: #06b6d4;
+  }
+  .discuss-bar p { margin: 0; font-size: 11px; color: #9ca3af; line-height: 1.5; }
+  .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+  .controls .group {
+    display: flex; gap: 6px; align-items: center;
+    background: #0b0f19; border: 1px solid #1f2937; border-radius: 8px; padding: 5px 8px;
+  }
+  .controls label {
+    font-size: 9px; font-family: 'JetBrains Mono', monospace; color: #6b7280;
+    text-transform: uppercase; letter-spacing: 0.05em; padding-left: 4px;
+  }
+  .controls button {
+    background: transparent; border: 1px solid #374151; color: #d1d5db;
+    padding: 5px 10px; border-radius: 6px; font-size: 11px; cursor: pointer;
+  }
+  .controls button.active {
+    background: rgba(6, 182, 212, 0.15); border-color: #06b6d4; color: #06b6d4; font-weight: 600;
+  }
+
+  /* Live measurement panel - one row per container, all measured simultaneously */
+  .measure-panel {
+    margin-top: 10px;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+  }
+  .measure-panel .cell {
+    background: #0b0f19; border: 1px solid #1f2937; border-radius: 6px;
+    padding: 6px 10px; font-family: 'JetBrains Mono', monospace;
+  }
+  .measure-panel .cell .name { font-size: 9px; color: #6b7280; text-transform: uppercase; }
+  .measure-panel .cell .dims { font-size: 13px; font-weight: 700; }
+  .measure-panel .cell.stable .dims { color: #10b981; }
+  .measure-panel .cell.shifted .dims { color: #ef4444; }
+  .measure-panel .cell.shifted { border-color: #ef4444; }
+
+  /* ============ App shell - fixed to remaining viewport height ============ */
+  .app-shell {
+    display: flex;
+    height: calc(100vh - 172px); /* fixed: only depends on the discuss-bar height, never on exam content */
+  }
+
+  /* Left: app nav - FIXED width AND height, own internal scroll if items overflow */
+  .app-sidebar {
+    width: 240px;
+    height: 100%;
+    flex-shrink: 0;
+    background: #131b2e;
+    border-right: 1px solid #1f2937;
+    padding: 20px 14px;
+    opacity: 0.4;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+  }
+  .app-sidebar .modules-label {
+    font-size: 11px; font-family: 'JetBrains Mono', monospace; color: #6b7280;
+    margin-bottom: 12px; padding-left: 6px;
+  }
+  .app-sidebar .nav-item {
+    padding: 9px 12px; border-radius: 6px; font-size: 13px; color: #9ca3af;
+    cursor: not-allowed; margin-bottom: 4px;
+  }
+  .app-sidebar .nav-item.locked-current {
+    background: rgba(6, 182, 212, 0.15); border: 1px solid #06b6d4; color: #06b6d4;
+    font-weight: bold; opacity: 1;
+  }
+
+  /* Center: exam column - FIXED width via flex:1 with min-width:0, FIXED height */
+  .exam-main {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: #0b0f19;
+  }
+
+  /* Exam header row - FIXED height, never changes */
+  .exam-header {
+    height: 56px;
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 24px;
+    border-bottom: 1px solid #1f2937;
+    background: #0d1220;
+  }
+  .exam-header .title { font-size: 14px; font-weight: 600; }
+  .exam-header .timer {
+    font-family: 'JetBrains Mono', monospace; font-size: 15px; color: #06b6d4;
+    background: rgba(6, 182, 212, 0.1); padding: 4px 12px; border-radius: 6px;
+  }
+
+  /* Question area wrapper - FIXED height (fills remaining space, never grows/shrinks with content) */
+  .exam-body {
+    flex: 1;
+    min-height: 0; /* critical: allows children to be constrained instead of pushing this taller */
+    padding: 20px 24px;
+    overflow: hidden; /* this wrapper itself NEVER scrolls or resizes */
+  }
+
+  /* The card - FIXED height (100% of exam-body's fixed space), FIXED width, three internal fixed-height rows */
+  #exam-question-card {
+    background: #131b2e;
+    border: 1px solid #1f2937;
+    border-radius: 12px;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* card NEVER grows - it's always exactly this size */
+  }
+
+  /* Row 1: question meta header - FIXED height */
+  .q-meta {
+    height: 48px;
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 24px;
+    border-bottom: 1px solid #1f2937;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: #06b6d4;
+  }
+
+  /* Row 2: the ONLY part that scrolls - everything else on the page is fixed */
+  /* Row 2, split into two independently-scrolling panes with a draggable divider.
+     The OUTER wrapper still takes exactly the same flex:1 / min-height:0 slot as
+     before, so the CARD's fixed height (from v2) is completely unaffected by
+     this internal split or by dragging the divider - only the split BETWEEN
+     the two panes moves, never the card's outer boundary. */
+  #split-wrapper {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .pane {
+    display: flex;
+    flex-direction: column;
+    min-height: 60px; /* never shrinks below this, even when dragged */
+    overflow: hidden;
+  }
+  #question-pane { height: 45%; flex-shrink: 0; }
+  #options-pane { flex: 1; min-height: 0; }
+
+  .pane-header {
+    height: 32px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 12px 0 24px;
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    background: #0d1220;
+    border-bottom: 1px solid #1f2937;
+  }
+  .zoom-controls { display: flex; align-items: center; gap: 4px; }
+  .zoom-btn {
+    width: 22px; height: 22px;
+    display: flex; align-items: center; justify-content: center;
+    background: #131b2e; border: 1px solid #374151; border-radius: 4px;
+    color: #d1d5db; font-size: 13px; font-family: 'Inter', sans-serif;
+    cursor: pointer; line-height: 1; padding: 0;
+  }
+  .zoom-btn:hover { border-color: #06b6d4; color: #06b6d4; }
+  .zoom-btn.zoom-reset { width: auto; padding: 0 8px; font-size: 9px; text-transform: uppercase; }
+  .zoom-pct {
+    font-size: 10px; color: #9ca3af; min-width: 32px; text-align: center;
+  }
+  .zoom-hint {
+    font-size: 9px; color: #4b5563; font-family: 'Inter', sans-serif;
+    text-transform: none; letter-spacing: 0; margin-left: 6px;
+    white-space: nowrap;
+  }
+  .pane-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+    padding: 16px 24px;
+  }
+
+  #pane-divider {
+    height: 9px;
+    flex-shrink: 0;
+    cursor: row-resize;
+    background: #0d1220;
+    border-top: 1px solid #1f2937;
+    border-bottom: 1px solid #1f2937;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #pane-divider:hover, #pane-divider.dragging { background: rgba(6, 182, 212, 0.15); }
+  #pane-divider::after {
+    content: '';
+    width: 36px;
+    height: 3px;
+    border-radius: 2px;
+    background: #374151;
+  }
+  #pane-divider:hover::after, #pane-divider.dragging::after { background: #06b6d4; }
+
+  /* Zoom: adjusts font-size via a CSS custom property, NOT transform:scale().
+     transform:scale() inside a scrolling container doesn't reflow the
+     scrollHeight correctly (a known CSS gotcha - the browser still measures
+     scroll based on the pre-scale layout box), so zoomed-in content can
+     visually overlap or clip. font-size genuinely reflows the content, so
+     the scrollable area's height updates correctly and scroll continues to
+     work exactly as expected at any zoom level - zoom and scroll are not
+     alternatives here, they compose. */
+  #question-pane-scroll { font-size: calc(15px * var(--q-zoom, 1)); }
+  #question-pane-scroll .q-text { line-height: 1.7; white-space: pre-wrap; }
+  #options-pane-scroll { font-size: calc(13px * var(--o-zoom, 1)); }
+  .q-options { display: flex; flex-direction: column; gap: 8px; }
+  .match-columns { display: flex; gap: 20px; }
+  .match-col { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+  .match-col h5 { margin: 0 0 4px; font-size: 0.85em; color: #6b7280; text-transform: uppercase; }
+  .match-item {
+    display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+    border: 1px solid #1f2937; border-radius: 6px; font-size: 1em;
+  }
+  .match-item select {
+    background: #0b0f19; border: 1px solid #374151; color: #d1d5db;
+    border-radius: 4px; padding: 2px 6px; font-size: 11px;
+  }
+  .q-option {
+    display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+    border: 1px solid #1f2937; border-radius: 8px; font-size: 1em;
+  }
+
+  /* Row 3: action bar - FIXED height, ALWAYS in the same screen position */
+  .q-actions {
+    height: 60px;
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 24px;
+    border-top: 1px solid #1f2937;
+  }
+  .q-actions button {
+    padding: 8px 16px; border-radius: 6px; font-size: 12px; cursor: pointer;
+    border: 1px solid #374151; background: transparent; color: #d1d5db;
+  }
+  .q-actions button.primary { background: #06b6d4; border-color: #06b6d4; color: #05070d; font-weight: 600; }
+
+  /* Right: palette - FIXED width AND height, own internal scroll */
+  #exam-palette-sidebar {
+    width: 320px;
+    height: 100%;
+    flex-shrink: 0;
+    background: #111827;
+    border-left: 1px solid #1f2937;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  #exam-palette-sidebar .palette-header {
+    height: 40px;
+    flex-shrink: 0;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    font-size: 13px;
+    font-family: 'JetBrains Mono', monospace;
+    color: #e5e7eb;
+    border-bottom: 1px solid #1f2937;
+  }
+  #palette-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+    padding: 16px 20px;
+  }
+  .palette-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  .palette-grid button {
+    aspect-ratio: 1; border-radius: 6px; border: 1px solid #374151;
+    background: #1f2937; color: #d1d5db; font-size: 11px;
+    font-family: 'JetBrains Mono', monospace; cursor: pointer;
+  }
+  .palette-grid button.answered { background: rgba(16,185,129,0.2); border-color: #10b981; color: #10b981; }
+  .palette-grid button.current { background: rgba(6,182,212,0.2); border-color: #06b6d4; color: #06b6d4; }
+</style>
+</head>
+<body>
+
+<div class="discuss-bar">
+  <h1>⚠ UI REFERENCE v5 — Ctrl/Cmd + Scroll zooms, plain scroll just scrolls</h1>
+  <p>
+    Hover over either pane and use your mouse wheel with no modifier held — that's plain native
+    scrolling, completely untouched, exactly like before. Hold Ctrl (or Cmd on Mac) while scrolling
+    over a pane, and the same wheel now zooms that pane instead — wheel up/pinch-out zooms in, wheel
+    down/pinch-in zooms out. Nothing needs to be "entered" or toggled between the two modes; the
+    modifier key is the only thing that decides which one happens, so your hand never has to leave the
+    mouse. The +/−/Reset buttons are still there too, doing the exact same thing through a different
+    input.
+  </p>
+  <div class="controls">
+    <div class="group">
+      <label>Question</label>
+      <button class="qlen active" data-len="short">Short</button>
+      <button class="qlen" data-len="medium">Medium</button>
+      <button class="qlen" data-len="long">Long</button>
+      <button class="qlen" data-len="extreme">Extreme (very long)</button>
+      <button class="qlen" data-len="matching">Matching-type</button>
+    </div>
+    <div class="group">
+      <label>Palette size</label>
+      <button class="qcount active" data-count="30">30 Qs</button>
+      <button class="qcount" data-count="100">100 Qs</button>
+      <button class="qcount" data-count="5">5 Qs</button>
+    </div>
+  </div>
+  <div class="measure-panel" id="measure-panel">
+    <div class="cell stable" id="m-header"><div class="name">Exam Header</div><div class="dims">—</div></div>
+    <div class="cell stable" id="m-card"><div class="name">Question Card</div><div class="dims">—</div></div>
+    <div class="cell stable" id="m-meta"><div class="name">Q Meta Row</div><div class="dims">—</div></div>
+    <div class="cell stable" id="m-actions"><div class="name">Action Bar</div><div class="dims">—</div></div>
+    <div class="cell stable" id="m-palette"><div class="name">Palette Sidebar</div><div class="dims">—</div></div>
+  </div>
+</div>
+
+<div class="app-shell">
+  <aside class="app-sidebar">
+    <div class="modules-label">MODULES (locked mid-exam)</div>
+    <div class="nav-item">Dashboard</div>
+    <div class="nav-item">Exam Generator &amp; Papers</div>
+    <div class="nav-item">Exam Patterns</div>
+    <div class="nav-item">Question Bank</div>
+    <div class="nav-item">Academic Structure</div>
+    <div class="nav-item locked-current">My Assessments &amp; Tests</div>
+  </aside>
+
+  <main class="exam-main">
+    <div class="exam-header" id="exam-header">
+      <span class="title">JEE Main Grand Blueprint (PCM) — Question 7 of 30</span>
+      <span class="timer">⏱ 02:29:50</span>
+    </div>
+
+    <div class="exam-body">
+      <div id="exam-question-card">
+        <div class="q-meta" id="q-meta">
+          <span>Question 7 of 30 · MCQ</span>
+          <span>+4 / −1</span>
+        </div>
+        <div id="split-wrapper">
+          <div class="pane" id="question-pane">
+            <div class="pane-header">
+              <span class="pane-label">📄 Question</span>
+              <div class="zoom-controls" data-target="q">
+                <span class="zoom-hint">Ctrl+Scroll to zoom</span>
+                <button class="zoom-btn" data-action="out" title="Zoom out">−</button>
+                <span class="zoom-pct" id="q-zoom-pct">100%</span>
+                <button class="zoom-btn" data-action="in" title="Zoom in">+</button>
+                <button class="zoom-btn zoom-reset" data-action="reset" title="Reset zoom">Reset</button>
+              </div>
+            </div>
+            <div class="pane-scroll" id="question-pane-scroll">
+              <div class="q-text" id="q-text">Loading…</div>
+            </div>
+          </div>
+          <div id="pane-divider" title="Drag to resize"></div>
+          <div class="pane" id="options-pane">
+            <div class="pane-header">
+              <span class="pane-label" id="options-pane-label">✓ Select Your Answer</span>
+              <div class="zoom-controls" data-target="o">
+                <span class="zoom-hint">Ctrl+Scroll to zoom</span>
+                <button class="zoom-btn" data-action="out" title="Zoom out">−</button>
+                <span class="zoom-pct" id="o-zoom-pct">100%</span>
+                <button class="zoom-btn" data-action="in" title="Zoom in">+</button>
+                <button class="zoom-btn zoom-reset" data-action="reset" title="Reset zoom">Reset</button>
+              </div>
+            </div>
+            <div class="pane-scroll" id="options-pane-scroll">
+              <div class="q-options" id="q-options"></div>
+            </div>
+          </div>
+        </div>
+        <div class="q-actions" id="q-actions">
+          <div>
+            <button>🏷 Mark for Review</button>
+            <button>Clear Response</button>
+          </div>
+          <div>
+            <button>◀ Previous</button>
+            <button class="primary">Save &amp; Next ▶</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <aside id="exam-palette-sidebar">
+    <div class="palette-header" id="palette-header">Question Palette (<span id="palette-count">30</span>)</div>
+    <div id="palette-scroll">
+      <div class="palette-grid" id="palette"></div>
+    </div>
+  </aside>
+</div>
+
+<script>
+const QUESTIONS = {
+  short: {
+    text: "What is the SI unit of electric current?",
+    options: ["Ampere", "Volt", "Ohm", "Watt"]
+  },
+  medium: {
+    text: "A block of mass 2 kg is placed on a rough horizontal surface with coefficient of friction 0.3. A horizontal force of 10 N is applied to the block. Calculate the acceleration of the block. (Take g = 10 m/s²)",
+    options: ["2.0 m/s²", "1.4 m/s²", "0.8 m/s²", "3.0 m/s²"]
+  },
+  long: {
+    text: "A particle of mass m moves in a circular path of radius r under the influence of a central force. The potential energy of the particle is given by U(r) = -k/r, where k is a positive constant.\n\nDetermine the total mechanical energy of the particle in terms of its angular momentum L, mass m, and the constant k, assuming the particle is in a stable circular orbit.\n\nAdditionally, derive an expression for the orbital period T of the particle in terms of the same quantities, and verify that your result is consistent with Kepler's third law when the central force is gravitational (k = GMm).",
+    options: [
+      "E = -k²m/(2L²), bounded oscillation about the circular orbit",
+      "E = -k²m/(4L²), unbounded escape trajectory",
+      "E = k²m/(2L²), bounded oscillation about the circular orbit",
+      "E = -k²m/(2L²), unbounded spiral trajectory"
+    ]
+  },
+  matching: {
+    text: "Match each physical quantity in Column A with its correct SI unit in Column B. Each item in Column A has exactly one correct match in Column B; not all Column B options will be used.",
+    isMatching: true,
+    columnA: ["Force", "Energy", "Power", "Pressure"],
+    columnB: ["Watt", "Newton", "Pascal", "Joule", "Hertz"]
+  },
+  extreme: {
+    text: "Read the following passage carefully and answer the question below.\n\nIn a modified Young's double slit experiment, two coherent sources S1 and S2 are separated by a distance d = 0.5 mm and placed at a distance D = 1.5 m from a screen. The experiment is conducted first in air (refractive index = 1) and then the entire apparatus is immersed in a transparent liquid of refractive index n = 1.33.\n\nSimultaneously, a thin transparent film of thickness t = 4 microns and refractive index 1.5 is introduced in front of one of the slits (S1). The wavelength of monochromatic light used in vacuum is 600 nm.\n\nPart A: Calculate the fringe width observed on the screen when the apparatus is in air, before the film is introduced.\n\nPart B: Calculate the shift in the position of the central maximum caused by introducing the thin film, while still in air.\n\nPart C: Now consider the apparatus immersed in the liquid (with the film still in place in front of S1). Determine the new fringe width and the new position of the central maximum, accounting for both the change in effective wavelength due to the liquid medium and the optical path difference introduced by the film.\n\nPart D: Discuss qualitatively how the visibility (contrast) of the fringes would be affected if the film's thickness were not perfectly uniform across the width of the slit, and explain the physical reasoning in 2-3 sentences.\n\nUse this information to determine which of the following combinations of fringe width (in air, before film) and central maximum shift (in air, after film) is correct.",
+    options: [
+      "β = 1.8 mm, shift = 4 mm toward S1",
+      "β = 1.8 mm, shift = 4 mm toward S2",
+      "β = 1.2 mm, shift = 2 mm toward S1",
+      "β = 1.8 mm, shift = 2 mm toward S2"
+    ]
+  }
+};
+
+let baseline = {};
+
+function renderQuestion(len) {
+  const q = QUESTIONS[len];
+  document.getElementById('q-text').textContent = q.text;
+  const optsEl = document.getElementById('q-options');
+  const optionsHeader = document.getElementById('options-pane-label');
+  optsEl.innerHTML = '';
+
+  if (q.isMatching) {
+    optionsHeader.textContent = '✓ Match Column A to Column B';
+    const wrap = document.createElement('div');
+    wrap.className = 'match-columns';
+    const colA = document.createElement('div');
+    colA.className = 'match-col';
+    colA.innerHTML = '<h5>Column A</h5>' + q.columnA.map(item =>
+      `<div class="match-item"><span>${item}</span>
+        <select><option>Select match…</option>${q.columnB.map(b => `<option>${b}</option>`).join('')}</select>
+      </div>`
+    ).join('');
+    const colB = document.createElement('div');
+    colB.className = 'match-col';
+    colB.innerHTML = '<h5>Column B (reference)</h5>' + q.columnB.map(item =>
+      `<div class="match-item"><span>${item}</span></div>`
+    ).join('');
+    wrap.appendChild(colA);
+    wrap.appendChild(colB);
+    optsEl.appendChild(wrap);
+  } else {
+    optionsHeader.textContent = '✓ Select Your Answer';
+    q.options.forEach((opt, i) => {
+      const div = document.createElement('div');
+      div.className = 'q-option';
+      div.innerHTML = `<input type="radio" name="opt"><span>${String.fromCharCode(65+i)}. ${opt}</span>`;
+      optsEl.appendChild(div);
+    });
+  }
+
+  // Reset each pane's own scroll position on question change - a fresh
+  // question should start at the top of both panes, not wherever the
+  // previous question's scroll happened to be.
+  document.getElementById('question-pane-scroll').scrollTop = 0;
+  document.getElementById('options-pane-scroll').scrollTop = 0;
+}
+
+function renderPalette(count) {
+  document.getElementById('palette-count').textContent = count;
+  const grid = document.getElementById('palette');
+  grid.innerHTML = '';
+  for (let i = 1; i <= count; i++) {
+    const btn = document.createElement('button');
+    btn.textContent = i;
+    if (i === 7) btn.className = 'current';
+    else if (i % 3 === 0) btn.className = 'answered';
+    grid.appendChild(btn);
+  }
+}
+
+function measureAll() {
+  const targets = {
+    'm-header': document.getElementById('exam-header'),
+    'm-card': document.getElementById('exam-question-card'),
+    'm-meta': document.getElementById('q-meta'),
+    'm-actions': document.getElementById('q-actions'),
+    'm-palette': document.getElementById('exam-palette-sidebar'),
+  };
+  let anyShift = false;
+  for (const [id, el] of Object.entries(targets)) {
+    const r = el.getBoundingClientRect();
+    const w = Math.round(r.width);
+    const h = Math.round(r.height);
+    const dims = `${w}×${h}`;
+    const cell = document.getElementById(id);
+    cell.querySelector('.dims').textContent = dims;
+
+    if (!(id in baseline)) baseline[id] = dims;
+    if (baseline[id] !== dims) {
+      cell.className = 'cell shifted';
+      anyShift = true;
+    } else {
+      cell.className = 'cell stable';
+    }
+  }
+  return anyShift;
+}
+
+document.querySelectorAll('.qlen').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.qlen').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderQuestion(btn.dataset.len);
+    requestAnimationFrame(() => requestAnimationFrame(measureAll));
+  });
+});
+
+document.querySelectorAll('.qcount').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.qcount').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderPalette(parseInt(btn.dataset.count, 10));
+    requestAnimationFrame(() => requestAnimationFrame(measureAll));
+  });
+});
+
+renderQuestion('short');
+renderPalette(30);
+window.addEventListener('resize', () => { baseline = {}; measureAll(); });
+requestAnimationFrame(() => requestAnimationFrame(measureAll));
+
+// ============ Divider drag-to-resize ============
+// Dragging only ever changes the split BETWEEN question-pane and
+// options-pane - it never touches #exam-question-card's own height, so
+// the card/header/meta/actions/palette measurements above stay stable
+// throughout, exactly as the fixed-container requirement demands.
+const divider = document.getElementById('pane-divider');
+const questionPane = document.getElementById('question-pane');
+const splitWrapper = document.getElementById('split-wrapper');
+let dragging = false;
+
+divider.addEventListener('mousedown', (e) => {
+  dragging = true;
+  divider.classList.add('dragging');
+  document.body.style.userSelect = 'none';
+  e.preventDefault();
+});
+
+window.addEventListener('mousemove', (e) => {
+  if (!dragging) return;
+  const wrapperRect = splitWrapper.getBoundingClientRect();
+  const dividerHeight = divider.getBoundingClientRect().height;
+  let newHeight = e.clientY - wrapperRect.top;
+  const minPane = 60;
+  const maxHeight = wrapperRect.height - dividerHeight - minPane;
+  newHeight = Math.max(minPane, Math.min(newHeight, maxHeight));
+  questionPane.style.height = newHeight + 'px';
+  measureAll(); // card/header/etc. should remain green even while dragging
+});
+
+window.addEventListener('mouseup', () => {
+  if (!dragging) return;
+  dragging = false;
+  divider.classList.remove('dragging');
+  document.body.style.userSelect = '';
+});
+
+// ============ Zoom controls (per pane, independent) ============
+// Adjusts a CSS custom property that drives font-size via calc() - see the
+// #question-pane-scroll / #options-pane-scroll rules. Because this reflows
+// real content (not transform:scale()), the pane's own scrollHeight updates
+// correctly at every zoom level, so scrolling keeps working exactly as
+// before - zoom and scroll compose rather than compete. Zoom NEVER touches
+// the pane's or card's outer size, only what's visible inside it.
+const ZOOM_MIN = 0.6, ZOOM_MAX = 2.2, ZOOM_STEP = 0.15;
+const zoomState = { q: 1, o: 1 };
+
+function applyZoom(target) {
+  const root = document.documentElement;
+  root.style.setProperty(`--${target}-zoom`, zoomState[target]);
+  document.getElementById(`${target}-zoom-pct`).textContent = Math.round(zoomState[target] * 100) + '%';
+}
+
+function adjustZoom(target, delta) {
+  // delta is a signed step, positive = zoom in, negative = zoom out.
+  // Shared by both the +/- buttons and Ctrl+wheel so they can never drift
+  // out of sync with each other.
+  zoomState[target] = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, zoomState[target] + delta));
+  applyZoom(target);
+  requestAnimationFrame(measureAll);
+}
+
+document.querySelectorAll('.zoom-controls').forEach(ctrl => {
+  const target = ctrl.dataset.target; // 'q' or 'o'
+  ctrl.querySelectorAll('.zoom-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const action = btn.dataset.action;
+      if (action === 'in') adjustZoom(target, ZOOM_STEP);
+      else if (action === 'out') adjustZoom(target, -ZOOM_STEP);
+      else { zoomState[target] = 1; applyZoom(target); requestAnimationFrame(measureAll); }
+    });
+  });
+});
+
+applyZoom('q');
+applyZoom('o');
+
+// ============ Ctrl/Cmd + Scroll = zoom, plain scroll = native scroll ============
+// Only intercepts the wheel event when a modifier key is held. Without the
+// modifier, this handler does nothing at all and the browser's normal
+// scroll behavior for an overflow:auto container runs completely
+// untouched - no custom scroll code needed, hovering + wheel already
+// scrolls natively. ctrlKey also covers trackpad pinch-to-zoom gestures:
+// browsers report those as wheel events with ctrlKey=true even though no
+// physical Ctrl key was pressed, so this one check handles both mouse
+// users (hold Ctrl, spin the wheel) and trackpad users (pinch) for free.
+function wireWheelZoom(scrollElId, target) {
+  const el = document.getElementById(scrollElId);
+  el.addEventListener('wheel', (e) => {
+    if (!(e.ctrlKey || e.metaKey)) return; // no modifier -> let native scroll happen, do nothing
+    e.preventDefault(); // stop the browser's own page-zoom from also firing
+    const direction = e.deltaY < 0 ? 1 : -1; // wheel up / pinch out = zoom in
+    const step = ZOOM_STEP * 0.5; // finer-grained than the button step, since wheel fires many times per gesture
+    adjustZoom(target, direction * step);
+  }, { passive: false }); // passive:false is required for preventDefault to actually work on a wheel event
+}
+
+wireWheelZoom('question-pane-scroll', 'q');
+wireWheelZoom('options-pane-scroll', 'o');
+</script>
+
+</body>
+</html>

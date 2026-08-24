@@ -11,6 +11,7 @@ export const PERSONAS = {
   subAdmin: { email: 'subadmin@examos.com', password: 'SubAdmin@123', role: 'SUB_ADMIN' },
   teacher: { email: 'teacher@examos.com', password: 'Teacher@123', role: 'TEACHER' },
   student: { email: 'student@examos.com', password: 'Student@123', role: 'STUDENT' },
+  student2: { email: 'student2@examos.com', password: 'Student2@123', role: 'STUDENT' },
 } as const;
 
 /**
@@ -21,14 +22,20 @@ export const PERSONAS = {
  */
 export async function loginAs(page: Page, persona: keyof typeof PERSONAS) {
   const { email, password } = PERSONAS[persona];
+  
   await page.goto('/');
 
   // If already logged in from a previous test in this run, log out first
-  // so each test starts from a known state.
-  const emailField = page.locator('input[type="email"]');
-  if (!(await emailField.isVisible().catch(() => false))) {
-    await page.evaluate(() => localStorage.clear());
-    await page.goto('/');
+  // so each test starts from a known clean state.
+  const logoutBtn = page.getByRole('button', { name: /logout/i });
+  if (await logoutBtn.isVisible().catch(() => false)) {
+    await logoutBtn.click();
+  } else {
+    const emailField = page.locator('input[type="email"]');
+    if (!(await emailField.isVisible().catch(() => false))) {
+      await page.evaluate(() => localStorage.clear());
+      await page.goto('/');
+    }
   }
 
   await expect(page.getByText('Sign in to ExamOS')).toBeVisible({ timeout: 10_000 });
@@ -44,7 +51,7 @@ export async function loginAs(page: Page, persona: keyof typeof PERSONAS) {
 
 export async function goToTab(
   page: Page,
-  tab: 'dashboard' | 'exams' | 'exam_patterns' | 'question_bank' | 'courses' | 'users' | 'analytics'
+  tab: 'dashboard' | 'student_exams' | 'exams' | 'archive' | 'exam_patterns' | 'question_bank' | 'courses' | 'users' | 'analytics' | string
 ) {
   await page.locator(`#nav-tab-${tab}`).click();
 }

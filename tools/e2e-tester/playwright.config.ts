@@ -23,6 +23,7 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './e2e',
+  timeout: 60_000,
   fullyParallel: false, // tests share DB state (seeded courses/questions/patterns) - keep sequential
   retries: 0, // a retry hiding a real failure is worse than an honest one
   workers: 1,

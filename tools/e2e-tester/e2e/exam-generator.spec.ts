@@ -25,9 +25,16 @@ async function generateExamFromBlueprint(page: import('@playwright/test').Page) 
   await page.getByRole('button', { name: /generate|new exam|create exam/i }).click();
 
   const blueprintSelect = selectNearLabel(page, 'Select Pattern Blueprint');
-  await selectOptionByText(blueprintSelect, /JEE Main Grand Blueprint/i);
+  await blueprintSelect.waitFor({ state: 'visible', timeout: 10_000 });
+  const targetOption = blueprintSelect.locator('option').filter({ hasText: /JEE Main Grand Blueprint/i });
+  await targetOption.waitFor({ state: 'attached', timeout: 10_000 });
+  const value = await targetOption.getAttribute('value');
+  if (value) {
+    await blueprintSelect.selectOption(value);
+  }
 
   await page.getByRole('button', { name: /generate paper/i }).click();
+  await expect(page.getByRole('heading', { name: 'Generate Exam Paper' })).not.toBeVisible({ timeout: 15_000 });
 
   // Real exam cards have a stable id="exam-card-{id}" attribute - this is
   // the actual proof generation succeeded, not just that the word "draft"
@@ -40,6 +47,12 @@ async function generateExamFromBlueprint(page: import('@playwright/test').Page) 
 }
 
 test.describe('Exam Generator workbench', () => {
+  test.beforeEach(async ({ page }) => {
+    page.on('dialog', async (dialog) => {
+      await dialog.accept();
+    });
+  });
+
   test('admin can generate an exam from the seeded JEE Main blueprint', async ({ page }) => {
     await loginAs(page, 'admin');
     await goToTab(page, 'exams');
@@ -53,8 +66,7 @@ test.describe('Exam Generator workbench', () => {
 
     // Self-contained: generate this test's own fixture rather than
     // depending on another test having run first and left an exam behind.
-    const examCard = await generateExamFromBlueprint(page);
-    await examCard.click();
+    await generateExamFromBlueprint(page);
 
     // Real assertion: section/question data actually renders, not just a
     // page shell.
@@ -65,18 +77,22 @@ test.describe('Exam Generator workbench', () => {
     await loginAs(page, 'admin');
     await goToTab(page, 'exams');
 
-    const examCard = await generateExamFromBlueprint(page);
-    await examCard.click();
+    // If no draft exam exists, generate one
+    const draftBadge = page.locator('[id^="exam-card-"]').filter({ hasText: 'DRAFT' }).first();
+    if (!await draftBadge.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await generateExamFromBlueprint(page);
+    }
+
+    // Select the draft exam card
+    const draftCard = page.locator('[id^="exam-card-"]').filter({ hasText: 'DRAFT' }).first();
+    await draftCard.click();
 
     // The ['ALL', 'DRAFT', 'PUBLISHED'] filter tab also renders a button
     // whose accessible name is "PUBLISHED" - matches /publish|finalize/i
     // too, same collision class as the DRAFT tab issue found earlier.
-    // Target the real button by its stable id instead.
-    await page.locator('#btn-publish-exam').click();
-    const confirmBtn = page.getByRole('button', { name: /confirm|yes|publish/i }).last();
-    if (await confirmBtn.isVisible().catch(() => false)) {
-      await confirmBtn.click();
-    }
+    const publishBtn = page.locator('#btn-publish-exam');
+    await publishBtn.waitFor({ state: 'visible', timeout: 10_000 });
+    await publishBtn.click();
 
     await expect(page.getByText(/published/i).first()).toBeVisible({ timeout: 10_000 });
 

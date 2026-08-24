@@ -20,6 +20,8 @@ const BUILT_TABS = [
   { id: 'exam_patterns', expectHeading: /pattern/i },
   { id: 'question_bank', expectHeading: /question/i },
   { id: 'courses', expectHeading: /course|academic/i },
+  { id: 'users', expectHeading: /user/i },
+  { id: 'analytics', expectHeading: /analytics|mastery/i },
 ] as const;
 
 test.describe('Navigation - no silently-empty tabs', () => {
@@ -41,12 +43,9 @@ test.describe('Navigation - no silently-empty tabs', () => {
     });
   }
 
-  test('unbuilt tabs (dashboard/users/analytics) are honestly still placeholders', async ({ page }) => {
-    // This is an intentional inverse check. If these ever silently become
-    // "not the placeholder" without a corresponding real page being built,
-    // that would mean someone routed them to render *something* without it
-    // being tracked - equally worth catching.
-    for (const tab of ['dashboard', 'users', 'analytics'] as const) {
+  test('unbuilt tab (dashboard) is honestly still placeholder', async ({ page }) => {
+    // This is an intentional inverse check.
+    for (const tab of ['dashboard'] as const) {
       await goToTab(page, tab);
       await expect(page.getByText(PLACEHOLDER_TEXT)).toBeVisible();
     }
