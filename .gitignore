@@ -4,7 +4,6 @@ node_modules
 package-lock.json
 
 # Build & Database Artifacts
-postgres-data
 test-db
 test-output.txt
 
