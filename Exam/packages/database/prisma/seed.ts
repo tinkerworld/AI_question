@@ -235,11 +235,11 @@ export const SEED_TRANSLATIONS: Record<string, Record<string, string>> = {
 export const SEED_COURSES = [
   { id: 'c1', name: 'Engineering Entrance Course (JEE)', code: 'ENG-101', description: 'Comprehensive JEE Main & Advanced Engineering Foundation', durationMonths: 12 },
   { id: 'c2', name: 'Medical Entrance Course (NEET)', code: 'MED-101', description: 'Comprehensive NEET Medical Foundation Course', durationMonths: 12 },
-  { id: 'c3', name: 'Civil Services & Public Administration (UPSC)', code: 'UPSC-101', description: 'Comprehensive Civil Services & Personality Test Foundation', durationMonths: 12 },
-  { id: 'c4', name: 'IELTS Academic English Mastery', code: 'IELTS-101', description: 'Comprehensive IELTS Academic Band 8+ Foundation & Speaking Prep', durationMonths: 6 },
+  { id: 'c3', name: 'International English Language Testing System (IELTS)', code: 'IELTS-101', description: 'Comprehensive IELTS Academic Foundation, Reading, Writing & Speaking Mastery', durationMonths: 6 },
 ];
 
 export const SEED_ENROLLMENTS = [
+  // Student 1 (student@examos.com) enrolled in all 3 courses (JEE, NEET, IELTS)
   {
     id: 'enr_student_1_jee',
     userId: 'usr_student_test',
@@ -253,53 +253,100 @@ export const SEED_ENROLLMENTS = [
     status: 'ACTIVE',
   },
   {
+    id: 'enr_student_1_ielts',
+    userId: 'usr_student_test',
+    courseId: 'c3',
+    status: 'ACTIVE',
+  },
+  // Student 2 (student2@examos.com) enrolled in all 3 courses (JEE, NEET, IELTS)
+  {
     id: 'enr_student_2_jee',
     userId: 'usr_student_2_test',
     courseId: 'c1',
     status: 'ACTIVE',
   },
   {
-    id: 'enr_student_2_upsc',
+    id: 'enr_student_2_neet',
     userId: 'usr_student_2_test',
-    courseId: 'c3',
+    courseId: 'c2',
     status: 'ACTIVE',
   },
   {
     id: 'enr_student_2_ielts',
     userId: 'usr_student_2_test',
-    courseId: 'c4',
+    courseId: 'c3',
     status: 'ACTIVE',
   },
 ];
 
 export const SEED_SUBJECTS = [
+  // JEE (c1)
   { id: 'sub_phy', courseId: 'c1', name: 'Physics', code: 'PHY-101', description: 'General & Applied Physics', credits: 4, order: 1 },
   { id: 'sub_chem', courseId: 'c1', name: 'Chemistry', code: 'CHEM-101', description: 'Physical, Inorganic & Organic Chemistry', credits: 4, order: 2 },
   { id: 'sub_math', courseId: 'c1', name: 'Mathematics', code: 'MATH-101', description: 'Calculus, Algebra & Coordinate Geometry', credits: 4, order: 3 },
-  { id: 'sub_bio', courseId: 'c2', name: 'Biology', code: 'BIO-101', description: 'Genetics, Physiology & Ecology', credits: 4, order: 1 },
-  { id: 'sub_upsc_interview', courseId: 'c3', name: 'Personality Test & Ethics', code: 'UPSC-PT', description: 'UPSC Board Interview & Ethical Dilemmas', credits: 4, order: 1 },
-  { id: 'sub_ielts_speaking', courseId: 'c4', name: 'IELTS Speaking & Oral Fluency', code: 'IELTS-SPK', description: 'IELTS 3-Part Speaking Assessment', credits: 4, order: 1 },
+
+  // NEET (c2)
+  { id: 'sub_bio', courseId: 'c2', name: 'Biology', code: 'BIO-101', description: 'Genetics, Physiology, Cell Biology & Ecology', credits: 6, order: 1 },
+  { id: 'sub_neet_phy', courseId: 'c2', name: 'Medical Physics', code: 'PHY-MED', description: 'Applied Physics & Biological Mechanics', credits: 4, order: 2 },
+  { id: 'sub_neet_chem', courseId: 'c2', name: 'Medical Chemistry', code: 'CHEM-MED', description: 'Bio-Organic & Medicinal Chemistry', credits: 4, order: 3 },
+
+  // IELTS (c3)
+  { id: 'sub_ielts_listening', courseId: 'c3', name: 'IELTS Listening Module', code: 'IELTS-LIS', description: 'Academic & Conversational Listening Comprehension', credits: 3, order: 1 },
+  { id: 'sub_ielts_reading', courseId: 'c3', name: 'IELTS Academic Reading', code: 'IELTS-RDG', description: 'Academic Texts, Inference & Evidence Synthesis', credits: 3, order: 2 },
+  { id: 'sub_ielts_writing', courseId: 'c3', name: 'IELTS Academic Writing', code: 'IELTS-WRT', description: 'Data Synthesis (Task 1) & Academic Argumentation (Task 2)', credits: 3, order: 3 },
+  { id: 'sub_ielts_speaking', courseId: 'c3', name: 'IELTS Speaking & Oral Fluency', code: 'IELTS-SPK', description: '3-Part Conversational Interview & Oral Assessment', credits: 3, order: 4 },
 ];
 
 export const SEED_TOPICS = [
-  // Physics
+  // Physics (JEE)
   { id: 'top_mech', subjectId: 'sub_phy', title: 'Mechanics & Dynamics', orderIndex: 1 },
   { id: 'top_optics', subjectId: 'sub_phy', title: 'Geometrical & Wave Optics', orderIndex: 2 },
   { id: 'top_electromag', subjectId: 'sub_phy', title: 'Electromagnetism & Circuits', orderIndex: 3 },
   { id: 'top_modern_phy', subjectId: 'sub_phy', title: 'Modern & Nuclear Physics', orderIndex: 4 },
-  // Chemistry
+
+  // Chemistry (JEE)
   { id: 'top_thermo', subjectId: 'sub_chem', title: 'Chemical Thermodynamics', orderIndex: 1 },
   { id: 'top_organic', subjectId: 'sub_chem', title: 'Organic Reactions & Mechanisms', orderIndex: 2 },
   { id: 'top_inorganic', subjectId: 'sub_chem', title: 'Inorganic & Coordination Chemistry', orderIndex: 3 },
   { id: 'top_physical_chem', subjectId: 'sub_chem', title: 'Physical Chemistry & Kinetics', orderIndex: 4 },
-  // Mathematics
+
+  // Mathematics (JEE)
   { id: 'top_calculus', subjectId: 'sub_math', title: 'Differential & Integral Calculus', orderIndex: 1 },
   { id: 'top_algebra', subjectId: 'sub_math', title: 'Linear Algebra & Matrices', orderIndex: 2 },
   { id: 'top_coordinate_geom', subjectId: 'sub_math', title: 'Coordinate Geometry & Vectors', orderIndex: 3 },
   { id: 'top_probability', subjectId: 'sub_math', title: 'Probability, Permutations & Statistics', orderIndex: 4 },
-  // UPSC & IELTS Interview Topics
-  { id: 'top_upsc_ethics', subjectId: 'sub_upsc_interview', title: 'Ethical Decision Making & Public Policy', orderIndex: 1 },
-  { id: 'top_ielts_fluency', subjectId: 'sub_ielts_speaking', title: 'Academic Discussion & Abstract Themes', orderIndex: 1 },
+
+  // Biology (NEET)
+  { id: 'top_bio_genetics', subjectId: 'sub_bio', title: 'Genetics, Molecular Basis & Evolution', orderIndex: 1 },
+  { id: 'top_bio_physiology', subjectId: 'sub_bio', title: 'Human & Plant Physiology', orderIndex: 2 },
+  { id: 'top_bio_cell', subjectId: 'sub_bio', title: 'Cell Structure, Function & Division', orderIndex: 3 },
+  { id: 'top_bio_ecology', subjectId: 'sub_bio', title: 'Ecology, Environment & Biodiversity', orderIndex: 4 },
+
+  // Medical Physics (NEET)
+  { id: 'top_neet_mechanics', subjectId: 'sub_neet_phy', title: 'Biomechanics, Fluids & Thermal Physics', orderIndex: 1 },
+  { id: 'top_neet_optics', subjectId: 'sub_neet_phy', title: 'Ray Optics & Bio-Electromagnetism', orderIndex: 2 },
+
+  // Medical Chemistry (NEET)
+  { id: 'top_neet_organic', subjectId: 'sub_neet_chem', title: 'Biomolecules & Organic Reaction Pathways', orderIndex: 1 },
+  { id: 'top_neet_physical', subjectId: 'sub_neet_chem', title: 'Chemical Kinetics & Ionic Equilibrium', orderIndex: 2 },
+
+  // IELTS
+  // Listening (empty/placeholder topic, no questions seeded)
+  { id: 'top_ielts_listening', subjectId: 'sub_ielts_listening', title: 'Listening Comprehension & Form Completion', orderIndex: 1 },
+
+  // Reading
+  { id: 'top_ielts_read_p1', subjectId: 'sub_ielts_reading', title: 'Reading Passage 1: Descriptive & Factual Analysis', orderIndex: 1 },
+  { id: 'top_ielts_read_p2', subjectId: 'sub_ielts_reading', title: 'Reading Passage 2: Discursive & Analytical Text', orderIndex: 2 },
+  { id: 'top_ielts_read_p3', subjectId: 'sub_ielts_reading', title: 'Reading Passage 3: Complex Academic & Theoretical Discourse', orderIndex: 3 },
+
+  // Writing
+  { id: 'top_ielts_write_t1', subjectId: 'sub_ielts_writing', title: 'Writing Task 1: Graphical Data, Process & Map Synthesis', orderIndex: 1 },
+  { id: 'top_ielts_write_t2', subjectId: 'sub_ielts_writing', title: 'Writing Task 2: Academic Discursive Essay & Argumentation', orderIndex: 2 },
+
+  // Speaking
+  { id: 'top_ielts_spk_p1', subjectId: 'sub_ielts_speaking', title: 'Speaking Part 1: Personal & Familiar Everyday Domains', orderIndex: 1 },
+  { id: 'top_ielts_spk_p2', subjectId: 'sub_ielts_speaking', title: 'Speaking Part 2: Individual Long Turn & Cue Card Monologue', orderIndex: 2 },
+  { id: 'top_ielts_spk_p3', subjectId: 'sub_ielts_speaking', title: 'Speaking Part 3: Socratic & Abstract Conceptual Debate', orderIndex: 3 },
 ];
 
 // Rich Question Bank seed dataset: 120 authentic questions across 12 topics (10 questions per topic: 3 EASY, 4 MEDIUM, 3 HARD)
@@ -2500,7 +2547,7 @@ export async function runSeed() {
     );
   }
 
-  console.log(`5. Seeding ${SEED_QUESTIONS.length} rich Question Bank items across 3 subjects & 12 topics with mixed difficulties...`);
+  console.log(`5. Seeding ${SEED_QUESTIONS.length} rich Question Bank items for JEE Main (Course c1)...`);
   let questionCount = 0;
   for (const q of SEED_QUESTIONS) {
     const dataPayload = JSON.stringify({
@@ -2529,57 +2576,778 @@ export async function runSeed() {
     questionCount++;
   }
 
-  console.log('5b. Seeding authentic Phase 12 AI Interview Questions into PostgreSQL...');
-  const interviewQuestions = [
+  console.log('5b. Seeding authentic NEET Questions (Biology, Medical Physics, Medical Chemistry) into Course c2...');
+  const neetQuestions = [
+    // Biology - Genetics
     {
-      id: 'q_interview_upsc_01',
-      type: 'INTERVIEW',
-      content: 'You are the District Magistrate overseeing a major infrastructure project. Local indigenous communities are protesting displacement, but stopping the project will incur massive public funds default. How do you resolve this conflict?',
+      id: 'q_bio_gen_01',
+      subjectId: 'sub_bio',
+      topicId: 'top_bio_genetics',
+      type: 'MCQ',
+      difficulty: 'EASY',
+      marks: 4.0,
+      content: 'In a classic Mendelian dihybrid cross involving two heterozygous pea plants (RrYy × RrYy), what is the expected phenotypic ratio in the F2 generation?',
+      options: [
+        { id: 'opt_a', text: '9 : 3 : 3 : 1', isCorrect: true },
+        { id: 'opt_b', text: '1 : 2 : 1', isCorrect: false },
+        { id: 'opt_c', text: '9 : 7', isCorrect: false },
+        { id: 'opt_d', text: '15 : 1', isCorrect: false },
+      ],
+      correctOptionId: 'opt_a',
+      explanation: 'Mendels Law of Independent Assortment yields a 9:3:3:1 phenotypic ratio (Round-Yellow, Round-Green, Wrinkled-Yellow, Wrinkled-Green) in a dihybrid F2 progeny.',
+    },
+    {
+      id: 'q_bio_gen_02',
+      subjectId: 'sub_bio',
+      topicId: 'top_bio_genetics',
+      type: 'MCQ',
+      difficulty: 'MEDIUM',
+      marks: 4.0,
+      content: 'Which landmark biological experiment definitively established the semi-conservative mode of DNA replication using ¹⁵N and ¹⁴N isotopes in Escherichia coli?',
+      options: [
+        { id: 'opt_a', text: 'Meselson and Stahl Experiment (1958)', isCorrect: true },
+        { id: 'opt_b', text: 'Hershey-Chase Bacteriophage Experiment (1952)', isCorrect: false },
+        { id: 'opt_c', text: 'Griffith Transformation Assay (1928)', isCorrect: false },
+        { id: 'opt_d', text: 'Avery-MacLeod-McCarty Experiment (1944)', isCorrect: false },
+      ],
+      correctOptionId: 'opt_a',
+      explanation: 'Matthew Meselson and Franklin Stahl demonstrated semi-conservative replication by density gradient centrifugation of E. coli grown in heavy 15N followed by 14N medium.',
+    },
+    {
+      id: 'q_bio_gen_03',
+      subjectId: 'sub_bio',
+      topicId: 'top_bio_genetics',
+      type: 'MCQ',
+      difficulty: 'MEDIUM',
+      marks: 4.0,
+      content: 'In the Lac operon mechanism of Escherichia coli, what direct molecular event occurs when allolactose binds to the Lac repressor protein?',
+      options: [
+        { id: 'opt_a', text: 'The repressor undergoes an allosteric conformational change and detaches from the operator', isCorrect: true },
+        { id: 'opt_b', text: 'The repressor binds tightly to the promoter region blocking RNA polymerase', isCorrect: false },
+        { id: 'opt_c', text: 'RNA polymerase is degraded via ubiquitin-dependent proteolysis', isCorrect: false },
+        { id: 'opt_d', text: 'Beta-galactosidase directly phosphorylates the operator locus', isCorrect: false },
+      ],
+      correctOptionId: 'opt_a',
+      explanation: 'Allolactose acts as the inducer by binding the repressor, changing its conformation so it can no longer bind the operator, enabling transcription.',
+    },
+    {
+      id: 'q_bio_gen_04',
+      subjectId: 'sub_bio',
+      topicId: 'top_bio_genetics',
+      type: 'MCQ',
       difficulty: 'HARD',
-      marks: 100.0,
-      status: 'PUBLISHED',
-      courseId: 'c3',
-      subjectId: 'sub_upsc_interview',
-      syllabusNodeId: 'top_upsc_ethics',
+      marks: 4.0,
+      content: 'In a randomly mating population in Hardy-Weinberg equilibrium, the frequency of an autosomal recessive allele (q) is 0.30. What is the expected frequency of heterozygous carriers (2pq) in this population?',
+      options: [
+        { id: 'opt_a', text: '0.42 (42%)', isCorrect: true },
+        { id: 'opt_b', text: '0.09 (9%)', isCorrect: false },
+        { id: 'opt_c', text: '0.49 (49%)', isCorrect: false },
+        { id: 'opt_d', text: '0.21 (21%)', isCorrect: false },
+      ],
+      correctOptionId: 'opt_a',
+      explanation: 'p = 1 - q = 1 - 0.30 = 0.70. Heterozygote frequency 2pq = 2 × 0.70 × 0.30 = 0.42 (42%).',
+    },
+
+    // Biology - Physiology
+    {
+      id: 'q_bio_phys_01',
+      subjectId: 'sub_bio',
+      topicId: 'top_bio_physiology',
+      type: 'MCQ',
+      difficulty: 'EASY',
+      marks: 4.0,
+      content: 'Which specialized cardiac tissue structure generates rhythmic action potentials at the highest intrinsic rate and functions as the primary pacemaker of the human heart?',
+      options: [
+        { id: 'opt_a', text: 'Sinoatrial (SA) Node', isCorrect: true },
+        { id: 'opt_b', text: 'Atrioventricular (AV) Node', isCorrect: false },
+        { id: 'opt_c', text: 'Bundle of His', isCorrect: false },
+        { id: 'opt_d', text: 'Purkinje Fibres', isCorrect: false },
+      ],
+      correctOptionId: 'opt_a',
+      explanation: 'The SA node in the right atrium generates spontaneous action potentials (70-75 bpm) setting the pace for cardiac contraction.',
+    },
+    {
+      id: 'q_bio_phys_02',
+      subjectId: 'sub_bio',
+      topicId: 'top_bio_physiology',
+      type: 'MCQ',
+      difficulty: 'MEDIUM',
+      marks: 4.0,
+      content: 'The counter-current multiplier and exchange system that maintains the hyperosmotic medullary concentration gradient in mammalian kidneys involves which anatomical structures?',
+      options: [
+        { id: 'opt_a', text: 'Loop of Henle and Vasa Recta capillaries', isCorrect: true },
+        { id: 'opt_b', text: 'Bowmans Capsule and Glomerulus', isCorrect: false },
+        { id: 'opt_c', text: 'Proximal Convoluted Tubule and Afferent Arteriole', isCorrect: false },
+        { id: 'opt_d', text: 'Distal Convoluted Tubule and Macula Densa', isCorrect: false },
+      ],
+      correctOptionId: 'opt_a',
+      explanation: 'The hairpin configuration of Henles loop (multiplier) and the adjacent vasa recta (exchanger) establish the medullary osmotic gradient for urine concentration.',
+    },
+    {
+      id: 'q_bio_phys_03',
+      subjectId: 'sub_bio',
+      topicId: 'top_bio_physiology',
+      type: 'MCQ',
+      difficulty: 'MEDIUM',
+      marks: 4.0,
+      content: 'During the propagation of a neuronal action potential, rapid membrane depolarization from -70 mV to +30 mV is primarily caused by:',
+      options: [
+        { id: 'opt_a', text: 'Rapid inward influx of Na⁺ ions through voltage-gated sodium channels', isCorrect: true },
+        { id: 'opt_b', text: 'Efflux of K⁺ ions into extracellular fluid', isCorrect: false },
+        { id: 'opt_c', text: 'Active transport of Cl⁻ ions into the axon', isCorrect: false },
+        { id: 'opt_d', text: 'Direct ATP hydrolysis by calcium pumps', isCorrect: false },
+      ],
+      correctOptionId: 'opt_a',
+      explanation: 'Opening of voltage-gated Na+ channels at threshold causes an avalanche influx of sodium down its electrochemical gradient, causing rapid depolarization.',
+    },
+    {
+      id: 'q_bio_phys_04',
+      subjectId: 'sub_bio',
+      topicId: 'top_bio_physiology',
+      type: 'MCQ',
+      difficulty: 'HARD',
+      marks: 4.0,
+      content: 'In C4 photosynthetic plants (e.g. Maize, Sugarcane), the initial fixation of atmospheric CO₂ into oxaloacetate by PEP carboxylase occurs exclusively in which anatomical tissue?',
+      options: [
+        { id: 'opt_a', text: 'Mesophyll cells', isCorrect: true },
+        { id: 'opt_b', text: 'Bundle sheath cells', isCorrect: false },
+        { id: 'opt_c', text: 'Epidermal guard cells', isCorrect: false },
+        { id: 'opt_d', text: 'Xylem parenchyma', isCorrect: false },
+      ],
+      correctOptionId: 'opt_a',
+      explanation: 'In Kranz anatomy, primary carboxylation occurs in mesophyll cells via PEP carboxylase. The 4-carbon acid is then shuttled to bundle sheath cells for the Calvin cycle.',
+    },
+
+    // Biology - Cell Biology
+    {
+      id: 'q_bio_cell_01',
+      subjectId: 'sub_bio',
+      topicId: 'top_bio_cell',
+      type: 'MCQ',
+      difficulty: 'EASY',
+      marks: 4.0,
+      content: 'Who formulated the Fluid Mosaic Model of biological membranes in 1972, proposing that proteins are embedded quasi-fluidly within a phospholipid bilayer?',
+      options: [
+        { id: 'opt_a', text: 'S.J. Singer and G.L. Nicolson', isCorrect: true },
+        { id: 'opt_b', text: 'J.D. Watson and F.H.C. Crick', isCorrect: false },
+        { id: 'opt_c', text: 'M.J. Schleiden and T. Schwann', isCorrect: false },
+        { id: 'opt_d', text: 'H. Danielli and E. Davson', isCorrect: false },
+      ],
+      correctOptionId: 'opt_a',
+      explanation: 'Singer and Nicolson proposed the Fluid Mosaic Model describing cell membranes as protein icebergs floating in a sea of phospholipids.',
+    },
+    {
+      id: 'q_bio_cell_02',
+      subjectId: 'sub_bio',
+      topicId: 'top_bio_cell',
+      type: 'MCQ',
+      difficulty: 'MEDIUM',
+      marks: 4.0,
+      content: 'In Meiosis I, physical crossing over and reciprocal genetic recombination between non-sister chromatids of homologous chromosomes occurs during which specific stage of Prophase I?',
+      options: [
+        { id: 'opt_a', text: 'Pachytene', isCorrect: true },
+        { id: 'opt_b', text: 'Leptotene', isCorrect: false },
+        { id: 'opt_c', text: 'Zygotene', isCorrect: false },
+        { id: 'opt_d', text: 'Diakinesis', isCorrect: false },
+      ],
+      correctOptionId: 'opt_a',
+      explanation: 'Crossing over takes place at the pachytene stage of Prophase I, mediated by the recombinase enzyme complex.',
+    },
+    {
+      id: 'q_bio_cell_03',
+      subjectId: 'sub_bio',
+      topicId: 'top_bio_cell',
+      type: 'MCQ',
+      difficulty: 'MEDIUM',
+      marks: 4.0,
+      content: 'During aerobic cellular respiration, the proton electrochemical gradient (proton-motive force) that drives ATP synthesis by F₀-F₁ ATP synthase is established across which membrane?',
+      options: [
+        { id: 'opt_a', text: 'Inner mitochondrial membrane', isCorrect: true },
+        { id: 'opt_b', text: 'Outer mitochondrial membrane', isCorrect: false },
+        { id: 'opt_c', text: 'Nuclear envelope', isCorrect: false },
+        { id: 'opt_d', text: 'Thylakoid intermembrane lumen only', isCorrect: false },
+      ],
+      correctOptionId: 'opt_a',
+      explanation: 'Complexes I, III, and IV pump protons from the matrix into the intermembrane space across the inner mitochondrial membrane.',
+    },
+    {
+      id: 'q_bio_cell_04',
+      subjectId: 'sub_bio',
+      topicId: 'top_bio_cell',
+      type: 'MCQ',
+      difficulty: 'HARD',
+      marks: 4.0,
+      content: 'Which eukaryotic cytoplasmic organelle performs post-translational protein modification (glycosylation), sorting, and packaging into secretory vesicles originating from the rough endoplasmic reticulum?',
+      options: [
+        { id: 'opt_a', text: 'Golgi Apparatus (Dictyosome)', isCorrect: true },
+        { id: 'opt_b', text: 'Peroxisome', isCorrect: false },
+        { id: 'opt_c', text: 'Lysosome', isCorrect: false },
+        { id: 'opt_d', text: 'Nucleolus', isCorrect: false },
+      ],
+      correctOptionId: 'opt_a',
+      explanation: 'The Golgi apparatus modifies proteins via cisternae from the cis face to the trans face, directing them to lysosomes, the plasma membrane, or secretory vesicles.',
+    },
+
+    // Biology - Ecology
+    {
+      id: 'q_bio_eco_01',
+      subjectId: 'sub_bio',
+      topicId: 'top_bio_ecology',
+      type: 'MCQ',
+      difficulty: 'EASY',
+      marks: 4.0,
+      content: 'According to Raymond Lindemans 10% Ecological Law of energy transfer, how much chemical energy stored in biomass at one trophic level is typically converted into organic matter at the next higher level?',
+      options: [
+        { id: 'opt_a', text: 'Approximately 10%', isCorrect: true },
+        { id: 'opt_b', text: 'Approximately 50%', isCorrect: false },
+        { id: 'opt_c', text: 'Approximately 1%', isCorrect: false },
+        { id: 'opt_d', text: 'Approximately 90%', isCorrect: false },
+      ],
+      correctOptionId: 'opt_a',
+      explanation: 'Only about 10% of the energy is transferred from one trophic level to the next; 90% is lost as metabolic heat during respiration.',
+    },
+    {
+      id: 'q_bio_eco_02',
+      subjectId: 'sub_bio',
+      topicId: 'top_bio_ecology',
+      type: 'MCQ',
+      difficulty: 'MEDIUM',
+      marks: 4.0,
+      content: 'In primary xerarch ecological succession on dry barren rock (lithosere), which pioneer community species are the first to establish and secrete organic acids to erode rock into primitive soil?',
+      options: [
+        { id: 'opt_a', text: 'Crustose and Foliose Lichens', isCorrect: true },
+        { id: 'opt_b', text: 'Annual grasses and weeds', isCorrect: false },
+        { id: 'opt_c', text: 'Perennial mesic shrubs', isCorrect: false },
+        { id: 'opt_d', text: 'Deciduous hardwood trees', isCorrect: false },
+      ],
+      correctOptionId: 'opt_a',
+      explanation: 'Lichens colonize bare rocks as pioneers, secreting carbonic and oxalic acids that weather rock minerals into rudimentary soil suitable for mosses.',
+    },
+    {
+      id: 'q_bio_eco_03',
+      subjectId: 'sub_bio',
+      topicId: 'top_bio_ecology',
+      type: 'MCQ',
+      difficulty: 'MEDIUM',
+      marks: 4.0,
+      content: 'Which of the following conservation methods is categorized strictly as an in-situ (on-site) biodiversity conservation strategy?',
+      options: [
+        { id: 'opt_a', text: 'National Parks, Wildlife Sanctuaries and Biosphere Reserves', isCorrect: true },
+        { id: 'opt_b', text: 'Botanical Gardens', isCorrect: false },
+        { id: 'opt_c', text: 'Zoological Theme Parks', isCorrect: false },
+        { id: 'opt_d', text: 'Cryopreservation Seed Banks', isCorrect: false },
+      ],
+      correctOptionId: 'opt_a',
+      explanation: 'In-situ conservation preserves endangered species in their natural habitats (National Parks, Sanctuaries), whereas Botanical Gardens and Seed Banks are ex-situ.',
+    },
+    {
+      id: 'q_bio_eco_04',
+      subjectId: 'sub_bio',
+      topicId: 'top_bio_ecology',
+      type: 'MCQ',
+      difficulty: 'HARD',
+      marks: 4.0,
+      content: 'Biological magnification of lipid-soluble non-biodegradable synthetic compounds (e.g. DDT) through an aquatic trophic web achieves its highest biological tissue concentration in which organisms?',
+      options: [
+        { id: 'opt_a', text: 'Top predatory fish-eating birds (e.g. Ospreys, Sea Eagles)', isCorrect: true },
+        { id: 'opt_b', text: 'Primary phytoplankton producers', isCorrect: false },
+        { id: 'opt_c', text: 'Herbivorous zooplankton', isCorrect: false },
+        { id: 'opt_d', text: 'Small benthic feeder fishes', isCorrect: false },
+      ],
+      correctOptionId: 'opt_a',
+      explanation: 'DDT is lipophilic and cannot be metabolized, concentrating cumulatively at each step up the food pyramid to reach toxic maximums in apex fish-eating raptors.',
+    },
+
+    // Medical Physics (NEET)
+    {
+      id: 'q_neet_phy_01',
+      subjectId: 'sub_neet_phy',
+      topicId: 'top_neet_mechanics',
+      type: 'MCQ',
+      difficulty: 'EASY',
+      marks: 4.0,
+      content: 'According to Poiseuilles law for laminar fluid flow in biological vessels, volumetric blood flow rate (Q) is proportional to which mathematical power of the vessel internal radius (r)?',
+      options: [
+        { id: 'opt_a', text: 'r⁴ (Fourth power)', isCorrect: true },
+        { id: 'opt_b', text: 'r² (Square)', isCorrect: false },
+        { id: 'opt_c', text: 'r³ (Cube)', isCorrect: false },
+        { id: 'opt_d', text: 'r (Linear)', isCorrect: false },
+      ],
+      correctOptionId: 'opt_a',
+      explanation: 'Poiseuille equation Q = (π ΔP r⁴) / (8 η L) shows that vessel resistance is inversely proportional to radius to the fourth power.',
+    },
+    {
+      id: 'q_neet_phy_02',
+      subjectId: 'sub_neet_phy',
+      topicId: 'top_neet_optics',
+      type: 'MCQ',
+      difficulty: 'MEDIUM',
+      marks: 4.0,
+      content: 'What is the optical power of a corrective convex spectacle lens required by a hypermetropic patient whose near point has shifted to +50 cm (+0.50 m), assuming standard near point of 25 cm?',
+      options: [
+        { id: 'opt_a', text: '+2.0 Diopters', isCorrect: true },
+        { id: 'opt_b', text: '+4.0 Diopters', isCorrect: false },
+        { id: 'opt_c', text: '+1.5 Diopters', isCorrect: false },
+        { id: 'opt_d', text: '-2.0 Diopters', isCorrect: false },
+      ],
+      correctOptionId: 'opt_a',
+      explanation: 'Lens formula: 1/f = 1/v - 1/u = 1/(-0.50) - 1/(-0.25) = -2 + 4 = +2.0 D.',
+    },
+    {
+      id: 'q_neet_phy_03',
+      subjectId: 'sub_neet_phy',
+      topicId: 'top_neet_mechanics',
+      type: 'MCQ',
+      difficulty: 'MEDIUM',
+      marks: 4.0,
+      content: 'A medical cardiac defibrillator delivers a 400 J electric shock from an internal capacitor bank of 50 μF. What is the potential difference charged across the capacitor plates?',
+      options: [
+        { id: 'opt_a', text: '4000 V (4.0 kV)', isCorrect: true },
+        { id: 'opt_b', text: '2000 V (2.0 kV)', isCorrect: false },
+        { id: 'opt_c', text: '8000 V (8.0 kV)', isCorrect: false },
+        { id: 'opt_d', text: '1600 V (1.6 kV)', isCorrect: false },
+      ],
+      correctOptionId: 'opt_a',
+      explanation: 'U = 1/2 C V² => V = sqrt(2U / C) = sqrt(2 × 400 / 50e-6) = sqrt(16,000,000) = 4000 V.',
+    },
+    {
+      id: 'q_neet_phy_04',
+      subjectId: 'sub_neet_phy',
+      topicId: 'top_neet_optics',
+      type: 'MCQ',
+      difficulty: 'HARD',
+      marks: 4.0,
+      content: 'Blood flows steadily through a major artery of radius 1.0 cm at 0.30 m/s. If atherosclerotic plaque constricts the lumen radius to 0.50 cm, what is the blood flow velocity in the constriction (by Continuity Principle)?',
+      options: [
+        { id: 'opt_a', text: '1.20 m/s', isCorrect: true },
+        { id: 'opt_b', text: '0.60 m/s', isCorrect: false },
+        { id: 'opt_c', text: '2.40 m/s', isCorrect: false },
+        { id: 'opt_d', text: '0.90 m/s', isCorrect: false },
+      ],
+      correctOptionId: 'opt_a',
+      explanation: 'A1 v1 = A2 v2 => π r1² v1 = π r2² v2 => v2 = v1 (r1/r2)² = 0.30 × (1.0/0.50)² = 0.30 × 4 = 1.20 m/s.',
+    },
+
+    // Medical Chemistry (NEET)
+    {
+      id: 'q_neet_chem_01',
+      subjectId: 'sub_neet_chem',
+      topicId: 'top_neet_organic',
+      type: 'MCQ',
+      difficulty: 'EASY',
+      marks: 4.0,
+      content: 'Which pyrimidine heterocyclic base is present in ribonucleic acid (RNA) molecules in place of the Thymine base found in DNA?',
+      options: [
+        { id: 'opt_a', text: 'Uracil', isCorrect: true },
+        { id: 'opt_b', text: 'Cytosine', isCorrect: false },
+        { id: 'opt_c', text: 'Guanine', isCorrect: false },
+        { id: 'opt_d', text: 'Adenine', isCorrect: false },
+      ],
+      correctOptionId: 'opt_a',
+      explanation: 'RNA uses Uracil (U) which lacks the 5-methyl group found in Thymine (5-methyluracil).',
+    },
+    {
+      id: 'q_neet_chem_02',
+      subjectId: 'sub_neet_chem',
+      topicId: 'top_neet_physical',
+      type: 'MCQ',
+      difficulty: 'MEDIUM',
+      marks: 4.0,
+      content: 'What is the pH of an equimolar buffer solution containing 0.10 M acetic acid and 0.10 M sodium acetate at 25°C (pKa of acetic acid = 4.74)?',
+      options: [
+        { id: 'opt_a', text: '4.74', isCorrect: true },
+        { id: 'opt_b', text: '7.00', isCorrect: false },
+        { id: 'opt_c', text: '5.74', isCorrect: false },
+        { id: 'opt_d', text: '3.74', isCorrect: false },
+      ],
+      correctOptionId: 'opt_a',
+      explanation: 'Henderson-Hasselbalch: pH = pKa + log([Salt]/[Acid]) = 4.74 + log(0.10/0.10) = 4.74 + 0 = 4.74.',
+    },
+    {
+      id: 'q_neet_chem_03',
+      subjectId: 'sub_neet_chem',
+      topicId: 'top_neet_organic',
+      type: 'MCQ',
+      difficulty: 'MEDIUM',
+      marks: 4.0,
+      content: 'The covalent peptide bond (-CO-NH-) linking adjacent amino acid alpha-carboxyl and alpha-amino groups in a protein backbone is chemically characterized as a:',
+      options: [
+        { id: 'opt_a', text: 'Secondary Amide linkage with partial double-bond character', isCorrect: true },
+        { id: 'opt_b', text: 'Aliphatic Ester linkage', isCorrect: false },
+        { id: 'opt_c', text: 'Glycosidic Ether bond', isCorrect: false },
+        { id: 'opt_d', text: 'Phosphodiester bridge', isCorrect: false },
+      ],
+      correctOptionId: 'opt_a',
+      explanation: 'Peptide bonds are planar secondary amides with ~40% double bond character due to resonance delocalization between the carbonyl and nitrogen.',
+    },
+    {
+      id: 'q_neet_chem_04',
+      subjectId: 'sub_neet_chem',
+      topicId: 'top_neet_physical',
+      type: 'MCQ',
+      difficulty: 'HARD',
+      marks: 4.0,
+      content: 'In classical enzyme kinetics following the Michaelis-Menten formulation, what does the Michaelis constant (Km) represent physically?',
+      options: [
+        { id: 'opt_a', text: 'The substrate concentration at which the initial catalytic rate reaches half of Vmax', isCorrect: true },
+        { id: 'opt_b', text: 'The turnover number (kcat) of the active site', isCorrect: false },
+        { id: 'opt_c', text: 'The total enzyme active site concentration', isCorrect: false },
+        { id: 'opt_d', text: 'The equilibrium constant of product dissociation', isCorrect: false },
+      ],
+      correctOptionId: 'opt_a',
+      explanation: 'Km is the substrate concentration [S] at which v = Vmax / 2, inversely reflecting the enzyme affinity for substrate.',
+    },
+  ];
+
+  for (const nq of neetQuestions) {
+    const dataPayload = JSON.stringify({
+      options: nq.options,
+      correctOptionId: nq.correctOptionId,
+      explanation: nq.explanation,
+    });
+
+    await pgDb.query(
+      `INSERT INTO "questions" (
+        "id", "type", "content", "data", "difficulty", "marks", "status", "version",
+        "courseId", "subjectId", "syllabusNodeId", "createdById", "createdAt", "updatedAt"
+      ) VALUES ($1, $2, $3, $4, $5, $6, 'PUBLISHED', 1, 'c2', $7, $8, 'usr_admin_test', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      ON CONFLICT ("id") DO UPDATE SET
+        "type" = EXCLUDED."type",
+        "content" = EXCLUDED."content",
+        "data" = EXCLUDED."data",
+        "difficulty" = EXCLUDED."difficulty",
+        "marks" = EXCLUDED."marks",
+        "status" = 'PUBLISHED',
+        "courseId" = 'c2',
+        "subjectId" = EXCLUDED."subjectId",
+        "syllabusNodeId" = EXCLUDED."syllabusNodeId"`,
+      [nq.id, nq.type, nq.content, dataPayload, nq.difficulty, nq.marks, nq.subjectId, nq.topicId]
+    );
+    questionCount++;
+  }
+
+  console.log('5c. Seeding authentic IELTS Reading & Writing Questions into Course c3...');
+  const ieltsAcademicQuestions = [
+    // Passage 1: Urban Microclimates
+    {
+      id: 'q_ielts_read_01',
+      subjectId: 'sub_ielts_reading',
+      topicId: 'top_ielts_read_p1',
+      type: 'MCQ',
+      difficulty: 'EASY',
+      marks: 9.0,
+      content: 'Passage 1 (Urban Microclimates): According to the passage, what is the primary biophysical mechanism by which expansive urban tree canopy lowers ambient summer surface temperature?',
+      options: [
+        { id: 'opt_a', text: 'Evapotranspirative moisture cooling combined with direct solar radiation shading', isCorrect: true },
+        { id: 'opt_b', text: 'Absorption of atmospheric carbon dioxide directly into concrete pavements', isCorrect: false },
+        { id: 'opt_c', text: 'Creation of localized thermal updrafts that trap exhaust gases', isCorrect: false },
+        { id: 'opt_d', text: 'Elimination of ambient humidity across concrete structures', isCorrect: false },
+      ],
+      correctOptionId: 'opt_a',
+      explanation: 'The passage explicitly states that urban foliage mitigates surface temperature spikes through solar intercept shading and latent heat dissipation via evapotranspiration.',
+    },
+    {
+      id: 'q_ielts_read_02',
+      subjectId: 'sub_ielts_reading',
+      topicId: 'top_ielts_read_p1',
+      type: 'SHORT_ANSWER',
+      difficulty: 'MEDIUM',
+      marks: 9.0,
+      content: 'Passage 1 (Urban Microclimates): Which scientific parameter denotes the nondimensional measure of diffuse reflection of solar radiation out of the total solar irradiance received by an architectural surface? (Write NO MORE THAN TWO WORDS)',
       data: {
-        scenario: 'You are facing the UPSC Personality Test Board. The Chairperson asks how you balance public interest, constitutional rights of vulnerable groups, and economic development in a high-stakes administrative crisis.',
-        preset: 'UPSC_PERSONALITY',
-        maxTurns: 4,
-        expectedDurationMinutes: 15,
-        systemInstructions: 'You are the Chairperson of the UPSC Interview Board. Listen to the candidate rationale, challenge their assumptions with realistic administrative constraints, and probe for ethical firmness, balance of judgment, and constitutional adherence.',
-        openingQuestion: 'Candidate, balancing sovereign development with indigenous community welfare is a recurring dilemma for administrators. Walk us through your immediate framework to address this protest without compromising public accountability.',
-        rubric: [
-          {
-            id: 'integrity',
-            name: 'Ethical Integrity & Public Service Commitment',
-            description: 'Constitutional compliance, empathy for vulnerable groups, and personal impartiality.',
-            maxScore: 25,
-            criteria: ['Empathy for displaced populations', 'Strict adherence to due process of law', 'Incorruptible public trust'],
-          },
-          {
-            id: 'decision_making',
-            name: 'Administrative Balance & Feasibility',
-            description: 'Pragmatic problem solving, stakeholder mediation, and resource optimization.',
-            maxScore: 25,
-            criteria: ['Viability of rehabilitation package', 'Conflict de-escalation tactics', 'Financial prudence'],
-          },
-          {
-            id: 'communication',
-            name: 'Clarity, Composure & Articulation',
-            description: 'Structured argumentation, polite firmness, and mental poise under scrutiny.',
-            maxScore: 25,
-            criteria: ['Concise logical structure', 'Composure under aggressive follow-up questioning', 'Professional vocabulary'],
-          },
-          {
-            id: 'critical_thinking',
-            name: 'Analytical Depth & Multi-Dimensional View',
-            description: 'Anticipation of second-order consequences, policy foresight, and holistic perspectives.',
-            maxScore: 25,
-            criteria: ['Awareness of systemic socio-economic factors', 'Evaluation of legal precedents'],
-          },
-        ],
+        keywords: ['albedo', 'solar reflectance'],
+        sampleAnswer: 'Albedo',
+        explanation: 'Albedo or surface solar reflectance measures the fraction of incoming solar energy reflected by materials.',
       },
     },
+    {
+      id: 'q_ielts_read_03',
+      subjectId: 'sub_ielts_reading',
+      topicId: 'top_ielts_read_p1',
+      type: 'MCQ',
+      difficulty: 'MEDIUM',
+      marks: 9.0,
+      content: 'Passage 1 (Urban Microclimates): Why do extensive green vegetative roofs provide superior thermal insulation during diurnal temperature extremes compared to conventional bituminous roofs?',
+      options: [
+        { id: 'opt_a', text: 'High substrate thermal mass and plant transpiration significantly attenuate conductive heat flux into buildings', isCorrect: true },
+        { id: 'opt_b', text: 'They reflect 100% of cosmic ultraviolet radiation back into the stratosphere', isCorrect: false },
+        { id: 'opt_c', text: 'They generate subterranean geothermal heating throughout the winter months', isCorrect: false },
+        { id: 'opt_d', text: 'They convert all incoming solar radiation directly into electrical power', isCorrect: false },
+      ],
+      correctOptionId: 'opt_a',
+      explanation: 'The vegetative canopy and growing substrate provide substantial thermal inertia, damping heat transfer through building envelopes.',
+    },
+    {
+      id: 'q_ielts_read_04',
+      subjectId: 'sub_ielts_reading',
+      topicId: 'top_ielts_read_p1',
+      type: 'SHORT_ANSWER',
+      difficulty: 'HARD',
+      marks: 9.0,
+      content: 'Passage 1 (Urban Microclimates): What physical radiative process allows high-emissivity building facades to discharge stored diurnal heat directly into clear night skies? (Write NO MORE THAN TWO WORDS)',
+      data: {
+        keywords: ['radiative cooling', 'infrared emission'],
+        sampleAnswer: 'Radiative cooling',
+        explanation: 'Radiative cooling allows high-emissivity materials to emit thermal longwave infrared radiation into space.',
+      },
+    },
+
+    // Passage 2: Cognitive Mechanisms of Bilingualism
+    {
+      id: 'q_ielts_read_05',
+      subjectId: 'sub_ielts_reading',
+      topicId: 'top_ielts_read_p2',
+      type: 'MCQ',
+      difficulty: 'EASY',
+      marks: 9.0,
+      content: 'Passage 2 (Bilingualism & Cognition): What primary neurocognitive advantage is consistently demonstrated by lifelong bilingual individuals during non-verbal executive control tasks?',
+      options: [
+        { id: 'opt_a', text: 'Enhanced inhibitory attentional control and rapid cognitive task-switching agility', isCorrect: true },
+        { id: 'opt_b', text: 'Complete photographic visual memory retention', isCorrect: false },
+        { id: 'opt_c', text: 'Total immunity to acute emotional stress and anxiety', isCorrect: false },
+        { id: 'opt_d', text: 'Superior auditory tone pitch discrimination across all frequencies', isCorrect: false },
+      ],
+      correctOptionId: 'opt_a',
+      explanation: 'Bilingual individuals continuously manage two active linguistic systems, strengthening general executive mechanisms for conflict resolution and task switching.',
+    },
+    {
+      id: 'q_ielts_read_06',
+      subjectId: 'sub_ielts_reading',
+      topicId: 'top_ielts_read_p2',
+      type: 'SHORT_ANSWER',
+      difficulty: 'MEDIUM',
+      marks: 9.0,
+      content: 'Passage 2 (Bilingualism & Cognition): Which frontal lobe cortical region is identified in neuroimaging studies as the core neural coordinator for suppressing interference from non-target languages? (Write NO MORE THAN THREE WORDS)',
+      data: {
+        keywords: ['prefrontal cortex', 'dorsolateral prefrontal cortex'],
+        sampleAnswer: 'Dorsolateral prefrontal cortex',
+        explanation: 'The dorsolateral prefrontal cortex and anterior cingulate cortex mediate linguistic selection and suppress intrusion.',
+      },
+    },
+    {
+      id: 'q_ielts_read_07',
+      subjectId: 'sub_ielts_reading',
+      topicId: 'top_ielts_read_p2',
+      type: 'MCQ',
+      difficulty: 'MEDIUM',
+      marks: 9.0,
+      content: 'Passage 2 (Bilingualism & Cognition): What clinical observation is reported regarding the manifestation of Alzheimer’s disease symptoms in bilingual older adults relative to monolingual peers with equivalent neuropathology?',
+      options: [
+        { id: 'opt_a', text: 'Clinical onset of cognitive impairment symptoms is delayed by an average of 4 to 5 years', isCorrect: true },
+        { id: 'opt_b', text: 'Cerebral cortical atrophy is completely prevented', isCorrect: false },
+        { id: 'opt_c', text: 'Memory deficits manifest abruptly without any compensatory phase', isCorrect: false },
+        { id: 'opt_d', text: 'Language proficiency deteriorates faster than motor reflexes', isCorrect: false },
+      ],
+      correctOptionId: 'opt_a',
+      explanation: 'Epidemiological studies confirm bilingualism builds cognitive reserve, delaying symptom onset by 4-5 years despite underlying pathology.',
+    },
+    {
+      id: 'q_ielts_read_08',
+      subjectId: 'sub_ielts_reading',
+      topicId: 'top_ielts_read_p2',
+      type: 'SHORT_ANSWER',
+      difficulty: 'HARD',
+      marks: 9.0,
+      content: 'Passage 2 (Bilingualism & Cognition): What overarching neurological concept describes the brain’s enhanced capacity to sustain neuropathological damage without clinical behavioral impairment via alternative neural pathways? (Write NO MORE THAN TWO WORDS)',
+      data: {
+        keywords: ['cognitive reserve'],
+        sampleAnswer: 'Cognitive reserve',
+        explanation: 'Cognitive reserve refers to resilience against neuropathological damage through rich synaptic networks and compensatory recruitment.',
+      },
+    },
+
+    // Passage 3: Marine Acidification
+    {
+      id: 'q_ielts_read_09',
+      subjectId: 'sub_ielts_reading',
+      topicId: 'top_ielts_read_p3',
+      type: 'MCQ',
+      difficulty: 'MEDIUM',
+      marks: 9.0,
+      content: 'Passage 3 (Ocean Acidification): When surplus anthropogenic carbon dioxide dissolves into surface seawater, what primary chemical reaction cascade occurs?',
+      options: [
+        { id: 'opt_a', text: 'Carbonic acid forms, releasing hydrogen ions that react with and deplete carbonate ion bioavailability', isCorrect: true },
+        { id: 'opt_b', text: 'Seawater pH rises dramatically, causing intense alkalinity', isCorrect: false },
+        { id: 'opt_c', text: 'Dissolved oxygen precipitates into solid mineral crystals on the seabed', isCorrect: false },
+        { id: 'opt_d', text: 'Sodium chloride concentrations double across pelagic biomes', isCorrect: false },
+      ],
+      correctOptionId: 'opt_a',
+      explanation: 'Dissolved CO2 forms H2CO3, which dissociates into H+ and HCO3-. The free H+ ions bind CO3(2-), reducing the saturation state required for calcification.',
+    },
+    {
+      id: 'q_ielts_read_10',
+      subjectId: 'sub_ielts_reading',
+      topicId: 'top_ielts_read_p3',
+      type: 'SHORT_ANSWER',
+      difficulty: 'MEDIUM',
+      marks: 9.0,
+      content: 'Passage 3 (Ocean Acidification): Which biomineral compound is critically required by pteropods, corals, and bivalve molluscs to construct and maintain their protective shells? (Write NO MORE THAN TWO WORDS)',
+      data: {
+        keywords: ['calcium carbonate', 'aragonite'],
+        sampleAnswer: 'Calcium carbonate',
+        explanation: 'Calcifying marine organisms utilize calcium and carbonate ions to synthesize calcium carbonate (calcite/aragonite) skeletons.',
+      },
+    },
+    {
+      id: 'q_ielts_read_11',
+      subjectId: 'sub_ielts_reading',
+      topicId: 'top_ielts_read_p3',
+      type: 'MCQ',
+      difficulty: 'HARD',
+      marks: 9.0,
+      content: 'Passage 3 (Ocean Acidification): What is the authors critical assessment of large-scale ocean chemical geo-engineering interventions (e.g. artificial ocean liming)?',
+      options: [
+        { id: 'opt_a', text: 'They pose unpredictable ecological side effects and cannot substitute for reducing core carbon emissions', isCorrect: true },
+        { id: 'opt_b', text: 'They have proven fully effective in reviving dying coral barrier systems', isCorrect: false },
+        { id: 'opt_c', text: 'They are completely risk-free and inexpensive to scale globally', isCorrect: false },
+        { id: 'opt_d', text: 'They eliminate the need for global renewable energy transition', isCorrect: false },
+      ],
+      correctOptionId: 'opt_a',
+      explanation: 'The author notes geo-engineering has unquantified ecological risks and represents a temporary palliative rather than addressing root carbon emissions.',
+    },
+    {
+      id: 'q_ielts_read_12',
+      subjectId: 'sub_ielts_reading',
+      topicId: 'top_ielts_read_p3',
+      type: 'SHORT_ANSWER',
+      difficulty: 'HARD',
+      marks: 9.0,
+      content: 'Passage 3 (Ocean Acidification): What primary socio-economic consequence does the author project for developing coastal economies dependent on shellfish mariculture? (Write NO MORE THAN THREE WORDS)',
+      data: {
+        keywords: ['fisheries collapse', 'economic decline', 'aquaculture disruption'],
+        sampleAnswer: 'Fisheries collapse',
+        explanation: 'The degradation of larval bivalve recruitment threatens coastal aquaculture collapse and artisanal fishery livelihoods.',
+      },
+    },
+
+    // IELTS Writing Tasks (Subjective Prompts)
+    {
+      id: 'q_ielts_wrt_01',
+      subjectId: 'sub_ielts_writing',
+      topicId: 'top_ielts_write_t1',
+      type: 'SUBJECTIVE',
+      difficulty: 'MEDIUM',
+      marks: 9.0,
+      content: 'IELTS Academic Writing Task 1: The bar chart illustrates the proportions of renewable electricity generation (solar, wind, and hydroelectric) across five European nations between 2010 and 2024. Summarise the information by selecting and reporting the main features, and make comparisons where relevant. (Write at least 150 words).',
+      data: {
+        taskType: 'TASK_1_GRAPH',
+        minWords: 150,
+        rubricCriteria: ['Task Achievement', 'Coherence & Cohesion', 'Lexical Resource', 'Grammatical Range & Accuracy'],
+        sampleAnswer: 'The provided bar chart compares the percentage shares of renewable electricity generated via solar, wind, and hydroelectric sources across five European countries over a 14-year period from 2010 to 2024...',
+      },
+    },
+    {
+      id: 'q_ielts_wrt_02',
+      subjectId: 'sub_ielts_writing',
+      topicId: 'top_ielts_write_t1',
+      type: 'SUBJECTIVE',
+      difficulty: 'MEDIUM',
+      marks: 9.0,
+      content: 'IELTS Academic Writing Task 1: The flow diagram illustrates the multi-stage technical process of seawater reverse osmosis desalination and municipal potable water distribution. Summarise the process by describing the main chronological stages. (Write at least 150 words).',
+      data: {
+        taskType: 'TASK_1_PROCESS',
+        minWords: 150,
+        rubricCriteria: ['Task Achievement', 'Coherence & Cohesion', 'Lexical Resource', 'Grammatical Range & Accuracy'],
+        sampleAnswer: 'The diagram delineates the sequential technical stages involved in extracting, treating, and purifying ocean seawater through high-pressure reverse osmosis filtration before mineral rebalancing and municipal delivery...',
+      },
+    },
+    {
+      id: 'q_ielts_wrt_03',
+      subjectId: 'sub_ielts_writing',
+      topicId: 'top_ielts_write_t2',
+      type: 'SUBJECTIVE',
+      difficulty: 'HARD',
+      marks: 9.0,
+      content: 'IELTS Academic Writing Task 2: Some educational theorists argue that tertiary institutions should focus exclusively on providing specialized technical and vocational training for immediate industry employment, while others believe universities should cultivate broad philosophical enquiry and critical thinking regardless of market utility. Discuss both views and give your own reasoned opinion with academic examples. (Write at least 250 words).',
+      data: {
+        taskType: 'TASK_2_ESSAY',
+        minWords: 250,
+        rubricCriteria: ['Task Response', 'Coherence & Cohesion', 'Lexical Resource', 'Grammatical Range & Accuracy'],
+        sampleAnswer: 'A contentious debate in contemporary higher education revolves around whether universities should function predominantly as vocational training grounds tailored to market demands or remain bastions of open intellectual enquiry...',
+      },
+    },
+    {
+      id: 'q_ielts_wrt_04',
+      subjectId: 'sub_ielts_writing',
+      topicId: 'top_ielts_write_t2',
+      type: 'SUBJECTIVE',
+      difficulty: 'HARD',
+      marks: 9.0,
+      content: 'IELTS Academic Writing Task 2: With the rapid proliferation of artificial intelligence and autonomous cognitive systems, human labour in creative, analytical, and professional fields is facing unprecedented disruption. To what extent do you agree or disagree that automated systems will diminish genuine human creativity and intellectual innovation? Support your argument with concrete illustrations. (Write at least 250 words).',
+      data: {
+        taskType: 'TASK_2_ESSAY',
+        minWords: 250,
+        rubricCriteria: ['Task Response', 'Coherence & Cohesion', 'Lexical Resource', 'Grammatical Range & Accuracy'],
+        sampleAnswer: 'The exponential rise of generative artificial intelligence has sparked intense scrutiny regarding the sanctity of human intellectual and artistic innovation...',
+      },
+    },
+  ];
+
+  for (const iq of ieltsAcademicQuestions) {
+    let dataPayload: string;
+    if (iq.type === 'MCQ') {
+      dataPayload = JSON.stringify({
+        options: (iq as any).options,
+        correctOptionId: (iq as any).correctOptionId,
+        explanation: (iq as any).explanation,
+      });
+    } else {
+      dataPayload = JSON.stringify(iq.data);
+    }
+
+    await pgDb.query(
+      `INSERT INTO "questions" (
+        "id", "type", "content", "data", "difficulty", "marks", "status", "version",
+        "courseId", "subjectId", "syllabusNodeId", "createdById", "createdAt", "updatedAt"
+      ) VALUES ($1, $2, $3, $4, $5, $6, 'PUBLISHED', 1, 'c3', $7, $8, 'usr_admin_test', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      ON CONFLICT ("id") DO UPDATE SET
+        "type" = EXCLUDED."type",
+        "content" = EXCLUDED."content",
+        "data" = EXCLUDED."data",
+        "difficulty" = EXCLUDED."difficulty",
+        "marks" = EXCLUDED."marks",
+        "status" = 'PUBLISHED',
+        "courseId" = 'c3',
+        "subjectId" = EXCLUDED."subjectId",
+        "syllabusNodeId" = EXCLUDED."syllabusNodeId"`,
+      [iq.id, iq.type, iq.content, dataPayload, iq.difficulty, iq.marks, iq.subjectId, iq.topicId]
+    );
+    questionCount++;
+  }
+
+  console.log('5d. Seeding 7 rich IELTS Speaking scenarios (INTERVIEW type with 4-criterion 0-9 Band Rubric)...');
+  const ieltsSpeakingRubric = [
+    {
+      id: 'fluency',
+      name: 'Fluency & Coherence',
+      description: 'Speaks at length with ease, natural rhythm, logical structuring of ideas, and smooth connectives with minimal hesitation.',
+      maxScore: 9,
+      criteria: ['Extended discourse without loss of coherence', 'Effective discourse markers & discourse connectives', 'Natural topic progression'],
+    },
+    {
+      id: 'lexical',
+      name: 'Lexical Resource',
+      description: 'Demonstrates a wide lexical repertoire on abstract topics with precise academic collocation and idiomatic flexibility.',
+      maxScore: 9,
+      criteria: ['Sophisticated academic register', 'Precise nuanced collocations', 'Paraphrasing and context-specific idioms'],
+    },
+    {
+      id: 'grammar',
+      name: 'Grammatical Range & Accuracy',
+      description: 'Deploys a diverse mix of complex and compound sentence structures with high grammatical control and low error density.',
+      maxScore: 9,
+      criteria: ['Subordinate, conditional, and relative clauses', 'Consistent tense and mood control', 'Accurate modal expressions'],
+    },
+    {
+      id: 'pronunciation',
+      name: 'Pronunciation & Oral Delivery',
+      description: 'Intelligible, natural phonological delivery utilizing expressive sentence stress, intonation contours, and syllable rhythm.',
+      maxScore: 9,
+      criteria: ['Effortless intelligibility', 'Accurate word and sentence stress', 'Expressive pitch variation and pacing'],
+    },
+  ];
+
+  const ieltsSpeakingQuestions = [
     {
       id: 'q_interview_ielts_01',
       type: 'INTERVIEW',
@@ -2587,51 +3355,142 @@ export async function runSeed() {
       difficulty: 'MEDIUM',
       marks: 9.0,
       status: 'PUBLISHED',
-      courseId: 'c4',
+      courseId: 'c3',
       subjectId: 'sub_ielts_speaking',
-      syllabusNodeId: 'top_ielts_fluency',
+      syllabusNodeId: 'top_ielts_spk_p3',
       data: {
-        scenario: 'IELTS Speaking Part 3 Discussion: The examiner asks you to critically discuss the impact of artificial intelligence and digital platforms on learning autonomy and critical thinking.',
+        scenario: 'IELTS Speaking Part 3 Discussion: The examiner asks you to critically evaluate how digital learning tools and artificial intelligence influence learner autonomy and critical thinking.',
         preset: 'IELTS_SPEAKING',
         maxTurns: 4,
         expectedDurationMinutes: 12,
         systemInstructions: 'You are a certified IELTS Speaking Examiner. Ask probing follow-up questions evaluating the candidate vocabulary range, complex grammatical structures, and depth of argumentation.',
         openingQuestion: 'Let us discuss technological changes in learning. In your view, has the rapid adoption of digital tools enhanced genuine critical thinking among young students, or made them overly reliant on automated shortcuts?',
-        rubric: [
-          {
-            id: 'fluency',
-            name: 'Fluency & Coherence',
-            description: 'Speaks at length with ease, logical sequencing of ideas, and smooth connectives.',
-            maxScore: 9,
-            criteria: ['Natural discourse flow', 'Minimal hesitation or repetition', 'Clear paragraphing in speech'],
-          },
-          {
-            id: 'lexical',
-            name: 'Lexical Resource',
-            description: 'Uses a wide range of academic and idiomatic vocabulary with precision.',
-            maxScore: 9,
-            criteria: ['Varied vocabulary on abstract topics', 'Accurate collocations', 'Appropriate register'],
-          },
-          {
-            id: 'grammar',
-            name: 'Grammatical Range & Accuracy',
-            description: 'Uses a mix of simple and complex sentence structures with high accuracy.',
-            maxScore: 9,
-            criteria: ['Complex clauses (conditionals, passive, relative)', 'Low error density'],
-          },
-          {
-            id: 'pronunciation',
-            name: 'Pronunciation & Intonation',
-            description: 'Intelligible pronunciation with expressive stress, rhythm, and intonation.',
-            maxScore: 9,
-            criteria: ['Phonological features used effectively', 'Effortless comprehensibility'],
-          },
-        ],
+        rubric: ieltsSpeakingRubric,
+      },
+    },
+    {
+      id: 'q_interview_ielts_02',
+      type: 'INTERVIEW',
+      content: 'Discuss the challenges of rapid urbanization and sustainable public transport in contemporary metropolitan cities. How should city planners balance economic expansion with environmental conservation?',
+      difficulty: 'HARD',
+      marks: 9.0,
+      status: 'PUBLISHED',
+      courseId: 'c3',
+      subjectId: 'sub_ielts_speaking',
+      syllabusNodeId: 'top_ielts_spk_p3',
+      data: {
+        scenario: 'IELTS Speaking Part 3 Academic Discussion: The examiner evaluates your ability to debate urban planning, high-density public transit solutions, and carbon footprint reduction in expanding metropolises.',
+        preset: 'IELTS_SPEAKING',
+        maxTurns: 4,
+        expectedDurationMinutes: 14,
+        systemInstructions: 'You are a certified IELTS Speaking Examiner. Probe the candidate for nuanced analysis of public transit investments, congestion pricing, and urban sustainability tradeoffs.',
+        openingQuestion: 'Metropolitan centers worldwide face severe traffic congestion and air pollution. What innovative transport policies do you believe can effectively persuade citizens to abandon private car dependency?',
+        rubric: ieltsSpeakingRubric,
+      },
+    },
+    {
+      id: 'q_interview_ielts_03',
+      type: 'INTERVIEW',
+      content: 'Describe a memorable journey to an unfamiliar destination that challenged your initial assumptions. Explain what occurred and how the experience broadened your cultural perspective.',
+      difficulty: 'MEDIUM',
+      marks: 9.0,
+      status: 'PUBLISHED',
+      courseId: 'c3',
+      subjectId: 'sub_ielts_speaking',
+      syllabusNodeId: 'top_ielts_spk_p2',
+      data: {
+        scenario: 'IELTS Speaking Part 2 Long Turn & Part 3 Follow-up: You are provided an individual cue card prompt regarding a transformative travel experience, followed by a discussion on cross-cultural empathy.',
+        preset: 'IELTS_SPEAKING',
+        maxTurns: 4,
+        expectedDurationMinutes: 12,
+        systemInstructions: 'You are a certified IELTS Speaking Examiner. Allow the candidate to develop their narrative monologue, then ask probing follow-up questions exploring cultural globalization.',
+        openingQuestion: 'You have one minute to prepare your monologue describing your journey. Afterwards, we will examine how modern tourism influences local cultural traditions.',
+        rubric: ieltsSpeakingRubric,
+      },
+    },
+    {
+      id: 'q_interview_ielts_04',
+      type: 'INTERVIEW',
+      content: 'Analyze the implications of workplace automation and artificial intelligence for future employment. What essential competencies should future graduates cultivate to thrive in an automated economy?',
+      difficulty: 'HARD',
+      marks: 9.0,
+      status: 'PUBLISHED',
+      courseId: 'c3',
+      subjectId: 'sub_ielts_speaking',
+      syllabusNodeId: 'top_ielts_spk_p3',
+      data: {
+        scenario: 'IELTS Speaking Part 3 Discussion: The examiner probes your perspective on the changing nature of employment, cognitive adaptability, and human-machine collaboration.',
+        preset: 'IELTS_SPEAKING',
+        maxTurns: 4,
+        expectedDurationMinutes: 14,
+        systemInstructions: 'You are a certified IELTS Speaking Examiner. Challenge simplistic views on job displacement and prompt the candidate for deep sociological and economic synthesis.',
+        openingQuestion: 'As machine intelligence automates routine and complex analytical workflows, which uniquely human skills do you consider irreplaceable in the upcoming decades?',
+        rubric: ieltsSpeakingRubric,
+      },
+    },
+    {
+      id: 'q_interview_ielts_05',
+      type: 'INTERVIEW',
+      content: 'Examine whether national governments should allocate substantial public funds to preserving historic architecture and cultural traditions, or prioritize modern infrastructure.',
+      difficulty: 'MEDIUM',
+      marks: 9.0,
+      status: 'PUBLISHED',
+      courseId: 'c3',
+      subjectId: 'sub_ielts_speaking',
+      syllabusNodeId: 'top_ielts_spk_p3',
+      data: {
+        scenario: 'IELTS Speaking Part 3 Discussion: Discussing cultural identity preservation, architectural heritage conservation, and economic prioritization in a globalized society.',
+        preset: 'IELTS_SPEAKING',
+        maxTurns: 4,
+        expectedDurationMinutes: 12,
+        systemInstructions: 'You are a certified IELTS Speaking Examiner. Probe the candidate on the balance between national identity preservation and pragmatic public expenditure.',
+        openingQuestion: 'Some people argue that preserving ancient buildings is an expensive luxury for developing nations. How would you justify public investment in cultural heritage?',
+        rubric: ieltsSpeakingRubric,
+      },
+    },
+    {
+      id: 'q_interview_ielts_06',
+      type: 'INTERVIEW',
+      content: 'Describe a person—such as a teacher, family member, or community leader—who strongly influenced your personal values or career ambitions.',
+      difficulty: 'MEDIUM',
+      marks: 9.0,
+      status: 'PUBLISHED',
+      courseId: 'c3',
+      subjectId: 'sub_ielts_speaking',
+      syllabusNodeId: 'top_ielts_spk_p2',
+      data: {
+        scenario: 'IELTS Speaking Part 2 Cue Card & Part 3 Discussion: Delivering an individual long turn regarding personal mentorship and leadership ethics.',
+        preset: 'IELTS_SPEAKING',
+        maxTurns: 4,
+        expectedDurationMinutes: 12,
+        systemInstructions: 'You are a certified IELTS Speaking Examiner. Listen to the candidate character monologue and follow up with conceptual questions on role models in society.',
+        openingQuestion: 'Please present your cue card talk on this influential individual, describing who they are, how you met, and the key lessons or values they imparted to you.',
+        rubric: ieltsSpeakingRubric,
+      },
+    },
+    {
+      id: 'q_interview_ielts_07',
+      type: 'INTERVIEW',
+      content: 'Let us discuss everyday routines, leisure habits, and work-life balance in modern high-stress society. How do recreational habits impact personal well-being and productivity?',
+      difficulty: 'EASY',
+      marks: 9.0,
+      status: 'PUBLISHED',
+      courseId: 'c3',
+      subjectId: 'sub_ielts_speaking',
+      syllabusNodeId: 'top_ielts_spk_p1',
+      data: {
+        scenario: 'IELTS Speaking Part 1 & Part 3 Academic Discussion: Everyday lifestyle choices, physical fitness, stress reduction, and digital detox habits.',
+        preset: 'IELTS_SPEAKING',
+        maxTurns: 4,
+        expectedDurationMinutes: 10,
+        systemInstructions: 'You are a certified IELTS Speaking Examiner. Begin with natural personal inquiry and transition into broader societal observations regarding leisure culture.',
+        openingQuestion: 'How have leisure activities and recreational time evolved over the past generation, and do individuals today achieve a healthy work-life balance?',
+        rubric: ieltsSpeakingRubric,
       },
     },
   ];
 
-  for (const iq of interviewQuestions) {
+  for (const iq of ieltsSpeakingQuestions) {
     await pgDb.query(
       `INSERT INTO "questions" (
         "id", "type", "content", "data", "difficulty", "marks", "status", "version",
@@ -2696,7 +3555,9 @@ export async function runSeed() {
     }
   }
 
-  console.log('8. Seeding standard authentic JEE Main Exam Pattern blueprint...');
+  console.log('8. Seeding standard authentic Exam Pattern blueprints (JEE, NEET, IELTS)...');
+  
+  // 8a. JEE Blueprint
   await pgDb.query(`
     INSERT INTO "exam_patterns" (
       "id", "name", "courseId", "durationMinutes", "description", "status", "type", "totalMarks", "version", "createdById", "createdAt", "updatedAt"
@@ -2727,13 +3588,13 @@ export async function runSeed() {
     `, [sub.id, sub.marks]);
   }
 
-  const baselineSections = [
+  const jeeSections = [
     { id: 'sec_jee_phy', name: 'Section A: Physics', subjectId: 'sub_phy', numQ: 10, marks: 4.0, wrong: -1.0, order: 1 },
     { id: 'sec_jee_chem', name: 'Section B: Chemistry', subjectId: 'sub_chem', numQ: 10, marks: 4.0, wrong: -1.0, order: 2 },
     { id: 'sec_jee_math', name: 'Section C: Mathematics', subjectId: 'sub_math', numQ: 10, marks: 4.0, wrong: -1.0, order: 3 },
   ];
 
-  for (const s of baselineSections) {
+  for (const s of jeeSections) {
     await pgDb.query(`
       INSERT INTO "exam_pattern_sections" (
         "id", "examPatternId", "subjectId", "name", "sequenceOrder", "numQuestions", "marksPerQuestion", "totalMarks", "marksCorrect", "marksWrong", "marksUnattempted", "createdAt", "updatedAt"
@@ -2746,23 +3607,130 @@ export async function runSeed() {
     `, [s.id, s.subjectId, s.name, s.order, s.numQ, s.marks, s.numQ * s.marks, s.marks, s.wrong]);
   }
 
-  console.log('9. Pre-generating and publishing 3 authentic demo exams via real service pipeline...');
-  const examTitles = [
-    'JEE Main Grand Mock Exam 1 (All India Test Series)',
-    'JEE Main Grand Mock Exam 2 (Physics & Chemistry Intensive)',
-    'JEE Main Grand Mock Exam 3 (Full Syllabus Simulation)',
+  // 8b. NEET Blueprint
+  await pgDb.query(`
+    INSERT INTO "exam_patterns" (
+      "id", "name", "courseId", "durationMinutes", "description", "status", "type", "totalMarks", "version", "createdById", "createdAt", "updatedAt"
+    ) VALUES (
+      'pat_neet_standard',
+      'NEET UG National Blueprint (PCB)',
+      'c2',
+      180,
+      'Pre-medical entrance assessment covering Biology (Genetics & Physiology), Medical Physics, and Medical Chemistry (+4 / -1)',
+      'PUBLISHED',
+      'MULTI',
+      72.0,
+      1,
+      'usr_admin_test',
+      CURRENT_TIMESTAMP,
+      CURRENT_TIMESTAMP
+    ) ON CONFLICT ("id") DO UPDATE SET
+      "name" = EXCLUDED."name",
+      "status" = 'PUBLISHED',
+      "totalMarks" = 72.0
+  `);
+
+  for (const sub of [{ id: 'sub_bio', marks: 40 }, { id: 'sub_neet_phy', marks: 16 }, { id: 'sub_neet_chem', marks: 16 }]) {
+    await pgDb.query(`
+      INSERT INTO "exam_pattern_subjects" ("examPatternId", "subjectId", "targetMarks")
+      VALUES ('pat_neet_standard', $1, $2)
+      ON CONFLICT ("examPatternId", "subjectId") DO UPDATE SET "targetMarks" = EXCLUDED."targetMarks"
+    `, [sub.id, sub.marks]);
+  }
+
+  const neetSections = [
+    { id: 'sec_neet_bio', name: 'Section A: Biology & Genetics', subjectId: 'sub_bio', numQ: 10, marks: 4.0, wrong: -1.0, order: 1 },
+    { id: 'sec_neet_phy', name: 'Section B: Medical Physics', subjectId: 'sub_neet_phy', numQ: 4, marks: 4.0, wrong: -1.0, order: 2 },
+    { id: 'sec_neet_chem', name: 'Section C: Medical Chemistry', subjectId: 'sub_neet_chem', numQ: 4, marks: 4.0, wrong: -1.0, order: 3 },
   ];
+
+  for (const s of neetSections) {
+    await pgDb.query(`
+      INSERT INTO "exam_pattern_sections" (
+        "id", "examPatternId", "subjectId", "name", "sequenceOrder", "numQuestions", "marksPerQuestion", "totalMarks", "marksCorrect", "marksWrong", "marksUnattempted", "createdAt", "updatedAt"
+      ) VALUES ($1, 'pat_neet_standard', $2, $3, $4, $5, $6, $7, $8, $9, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      ON CONFLICT ("id") DO UPDATE SET
+        "name" = EXCLUDED."name",
+        "numQuestions" = EXCLUDED."numQuestions",
+        "marksPerQuestion" = EXCLUDED."marksPerQuestion",
+        "totalMarks" = EXCLUDED."totalMarks"
+    `, [s.id, s.subjectId, s.name, s.order, s.numQ, s.marks, s.numQ * s.marks, s.marks, s.wrong]);
+  }
+
+  // 8c. IELTS Blueprint (Reading + Writing + Speaking)
+  await pgDb.query(`
+    INSERT INTO "exam_patterns" (
+      "id", "name", "courseId", "durationMinutes", "description", "status", "type", "totalMarks", "version", "createdById", "createdAt", "updatedAt"
+    ) VALUES (
+      'pat_ielts_academic_standard',
+      'IELTS Academic Complete Blueprint',
+      'c3',
+      160,
+      'Standard IELTS Academic Examination covering Reading (Passage Analysis), Writing (Task 1 & Task 2), and Speaking (Oral Interview Assessment)',
+      'PUBLISHED',
+      'MULTI',
+      72.0,
+      1,
+      'usr_admin_test',
+      CURRENT_TIMESTAMP,
+      CURRENT_TIMESTAMP
+    ) ON CONFLICT ("id") DO UPDATE SET
+      "name" = EXCLUDED."name",
+      "status" = 'PUBLISHED',
+      "totalMarks" = 72.0
+  `);
+
+  for (const sub of [{ id: 'sub_ielts_reading', marks: 36 }, { id: 'sub_ielts_writing', marks: 18 }, { id: 'sub_ielts_speaking', marks: 18 }]) {
+    await pgDb.query(`
+      INSERT INTO "exam_pattern_subjects" ("examPatternId", "subjectId", "targetMarks")
+      VALUES ('pat_ielts_academic_standard', $1, $2)
+      ON CONFLICT ("examPatternId", "subjectId") DO UPDATE SET "targetMarks" = EXCLUDED."targetMarks"
+    `, [sub.id, sub.marks]);
+  }
+
+  const ieltsSections = [
+    { id: 'sec_ielts_read', name: 'Section A: Academic Reading Comprehension', subjectId: 'sub_ielts_reading', numQ: 4, marks: 9.0, wrong: 0.0, order: 1 },
+    { id: 'sec_ielts_write', name: 'Section B: Academic Writing Tasks (Task 1 & Task 2)', subjectId: 'sub_ielts_writing', numQ: 2, marks: 9.0, wrong: 0.0, order: 2 },
+    { id: 'sec_ielts_speak', name: 'Section C: Oral Speaking & Interview Assessment', subjectId: 'sub_ielts_speaking', numQ: 2, marks: 9.0, wrong: 0.0, order: 3 },
+  ];
+
+  for (const s of ieltsSections) {
+    await pgDb.query(`
+      INSERT INTO "exam_pattern_sections" (
+        "id", "examPatternId", "subjectId", "name", "sequenceOrder", "numQuestions", "marksPerQuestion", "totalMarks", "marksCorrect", "marksWrong", "marksUnattempted", "createdAt", "updatedAt"
+      ) VALUES ($1, 'pat_ielts_academic_standard', $2, $3, $4, $5, $6, $7, $8, $9, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      ON CONFLICT ("id") DO UPDATE SET
+        "name" = EXCLUDED."name",
+        "numQuestions" = EXCLUDED."numQuestions",
+        "marksPerQuestion" = EXCLUDED."marksPerQuestion",
+        "totalMarks" = EXCLUDED."totalMarks"
+    `, [s.id, s.subjectId, s.name, s.order, s.numQ, s.marks, s.numQ * s.marks, s.marks, s.wrong]);
+  }
+
+  console.log('9. Pre-generating and publishing 2 authentic demo exams for EACH of the 3 courses (JEE, NEET, IELTS) via real service pipeline...');
+  const examPlans = [
+    // JEE Main Exams
+    { patternId: 'pat_jee_main_standard', name: 'JEE Main Grand Mock Exam 1 (All India Test Series)' },
+    { patternId: 'pat_jee_main_standard', name: 'JEE Main Grand Mock Exam 2 (Physics & Chemistry Intensive)' },
+    // NEET UG Exams
+    { patternId: 'pat_neet_standard', name: 'NEET UG All-India Diagnostic Paper 1 (Medical Assessment)' },
+    { patternId: 'pat_neet_standard', name: 'NEET UG Full Syllabus Simulation Paper 2 (Pre-Medical Mock)' },
+    // IELTS Academic Exams
+    { patternId: 'pat_ielts_academic_standard', name: 'IELTS Academic Comprehensive Examination - Practice Test 1' },
+    { patternId: 'pat_ielts_academic_standard', name: 'IELTS Academic Comprehensive Examination - Practice Test 2' },
+  ];
+
   const generatedExams: any[] = [];
-  for (const name of examTitles) {
+  for (const plan of examPlans) {
     const generated: any = await ExamGeneratorService.generateExam(
-      { patternId: 'pat_jee_main_standard', name },
+      { patternId: plan.patternId, name: plan.name },
       'usr_admin_test'
     );
     await ExamArchiveService.publishAndSnapshotExam(generated.exam.id, 'usr_admin_test');
     generatedExams.push(generated.exam);
   }
 
-  console.log('10. Seeding contrasting student attempt profiles across seeded exams...');
+  console.log('10. Seeding contrasting student attempt profiles across seeded JEE exams...');
   const attemptService = new AttemptService();
 
   const studentProfiles = [
@@ -3124,7 +4092,7 @@ export async function runSeed() {
     { planCode: 'PREMIUM', key: 'priority_ai', type: 'BOOLEAN', value: 'false' },
     // PREMIUM_PLUS
     { planCode: 'PREMIUM_PLUS', key: 'mock_tests', type: 'NUMBER', value: '999999' },
-    { planCode: 'PREMIUM_PLUS', key: 'ai_interview_daily', type: 'NUMBER', value: '10' },
+    { planCode: 'PREMIUM_PLUS', key: 'ai_interview_daily', type: 'NUMBER', value: '100' },
     { planCode: 'PREMIUM_PLUS', key: 'demo_duration', type: 'NUMBER', value: '60' },
     { planCode: 'PREMIUM_PLUS', key: 'daily_ai_credits', type: 'NUMBER', value: '50' },
     { planCode: 'PREMIUM_PLUS', key: 'full_assessment', type: 'BOOLEAN', value: 'true' },
@@ -3183,13 +4151,13 @@ export async function runSeed() {
 
   console.log('================================================================');
   console.log(`✅ DATABASE SEED COMPLETE:`);
-  console.log(`   - Courses: ${SEED_COURSES.length} (Engineering Entrance & Medical Foundation)`);
-  console.log(`   - Subjects: ${SEED_SUBJECTS.length} (Physics, Chemistry, Mathematics, Biology)`);
-  console.log(`   - Topics: ${SEED_TOPICS.length} syllabus topics`);
-  console.log(`   - Questions: ${questionCount} published questions seeded across all 12 topics (10 per topic: 3 EASY, 4 MEDIUM, 3 HARD)`);
-  console.log(`   - Blueprints: 1 standard authentic JEE Main Grand Blueprint (pat_jee_main_standard) with 3 sections`);
-  console.log(`   - Pre-published Exams: ${generatedExams.length} published exams with immutable snapshots in archive`);
-  console.log(`   - Enrolled Students: ${studentProfiles.length} students with contrasting evaluated mastery profiles`);
+  console.log(`   - Courses: ${SEED_COURSES.length} (Engineering Entrance [JEE], Medical Entrance [NEET], IELTS Academic)`);
+  console.log(`   - Subjects: ${SEED_SUBJECTS.length} (JEE: PHY, CHEM, MATH | NEET: BIO, PHY, CHEM | IELTS: LIS, RDG, WRT, SPK)`);
+  console.log(`   - Topics: ${SEED_TOPICS.length} syllabus topics (with Listening structural node unpopulated)`);
+  console.log(`   - Questions: ${questionCount} published questions seeded across question bank`);
+  console.log(`   - Blueprints: 3 standard authentic blueprints (pat_jee_main_standard, pat_neet_standard, pat_ielts_academic_standard)`);
+  console.log(`   - Pre-published Exams: ${generatedExams.length} published exams (2 per course) with immutable snapshots in archive`);
+  console.log(`   - Enrolled Students: ${studentProfiles.length} students enrolled in IELTS with full interview eligibility`);
   console.log(`   - Languages: ${BASELINE_LANGUAGES.length} (Full 23-language Indian baseline)`);
   console.log(`   - Translations: ${totalTranslationsSeeded}`);
   console.log(`   - Plans & Entitlements: ${defaultPlans.length} plans, ${defaultEntitlementRules.length} rules, ${creditPackages.length} credit packages`);
@@ -3206,3 +4174,4 @@ if (require.main === module) {
       process.exit(1);
     });
 }
+

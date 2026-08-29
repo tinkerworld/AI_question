@@ -362,7 +362,9 @@ const MainLayout: React.FC = () => {
                 ? '0'
                 : '28px',
             display: 'flex',
-            overflow: 'hidden',
+            flexDirection: 'column',
+            overflowY: 'auto',
+            overflowX: 'hidden',
           }}
         >
           {activeTab === 'student_exams' ? (

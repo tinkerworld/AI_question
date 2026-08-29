@@ -313,7 +313,7 @@ export class AIGatewayService {
       // Ollama / Local API format
       try {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 60000); // 60s timeout for local model cold load
+        const timeout = setTimeout(() => controller.abort(), 120000); // 120s timeout for local model cold load & generation
         const baseUrl = (provider.baseUrl || 'http://localhost:11434').replace(/\/+$/, '');
         const res = await fetch(`${baseUrl}/api/generate`, {
           method: 'POST',
@@ -322,6 +322,10 @@ export class AIGatewayService {
             model: provider.modelId,
             prompt: `${systemPrompt}\n\n${userPrompt}`,
             stream: false,
+            options: {
+              num_predict: req.maxTokens || 256,
+              temperature: req.temperature || 0.7,
+            },
             format: 'json',
           }),
           signal: controller.signal,
@@ -623,7 +627,7 @@ export class AIGatewayService {
     if (provider.type === 'LOCAL') {
       try {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 30000);
+        const timeout = setTimeout(() => controller.abort(), 120000); // 120s timeout for local model conversation inference
         let baseUrl = provider.baseUrl?.trim() || 'http://localhost:11434';
         baseUrl = baseUrl.replace(/\/+$/, '');
 
@@ -637,6 +641,10 @@ export class AIGatewayService {
             model: provider.modelId,
             messages,
             stream: false,
+            options: {
+              num_predict: req.maxTokens || (featureKey === 'interview_evaluation' ? 512 : 120),
+              temperature: req.temperature || 0.7,
+            },
             format: featureKey === 'interview_evaluation' ? 'json' : undefined,
           };
         } else {

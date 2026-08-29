@@ -151,7 +151,7 @@ export const BASELINE_PLAN_CONFIGS: Record<PlanTier, PlanTierConfig> = {
     billingCycle: 'monthly',
     entitlements: {
       mock_tests: 999999,
-      ai_interview_daily: 10,
+      ai_interview_daily: 100,
       demo_duration: 60,
       daily_ai_credits: 50,
       full_assessment: true,

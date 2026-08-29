@@ -3,7 +3,7 @@ const assert = require('assert');
 const path = require('path');
 const { questionTypeRegistry } = require(path.resolve(__dirname, '../packages/question-types/src/index.ts'));
 
-const API_BASE = 'http://localhost:4000/api/v1';
+const API_BASE = process.env.API_BASE || 'http://localhost:4043/api/v1';
 
 function request(method, path, body = null, token = null) {
   return new Promise((resolve, reject) => {
@@ -103,18 +103,19 @@ async function runAllTests() {
   });
 
   // 12.2 Derived Course Eligibility
-  await test('12.2-U1: Derived Course Eligibility separates Interview vs JEE/NEET students', async () => {
-    // Student 1 is enrolled in c1 (JEE) and c2 (NEET) - 0 interview questions
+  await test('12.2-U1: Derived Course Eligibility confirms IELTS enrolled students are interview-eligible', async () => {
+    // Student 1 is enrolled in IELTS (c3) - has interview questions
     const s1Res = await request('GET', '/interviews/eligibility', null, studentToken);
     assert.strictEqual(s1Res.status, 200);
-    assert.strictEqual(s1Res.data.data.isEligible, false, 'JEE/NEET student must not be interview-eligible');
-    assert.strictEqual(s1Res.data.data.eligibleCourseIds.length, 0);
+    assert.strictEqual(s1Res.data.data.isEligible, true, 'IELTS enrolled student must be interview-eligible');
+    assert.ok(s1Res.data.data.eligibleCourseIds.includes('c3'));
+    assert.ok(s1Res.data.data.availableQuestions.length >= 1);
 
-    // Student 2 is enrolled in c3 (UPSC) and c4 (IELTS) - has interview questions
+    // Student 2 is enrolled in IELTS (c3) - has interview questions
     const s2Res = await request('GET', '/interviews/eligibility', null, student2Token);
     assert.strictEqual(s2Res.status, 200);
-    assert.strictEqual(s2Res.data.data.isEligible, true, 'UPSC/IELTS student must be interview-eligible');
-    assert.ok(s2Res.data.data.eligibleCourseIds.length >= 1);
+    assert.strictEqual(s2Res.data.data.isEligible, true, 'IELTS enrolled student must be interview-eligible');
+    assert.ok(s2Res.data.data.eligibleCourseIds.includes('c3'));
     assert.ok(s2Res.data.data.availableQuestions.length >= 1);
 
     // Staff (Admin) is always eligible
@@ -134,7 +135,7 @@ async function runAllTests() {
       'POST',
       '/interview/sessions/start',
       {
-        questionId: 'q_interview_upsc_01',
+        questionId: 'q_interview_ielts_01',
         mode: 'PRACTICE',
       },
       student2Token
@@ -157,9 +158,9 @@ async function runAllTests() {
     );
 
     assert.strictEqual(turn1Res.status, 200, 'Turn 1 must succeed');
-    assert.strictEqual(turn1Res.data.data.candidateTurn.turnNumber, 1);
+    assert.strictEqual(turn1Res.data.data.candidateTurn.turnNumber, 2);
     assert.ok(turn1Res.data.data.aiTurn, 'Should generate AI follow-up turn');
-    assert.strictEqual(turn1Res.data.data.aiTurn.turnNumber, 2);
+    assert.strictEqual(turn1Res.data.data.aiTurn.turnNumber, 3);
     assert.strictEqual(turn1Res.data.data.isCompleted, false);
 
     // 3. Submit Turn 2 Response
@@ -170,7 +171,7 @@ async function runAllTests() {
       student2Token
     );
     assert.strictEqual(turn2Res.status, 200, 'Turn 2 must succeed');
-    assert.strictEqual(turn2Res.data.data.candidateTurn.turnNumber, 2);
+    assert.strictEqual(turn2Res.data.data.candidateTurn.turnNumber, 4);
 
     // 4. Complete & Evaluate Session
     const completeRes = await request(

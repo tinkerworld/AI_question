@@ -41,6 +41,12 @@ async function migrate() {
 
   await db.exec(`
     -- Drop existing tables if present
+    DROP TABLE IF EXISTS "refund_transactions" CASCADE;
+    DROP TABLE IF EXISTS "invoices" CASCADE;
+    DROP TABLE IF EXISTS "ai_credit_packages" CASCADE;
+    DROP TABLE IF EXISTS "subscriptions" CASCADE;
+    DROP TABLE IF EXISTS "entitlement_rules" CASCADE;
+    DROP TABLE IF EXISTS "plans" CASCADE;
     DROP TABLE IF EXISTS "interview_turns" CASCADE;
     DROP TABLE IF EXISTS "interview_sessions" CASCADE;
     DROP TABLE IF EXISTS "ai_generation_jobs" CASCADE;
