@@ -323,8 +323,8 @@ export class AIGatewayService {
             prompt: `${systemPrompt}\n\n${userPrompt}`,
             stream: false,
             options: {
-              num_predict: req.maxTokens || 256,
-              temperature: req.temperature || 0.7,
+              num_predict: 256,
+              temperature: 0.7,
             },
             format: 'json',
           }),
