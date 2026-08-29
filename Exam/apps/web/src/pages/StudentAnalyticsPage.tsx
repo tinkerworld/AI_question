@@ -14,7 +14,7 @@ import {
 } from '@repo/types';
 import { PracticePlayerModal } from '../components/PracticePlayerModal';
 
-const API_BASE = 'http://localhost:4000/api/v1';
+const API_BASE = 'http://localhost:4043/api/v1';
 
 function getStatusBadgeStyle(color?: MasteryColor) {
   switch (color) {

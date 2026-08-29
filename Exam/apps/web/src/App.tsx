@@ -69,7 +69,7 @@ const MainLayout: React.FC = () => {
       return;
     }
 
-    fetch('http://localhost:4000/api/v1/interview/eligibility', {
+    fetch('http://localhost:4043/api/v1/interview/eligibility', {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => r.json())

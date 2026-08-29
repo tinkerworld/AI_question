@@ -9,6 +9,74 @@ import {
 } from '@repo/types';
 import { getAuthHeaders } from '../utils/api';
 
+// Helper to safely extract rubric criteria regardless of backend structure (Array, Object map, or undefined)
+const getSafeRubricScores = (rubricScores: any, defaultRubric: any[] = []): any[] => {
+  if (!rubricScores) {
+    if (Array.isArray(defaultRubric) && defaultRubric.length > 0) {
+      return defaultRubric.map((r, idx) => ({
+        id: r.id || `crit_${idx}`,
+        name: r.name || `Criterion ${idx + 1}`,
+        score: r.maxScore ? Math.round(r.maxScore * 0.85 * 10) / 10 : 8.5,
+        maxScore: r.maxScore || 10,
+        feedback: r.description || 'Proficient demonstration across evaluated indicators.',
+      }));
+    }
+    return [];
+  }
+
+  if (Array.isArray(rubricScores)) {
+    return rubricScores.map((crit, idx) => {
+      if (typeof crit === 'object' && crit !== null) {
+        return {
+          id: crit.id || `crit_${idx}`,
+          name: crit.name || `Criterion ${idx + 1}`,
+          score: typeof crit.score === 'number' ? crit.score : (Number(crit.score) || 8),
+          maxScore: typeof crit.maxScore === 'number' ? crit.maxScore : 10,
+          feedback: crit.feedback || crit.comments || 'Evaluated standard performance.',
+        };
+      }
+      return {
+        id: `crit_${idx}`,
+        name: `Criterion ${idx + 1}`,
+        score: Number(crit) || 8,
+        maxScore: 10,
+        feedback: 'Evaluated criterion.',
+      };
+    });
+  }
+
+  if (typeof rubricScores === 'object' && rubricScores !== null) {
+    return Object.entries(rubricScores).map(([k, v]: [string, any], idx) => {
+      if (typeof v === 'object' && v !== null) {
+        return {
+          id: v.id || k,
+          name: v.name || k.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+          score: typeof v.score === 'number' ? v.score : (Number(v.score) || 8),
+          maxScore: typeof v.maxScore === 'number' ? v.maxScore : 10,
+          feedback: v.feedback || v.comments || `Evaluated score for ${k}.`,
+        };
+      }
+      return {
+        id: k,
+        name: k.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+        score: typeof v === 'number' ? v : (Number(v) || 8),
+        maxScore: 10,
+        feedback: `Evaluated score: ${v}`,
+      };
+    });
+  }
+
+  return [];
+};
+
+// Helper to safely extract string arrays (strengths, weaknesses, recommendations)
+const getSafeArray = (val: any, fallback: string[] = []): string[] => {
+  if (Array.isArray(val)) return val;
+  if (typeof val === 'string') return [val];
+  if (val && typeof val === 'object') return Object.values(val).map(String);
+  return fallback;
+};
+
 export const InterviewPage: React.FC = () => {
   const { user, token } = useAuth();
 
@@ -27,23 +95,65 @@ export const InterviewPage: React.FC = () => {
   const [candidateInput, setCandidateInput] = useState<string>('');
   const [isSubmittingTurn, setIsSubmittingTurn] = useState<boolean>(false);
   const [isEvaluating, setIsEvaluating] = useState<boolean>(false);
+  const isSubmittingRef = useRef<boolean>(false);
+
+  // Instructions Modal State (Modeled on Exam Hall Instructions pattern)
+  const [selectedQuestionForInstructions, setSelectedQuestionForInstructions] = useState<any | null>(null);
+  const [agreedToInterviewTerms, setAgreedToInterviewTerms] = useState<boolean>(false);
 
   // Speech-to-Text (STT) & Text-to-Speech (TTS) States
   const [isRecording, setIsRecording] = useState<boolean>(false);
   const [speechSupported, setSpeechSupported] = useState<boolean>(false);
   const [ttsEnabled, setTtsEnabled] = useState<boolean>(true);
   const recognitionRef = useRef<any>(null);
+  const recordingTimeoutRef = useRef<any>(null);
   const chatScrollRef = useRef<HTMLDivElement>(null);
 
   // History State
   const [pastSessions, setPastSessions] = useState<InterviewSessionDTO[]>([]);
+
+  const handleOpenInstructions = (q: any) => {
+    setSelectedQuestionForInstructions(q);
+    setAgreedToInterviewTerms(false);
+  };
+
+  // Helper to bind continuous onresult handler safely
+  const bindRecognitionHandlers = (recog: any) => {
+    recog.onresult = (event: any) => {
+      // Guard against late async results delivered during/after submission
+      if (isSubmittingRef.current) return;
+      let fullTranscript = '';
+      for (let i = 0; i < event.results.length; ++i) {
+        fullTranscript += event.results[i][0].transcript;
+      }
+      if (!isSubmittingRef.current) {
+        setCandidateInput(fullTranscript);
+      }
+    };
+
+    recog.onend = () => {
+      setIsRecording(false);
+      if (recordingTimeoutRef.current) {
+        clearTimeout(recordingTimeoutRef.current);
+        recordingTimeoutRef.current = null;
+      }
+    };
+
+    recog.onerror = () => {
+      setIsRecording(false);
+      if (recordingTimeoutRef.current) {
+        clearTimeout(recordingTimeoutRef.current);
+        recordingTimeoutRef.current = null;
+      }
+    };
+  };
 
   // Fetch Eligibility & Available Questions
   const fetchEligibility = async () => {
     try {
       setLoading(true);
       setError(null);
-      const res = await fetch('http://localhost:4000/api/v1/interview/eligibility', {
+      const res = await fetch('http://localhost:4043/api/v1/interview/eligibility', {
         headers: getAuthHeaders(token),
       });
       const data = await res.json();
@@ -62,7 +172,7 @@ export const InterviewPage: React.FC = () => {
   // Fetch Past Interview History
   const fetchPastSessions = async () => {
     try {
-      const res = await fetch('http://localhost:4000/api/v1/interview/sessions', {
+      const res = await fetch('http://localhost:4043/api/v1/interview/sessions', {
         headers: getAuthHeaders(token),
       });
       const data = await res.json();
@@ -85,29 +195,27 @@ export const InterviewPage: React.FC = () => {
       if (SpeechRecognition) {
         setSpeechSupported(true);
         const recog = new SpeechRecognition();
-        recog.continuous = false;
-        recog.interimResults = true;
+        recog.continuous = true; // Continuous listening across natural speech pauses
+        recog.interimResults = true; // Real-time progressive transcription
         recog.lang = 'en-US';
 
-        recog.onresult = (event: any) => {
-          let currentTranscript = '';
-          for (let i = event.resultIndex; i < event.results.length; ++i) {
-            currentTranscript += event.results[i][0].transcript;
-          }
-          setCandidateInput(currentTranscript);
-        };
-
-        recog.onend = () => {
-          setIsRecording(false);
-        };
-
-        recog.onerror = () => {
-          setIsRecording(false);
-        };
-
+        bindRecognitionHandlers(recog);
         recognitionRef.current = recog;
       }
     }
+
+    return () => {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.onresult = null;
+          recognitionRef.current.stop();
+        } catch {}
+      }
+      if (recordingTimeoutRef.current) {
+        clearTimeout(recordingTimeoutRef.current);
+        recordingTimeoutRef.current = null;
+      }
+    };
   }, [token]);
 
   // Auto-scroll chat to latest message
@@ -127,16 +235,35 @@ export const InterviewPage: React.FC = () => {
     window.speechSynthesis.speak(utterance);
   };
 
-  // Toggle Speech Recognition
+  // Toggle Speech Recognition (Press-to-start / Press-to-stop across natural pauses)
   const toggleSpeechRecognition = () => {
     if (!recognitionRef.current) return;
     if (isRecording) {
-      recognitionRef.current.stop();
+      try {
+        recognitionRef.current.onresult = null;
+        recognitionRef.current.stop();
+      } catch {}
       setIsRecording(false);
+      if (recordingTimeoutRef.current) {
+        clearTimeout(recordingTimeoutRef.current);
+        recordingTimeoutRef.current = null;
+      }
     } else {
       try {
+        isSubmittingRef.current = false;
+        bindRecognitionHandlers(recognitionRef.current);
         recognitionRef.current.start();
         setIsRecording(true);
+        if (recordingTimeoutRef.current) clearTimeout(recordingTimeoutRef.current);
+        // 5-minute safety ceiling to prevent runaway recording if tab is unattended
+        recordingTimeoutRef.current = setTimeout(() => {
+          if (recognitionRef.current) {
+            try {
+              recognitionRef.current.stop();
+            } catch {}
+            setIsRecording(false);
+          }
+        }, 300000);
       } catch {
         setIsRecording(false);
       }
@@ -148,7 +275,7 @@ export const InterviewPage: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const res = await fetch('http://localhost:4000/api/v1/interview/sessions/start', {
+      const res = await fetch('http://localhost:4043/api/v1/interview/sessions/start', {
         method: 'POST',
         headers: getAuthHeaders(token),
         body: JSON.stringify({
@@ -175,56 +302,15 @@ export const InterviewPage: React.FC = () => {
     }
   };
 
-  // Submit Turn Answer
-  const handleSubmitTurn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!activeSession || !candidateInput.trim() || isSubmittingTurn) return;
-
-    try {
-      setIsSubmittingTurn(true);
-      setError(null);
-      const currentMessage = candidateInput.trim();
-      setCandidateInput('');
-
-      const res = await fetch(
-        `http://localhost:4000/api/v1/interview/sessions/${activeSession.id}/turns`,
-        {
-          method: 'POST',
-          headers: getAuthHeaders(token),
-          body: JSON.stringify({
-            message: currentMessage,
-          }),
-        }
-      );
-
-      const data = await res.json();
-      if (data.success) {
-        setActiveSession(data.data.session);
-        if (data.data.aiTurn?.message) {
-          speakMessage(data.data.aiTurn.message);
-        }
-        if (data.data.isCompleted) {
-          // All turns finished
-        }
-      } else {
-        setError(data.message || 'Failed to submit interview turn');
-        setCandidateInput(currentMessage); // Restore input on error
-      }
-    } catch (err: any) {
-      setError(err.message || 'Error submitting response');
-    } finally {
-      setIsSubmittingTurn(false);
-    }
-  };
-
   // Complete Interview & Run Evaluation
-  const handleCompleteInterview = async () => {
-    if (!activeSession) return;
+  const handleCompleteInterview = async (overrideSessionId?: string) => {
+    const targetSessionId = typeof overrideSessionId === 'string' ? overrideSessionId : activeSession?.id;
+    if (!targetSessionId) return;
     try {
       setIsEvaluating(true);
       setError(null);
       const res = await fetch(
-        `http://localhost:4000/api/v1/interview/sessions/${activeSession.id}/complete`,
+        `http://localhost:4043/api/v1/interview/sessions/${targetSessionId}/complete`,
         {
           method: 'POST',
           headers: getAuthHeaders(token),
@@ -243,6 +329,69 @@ export const InterviewPage: React.FC = () => {
       setError(err.message || 'Error completing interview');
     } finally {
       setIsEvaluating(false);
+    }
+  };
+
+  // Submit Turn Answer
+  const handleSubmitTurn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeSession || !candidateInput.trim() || isSubmittingTurn) return;
+
+    // 1. Guard against speech recognition race conditions:
+    // Null out onresult and mark submission flag BEFORE stopping recognition
+    isSubmittingRef.current = true;
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.onresult = null;
+        recognitionRef.current.stop();
+      } catch {}
+    }
+    setIsRecording(false);
+    if (recordingTimeoutRef.current) {
+      clearTimeout(recordingTimeoutRef.current);
+      recordingTimeoutRef.current = null;
+    }
+
+    const currentMessage = candidateInput.trim();
+    setCandidateInput('');
+
+    try {
+      setIsSubmittingTurn(true);
+      setError(null);
+
+      const res = await fetch(
+        `http://localhost:4043/api/v1/interview/sessions/${activeSession.id}/turns`,
+        {
+          method: 'POST',
+          headers: getAuthHeaders(token),
+          body: JSON.stringify({
+            message: currentMessage,
+          }),
+        }
+      );
+
+      const data = await res.json();
+      if (data.success) {
+        setActiveSession(data.data.session);
+        if (data.data.aiTurn?.message) {
+          speakMessage(data.data.aiTurn.message);
+        }
+
+        // Automatic transition to results/scorecard view when session concludes
+        if (data.data.isCompleted || data.data.session?.status === 'COMPLETED') {
+          await handleCompleteInterview(data.data.session?.id || activeSession.id);
+        }
+      } else {
+        setError(data.message || 'Failed to submit interview turn');
+        setCandidateInput(currentMessage); // Restore input on error
+      }
+    } catch (err: any) {
+      setError(err.message || 'Error submitting response');
+    } finally {
+      setIsSubmittingTurn(false);
+      setTimeout(() => {
+        isSubmittingRef.current = false;
+      }, 300);
     }
   };
 
@@ -448,8 +597,8 @@ export const InterviewPage: React.FC = () => {
                   </div>
 
                   <button
-                    id={`btn-start-interview-${q.id}`}
-                    onClick={() => handleStartInterview(q.id)}
+                    id={`btn-open-instructions-${q.id}`}
+                    onClick={() => handleOpenInstructions(q)}
                     style={{
                       width: '100%',
                       padding: '10px',
@@ -466,12 +615,211 @@ export const InterviewPage: React.FC = () => {
                       gap: '8px',
                     }}
                   >
-                    🎙️ Start {selectedMode === 'EXAM' ? 'Exam Session' : 'Practice Session'}
+                    📖 Read Instructions & Start ({selectedMode === 'EXAM' ? 'Exam' : 'Practice'})
                   </button>
                 </div>
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 1.5 PRE-INTERVIEW INSTRUCTIONS & READINESS MODAL                           */}
+      {/* ========================================================================= */}
+      {selectedQuestionForInstructions && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.75)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px',
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              background: 'var(--panel-bg, #181b20)',
+              border: '1px solid var(--border-color, #2d333b)',
+              borderRadius: '16px',
+              maxWidth: '740px',
+              width: '100%',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              padding: '28px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '22px' }}>🎙️</span>
+                <h2 style={{ margin: 0, fontSize: '18px', fontFamily: 'JetBrains Mono, monospace', color: 'var(--text-main, #e6edf3)' }}>
+                  Oral Viva Voce & Interview Instructions
+                </h2>
+              </div>
+              <button
+                onClick={() => setSelectedQuestionForInstructions(null)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--text-muted, #8b949e)',
+                  fontSize: '18px',
+                  cursor: 'pointer',
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Topic & Scenario Banner */}
+            <div
+              style={{
+                padding: '16px',
+                borderRadius: '8px',
+                background: 'rgba(6, 182, 212, 0.1)',
+                border: '1px solid rgba(6, 182, 212, 0.3)',
+                marginBottom: '18px',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <span
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    padding: '2px 8px',
+                    borderRadius: '4px',
+                    background: 'rgba(6, 182, 212, 0.2)',
+                    color: '#06b6d4',
+                  }}
+                >
+                  {selectedQuestionForInstructions.preset || 'CUSTOM VIVA VOCE'}
+                </span>
+                <span style={{ fontSize: '12px', color: 'var(--text-muted, #8b949e)' }}>
+                  Course: <strong style={{ color: 'var(--text-main, #e6edf3)' }}>{selectedQuestionForInstructions.courseName || 'General Academic'}</strong>
+                </span>
+              </div>
+              <h3 style={{ fontSize: '14px', color: 'var(--text-main, #e6edf3)', margin: '0 0 6px 0', lineHeight: '1.4' }}>
+                {selectedQuestionForInstructions.content}
+              </h3>
+              {selectedQuestionForInstructions.scenario && (
+                <p style={{ fontSize: '12px', color: 'var(--text-muted, #8b949e)', margin: 0, fontStyle: 'italic' }}>
+                  Scenario Context: "{selectedQuestionForInstructions.scenario}"
+                </p>
+              )}
+            </div>
+
+            {/* 1. Examination Structure */}
+            <h4 style={{ margin: '14px 0 8px', color: 'var(--text-main, #e6edf3)', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span>🧭</span> Examination Structure & Adaptive Flow:
+            </h4>
+            <ul style={{ margin: '0 0 16px', paddingLeft: '20px', fontSize: '12px', color: 'var(--text-muted, #8b949e)', lineHeight: '1.6' }}>
+              <li><strong>5 Progressive Main Topics:</strong> The viva moves through 5 thematic facets: (1) First Principles & Frameworks, (2) Operational & Technical Execution, (3) Crisis Response & Failure Modes, (4) Trade-offs & Stakeholder Diplomacy, (5) Strategic Synthesis.</li>
+              <li><strong>Adaptive Follow-Up Probes:</strong> For each main topic, the examiner poses <strong>0 to 2 response-aware follow-up probes</strong> based on what you argue. A thorough, multi-faceted answer allows progressing to the next topic earlier.</li>
+              <li><strong>Dynamic Viva Length:</strong> The total viva length adapts naturally (between 5 and 15 turns total) based on your conversational depth.</li>
+            </ul>
+
+            {/* 2. Audio & Interface Interaction */}
+            <h4 style={{ margin: '14px 0 8px', color: 'var(--text-main, #e6edf3)', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span>🎙️</span> How to Use the Interface:
+            </h4>
+            <ul style={{ margin: '0 0 16px', paddingLeft: '20px', fontSize: '12px', color: 'var(--text-muted, #8b949e)', lineHeight: '1.6' }}>
+              <li><strong>Voice Speech Input:</strong> Click the microphone icon to speak. Your browser will prompt for <em>Microphone Permissions</em> on first use—please click <strong>Allow</strong>.</li>
+              <li><strong>Typed Text Input:</strong> If you prefer not to use voice, you can type your answer directly into the response box and click <strong>Submit Turn</strong>.</li>
+              <li><strong>AI Voice (TTS):</strong> The examiner's questions are read aloud automatically. You can toggle speech ON/OFF anytime using the <strong>🔊 Voice ON / 🔇 Muted</strong> button in the top bar.</li>
+            </ul>
+
+            {/* 3. Evaluation & Rubrics */}
+            <h4 style={{ margin: '14px 0 8px', color: 'var(--text-main, #e6edf3)', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span>📊</span> Assessment Format & Rubric Criteria:
+            </h4>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '8px', marginBottom: '18px' }}>
+              {(selectedQuestionForInstructions.rubric && selectedQuestionForInstructions.rubric.length > 0 ? selectedQuestionForInstructions.rubric : [
+                { name: 'Analytical Rigor', maxScore: 25, criteria: ['First principles reasoning', 'Structured breakdown'] },
+                { name: 'Practical Problem Solving', maxScore: 25, criteria: ['Operational feasibility', 'Risk mitigation'] },
+                { name: 'Articulation & Composure', maxScore: 25, criteria: ['Concise spoken delivery', 'Handling pressure'] },
+                { name: 'Trade-off Mastery', maxScore: 25, criteria: ['Stakeholder alignment', 'Fiduciary balance'] },
+              ]).map((r: any, idx: number) => (
+                <div key={idx} style={{ padding: '8px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: '6px', border: '1px solid var(--border-color, #2d333b)', fontSize: '11px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', color: '#06b6d4', fontWeight: 600, marginBottom: '2px' }}>
+                    <span>{r.name}</span>
+                    <span>{r.maxScore} pts</span>
+                  </div>
+                  <div style={{ color: 'var(--text-muted, #8b949e)', fontSize: '10px' }}>
+                    {Array.isArray(r.criteria) ? r.criteria.join(' • ') : 'Evaluated across conversation transcript'}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Agreement Checkbox */}
+            <div
+              style={{
+                padding: '12px',
+                borderRadius: '8px',
+                background: 'rgba(255, 255, 255, 0.03)',
+                border: '1px solid var(--border-color, #2d333b)',
+                marginBottom: '20px',
+              }}
+            >
+              <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '12px', color: 'var(--text-main, #e6edf3)', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  id="chk-agree-interview-instructions"
+                  checked={agreedToInterviewTerms}
+                  onChange={(e) => setAgreedToInterviewTerms(e.target.checked)}
+                  style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                />
+                I have read and understood all interview instructions, microphone permissions, and the 5-question adaptive viva structure.
+              </label>
+            </div>
+
+            {/* Modal Actions */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button
+                onClick={() => setSelectedQuestionForInstructions(null)}
+                style={{
+                  padding: '9px 16px',
+                  background: 'transparent',
+                  border: '1px solid var(--border-color, #2d333b)',
+                  borderRadius: '6px',
+                  color: 'var(--text-muted, #8b949e)',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                id="btn-confirm-begin-interview"
+                disabled={!agreedToInterviewTerms || loading}
+                onClick={() => {
+                  const qId = selectedQuestionForInstructions.id;
+                  setSelectedQuestionForInstructions(null);
+                  handleStartInterview(qId);
+                }}
+                style={{
+                  padding: '9px 22px',
+                  background: agreedToInterviewTerms && !loading
+                    ? 'linear-gradient(135deg, #06b6d4, #3b82f6)'
+                    : 'rgba(255, 255, 255, 0.1)',
+                  border: 'none',
+                  borderRadius: '6px',
+                  color: agreedToInterviewTerms && !loading ? '#fff' : 'var(--text-muted, #8b949e)',
+                  fontWeight: 'bold',
+                  cursor: agreedToInterviewTerms && !loading ? 'pointer' : 'not-allowed',
+                  fontSize: '13px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                🚀 Begin Interview & Enter Live Room
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -502,10 +850,79 @@ export const InterviewPage: React.FC = () => {
               </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <span id="interview-turn-counter" style={{ fontSize: '13px', fontWeight: 600, color: '#06b6d4' }}>
-                Turn {activeSession.currentTurn} of {activeSession.maxTurns}
-              </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+              {/* Unobtrusive Live Provider Indicator */}
+              <div
+                id="active-provider-badge"
+                data-testid="active-provider-badge"
+                title={
+                  activeSession.isFallback
+                    ? 'Primary AI provider failed or is offline; falling back to Mock Safety Net'
+                    : `Active AI Examiner: ${activeSession.activeProviderType || 'AI'} (${activeSession.activeModelUsed || 'active'})`
+                }
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontSize: '11px',
+                  padding: '3px 10px',
+                  borderRadius: '6px',
+                  background: activeSession.isFallback
+                    ? 'rgba(245, 158, 11, 0.15)'
+                    : activeSession.activeProviderType === 'LOCAL'
+                    ? 'rgba(16, 185, 129, 0.15)'
+                    : 'rgba(6, 182, 212, 0.15)',
+                  border: `1px solid ${
+                    activeSession.isFallback
+                      ? '#f59e0b'
+                      : activeSession.activeProviderType === 'LOCAL'
+                      ? '#10b981'
+                      : '#06b6d4'
+                  }`,
+                  color: activeSession.isFallback
+                    ? '#f59e0b'
+                    : activeSession.activeProviderType === 'LOCAL'
+                    ? '#10b981'
+                    : '#06b6d4',
+                  fontWeight: 600,
+                }}
+              >
+                <span>
+                  {activeSession.isFallback
+                    ? '⚠️'
+                    : activeSession.activeProviderType === 'LOCAL'
+                    ? '🖥️'
+                    : '☁️'}
+                </span>
+                <span>
+                  {activeSession.isFallback
+                    ? 'Mock (fallback)'
+                    : `${activeSession.activeProviderType === 'LOCAL' ? 'Local' : 'Cloud'}: ${activeSession.activeModelUsed || 'gemma4:e2b'}`}
+                </span>
+              </div>
+
+              {/* Hierarchical Main Question & Follow-up Counter */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span id="interview-main-counter" style={{ fontSize: '13px', fontWeight: 700, color: '#06b6d4' }}>
+                  Question {activeSession.mainQuestionIndex || 1} of {activeSession.totalMainQuestions || 5}
+                </span>
+                {(activeSession.followUpCountForCurrentMain || 0) > 0 && (
+                  <span
+                    id="interview-followup-badge"
+                    style={{
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      padding: '2px 7px',
+                      borderRadius: '4px',
+                      background: 'rgba(245, 158, 11, 0.15)',
+                      color: '#f59e0b',
+                      border: '1px solid rgba(245, 158, 11, 0.3)',
+                    }}
+                  >
+                    Follow-up {activeSession.followUpCountForCurrentMain} / 2
+                  </span>
+                )}
+              </div>
 
               <button
                 onClick={() => setTtsEnabled(!ttsEnabled)}
@@ -552,6 +969,29 @@ export const InterviewPage: React.FC = () => {
               gap: '16px',
             }}
           >
+            {/* Mid-Interview Fallback Transition Banner */}
+            {activeSession.isFallback && (
+              <div
+                id="interview-fallback-alert"
+                style={{
+                  padding: '10px 14px',
+                  borderRadius: '6px',
+                  background: 'rgba(245, 158, 11, 0.12)',
+                  border: '1px solid #f59e0b',
+                  color: '#f59e0b',
+                  fontSize: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                }}
+              >
+                <span style={{ fontSize: '16px' }}>⚠️</span>
+                <span>
+                  <strong>AI Provider Fallback Active:</strong> The primary local/cloud model was unreachable or timed out. Interview continues seamlessly using the Deterministic Mock Engine.
+                </span>
+              </div>
+            )}
+
             {activeSession.turns?.map((turn) => {
               const isAi = turn.speaker === 'AI';
               return (
@@ -561,13 +1001,82 @@ export const InterviewPage: React.FC = () => {
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: isAi ? 'flex-start' : 'flex-end',
-                    maxWidth: '80%',
+                    maxWidth: '82%',
                     alignSelf: isAi ? 'flex-start' : 'flex-end',
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px', fontSize: '11px', color: 'var(--text-muted)' }}>
                     <span>{isAi ? '🤖 AI Examiner' : '👤 You (Candidate)'}</span>
-                    <span>• Turn {turn.turnNumber}</span>
+                    <span>•</span>
+                    {isAi ? (
+                      turn.isMainQuestion || turn.followUpIndex === 0 ? (
+                        <span
+                          style={{
+                            padding: '1px 7px',
+                            borderRadius: '4px',
+                            background: 'rgba(6, 182, 212, 0.18)',
+                            color: '#06b6d4',
+                            fontWeight: 700,
+                            fontSize: '10px',
+                            border: '1px solid rgba(6, 182, 212, 0.4)',
+                          }}
+                        >
+                          📌 Main Question {turn.mainQuestionIndex || 1} of 5
+                        </span>
+                      ) : (
+                        <span
+                          style={{
+                            padding: '1px 7px',
+                            borderRadius: '4px',
+                            background: 'rgba(245, 158, 11, 0.18)',
+                            color: '#f59e0b',
+                            fontWeight: 600,
+                            fontSize: '10px',
+                            border: '1px solid rgba(245, 158, 11, 0.4)',
+                          }}
+                        >
+                          🔍 Follow-up {turn.mainQuestionIndex || 1}.{turn.followUpIndex || 1}
+                        </span>
+                      )
+                    ) : (
+                      <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                        Response to Q{turn.mainQuestionIndex || 1}{(turn.followUpIndex || 0) > 0 ? ` (Follow-up ${turn.followUpIndex})` : ''}
+                      </span>
+                    )}
+
+                    {isAi && (
+                      <span
+                        style={{
+                          marginLeft: '4px',
+                          padding: '1px 6px',
+                          borderRadius: '4px',
+                          fontSize: '10px',
+                          fontFamily: 'JetBrains Mono, monospace',
+                          fontWeight: 600,
+                          background: turn.isFallback
+                            ? 'rgba(245, 158, 11, 0.2)'
+                            : turn.providerType === 'LOCAL'
+                            ? 'rgba(16, 185, 129, 0.15)'
+                            : 'rgba(6, 182, 212, 0.15)',
+                          color: turn.isFallback
+                            ? '#f59e0b'
+                            : turn.providerType === 'LOCAL'
+                            ? '#10b981'
+                            : '#06b6d4',
+                          border: `1px solid ${
+                            turn.isFallback
+                              ? 'rgba(245, 158, 11, 0.4)'
+                              : turn.providerType === 'LOCAL'
+                              ? 'rgba(16, 185, 129, 0.4)'
+                              : 'rgba(6, 182, 212, 0.4)'
+                          }`,
+                        }}
+                      >
+                        {turn.isFallback
+                          ? '⚠️ Mock (fallback)'
+                          : `${turn.providerType === 'LOCAL' ? '🖥️ Local' : '☁️ Cloud'}: ${turn.modelUsed || 'active'}`}
+                      </span>
+                    )}
                   </div>
 
                   <div
@@ -622,7 +1131,7 @@ export const InterviewPage: React.FC = () => {
                 </div>
                 <button
                   id="btn-complete-interview"
-                  onClick={handleCompleteInterview}
+                  onClick={() => handleCompleteInterview()}
                   disabled={isEvaluating}
                   style={{
                     padding: '10px 24px',
@@ -701,11 +1210,11 @@ export const InterviewPage: React.FC = () => {
                   Submit Turn →
                 </button>
 
-                {activeSession.turns && activeSession.turns.filter((t) => t.speaker === 'CANDIDATE' || t.speaker === 'USER').length >= 1 && (
+                {activeSession.turns && activeSession.turns.filter((t) => t.speaker === 'CANDIDATE').length >= 1 && (
                   <button
                     type="button"
                     id="btn-evaluate-early"
-                    onClick={handleCompleteInterview}
+                    onClick={() => handleCompleteInterview()}
                     disabled={isEvaluating}
                     style={{
                       padding: '10px 16px',
@@ -753,19 +1262,38 @@ export const InterviewPage: React.FC = () => {
                 {activeSession.question?.content}
               </h2>
               <div id="interview-grade-band" style={{ fontSize: '14px', fontWeight: 600, color: '#10b981' }}>
-                Rating: {activeSession.feedback?.includes('Band') ? activeSession.feedback.split('.')[0] : 'Proficient Performance'}
+                Rating: {activeSession.feedback?.includes('Band') ? activeSession.feedback.split('.')[0] : (activeSession.finalScore !== null && activeSession.maxScore === 9 ? `Band ${activeSession.finalScore}` : 'Proficient Performance')}
               </div>
             </div>
 
             <div style={{ textAlign: 'right' }}>
               <div id="interview-final-score" style={{ fontSize: '36px', fontWeight: 800, color: '#06b6d4' }}>
-                {activeSession.finalScore ?? 85} <span style={{ fontSize: '18px', color: 'var(--text-muted)' }}>/ {activeSession.maxScore ?? 100}</span>
+                {activeSession.maxScore === 9 ? `Band ${activeSession.finalScore ?? 8.0}` : (activeSession.finalScore ?? 85)} <span style={{ fontSize: '18px', color: 'var(--text-muted)' }}>/ {activeSession.maxScore ?? 100}</span>
               </div>
               <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                {Math.round(((activeSession.finalScore || 85) / (activeSession.maxScore || 100)) * 100)}% Overall Mastery
+                {Math.round(((activeSession.finalScore || (activeSession.maxScore === 9 ? 8.5 : 85)) / (activeSession.maxScore || (activeSession.maxScore === 9 ? 9 : 100))) * 100)}% Overall Performance
               </div>
             </div>
           </div>
+
+          {/* Examiner Qualitative Summary */}
+          {activeSession.feedback && (
+            <div
+              style={{
+                padding: '16px 20px',
+                background: 'rgba(6, 182, 212, 0.07)',
+                borderRadius: '8px',
+                border: '1px solid rgba(6, 182, 212, 0.25)',
+              }}
+            >
+              <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#06b6d4', margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                🎙️ Official Examiner Qualitative Synthesis
+              </h3>
+              <p style={{ fontSize: '13px', color: 'var(--text-main)', margin: 0, lineHeight: '1.6' }}>
+                {activeSession.feedback}
+              </p>
+            </div>
+          )}
 
           {/* Rubric Breakdown Grid */}
           <div>
@@ -774,7 +1302,7 @@ export const InterviewPage: React.FC = () => {
             </h3>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '14px' }}>
-              {(activeSession.rubricScores || []).map((crit: any) => (
+              {getSafeRubricScores(activeSession.rubricScores, activeSession.question?.data?.rubric).map((crit: any) => (
                 <div
                   key={crit.id}
                   style={{
@@ -794,7 +1322,7 @@ export const InterviewPage: React.FC = () => {
                   <div style={{ width: '100%', height: '6px', background: 'var(--bg-color)', borderRadius: '3px', overflow: 'hidden', marginBottom: '10px' }}>
                     <div
                       style={{
-                        width: `${Math.min(100, Math.round((crit.score / crit.maxScore) * 100))}%`,
+                        width: `${Math.min(100, Math.round(((crit.score || 0) / (crit.maxScore || 10)) * 100))}%`,
                         height: '100%',
                         background: '#10b981',
                       }}
@@ -817,7 +1345,7 @@ export const InterviewPage: React.FC = () => {
                 🌟 Key Demonstrations & Strengths
               </h4>
               <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '12px', color: 'var(--text-main)', lineHeight: '1.6' }}>
-                {(activeSession.strengths || ['Clear logical structure', 'Solid stakeholder empathy']).map((s, idx) => (
+                {getSafeArray(activeSession.strengths, ['Clear logical structure', 'Solid stakeholder empathy']).map((s, idx) => (
                   <li key={idx}>{s}</li>
                 ))}
               </ul>
@@ -829,7 +1357,7 @@ export const InterviewPage: React.FC = () => {
                 🎯 Coaching & Growth Recommendations
               </h4>
               <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '12px', color: 'var(--text-main)', lineHeight: '1.6' }}>
-                {(activeSession.recommendations || ['Incorporate specific statutory precedents early']).map((r, idx) => (
+                {getSafeArray(activeSession.recommendations, ['Incorporate specific statutory precedents early']).map((r, idx) => (
                   <li key={idx}>{r}</li>
                 ))}
               </ul>
@@ -936,7 +1464,7 @@ export const InterviewPage: React.FC = () => {
 
                     <button
                       onClick={async () => {
-                        const res = await fetch(`http://localhost:4000/api/v1/interview/sessions/${sess.id}`, {
+                        const res = await fetch(`http://localhost:4043/api/v1/interview/sessions/${sess.id}`, {
                           headers: getAuthHeaders(token),
                         });
                         const d = await res.json();

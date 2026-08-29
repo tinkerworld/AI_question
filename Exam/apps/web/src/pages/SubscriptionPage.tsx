@@ -60,11 +60,11 @@ export const SubscriptionPage: React.FC = () => {
       const headers = { Authorization: `Bearer ${token}` };
 
       const [plansRes, subRes, credRes, pkgRes, invRes] = await Promise.all([
-        fetch('http://localhost:4000/api/v1/subscriptions/plans', { headers }).then((r) => r.json()),
-        fetch('http://localhost:4000/api/v1/subscriptions/me', { headers }).then((r) => r.json()),
-        fetch('http://localhost:4000/api/v1/ai-credits/balance', { headers }).then((r) => r.json()),
-        fetch('http://localhost:4000/api/v1/ai-credits/packages', { headers }).then((r) => r.json()),
-        fetch('http://localhost:4000/api/v1/billing/invoices', { headers }).then((r) => r.json()),
+        fetch('http://localhost:4043/api/v1/subscriptions/plans', { headers }).then((r) => r.json()),
+        fetch('http://localhost:4043/api/v1/subscriptions/me', { headers }).then((r) => r.json()),
+        fetch('http://localhost:4043/api/v1/ai-credits/balance', { headers }).then((r) => r.json()),
+        fetch('http://localhost:4043/api/v1/ai-credits/packages', { headers }).then((r) => r.json()),
+        fetch('http://localhost:4043/api/v1/billing/invoices', { headers }).then((r) => r.json()),
       ]);
 
       if (plansRes.success) setPlans(plansRes.data);
@@ -74,7 +74,7 @@ export const SubscriptionPage: React.FC = () => {
       if (invRes.success) setInvoices(invRes.data);
 
       if (canManageBilling) {
-        const txRes = await fetch('http://localhost:4000/api/v1/billing/transactions', { headers }).then((r) =>
+        const txRes = await fetch('http://localhost:4043/api/v1/billing/transactions', { headers }).then((r) =>
           r.json()
         );
         if (txRes.success) setTransactions(txRes.data);
@@ -94,7 +94,7 @@ export const SubscriptionPage: React.FC = () => {
     if (!checkoutItem || !token) return;
     setActionLoading(true);
     try {
-      const res = await fetch('http://localhost:4000/api/v1/billing/checkout', {
+      const res = await fetch('http://localhost:4043/api/v1/billing/checkout', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -125,7 +125,7 @@ export const SubscriptionPage: React.FC = () => {
       return;
     setActionLoading(true);
     try {
-      const res = await fetch('http://localhost:4000/api/v1/subscriptions/cancel', {
+      const res = await fetch('http://localhost:4043/api/v1/subscriptions/cancel', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -145,7 +145,7 @@ export const SubscriptionPage: React.FC = () => {
     if (!token) return;
     setActionLoading(true);
     try {
-      const res = await fetch('http://localhost:4000/api/v1/billing/refunds', {
+      const res = await fetch('http://localhost:4043/api/v1/billing/refunds', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,

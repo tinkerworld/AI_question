@@ -247,7 +247,7 @@ export const QuestionBankPage: React.FC = () => {
       if (filterSyllabusNodeId) params.append('syllabusNodeId', filterSyllabusNodeId);
       params.append('limit', '200');
 
-      const res = await fetch(`http://localhost:4000/api/v1/questions?${params.toString()}`, {
+      const res = await fetch(`http://localhost:4043/api/v1/questions?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -266,7 +266,7 @@ export const QuestionBankPage: React.FC = () => {
   const fetchMetadata = async () => {
     try {
       // 1. Analytics
-      fetch('http://localhost:4000/api/v1/questions/analytics/summary', {
+      fetch('http://localhost:4043/api/v1/questions/analytics/summary', {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then((r) => r.json())
@@ -274,7 +274,7 @@ export const QuestionBankPage: React.FC = () => {
         .catch(() => {});
 
       // 2. Tags
-      fetch('http://localhost:4000/api/v1/questions/tags/all', {
+      fetch('http://localhost:4043/api/v1/questions/tags/all', {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then((r) => r.json())
@@ -282,7 +282,7 @@ export const QuestionBankPage: React.FC = () => {
         .catch(() => {});
 
       // 3. Courses
-      fetch('http://localhost:4000/api/v1/courses', {
+      fetch('http://localhost:4043/api/v1/courses', {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then((r) => r.json())
@@ -290,7 +290,7 @@ export const QuestionBankPage: React.FC = () => {
         .catch(() => {});
 
       // 4. Subjects & Syllabus tree
-      fetch('http://localhost:4000/api/v1/syllabus/tree', {
+      fetch('http://localhost:4043/api/v1/syllabus/tree', {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then((r) => r.json())
@@ -316,7 +316,7 @@ export const QuestionBankPage: React.FC = () => {
   const fetchDraftQuestions = async () => {
     try {
       setLoadingDrafts(true);
-      const res = await fetch('http://localhost:4000/api/v1/ai/questions/drafts?isAiOnly=true', {
+      const res = await fetch('http://localhost:4043/api/v1/ai/questions/drafts?isAiOnly=true', {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -331,7 +331,7 @@ export const QuestionBankPage: React.FC = () => {
 
   const handleReviewDraft = async (questionId: string, action: 'APPROVE' | 'REJECT', rejectionReason?: string) => {
     try {
-      const res = await fetch(`http://localhost:4000/api/v1/ai/questions/drafts/${questionId}/review`, {
+      const res = await fetch(`http://localhost:4043/api/v1/ai/questions/drafts/${questionId}/review`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -507,7 +507,7 @@ export const QuestionBankPage: React.FC = () => {
       };
 
       if (editingQuestion) {
-        const res = await fetch(`http://localhost:4000/api/v1/questions/${editingQuestion.id}`, {
+        const res = await fetch(`http://localhost:4043/api/v1/questions/${editingQuestion.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify(payload),
@@ -521,7 +521,7 @@ export const QuestionBankPage: React.FC = () => {
           setError(extractApiErrorMessage(data, 'Failed to update question'));
         }
       } else {
-        const res = await fetch('http://localhost:4000/api/v1/questions', {
+        const res = await fetch('http://localhost:4043/api/v1/questions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify(payload),
@@ -543,7 +543,7 @@ export const QuestionBankPage: React.FC = () => {
   const handleStatusChange = async (questionId: string, newStatus: string) => {
     try {
       setError(null);
-      const res = await fetch(`http://localhost:4000/api/v1/questions/${questionId}/status`, {
+      const res = await fetch(`http://localhost:4043/api/v1/questions/${questionId}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ status: newStatus }),
@@ -564,7 +564,7 @@ export const QuestionBankPage: React.FC = () => {
     if (!window.confirm(`Are you sure you want to permanently delete question ${id}?`)) return;
     try {
       setError(null);
-      const res = await fetch(`http://localhost:4000/api/v1/questions/${id}`, {
+      const res = await fetch(`http://localhost:4043/api/v1/questions/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -583,7 +583,7 @@ export const QuestionBankPage: React.FC = () => {
   const openVersionHistory = async (q: Question) => {
     try {
       setVersionDrawerQuestion(q);
-      const res = await fetch(`http://localhost:4000/api/v1/questions/${q.id}/versions`, {
+      const res = await fetch(`http://localhost:4043/api/v1/questions/${q.id}/versions`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -597,7 +597,7 @@ export const QuestionBankPage: React.FC = () => {
     if (!window.confirm(`Roll back question ${qId} to Version ${versionNum}?`)) return;
     try {
       setError(null);
-      const res = await fetch(`http://localhost:4000/api/v1/questions/${qId}/versions/${versionNum}/rollback`, {
+      const res = await fetch(`http://localhost:4043/api/v1/questions/${qId}/versions/${versionNum}/rollback`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -617,7 +617,7 @@ export const QuestionBankPage: React.FC = () => {
   const openExamHistory = async (q: Question) => {
     try {
       setExamHistoryQuestion(q);
-      const res = await fetch(`http://localhost:4000/api/v1/questions/${q.id}/exam-history`, {
+      const res = await fetch(`http://localhost:4043/api/v1/questions/${q.id}/exam-history`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -632,7 +632,7 @@ export const QuestionBankPage: React.FC = () => {
     if (!examHistoryQuestion) return;
     try {
       setError(null);
-      const res = await fetch(`http://localhost:4000/api/v1/questions/${examHistoryQuestion.id}/exam-history`, {
+      const res = await fetch(`http://localhost:4043/api/v1/questions/${examHistoryQuestion.id}/exam-history`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({

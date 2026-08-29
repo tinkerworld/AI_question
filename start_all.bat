@@ -9,8 +9,8 @@ start "ExamOS Build Tracker" cmd /k "cd tools/build-tracker && node server.js"
 
 timeout /t 2 /nobreak >nul
 
-echo 2. Starting Express API Server (with PostgreSQL 16 Engine) on Port 4000...
-start "ExamOS API Server" cmd /k "cd Exam && npx ts-node -r tsconfig-paths/register --project apps/api/tsconfig.json --transpile-only apps/api/src/server.ts"
+echo 2. Starting Express API Server (with PostgreSQL 16 Engine) on Port 4043...
+start "ExamOS API Server" cmd /k "cd Exam && set PORT=4043 && npx ts-node -r tsconfig-paths/register --project apps/api/tsconfig.json --transpile-only apps/api/src/server.ts"
 
 timeout /t 2 /nobreak >nul
 
@@ -21,6 +21,6 @@ echo.
 echo ====================================================
 echo  ExamOS Full Stack is Live!
 echo  Web Application: http://localhost:3000/
-echo  API Endpoint:    http://localhost:4000/
+echo  API Endpoint:    http://localhost:4043/
 echo  Build Tracker:   http://localhost:3050/
 echo ====================================================

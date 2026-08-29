@@ -69,9 +69,15 @@ importers:
 
   apps/api:
     dependencies:
+      '@repo/ai-client':
+        specifier: workspace:*
+        version: link:../../packages/ai-client
       '@repo/database':
         specifier: workspace:*
         version: link:../../packages/database
+      '@repo/entitlement-engine':
+        specifier: workspace:*
+        version: link:../../packages/entitlement-engine
       '@repo/mastery-engine':
         specifier: workspace:*
         version: link:../../packages/mastery-engine
@@ -159,6 +165,19 @@ importers:
         specifier: ^5.1.6
         version: 5.4.21(@types/node@26.2.0)
 
+  packages/ai-client:
+    dependencies:
+      '@repo/types':
+        specifier: workspace:*
+        version: link:../types
+      '@repo/validation':
+        specifier: workspace:*
+        version: link:../validation
+    devDependencies:
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+
   packages/database:
     dependencies:
       '@electric-sql/pglite':
@@ -180,6 +199,16 @@ importers:
       typescript:
         specifier: ^5.4.0
         version: 5.9.3
+
+  packages/entitlement-engine:
+    dependencies:
+      '@repo/types':
+        specifier: workspace:*
+        version: link:../types
+    devDependencies:
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
 
   packages/eslint-config: {}
 

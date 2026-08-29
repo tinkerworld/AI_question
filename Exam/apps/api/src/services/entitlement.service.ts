@@ -52,7 +52,13 @@ export class EntitlementService {
       }
     }
 
-    // 2. Query active subscription from database
+    // 2. Grant Institutional tier to admin and faculty roles
+    const roles = Array.isArray(authContext?.roles) ? authContext.roles : (authContext?.role ? [authContext.role] : []);
+    if (roles.includes('ADMIN') || roles.includes('SUB_ADMIN') || roles.includes('TEACHER')) {
+      return 'INSTITUTIONAL';
+    }
+
+    // 3. Query active subscription from database
     const res = await pgDb.query(
       `SELECT "planCode", "status", "endDate" FROM "subscriptions"
        WHERE "userId" = $1 AND "status" = 'ACTIVE' AND "endDate" >= CURRENT_TIMESTAMP

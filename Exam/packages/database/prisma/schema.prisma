@@ -613,23 +613,26 @@ model InterviewSession {
   courseId        String?
   mode            String          @default("PRACTICE")
   status          String          @default("IN_PROGRESS")
-  currentTurn     Int             @default(0)
-  maxTurns        Int             @default(5)
-  startedAt       DateTime        @default(now())
-  completedAt     DateTime?
-  finalScore      Float?
-  maxScore        Float?
-  rubricScores    Json?
-  feedback        String?
-  strengths       String[]        @default([])
-  weaknesses      String[]        @default([])
-  recommendations String[]        @default([])
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  question        Question        @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  course          Course?         @relation(fields: [courseId], references: [id], onDelete: SetNull)
-  turns           InterviewTurn[]
+  currentTurn                 Int              @default(0)
+  maxTurns                    Int              @default(5)
+  mainQuestionIndex           Int              @default(1)
+  followUpCountForCurrentMain Int              @default(0)
+  totalMainQuestions          Int              @default(5)
+  startedAt                   DateTime         @default(now())
+  completedAt                 DateTime?
+  finalScore                  Float?
+  maxScore                    Float?
+  rubricScores                Json?
+  feedback                    String?
+  strengths                   String[]         @default([])
+  weaknesses                  String[]         @default([])
+  recommendations             String[]         @default([])
+  createdAt                   DateTime         @default(now())
+  updatedAt                   DateTime         @updatedAt
+  user                        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question                    Question         @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  course                      Course?          @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  turns                       InterviewTurn[]
 
   @@map("interview_sessions")
 }
@@ -643,6 +646,13 @@ model InterviewTurn {
   audioUrl        String?
   durationSeconds Int?
   evaluationNotes String?
+  mainQuestionIndex Int            @default(1)
+  followUpIndex     Int            @default(0)
+  isMainQuestion    Boolean        @default(false)
+  providerId      String?
+  modelUsed       String?
+  providerType    String?
+  isFallback      Boolean          @default(false)
   createdAt       DateTime         @default(now())
   session         InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 

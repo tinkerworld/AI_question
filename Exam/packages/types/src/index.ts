@@ -1330,6 +1330,13 @@ export interface InterviewTurnDTO {
   audioUrl?: string | null;
   durationSeconds?: number | null;
   evaluationNotes?: string | null;
+  mainQuestionIndex?: number;
+  followUpIndex?: number;
+  isMainQuestion?: boolean;
+  providerId?: string | null;
+  modelUsed?: string | null;
+  providerType?: 'LOCAL' | 'CLOUD' | 'MOCK' | string | null;
+  isFallback?: boolean;
   createdAt: string;
 }
 
@@ -1354,6 +1361,9 @@ export interface InterviewSessionDTO {
   status: InterviewStatus;
   currentTurn: number;
   maxTurns: number;
+  mainQuestionIndex?: number;
+  followUpCountForCurrentMain?: number;
+  totalMainQuestions?: number;
   startedAt: string;
   completedAt?: string | null;
   finalScore?: number | null;
@@ -1363,6 +1373,10 @@ export interface InterviewSessionDTO {
   strengths?: string[] | null;
   weaknesses?: string[] | null;
   recommendations?: string[] | null;
+  activeProviderId?: string | null;
+  activeModelUsed?: string | null;
+  activeProviderType?: 'LOCAL' | 'CLOUD' | 'MOCK' | string | null;
+  isFallback?: boolean;
   turns?: InterviewTurnDTO[];
   question?: {
     id: string;
@@ -1382,6 +1396,7 @@ export interface StartInterviewDTO {
   questionId: string;
   mode?: InterviewMode;
   courseId?: string;
+  maxTurns?: number;
 }
 
 export interface SubmitInterviewTurnDTO {

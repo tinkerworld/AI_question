@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { getAuthHeaders } from '../../utils/api';
 
-const API_BASE = 'http://localhost:4000/api/v1';
+const API_BASE = 'http://localhost:4043/api/v1';
 
 interface AIQuestionModifierModalProps {
   isOpen: boolean;

@@ -31,7 +31,11 @@ export interface RouteAIConversationRequest {
     rubric?: any[];
     turnNumber?: number;
     maxTurns?: number;
+    mainQuestionIndex?: number;
+    followUpIndex?: number;
+    isMainQuestion?: boolean;
     preset?: string;
+    [key: string]: any;
   };
   userId?: string;
   preferredProviderId?: string;
@@ -309,8 +313,9 @@ export class AIGatewayService {
       // Ollama / Local API format
       try {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 8000); // 8s timeout for local model
-        const res = await fetch(`${provider.baseUrl || 'http://localhost:11434'}/api/generate`, {
+        const timeout = setTimeout(() => controller.abort(), 60000); // 60s timeout for local model cold load
+        const baseUrl = (provider.baseUrl || 'http://localhost:11434').replace(/\/+$/, '');
+        const res = await fetch(`${baseUrl}/api/generate`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -322,7 +327,10 @@ export class AIGatewayService {
           signal: controller.signal,
         });
         clearTimeout(timeout);
-        if (!res.ok) throw new Error(`Local provider responded with status ${res.status}`);
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({}));
+          throw new Error(`Local provider status ${res.status}: ${errBody.error || res.statusText}`);
+        }
         const data = await res.json();
         return {
           content: data.response,
@@ -590,17 +598,20 @@ export class AIGatewayService {
       }
 
       // featureKey === 'interview_conversation'
-      // Generate intelligent contextual follow-up probing questions
-      const followUpTemplates = [
-        `You emphasized that point clearly. However, what specific operational measures would you take if budget constraints reduce your available resources by 40%?`,
-        `That is a constructive perspective. How would you address the immediate concerns of affected stakeholders who feel their voices have been overlooked?`,
-        `Interesting argument. What metrics or key performance indicators would you use to evaluate whether this strategy is succeeding after the first quarter?`,
-        `Thank you for detailing that approach. Could you summarize your final synthesis and core takeaway for this board?`,
+      // Dynamically extract core concepts and terms from the candidate's actual input
+      const userWords = lastUserMessage.replace(/[^\w\s]/g, '').split(/\s+/).filter((w) => w.length > 4);
+      const salientKeyword = userWords.length > 0 ? `regarding "${userWords[Math.floor(Math.random() * userWords.length)]}"` : 'on that specific point';
+
+      const dynamicProbes = [
+        `You raised a critical point ${salientKeyword}. To examine this more closely: (1) What specific operational mechanisms would you use to prevent cascading failures under heavy load? and (2) How would you address the immediate trade-offs if resource constraints reduce your available budget by 40%?`,
+        `That is a constructive perspective ${salientKeyword}. Let us explore two key dimensions: (1) What quantitative metrics would you track in the first 90 days to verify that this solution is working? and (2) How would you resolve pushback from key stakeholders who favor an alternative approach?`,
+        `Your emphasis ${salientKeyword} touches on an essential trade-off. To probe deeper: (1) What edge cases or security vulnerabilities could emerge under peak concurrency? and (2) What rollback procedure would you enforce if unexpected anomalies are detected?`,
+        `Thank you for detailing that approach ${salientKeyword}. Building directly on your explanation: (1) How does this strategy maintain strict compliance with ethical and regulatory standards? and (2) What architectural compromises were made to achieve this throughput?`,
       ];
 
       const chosenFollowUp = turnNumber >= maxTurns
-        ? `Thank you for your comprehensive answers today. That concludes our interview session. You may now submit your session for final evaluation.`
-        : followUpTemplates[(turnNumber - 1) % followUpTemplates.length];
+        ? `Thank you for your comprehensive answers today. That concludes our oral interview session. You may now submit your session for final evaluation.`
+        : dynamicProbes[(turnNumber - 1) % dynamicProbes.length];
 
       return {
         content: chosenFollowUp,
@@ -612,25 +623,48 @@ export class AIGatewayService {
     if (provider.type === 'LOCAL') {
       try {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 10000);
-        const res = await fetch(`${provider.baseUrl || 'http://localhost:11434'}/api/chat`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+        const timeout = setTimeout(() => controller.abort(), 30000);
+        let baseUrl = provider.baseUrl?.trim() || 'http://localhost:11434';
+        baseUrl = baseUrl.replace(/\/+$/, '');
+
+        // Support Ollama native (/api/chat) or OpenAI-compatible local server (/v1/chat/completions)
+        const isOllamaNative = !baseUrl.endsWith('/v1') && !baseUrl.includes('/chat/completions');
+        let endpoint = isOllamaNative ? `${baseUrl}/api/chat` : (baseUrl.endsWith('/chat/completions') ? baseUrl : `${baseUrl}/chat/completions`);
+
+        let reqBody: any;
+        if (isOllamaNative) {
+          reqBody = {
             model: provider.modelId,
             messages,
             stream: false,
             format: featureKey === 'interview_evaluation' ? 'json' : undefined,
-          }),
+          };
+        } else {
+          reqBody = {
+            model: provider.modelId,
+            messages,
+            temperature: req.temperature || 0.7,
+            response_format: featureKey === 'interview_evaluation' ? { type: 'json_object' } : undefined,
+          };
+        }
+
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(reqBody),
           signal: controller.signal,
         });
         clearTimeout(timeout);
-        if (!res.ok) throw new Error(`Local chat provider error (${res.status})`);
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({}));
+          throw new Error(`Local chat provider error (${res.status}): ${errBody.error || res.statusText}`);
+        }
         const data = await res.json();
+        const content = data.message?.content || data.choices?.[0]?.message?.content || data.response || '';
         return {
-          content: data.message?.content || data.response || '',
-          promptTokens: data.prompt_eval_count || 120,
-          completionTokens: data.eval_count || 80,
+          content,
+          promptTokens: data.prompt_eval_count || data.usage?.prompt_tokens || 120,
+          completionTokens: data.eval_count || data.usage?.completion_tokens || 80,
         };
       } catch (err: any) {
         throw new Error(`LOCAL_PROVIDER_FAILED: ${err.message}`);
@@ -638,14 +672,16 @@ export class AIGatewayService {
     }
 
     if (provider.type === 'CLOUD') {
-      const decryptedApiKey = decryptSecret(provider.apiKey || '');
-      if (!decryptedApiKey || decryptedApiKey.trim() === '') {
-        throw new Error('CLOUD_API_KEY_NOT_CONFIGURED');
-      }
+      const decryptedApiKey = decryptSecret(provider.apiKey || '') || provider.apiKey || '';
+
+      // Normalize base URL
+      let baseUrl = provider.baseUrl?.trim() || 'https://api.openai.com/v1';
+      baseUrl = baseUrl.replace(/\/+$/, '');
+      const endpoint = baseUrl.endsWith('/chat/completions') ? baseUrl : `${baseUrl}/chat/completions`;
 
       try {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 15000);
+        const timeout = setTimeout(() => controller.abort(), 30000);
         const bodyPayload: any = {
           model: provider.modelId,
           messages,
@@ -655,28 +691,33 @@ export class AIGatewayService {
           bodyPayload.response_format = { type: 'json_object' };
         }
 
-        const res = await fetch(`${provider.baseUrl || 'https://api.openai.com/v1'}/chat/completions`, {
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+        };
+        if (decryptedApiKey && decryptedApiKey.trim() !== '') {
+          headers['Authorization'] = `Bearer ${decryptedApiKey.trim()}`;
+        }
+
+        const res = await fetch(endpoint, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${decryptedApiKey}`,
-          },
+          headers,
           body: JSON.stringify(bodyPayload),
           signal: controller.signal,
         });
         clearTimeout(timeout);
         if (!res.ok) {
           const errBody = await res.json().catch(() => ({}));
-          throw new Error(`Cloud provider error (${res.status}): ${errBody.error?.message || res.statusText}`);
+          throw new Error(`Cloud provider error (${res.status}): ${errBody.error?.message || errBody.message || res.statusText}`);
         }
         const data = await res.json();
+        const content = data.choices?.[0]?.message?.content || data.choices?.[0]?.text || '';
         return {
-          content: data.choices[0].message.content,
+          content,
           promptTokens: data.usage?.prompt_tokens || 180,
           completionTokens: data.usage?.completion_tokens || 120,
         };
       } catch (err: any) {
-        throw new Error(`CLOUD_PROVIDER_FAILED: ${err.message}`);
+        throw new Error(`CLOUD_PROVIDER_FAILED (${provider.name} - ${provider.modelId}): ${err.message}`);
       }
     }
 

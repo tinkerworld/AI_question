@@ -1,0 +1,19 @@
+{
+  "name": "examos-human-simulator",
+  "version": "1.0.0",
+  "description": "Human simulation agent and QA Dashboard API bridge for ExamOS and web applications",
+  "main": "simulation-server.js",
+  "scripts": {
+    "start": "node simulation-server.js",
+    "simulate": "node exam-simulation-agent.js",
+    "install-browser": "npx playwright install chromium"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "playwright": "^1.42.0"
+  },
+  "keywords": ["human-simulation", "playwright", "qa-dashboard", "examos"],
+  "author": "ExamOS QA Team",
+  "license": "MIT"
+}

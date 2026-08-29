@@ -173,7 +173,7 @@ export class EntitlementEngine {
     if (upper === 'PREMIUM' || upper === 'PREMIUM_PLUS' || upper === 'FREE') {
       return upper as PlanTier;
     }
-    if (upper === 'PRO' || upper === 'PREMIUM+' || upper === 'PLUS') {
+    if (upper === 'PRO' || upper === 'PREMIUM+' || upper === 'PLUS' || upper === 'INSTITUTIONAL' || upper === 'ADMIN' || upper === 'ENTERPRISE') {
       return 'PREMIUM_PLUS';
     }
     return 'FREE';

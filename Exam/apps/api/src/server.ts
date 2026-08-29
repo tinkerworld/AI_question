@@ -30,7 +30,7 @@ import { errorHandler } from './middleware/error';
 dotenv.config();
 
 export const app = express();
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 4043;
 
 // API Middleware Stack (Feature 1.10)
 app.use(cors());

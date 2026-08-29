@@ -104,7 +104,7 @@ export const CoursesPage: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const res = await fetch('http://localhost:4000/api/v1/courses', {
+      const res = await fetch('http://localhost:4043/api/v1/courses', {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -124,7 +124,7 @@ export const CoursesPage: React.FC = () => {
   const fetchSubjects = async (courseId: string, targetSubjectId?: string) => {
     try {
       setError(null);
-      const res = await fetch(`http://localhost:4000/api/v1/courses/${courseId}/subjects`, {
+      const res = await fetch(`http://localhost:4043/api/v1/courses/${courseId}/subjects`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -164,7 +164,7 @@ export const CoursesPage: React.FC = () => {
     try {
       setTreeLoading(true);
       setError(null);
-      const res = await fetch(`http://localhost:4000/api/v1/syllabus/tree?subjectId=${subjectId}`, {
+      const res = await fetch(`http://localhost:4043/api/v1/syllabus/tree?subjectId=${subjectId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -229,7 +229,7 @@ export const CoursesPage: React.FC = () => {
       };
 
       if (editingCourse) {
-        const res = await fetch(`http://localhost:4000/api/v1/courses/${editingCourse.id}`, {
+        const res = await fetch(`http://localhost:4043/api/v1/courses/${editingCourse.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify(payload),
@@ -243,7 +243,7 @@ export const CoursesPage: React.FC = () => {
           setError(extractApiErrorMessage(data, 'Failed to update course'));
         }
       } else {
-        const res = await fetch('http://localhost:4000/api/v1/courses', {
+        const res = await fetch('http://localhost:4043/api/v1/courses', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify(payload),
@@ -267,7 +267,7 @@ export const CoursesPage: React.FC = () => {
     if (!window.confirm('Are you sure you want to delete this course and all associated subjects?')) return;
     try {
       setError(null);
-      const res = await fetch(`http://localhost:4000/api/v1/courses/${courseId}`, {
+      const res = await fetch(`http://localhost:4043/api/v1/courses/${courseId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -323,7 +323,7 @@ export const CoursesPage: React.FC = () => {
       };
 
       if (editingSubject) {
-        const res = await fetch(`http://localhost:4000/api/v1/subject/${editingSubject.id}`, {
+        const res = await fetch(`http://localhost:4043/api/v1/subject/${editingSubject.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify(payload),
@@ -337,7 +337,7 @@ export const CoursesPage: React.FC = () => {
           setError(extractApiErrorMessage(data, 'Failed to update subject'));
         }
       } else {
-        const res = await fetch(`http://localhost:4000/api/v1/courses/${selectedCourse.id}/subjects`, {
+        const res = await fetch(`http://localhost:4043/api/v1/courses/${selectedCourse.id}/subjects`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify(payload),
@@ -362,7 +362,7 @@ export const CoursesPage: React.FC = () => {
     if (!window.confirm('Delete this subject and all its syllabus tree nodes?')) return;
     try {
       setError(null);
-      const res = await fetch(`http://localhost:4000/api/v1/subject/${subjectId}`, {
+      const res = await fetch(`http://localhost:4043/api/v1/subject/${subjectId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -437,7 +437,7 @@ export const CoursesPage: React.FC = () => {
       };
 
       if (editingNode) {
-        const res = await fetch(`http://localhost:4000/api/v1/syllabus/node/${editingNode.id}`, {
+        const res = await fetch(`http://localhost:4043/api/v1/syllabus/node/${editingNode.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify(payload),
@@ -452,7 +452,7 @@ export const CoursesPage: React.FC = () => {
         }
       } else {
         payload.parentId = nodeParentId || undefined;
-        const res = await fetch(`http://localhost:4000/api/v1/subjects/${selectedSubject.id}/syllabus`, {
+        const res = await fetch(`http://localhost:4043/api/v1/subjects/${selectedSubject.id}/syllabus`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify(payload),
@@ -476,7 +476,7 @@ export const CoursesPage: React.FC = () => {
     if (!selectedSubject) return;
     try {
       setError(null);
-      const res = await fetch(`http://localhost:4000/api/v1/syllabus/node/${nodeId}`, {
+      const res = await fetch(`http://localhost:4043/api/v1/syllabus/node/${nodeId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -497,7 +497,7 @@ export const CoursesPage: React.FC = () => {
     try {
       setError(null);
       const newOrder = direction === 'UP' ? Math.max(0, node.orderIndex - 1) : node.orderIndex + 1;
-      const res = await fetch(`http://localhost:4000/api/v1/syllabus/node/${node.id}/reorder`, {
+      const res = await fetch(`http://localhost:4043/api/v1/syllabus/node/${node.id}/reorder`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({

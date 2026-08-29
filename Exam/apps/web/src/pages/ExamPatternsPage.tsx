@@ -202,7 +202,7 @@ export const ExamPatternsPage: React.FC = () => {
 
   const fetchCourses = async () => {
     try {
-      const res = await fetch('http://localhost:4000/api/v1/courses', {
+      const res = await fetch('http://localhost:4043/api/v1/courses', {
         headers: getAuthHeaders(),
       });
       if (res.ok) {
@@ -223,7 +223,7 @@ export const ExamPatternsPage: React.FC = () => {
   const fetchPatterns = async () => {
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:4000/api/v1/exam-patterns', {
+      const res = await fetch('http://localhost:4043/api/v1/exam-patterns', {
         headers: getAuthHeaders(),
       });
       if (res.ok) {
@@ -240,7 +240,7 @@ export const ExamPatternsPage: React.FC = () => {
   // Endpoint 3: GET /api/v1/exam-patterns/:id — Pattern Details
   const fetchPatternDetails = async (patternId: string) => {
     try {
-      const res = await fetch(`http://localhost:4000/api/v1/exam-patterns/${patternId}`, {
+      const res = await fetch(`http://localhost:4043/api/v1/exam-patterns/${patternId}`, {
         headers: getAuthHeaders(),
       });
       if (res.ok) {
@@ -277,7 +277,7 @@ export const ExamPatternsPage: React.FC = () => {
 
   const fetchTopicsForCourse = async (cId: string) => {
     try {
-      const res = await fetch(`http://localhost:4000/api/v1/courses/${cId}/subjects`, {
+      const res = await fetch(`http://localhost:4043/api/v1/courses/${cId}/subjects`, {
         headers: getAuthHeaders(),
       });
       if (res.ok) {
@@ -286,7 +286,7 @@ export const ExamPatternsPage: React.FC = () => {
         setAvailableSubjects(subs);
         if (subs.length > 0) {
           const sId = subs[0].id;
-          const topRes = await fetch(`http://localhost:4000/api/v1/subjects/${sId}/syllabus`, {
+          const topRes = await fetch(`http://localhost:4043/api/v1/subjects/${sId}/syllabus`, {
             headers: getAuthHeaders(),
           });
           if (topRes.ok) {
@@ -323,7 +323,7 @@ export const ExamPatternsPage: React.FC = () => {
       return;
     }
     try {
-      const res = await fetch('http://localhost:4000/api/v1/exam-patterns', {
+      const res = await fetch('http://localhost:4043/api/v1/exam-patterns', {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({
@@ -375,7 +375,7 @@ export const ExamPatternsPage: React.FC = () => {
     setEditFormError(null);
 
     try {
-      const res = await fetch(`http://localhost:4000/api/v1/exam-patterns/${editingPattern.id}`, {
+      const res = await fetch(`http://localhost:4043/api/v1/exam-patterns/${editingPattern.id}`, {
         method: 'PATCH',
         headers: getAuthHeaders(),
         body: JSON.stringify({
@@ -407,7 +407,7 @@ export const ExamPatternsPage: React.FC = () => {
   // Endpoint 4: PATCH /api/v1/exam-patterns/:id — Update Status Transition
   const handleUpdateStatus = async (patternId: string, newStatus: 'PUBLISHED' | 'ARCHIVED') => {
     try {
-      const res = await fetch(`http://localhost:4000/api/v1/exam-patterns/${patternId}`, {
+      const res = await fetch(`http://localhost:4043/api/v1/exam-patterns/${patternId}`, {
         method: 'PATCH',
         headers: getAuthHeaders(),
         body: JSON.stringify({ status: newStatus }),
@@ -429,7 +429,7 @@ export const ExamPatternsPage: React.FC = () => {
   const handleDeletePattern = async (patternId: string) => {
     if (!window.confirm('Are you sure you want to delete this draft exam pattern?')) return;
     try {
-      const res = await fetch(`http://localhost:4000/api/v1/exam-patterns/${patternId}`, {
+      const res = await fetch(`http://localhost:4043/api/v1/exam-patterns/${patternId}`, {
         method: 'DELETE',
         headers: getAuthHeaders(),
       });
@@ -455,7 +455,7 @@ export const ExamPatternsPage: React.FC = () => {
       const marksWr = parseFloat(secMarksWrong) || 0.0;
       const marksUnatt = parseFloat(secMarksUnattempted) || 0.0;
 
-      const res = await fetch(`http://localhost:4000/api/v1/exam-patterns/${patternId}/sections`, {
+      const res = await fetch(`http://localhost:4043/api/v1/exam-patterns/${patternId}/sections`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({
@@ -494,7 +494,7 @@ export const ExamPatternsPage: React.FC = () => {
 
     const sectionIds = sectionsCopy.map((s) => s.id);
     try {
-      const res = await fetch(`http://localhost:4000/api/v1/exam-patterns/${patternId}/sections/reorder`, {
+      const res = await fetch(`http://localhost:4043/api/v1/exam-patterns/${patternId}/sections/reorder`, {
         method: 'PATCH',
         headers: getAuthHeaders(),
         body: JSON.stringify({ sectionIds }),
@@ -511,7 +511,7 @@ export const ExamPatternsPage: React.FC = () => {
   const handleDeleteSection = async (patternId: string, sectionId: string) => {
     if (!window.confirm('Delete this section?')) return;
     try {
-      const res = await fetch(`http://localhost:4000/api/v1/exam-patterns/${patternId}/sections/${sectionId}`, {
+      const res = await fetch(`http://localhost:4043/api/v1/exam-patterns/${patternId}/sections/${sectionId}`, {
         method: 'DELETE',
         headers: getAuthHeaders(),
       });
@@ -537,7 +537,7 @@ export const ExamPatternsPage: React.FC = () => {
     if (selectedPattern) {
       try {
         const rRes = await fetch(
-          `http://localhost:4000/api/v1/exam-patterns/${selectedPattern.id}/sections/${sec.id}/rules`,
+          `http://localhost:4043/api/v1/exam-patterns/${selectedPattern.id}/sections/${sec.id}/rules`,
           { headers: getAuthHeaders() }
         );
         if (rRes.ok) {
@@ -555,7 +555,7 @@ export const ExamPatternsPage: React.FC = () => {
       // Endpoint 14: GET /api/v1/exam-patterns/:id/sections/:sectionId/topics
       try {
         const tRes = await fetch(
-          `http://localhost:4000/api/v1/exam-patterns/${selectedPattern.id}/sections/${sec.id}/topics`,
+          `http://localhost:4043/api/v1/exam-patterns/${selectedPattern.id}/sections/${sec.id}/topics`,
           { headers: getAuthHeaders() }
         );
         if (tRes.ok) {
@@ -593,7 +593,7 @@ export const ExamPatternsPage: React.FC = () => {
         .map((s) => s.trim())
         .filter((s) => s.length > 0);
 
-      const res = await fetch(`http://localhost:4000/api/v1/exam-patterns/${patternId}/sections/${sectionId}/rules`, {
+      const res = await fetch(`http://localhost:4043/api/v1/exam-patterns/${patternId}/sections/${sectionId}/rules`, {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify({
@@ -621,7 +621,7 @@ export const ExamPatternsPage: React.FC = () => {
         .filter((r) => r.topicId && parseFloat(String(r.value)) > 0)
         .map((r) => ({ topicId: r.topicId, value: parseFloat(String(r.value)) || 0 }));
 
-      const res = await fetch(`http://localhost:4000/api/v1/exam-patterns/${patternId}/sections/${sectionId}/topics`, {
+      const res = await fetch(`http://localhost:4043/api/v1/exam-patterns/${patternId}/sections/${sectionId}/topics`, {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify({
@@ -657,7 +657,7 @@ export const ExamPatternsPage: React.FC = () => {
         ];
       }
 
-      const res = await fetch(`http://localhost:4000/api/v1/exam-patterns/${patternId}/sections/${sectionId}/difficulty`, {
+      const res = await fetch(`http://localhost:4043/api/v1/exam-patterns/${patternId}/sections/${sectionId}/difficulty`, {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify(payload),
@@ -677,7 +677,7 @@ export const ExamPatternsPage: React.FC = () => {
   // Endpoint 16: PUT /api/v1/exam-patterns/:id/sections/:sectionId/marking — Save Marking Scheme (Feature 4.6)
   const handleSaveMarkingScheme = async (patternId: string, sectionId: string) => {
     try {
-      const res = await fetch(`http://localhost:4000/api/v1/exam-patterns/${patternId}/sections/${sectionId}/marking`, {
+      const res = await fetch(`http://localhost:4043/api/v1/exam-patterns/${patternId}/sections/${sectionId}/marking`, {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify({
@@ -711,7 +711,7 @@ export const ExamPatternsPage: React.FC = () => {
         subjectId: subId,
       }));
 
-      const res = await fetch(`http://localhost:4000/api/v1/exam-patterns/${patternId}/subjects-allocation`, {
+      const res = await fetch(`http://localhost:4043/api/v1/exam-patterns/${patternId}/subjects-allocation`, {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify({
@@ -734,7 +734,7 @@ export const ExamPatternsPage: React.FC = () => {
   // Endpoint 18: POST /api/v1/exam-patterns/:id/validate — Validation Engine (Feature 4.8)
   const handleRunValidation = async (patternId: string) => {
     try {
-      const res = await fetch(`http://localhost:4000/api/v1/exam-patterns/${patternId}/validate`, {
+      const res = await fetch(`http://localhost:4043/api/v1/exam-patterns/${patternId}/validate`, {
         method: 'POST',
         headers: getAuthHeaders(),
       });
@@ -751,7 +751,7 @@ export const ExamPatternsPage: React.FC = () => {
   // Endpoint 19: GET /api/v1/exam-patterns/:id/versions — Version History (Feature 4.9)
   const handleFetchVersions = async (patternId: string) => {
     try {
-      const res = await fetch(`http://localhost:4000/api/v1/exam-patterns/${patternId}/versions`, {
+      const res = await fetch(`http://localhost:4043/api/v1/exam-patterns/${patternId}/versions`, {
         headers: getAuthHeaders(),
       });
       if (res.ok) {

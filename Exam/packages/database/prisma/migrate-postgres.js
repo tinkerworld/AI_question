@@ -880,6 +880,9 @@ async function migrate() {
       "status" TEXT NOT NULL DEFAULT 'IN_PROGRESS',
       "currentTurn" INT NOT NULL DEFAULT 0,
       "maxTurns" INT NOT NULL DEFAULT 5,
+      "mainQuestionIndex" INT NOT NULL DEFAULT 1,
+      "followUpCountForCurrentMain" INT NOT NULL DEFAULT 0,
+      "totalMainQuestions" INT NOT NULL DEFAULT 5,
       "startedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       "completedAt" TIMESTAMP,
       "finalScore" DOUBLE PRECISION,
@@ -902,6 +905,13 @@ async function migrate() {
       "audioUrl" TEXT,
       "durationSeconds" INT,
       "evaluationNotes" TEXT,
+      "mainQuestionIndex" INT NOT NULL DEFAULT 1,
+      "followUpIndex" INT NOT NULL DEFAULT 0,
+      "isMainQuestion" BOOLEAN NOT NULL DEFAULT false,
+      "providerId" TEXT,
+      "modelUsed" TEXT,
+      "providerType" TEXT,
+      "isFallback" BOOLEAN NOT NULL DEFAULT false,
       "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
 
