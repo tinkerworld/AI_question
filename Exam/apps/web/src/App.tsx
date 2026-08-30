@@ -19,6 +19,7 @@ import { InterviewPage } from './pages/InterviewPage';
 import { SubscriptionPage } from './pages/SubscriptionPage';
 import { PreviewBanner } from './components/PreviewBanner';
 import { PreviewConfigurationModal } from './components/PreviewConfigurationModal';
+import { API_BASE } from './config/api';
 import './styles/theme.css';
 
 interface NavTabConfig {
@@ -69,7 +70,7 @@ const MainLayout: React.FC = () => {
       return;
     }
 
-    fetch('http://localhost:4043/api/v1/interview/eligibility', {
+    fetch(`${API_BASE}/interview/eligibility`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => r.json())

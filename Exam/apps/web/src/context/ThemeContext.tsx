@@ -1,12 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { ThemeMode } from '@repo/types';
+import { API_BASE } from '../config/api';
 
 interface ThemeContextType {
   theme: ThemeMode;
   setTheme: (theme: ThemeMode) => void;
 }
-
-const API_BASE = 'http://localhost:4043/api/v1';
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 

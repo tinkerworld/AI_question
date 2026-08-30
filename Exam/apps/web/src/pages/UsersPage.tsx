@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { EntityDiffViewer } from '../components/EntityDiffViewer';
 import { ImpersonationModal } from '../components/ImpersonationModal';
-
-const API_BASE = 'http://localhost:4043/api/v1';
+import { API_BASE } from '../config/api';
 
 interface UserRecord {
   id: string;

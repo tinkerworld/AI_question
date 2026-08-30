@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../context/I18nContext';
+import { API_BASE } from '../config/api';
 
 interface ExamItem {
   id: string;
@@ -162,7 +163,7 @@ export const ExamsPage: React.FC = () => {
   const fetchExams = async () => {
     setLoading(true);
     try {
-      let url = 'http://localhost:4043/api/v1/exams';
+      let url = `${API_BASE}/exams`;
       if (statusFilter !== 'ALL') url += `?status=${statusFilter}`;
       const res = await fetch(url, { headers });
       const data = await res.json();
@@ -179,8 +180,8 @@ export const ExamsPage: React.FC = () => {
   const fetchPatternsAndCourses = async () => {
     try {
       const [patRes, crsRes] = await Promise.all([
-        fetch('http://localhost:4043/api/v1/exam-patterns', { headers }),
-        fetch('http://localhost:4043/api/v1/courses', { headers }),
+        fetch(`${API_BASE}/exam-patterns`, { headers }),
+        fetch(`${API_BASE}/courses`, { headers }),
       ]);
       const patData = await patRes.json();
       const crsData = await crsRes.json();
@@ -208,7 +209,7 @@ export const ExamsPage: React.FC = () => {
   const fetchExamDetails = async (id: string) => {
     setDetailsLoading(true);
     try {
-      const res = await fetch(`http://localhost:4043/api/v1/exams/${id}/draft`, { headers });
+      const res = await fetch(`${API_BASE}/exams/${id}/draft`, { headers });
       const data = await res.json();
       if (data.success) {
         setExamDetails(data.data);
@@ -242,7 +243,7 @@ export const ExamsPage: React.FC = () => {
 
     try {
       const avoidDays = parseInt(genAvoidRecentDays, 10);
-      const res = await fetch('http://localhost:4043/api/v1/exams/generate', {
+      const res = await fetch(`${API_BASE}/exams/generate`, {
         method: 'POST',
         headers,
         body: JSON.stringify({
@@ -273,13 +274,19 @@ export const ExamsPage: React.FC = () => {
     }
   };
 
-  // Handle Create Manual Blank Exam Submit (Feature 5.4)
+  // -------------------------------------------------------------
+  // Feature 5.4: Manual Exam Creation
+  // -------------------------------------------------------------
   const handleCreateManualExam = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!manualName.trim() || !manualCourseId) {
+      setManualError('Please provide exam name and course');
+      return;
+    }
     setManualError(null);
 
     try {
-      const res = await fetch('http://localhost:4043/api/v1/exams/manual', {
+      const res = await fetch(`${API_BASE}/exams/manual`, {
         method: 'POST',
         headers,
         body: JSON.stringify({
@@ -315,7 +322,7 @@ export const ExamsPage: React.FC = () => {
 
     try {
       const res = await fetch(
-        `http://localhost:4043/api/v1/questions?status=PUBLISHED&difficulty=${q.difficulty}&limit=20`,
+        `${API_BASE}/questions?status=PUBLISHED&difficulty=${q.difficulty}&limit=20`,
         { headers }
       );
       const data = await res.json();
@@ -343,7 +350,7 @@ export const ExamsPage: React.FC = () => {
 
     try {
       const res = await fetch(
-        `http://localhost:4043/api/v1/exams/${selectedExamId}/questions/${targetSwapQuestion.questionId}/swap`,
+        `${API_BASE}/exams/${selectedExamId}/questions/${targetSwapQuestion.questionId}/swap`,
         {
           method: 'PATCH',
           headers,
@@ -372,7 +379,7 @@ export const ExamsPage: React.FC = () => {
 
     try {
       const res = await fetch(
-        `http://localhost:4043/api/v1/exams/${selectedExamId}/sections/${secId}/regenerate`,
+        `${API_BASE}/exams/${selectedExamId}/sections/${secId}/regenerate`,
         {
           method: 'PATCH',
           headers,
@@ -407,7 +414,7 @@ export const ExamsPage: React.FC = () => {
     const qIds = newOrderList.map((q) => q.questionId);
 
     try {
-      const res = await fetch(`http://localhost:4043/api/v1/exams/${selectedExamId}/reorder`, {
+      const res = await fetch(`${API_BASE}/exams/${selectedExamId}/reorder`, {
         method: 'PATCH',
         headers,
         body: JSON.stringify({ sectionId: secId, questionIds: qIds }),
@@ -444,7 +451,7 @@ export const ExamsPage: React.FC = () => {
     setSettingsError(null);
 
     try {
-      const res = await fetch(`http://localhost:4043/api/v1/exams/${selectedExamId}`, {
+      const res = await fetch(`${API_BASE}/exams/${selectedExamId}`, {
         method: 'PATCH',
         headers,
         body: JSON.stringify({
@@ -475,7 +482,7 @@ export const ExamsPage: React.FC = () => {
     if (!window.confirm('Publish this exam? Published exams are locked for student attempt sessions.')) return;
 
     try {
-      const res = await fetch(`http://localhost:4043/api/v1/exams/${selectedExamId}/publish`, {
+      const res = await fetch(`${API_BASE}/exams/${selectedExamId}/publish`, {
         method: 'POST',
         headers,
       });
@@ -503,7 +510,7 @@ export const ExamsPage: React.FC = () => {
     try {
       const marksPerQ = parseFloat(newSecMarksPerQ) || 1.0;
       const penalty = newSecMarksWrong ? -Math.abs(parseFloat(newSecMarksWrong)) : 0.0;
-      const res = await fetch(`http://localhost:4043/api/v1/exams/${selectedExamId}/sections`, {
+      const res = await fetch(`${API_BASE}/exams/${selectedExamId}/sections`, {
         method: 'POST',
         headers,
         body: JSON.stringify({
@@ -539,7 +546,7 @@ export const ExamsPage: React.FC = () => {
     setShowQuestionPickerModal(true);
 
     try {
-      const res = await fetch('http://localhost:4043/api/v1/questions?status=PUBLISHED&limit=100', { headers });
+      const res = await fetch(`${API_BASE}/questions?status=PUBLISHED&limit=100`, { headers });
       const data = await res.json();
       if (data.success) {
         const existingQIds = new Set(
@@ -558,7 +565,7 @@ export const ExamsPage: React.FC = () => {
     setPickerError(null);
 
     try {
-      const res = await fetch(`http://localhost:4043/api/v1/exams/${selectedExamId}/questions`, {
+      const res = await fetch(`${API_BASE}/exams/${selectedExamId}/questions`, {
         method: 'POST',
         headers,
         body: JSON.stringify({

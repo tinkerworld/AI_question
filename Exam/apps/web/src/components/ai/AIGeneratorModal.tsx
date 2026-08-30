@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { getAuthHeaders } from '../../utils/api';
-
-const API_BASE = 'http://localhost:4043/api/v1';
+import { API_BASE } from '../../config/api';
 
 interface AIGeneratorModalProps {
   isOpen: boolean;

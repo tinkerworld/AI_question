@@ -4,7 +4,8 @@ setlocal enabledelayedexpansion
 echo ====================================================
 echo   ExamOS Automated Installer (Windows)
 echo ====================================================
-echo.
+setlocal
+set DEFAULT_API_PORT=4043
 
 REM --- 1. Check Node.js ---
 echo [1/5] Checking Node.js environment...
@@ -52,7 +53,7 @@ if not exist "Exam\.env" (
             echo DATABASE_URL="postgresql://examos:examos_password@localhost:5432/examos_db?schema=public"
             echo JWT_SECRET="examos_super_secret_jwt_key_2026_production"
             echo JWT_REFRESH_SECRET="examos_super_secret_refresh_jwt_key_2026_production"
-            echo PORT=4043
+            echo PORT=%DEFAULT_API_PORT%
         ) > "Exam\.env"
         echo       Created default Exam\.env configuration.
     )
@@ -110,7 +111,7 @@ echo     stop_all.bat
 echo.
 echo   Service Endpoints:
 echo     - Web Application: http://localhost:3000
-echo     - API Server:      http://localhost:4043
+echo     - API Server:      http://localhost:%DEFAULT_API_PORT%
 echo     - Build Tracker:   http://localhost:3050
 echo.
 echo   Seeded Login Credentials:

@@ -8,6 +8,7 @@ import {
   InterviewMode,
 } from '@repo/types';
 import { getAuthHeaders } from '../utils/api';
+import { API_BASE } from '../config/api';
 
 // Helper to safely extract rubric criteria regardless of backend structure (Array, Object map, or undefined)
 const getSafeRubricScores = (rubricScores: any, defaultRubric: any[] = []): any[] => {
@@ -153,7 +154,7 @@ export const InterviewPage: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const res = await fetch('http://localhost:4043/api/v1/interview/eligibility', {
+      const res = await fetch(`${API_BASE}/interview/eligibility`, {
         headers: getAuthHeaders(token),
       });
       const data = await res.json();
@@ -172,7 +173,7 @@ export const InterviewPage: React.FC = () => {
   // Fetch Past Interview History
   const fetchPastSessions = async () => {
     try {
-      const res = await fetch('http://localhost:4043/api/v1/interview/sessions', {
+      const res = await fetch(`${API_BASE}/interview/sessions`, {
         headers: getAuthHeaders(token),
       });
       const data = await res.json();
@@ -275,7 +276,7 @@ export const InterviewPage: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const res = await fetch('http://localhost:4043/api/v1/interview/sessions/start', {
+      const res = await fetch(`${API_BASE}/interview/sessions/start`, {
         method: 'POST',
         headers: getAuthHeaders(token),
         body: JSON.stringify({
@@ -310,7 +311,7 @@ export const InterviewPage: React.FC = () => {
       setIsEvaluating(true);
       setError(null);
       const res = await fetch(
-        `http://localhost:4043/api/v1/interview/sessions/${targetSessionId}/complete`,
+        `${API_BASE}/interview/sessions/${targetSessionId}/complete`,
         {
           method: 'POST',
           headers: getAuthHeaders(token),
@@ -360,7 +361,7 @@ export const InterviewPage: React.FC = () => {
       setError(null);
 
       const res = await fetch(
-        `http://localhost:4043/api/v1/interview/sessions/${activeSession.id}/turns`,
+        `${API_BASE}/interview/sessions/${activeSession.id}/turns`,
         {
           method: 'POST',
           headers: getAuthHeaders(token),
@@ -1464,7 +1465,7 @@ export const InterviewPage: React.FC = () => {
 
                     <button
                       onClick={async () => {
-                        const res = await fetch(`http://localhost:4043/api/v1/interview/sessions/${sess.id}`, {
+                        const res = await fetch(`${API_BASE}/interview/sessions/${sess.id}`, {
                           headers: getAuthHeaders(token),
                         });
                         const d = await res.json();

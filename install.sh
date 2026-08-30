@@ -36,6 +36,8 @@ fi
 PNPM_VER=$(pnpm -v)
 echo "      Found pnpm v${PNPM_VER}"
 
+DEFAULT_API_PORT=4043
+
 # --- 3. Setup environment configuration ---
 echo "[3/5] Setting up local environment configuration..."
 if [ ! -f "Exam/.env" ]; then
@@ -47,7 +49,7 @@ if [ ! -f "Exam/.env" ]; then
 DATABASE_URL="postgresql://examos:examos_password@localhost:5432/examos_db?schema=public"
 JWT_SECRET="examos_super_secret_jwt_key_2026_production"
 JWT_REFRESH_SECRET="examos_super_secret_refresh_jwt_key_2026_production"
-PORT=4043
+PORT=${DEFAULT_API_PORT}
 EOF
         echo "      Created default Exam/.env configuration."
     fi
@@ -85,7 +87,7 @@ echo "     bash stop_all.sh"
 echo ""
 echo "   Service Endpoints:"
 echo "     - Web Application: http://localhost:3000"
-echo "     - API Server:      http://localhost:4043"
+echo "     - API Server:      http://localhost:${DEFAULT_API_PORT}"
 echo "     - Build Tracker:   http://localhost:3050"
 echo ""
 echo "   Seeded Login Credentials:"

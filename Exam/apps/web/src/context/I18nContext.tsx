@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { LanguageCode } from '@repo/types';
+import { API_BASE } from '../config/api';
 
 export interface LanguageInfo {
   code: string;
@@ -17,8 +18,6 @@ interface I18nContextType {
   registerLanguage: (lang: LanguageInfo, initialKeys?: Record<string, string>) => Promise<boolean>;
   isLoading: boolean;
 }
-
-const API_BASE = 'http://localhost:4043/api/v1';
 
 const I18nContext = createContext<I18nContextType | undefined>(undefined);
 

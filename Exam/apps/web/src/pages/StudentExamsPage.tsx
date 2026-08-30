@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { ExamPlayerPage } from './ExamPlayerPage';
 import { ExamResultPage } from './ExamResultPage';
+import { API_BASE } from '../config/api';
 
 interface ExamItem {
   id: string;
@@ -44,8 +45,6 @@ interface ExamInstructions {
     totalMarks: number;
   }[];
 }
-
-const API_BASE = 'http://localhost:4043/api/v1';
 
 export const StudentExamsPage: React.FC = () => {
   const { token, user, previewTargetExamId, setPreviewTargetExamId } = useAuth();

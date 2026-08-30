@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useExamLock } from '../context/ExamLockContext';
+import { API_BASE } from '../config/api';
 
 interface QuestionOption {
   id: string;
@@ -58,8 +59,6 @@ interface ExamPlayerPageProps {
   onComplete: (attemptId: string) => void;
   onExit: () => void;
 }
-
-const API_BASE = 'http://localhost:4043/api/v1';
 
 export const ExamPlayerPage: React.FC<ExamPlayerPageProps> = ({
   attemptId,

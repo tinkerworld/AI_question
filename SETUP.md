@@ -61,7 +61,23 @@ bash start_all.sh
 
 ---
 
-## 4. Baseline Persona Login Credentials
+## 4. Environment & Port Configuration
+
+ExamOS centralizes all frontend API calls through `Exam/apps/web/src/config/api.ts`, which reads `VITE_API_BASE_URL`.
+
+- **Backend API Port**: Set via `PORT` in `Exam/.env` (default: `4043`).
+- **Frontend API Endpoint**: By default connects to `http://localhost:4043/api/v1`.
+- **Local Port Override**: If you have a local port conflict on `4043`:
+  1. Change `PORT=<your_port>` in `Exam/.env`.
+  2. Create `Exam/apps/web/.env.local` containing:
+     ```env
+     VITE_API_BASE_URL=http://localhost:<your_port>/api/v1
+     ```
+  3. No application source code needs to be modified or committed (`.env.local` is gitignored).
+
+---
+
+## 5. Baseline Persona Login Credentials
 
 Use any of the seeded test personas to log in at [http://localhost:3000](http://localhost:3000):
 
@@ -75,6 +91,6 @@ Use any of the seeded test personas to log in at [http://localhost:3000](http://
 
 ---
 
-## 5. More Information & Architecture
+## 6. More Information & Architecture
 
 For detailed architecture documentation, question type specifications, security boundary documentation, and developer guides, refer to [`README.md`](README.md) and the [`docs/`](docs/) directory.

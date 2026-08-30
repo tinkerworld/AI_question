@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../context/I18nContext';
+import { API_BASE } from '../config/api';
 
 interface ExamSnapshotSummary {
   id: string;
@@ -90,8 +91,6 @@ interface VersionHistory {
     createdAt: string;
   }[];
 }
-
-const API_BASE = 'http://localhost:4043/api/v1';
 
 export const ExamArchivePage: React.FC = () => {
   const { user } = useAuth();

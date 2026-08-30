@@ -3,8 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { getAuthHeaders } from '../utils/api';
 import { ClassAnalyticsDTO, CourseDTO, MasteryColor } from '@repo/types';
 import { StudentAnalyticsPage } from './StudentAnalyticsPage';
-
-const API_BASE = 'http://localhost:4043/api/v1';
+import { API_BASE } from '../config/api';
 
 function getStatusBadgeStyle(color?: MasteryColor) {
   switch (color) {
