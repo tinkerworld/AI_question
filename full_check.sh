@@ -131,4 +131,7 @@ fi
 if [ "$AUDIT_EXIT" -ne 0 ]; then
     exit "$AUDIT_EXIT"
 fi
+if [ "$ZIP_EXIT" -ne 0 ]; then
+    exit "$ZIP_EXIT"
+fi
 exit 0
