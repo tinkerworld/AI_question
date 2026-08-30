@@ -20,7 +20,7 @@ if "%SEVENZIP%"=="" (
     exit /b 1
 )
 
-set OUTFILE=examos-for-friend.zip
+set OUTFILE=examos.zip
 if exist %OUTFILE% del %OUTFILE%
 
 echo ==============================================================
@@ -71,13 +71,20 @@ echo.
   -xr!reports ^
   -xr!screenshots ^
   -xr!scratch ^
-  -x!review-package.zip ^
-  -x!examos-for-friend.zip ^
-  -x!git-log.txt ^
-  -x!git-log-oneline.txt ^
-  -x!tree.txt ^
-  -x!lockfile-check.txt ^
-  -x!test-output.txt
+  -xr!review-package.zip ^
+  -xr!examos-for-friend.zip ^
+  -xr!examos.zip ^
+  -xr!*.zip ^
+  -xr!git-log.txt ^
+  -xr!git-log-oneline.txt ^
+  -xr!tree.txt ^
+  -xr!lockfile-check.txt ^
+  -xr!test-output.txt ^
+  -xr!export_proj.bat ^
+  -xr!export_proj.sh ^
+  -xr!export_for_friend.bat ^
+  -xr!Reviewzip.bat ^
+  -xr!Reviewzip.sh
 
 echo.
 if not exist %OUTFILE% (
@@ -119,4 +126,4 @@ echo     1. Unzip %OUTFILE%
 echo     2. Run install.bat [Windows] or bash install.sh [macOS/Linux]
 echo     3. Run start_all.bat [Windows] or bash start_all.sh [macOS/Linux]
 echo.
-pause
+if "%~1"=="" pause
