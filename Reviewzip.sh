@@ -42,18 +42,21 @@ echo "Generating git log snapshot..."
 if [ -d ".git" ]; then
     git log --stat --date=iso -n 50 > git-log.txt 2>/dev/null || true
     git log --oneline --all -n 100 > git-log-oneline.txt 2>/dev/null || true
+    git status --short > git-status.txt 2>/dev/null || true
 elif [ -d "Exam/.git" ]; then
     (cd Exam && git log --stat --date=iso -n 50 > ../git-log.txt 2>/dev/null || true)
     (cd Exam && git log --oneline --all -n 100 > ../git-log-oneline.txt 2>/dev/null || true)
+    (cd Exam && git status --short > ../git-status.txt 2>/dev/null || true)
 else
-    echo "No .git found in root or Exam/ — skipping git log." > git-log.txt
+    echo "No .git found in root or Exam/ — skipping git log and status." > git-log.txt
+    echo "No .git found in root or Exam/ — skipping git status." > git-status.txt
 fi
 
 echo "Checking for UI test tool run history..."
 E2ECOUNT=$(find tools/e2e-tester/logs -name "*.txt" 2>/dev/null | wc -l || echo 0)
 
 echo "Zipping project for review..."
-echo "  Including: everything in this folder, plus tree.txt and git-log.txt"
+echo "  Including: everything in this folder, plus tree.txt, git-log.txt, and git-status.txt"
 echo "  Excluding: node_modules, build output, database data/binaries, secrets"
 echo ""
 
@@ -101,6 +104,7 @@ if [ -f "$OUTFILE" ]; then
     echo "  - lockfile-check.txt"
     echo "  - tree.txt"
     echo "  - git-log.txt & git-log-oneline.txt"
+    echo "  - git-status.txt"
     echo "  - tools/e2e-tester/logs/ ($E2ECOUNT runs)"
     echo "  - tools/human-simulator/ & entire codebase"
 else

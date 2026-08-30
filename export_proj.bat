@@ -5,13 +5,17 @@ REM  Run this from repo root.
 REM  Creates a minimal, fresh, zero-secret distribution zip.
 REM ==============================================================
 
-setlocal
+setlocal DisableDelayedExpansion
 
 REM --- Locate 7-Zip (prefer 64-bit path) ---
 set SEVENZIP=
-if exist "C:\Program Files\7-Zip\7z.exe" set SEVENZIP=C:\Program Files\7-Zip\7z.exe
-if "%SEVENZIP%"=="" if exist "C:\Program Files (x86)\7-Zip\7z.exe" set SEVENZIP=C:\Program Files (x86)\7-Zip\7z.exe
-where 7z >nul 2>nul && set SEVENZIP=7z
+if exist "C:\Program Files\7-Zip\7z.exe" (
+    set "SEVENZIP=C:\Program Files\7-Zip\7z.exe"
+) else if exist "C:\Program Files (x86)\7-Zip\7z.exe" (
+    set "SEVENZIP=C:\Program Files (x86)\7-Zip\7z.exe"
+) else (
+    where 7z >nul 2>nul && set SEVENZIP=7z
+)
 
 if "%SEVENZIP%"=="" (
     echo.

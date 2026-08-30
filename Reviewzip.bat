@@ -16,13 +16,17 @@ REM  .txt not .log, since *.log is excluded below and a .log file here
 REM  would silently vanish from every zip otherwise.
 REM ==============================================================
 
-setlocal
+setlocal DisableDelayedExpansion
 
 REM --- locate 7z.exe, checking common install paths ---
 set SEVENZIP=
-if exist "C:\Program Files\7-Zip\7z.exe" set SEVENZIP=C:\Program Files\7-Zip\7z.exe
-if exist "C:\Program Files (x86)\7-Zip\7z.exe" set SEVENZIP=C:\Program Files (x86)\7-Zip\7z.exe
-where 7z >nul 2>nul && set SEVENZIP=7z
+if exist "C:\Program Files\7-Zip\7z.exe" (
+    set "SEVENZIP=C:\Program Files\7-Zip\7z.exe"
+) else if exist "C:\Program Files (x86)\7-Zip\7z.exe" (
+    set "SEVENZIP=C:\Program Files (x86)\7-Zip\7z.exe"
+) else (
+    where 7z >nul 2>nul && set SEVENZIP=7z
+)
 
 if "%SEVENZIP%"=="" (
     echo.
@@ -58,13 +62,16 @@ echo Generating git log snapshot...
 if exist .git (
     git log --stat --date=iso -n 50 > git-log.txt 2>nul
     git log --oneline --all -n 100 > git-log-oneline.txt 2>nul
+    git status --short > git-status.txt 2>nul
 ) else if exist Exam\.git (
     pushd Exam
     git log --stat --date=iso -n 50 > ..\git-log.txt 2>nul
     git log --oneline --all -n 100 > ..\git-log-oneline.txt 2>nul
+    git status --short > ..\git-status.txt 2>nul
     popd
 ) else (
-    echo No .git found in root or Exam\ — skipping git log.> git-log.txt
+    echo No .git found in root or Exam\ — skipping git log and status.> git-log.txt
+    echo No .git found in root or Exam\ — skipping git status.> git-status.txt
 )
 
 echo Checking for UI test tool run history...
@@ -74,7 +81,7 @@ if exist tools\e2e-tester\logs (
 )
 
 echo Zipping project for review...
-echo   Including: everything in this folder, plus tree.txt and git-log.txt
+echo   Including: everything in this folder, plus tree.txt, git-log.txt, and git-status.txt
 echo   Excluding: node_modules, build output, database data/binaries, secrets
 echo.
 
@@ -123,6 +130,7 @@ if exist %OUTFILE% (
     echo                           quick scan of commit message discipline
     echo                           ^(e.g. checking the [P0X.FXX] tag convention
     echo                           is actually being followed^)
+    echo   git-status.txt        - working tree status ^(clean vs modified/untracked files^)
     echo   tools\e2e-tester\logs\*.txt   - %E2ECOUNT% UI test run^(s^) found,
     echo                           full console transcript per run
     echo   tools\e2e-tester\reports\     - matching HTML reports + traces +
@@ -149,4 +157,13 @@ if exist %OUTFILE% (
 ) else (
     echo Something went wrong — %OUTFILE% was not created.
 )
-pause
+if "%~1"=="" pause
+if exist %OUTFILE% (
+    endlocal
+    exit /b 0
+) else (
+    endlocal
+    exit /b 1
+)
+
+
