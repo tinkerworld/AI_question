@@ -69,7 +69,17 @@ zip -r "$OUTFILE" . \
   -x ".turbo/*" "*/.turbo/*" \
   -x ".git/*" "*/.git/*" \
   -x "*.db" "*.db-journal" \
-  -x ".env" ".env.*" "*/.env" "*/.env.*" \
+  -x ".env" "*/.env" \
+  -x ".env.local" "*/.env.local" \
+  -x ".env.*.local" "*/.env.*.local" \
+  -x ".env.production" "*/.env.production" \
+  -x ".env.production.local" "*/.env.production.local" \
+  -x ".env.development" "*/.env.development" \
+  -x ".env.development.local" "*/.env.development.local" \
+  -x ".env.test" "*/.env.test" \
+  -x ".env.test.local" "*/.env.test.local" \
+  -x ".env.staging" "*/.env.staging" \
+  -x ".env.staging.local" "*/.env.staging.local" \
   -x "agyssessionid.txt" \
   -x "__pycache__/*" "*/__pycache__/*" "*.pyc" "*/*.pyc" \
   -x "*.log" \

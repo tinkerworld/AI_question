@@ -92,7 +92,12 @@ echo.
   -xr!*.db ^
   -xr!*.db-journal ^
   -xr!.env ^
-  -xr!.env.* ^
+  -xr!.env.local ^
+  -xr!.env.*.local ^
+  -xr!.env.production ^
+  -xr!.env.development ^
+  -xr!.env.test ^
+  -xr!.env.staging ^
   -xr!agyssessionid.txt ^
   -xr!__pycache__ ^
   -xr!*.pyc ^

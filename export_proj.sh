@@ -48,7 +48,17 @@ if command -v zip >/dev/null 2>&1; then
       -x ".turbo/*" "*/.turbo/*" \
       -x ".git/*" "*/.git/*" \
       -x "*.db" "*.db-journal" \
-      -x ".env" ".env.*" "*/.env" "*/.env.*" \
+      -x ".env" "*/.env" \
+      -x ".env.local" "*/.env.local" \
+      -x ".env.*.local" "*/.env.*.local" \
+      -x ".env.production" "*/.env.production" \
+      -x ".env.production.local" "*/.env.production.local" \
+      -x ".env.development" "*/.env.development" \
+      -x ".env.development.local" "*/.env.development.local" \
+      -x ".env.test" "*/.env.test" \
+      -x ".env.test.local" "*/.env.test.local" \
+      -x ".env.staging" "*/.env.staging" \
+      -x ".env.staging.local" "*/.env.staging.local" \
       -x "agyssessionid.txt" \
       -x "__pycache__/*" "*/__pycache__/*" "*.pyc" "*/*.pyc" \
       -x "*.log" "*/logs/*" "logs/*" \
@@ -65,7 +75,7 @@ if command -v zip >/dev/null 2>&1; then
 elif command -v powershell.exe >/dev/null 2>&1; then
     powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "& {
         \$sz = if (Test-Path 'C:\Program Files\7-Zip\7z.exe') { 'C:\Program Files\7-Zip\7z.exe' } elseif (Test-Path 'C:\Program Files (x86)\7-Zip\7z.exe') { 'C:\Program Files (x86)\7-Zip\7z.exe' } else { '7z' }
-        & \$sz a -tzip examos.zip * '-xr!node_modules*' '-xr!postgres-data' '-xr!.cache' '-xr!.prisma' '-xr!dist' '-xr!.next' '-xr!build' '-xr!coverage' '-xr!.turbo' '-xr!.git' '-xr!*.db' '-xr!*.db-journal' '-xr!.env' '-xr!.env.*' '-xr!.env.local' '-xr!agyssessionid.txt' '-xr!__pycache__' '-xr!*.pyc' '-xr!*.log' '-xr!*.tsbuildinfo' '-xr!.vscode' '-xr!.idea' '-xr!Thumbs.db' '-xr!.DS_Store' '-xr!logs' '-xr!reports' '-xr!screenshots' '-xr!scratch' '-xr!review-package.zip' '-xr!examos-for-friend.zip' '-xr!examos.zip' '-xr!*.zip' '-xr!git-log.txt' '-xr!git-log-oneline.txt' '-xr!tree.txt' '-xr!lockfile-check.txt' '-xr!test-output.txt' '-xr!export_proj.bat' '-xr!export_proj.sh' '-xr!export_for_friend.bat' '-xr!Reviewzip.bat' '-xr!Reviewzip.sh'
+        & \$sz a -tzip examos.zip * '-xr!node_modules*' '-xr!postgres-data' '-xr!.cache' '-xr!.prisma' '-xr!dist' '-xr!.next' '-xr!build' '-xr!coverage' '-xr!.turbo' '-xr!.git' '-xr!*.db' '-xr!*.db-journal' '-xr!.env' '-xr!.env.local' '-xr!.env.*.local' '-xr!.env.production' '-xr!.env.development' '-xr!.env.test' '-xr!.env.staging' '-xr!agyssessionid.txt' '-xr!__pycache__' '-xr!*.pyc' '-xr!*.log' '-xr!*.tsbuildinfo' '-xr!.vscode' '-xr!.idea' '-xr!Thumbs.db' '-xr!.DS_Store' '-xr!logs' '-xr!reports' '-xr!screenshots' '-xr!scratch' '-xr!review-package.zip' '-xr!examos-for-friend.zip' '-xr!examos.zip' '-xr!*.zip' '-xr!git-log.txt' '-xr!git-log-oneline.txt' '-xr!tree.txt' '-xr!lockfile-check.txt' '-xr!test-output.txt' '-xr!export_proj.bat' '-xr!export_proj.sh' '-xr!export_for_friend.bat' '-xr!Reviewzip.bat' '-xr!Reviewzip.sh'
     }"
 elif command -v 7z >/dev/null 2>&1; then
     7z a -tzip "$OUTFILE" . \
@@ -82,8 +92,12 @@ elif command -v 7z >/dev/null 2>&1; then
       "-xr!*.db" \
       "-xr!*.db-journal" \
       "-xr!.env" \
-      "-xr!.env.*" \
       "-xr!.env.local" \
+      "-xr!.env.*.local" \
+      "-xr!.env.production" \
+      "-xr!.env.development" \
+      "-xr!.env.test" \
+      "-xr!.env.staging" \
       "-xr!agyssessionid.txt" \
       "-xr!__pycache__" \
       "-xr!*.pyc" \
