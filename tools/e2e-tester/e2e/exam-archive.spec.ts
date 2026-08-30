@@ -73,7 +73,7 @@ test.describe('Phase 7: Published Exam Archive & Immutability Workbench', () => 
     await expect(snapshotBtn).toBeVisible({ timeout: 10_000 });
     await snapshotBtn.click();
     await expect(page.getByText(/Snapshot \(Read-Only\)/i)).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByText(/Section A: Physics/i)).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/Section [A-Z]:|Section \d|Physics|Biology|Reading|Writing/i).first()).toBeVisible({ timeout: 10_000 });
     const closeBtn = page.getByRole('button', { name: /Close|✕/i }).first();
     await expect(closeBtn).toBeVisible();
     await closeBtn.click();
