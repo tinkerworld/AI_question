@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
-const API_BASE = 'http://localhost:4000/api/v1';
+const API_BASE = process.env.API_BASE || 'http://localhost:4043/api/v1';
 const JWT_SECRET = process.env.JWT_SECRET || 'examos_super_secret_jwt_key_2026';
 
 const AUTH_TOKEN = jwt.sign(

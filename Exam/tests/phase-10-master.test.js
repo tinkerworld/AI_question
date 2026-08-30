@@ -1,7 +1,7 @@
 const http = require('http');
 const assert = require('assert');
 
-const BASE_URL = 'http://localhost:4000';
+const BASE_URL = process.env.API_BASE ? process.env.API_BASE.replace('/api/v1', '') : 'http://localhost:4043';
 
 function request(method, path, body = null, token = null) {
   return new Promise((resolve, reject) => {

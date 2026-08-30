@@ -141,7 +141,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = async (email: string, password: string): Promise<{ success: boolean; message?: string }> => {
-    setIsLoading(true);
     try {
       const res = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
@@ -157,14 +156,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setToken(accessToken);
         setRefreshToken(newRefresh);
         setUser(loggedInUser);
-        setIsLoading(false);
         return { success: true };
       } else {
-        setIsLoading(false);
         return { success: false, message: body.message || 'Invalid email or password' };
       }
     } catch (err: any) {
-      setIsLoading(false);
       return { success: false, message: err.message || 'Network error during authentication' };
     }
   };

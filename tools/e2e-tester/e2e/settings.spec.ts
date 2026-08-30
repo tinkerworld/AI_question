@@ -46,7 +46,26 @@ test.describe.serial('Phase 11: System Settings & AI Gateway Configuration', () 
     await expect(mockCard.getByText(/Connection operational|Successfully connected/i)).toBeVisible({ timeout: 10_000 });
     await expect(mockCard.getByText(/Latency:/i)).toBeVisible();
 
-    // 6. Test Appearance Subtab
+    // 6. Test Scope-Isolated Provider Filter Switches
+    const scopeQuestionAuthoringBtn = page.locator('#scope-filter-question_authoring');
+    const scopeInterviewBtn = page.locator('#scope-filter-interview');
+    const scopeAllBtn = page.locator('#scope-filter-all');
+
+    if (await scopeQuestionAuthoringBtn.isVisible().catch(() => false)) {
+      // Filter by Question Authoring
+      await scopeQuestionAuthoringBtn.click();
+      await expect(mockCard).toBeVisible();
+
+      // Filter by Interview Scope
+      await scopeInterviewBtn.click();
+      await expect(page.locator('#provider-card-prov_interview_mock_01')).toBeVisible({ timeout: 5000 });
+
+      // Reset to All Scopes
+      await scopeAllBtn.click();
+      await expect(mockCard).toBeVisible();
+    }
+
+    // 7. Test Appearance Subtab
     await page.locator('#settings-subtab-appearance').click();
     await expect(page.getByText('UI Color Scheme')).toBeVisible();
     await expect(page.locator('#theme-card-light')).toBeVisible();

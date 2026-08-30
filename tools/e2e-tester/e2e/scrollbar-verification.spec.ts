@@ -37,6 +37,15 @@ test.describe('Systemic Scrollbar Verification & Modal Safety', () => {
     expect(scrollInfo.overflowX).toBe('hidden');
     console.log('Question Bank Scroll Info:', scrollInfo);
 
+    // Active Scroll Action Test: Perform scrolling and assert scrollTop updates
+    const scrolledPos = await mainElement.evaluate((el) => {
+      el.scrollTop = 150;
+      return el.scrollTop;
+    });
+    if (scrollInfo.scrollHeight > scrollInfo.clientHeight) {
+      expect(scrolledPos).toBeGreaterThan(0);
+    }
+
     // Verify Create Question modal opens cleanly without clipping or broken fixed positioning
     const createBtn = page.getByRole('button', { name: /create question/i });
     await createBtn.click();

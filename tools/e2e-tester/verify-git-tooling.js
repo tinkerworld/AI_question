@@ -2,7 +2,7 @@ const { chromium } = require('playwright');
 const path = require('path');
 const fs = require('fs');
 
-const API_BASE = 'http://localhost:4000/api/v1';
+const API_BASE = 'http://localhost:4043/api/v1';
 
 (async () => {
   console.log('====================================================');

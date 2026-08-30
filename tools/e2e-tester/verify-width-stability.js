@@ -22,7 +22,7 @@ const fs = require('fs');
 
   // 2. Fetch syllabus tree via API with dummy/new subjectId
   const dummySubjectId = 'sub_dummy_nonexistent_12345';
-  const treeResp = await page.request.get(`http://localhost:4000/api/v1/syllabus/tree?subjectId=${dummySubjectId}`, {
+  const treeResp = await page.request.get(`http://localhost:4043/api/v1/syllabus/tree?subjectId=${dummySubjectId}`, {
     headers: { Authorization: `Bearer ${await page.evaluate(() => localStorage.getItem('token'))}` },
   });
   const treeJson = await treeResp.json();

@@ -56,7 +56,7 @@ bash start_all.sh
 | Service | URL | Description |
 | :--- | :--- | :--- |
 | **Web Application** | [http://localhost:3000](http://localhost:3000) | Main React UI for Students, Teachers & Admins |
-| **Express API Server** | [http://localhost:4000](http://localhost:4000) | REST API & In-Process PostgreSQL 16 Engine |
+| **Express API Server** | [http://localhost:4043](http://localhost:4043) | REST API & In-Process PostgreSQL 16 Engine |
 | **Build Tracker UI** | [http://localhost:3050](http://localhost:3050) | Architecture state & verification monitor |
 
 ---

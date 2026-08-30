@@ -112,13 +112,19 @@ test.describe('Phase 12: AI Interview & Oral Assessment System', () => {
     await expect(evaluateEarlyBtn).toBeVisible({ timeout: 60000 });
     await evaluateEarlyBtn.click();
 
-    // 8. Verify Scorecard & Rubric Breakdown
+    // 8. Verify Scorecard, IELTS Band Scores & Rubric Breakdown
     await expect(page.locator('#interview-final-score')).toBeVisible({ timeout: 60000 });
     await expect(page.getByText('Multi-Criterion Rubric Breakdown')).toBeVisible();
     await expect(page.getByText('Key Demonstrations & Strengths')).toBeVisible();
     await expect(page.getByText('Full Conversation Transcript Review')).toBeVisible();
 
-    // 11. View My Attempts History
+    // Verify IELTS 4 Criteria score rows are displayed
+    await expect(page.getByText('Fluency & Coherence').first()).toBeVisible();
+    await expect(page.getByText('Lexical Resource').first()).toBeVisible();
+    await expect(page.getByText('Grammatical Range & Accuracy').first()).toBeVisible();
+    await expect(page.getByText('Pronunciation').first()).toBeVisible();
+
+    // 9. View My Attempts History
     const historyBtn = page.getByRole('button', { name: /My Attempts/i });
     await expect(historyBtn).toBeVisible();
     await historyBtn.click();

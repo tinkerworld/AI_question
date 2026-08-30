@@ -27,9 +27,9 @@ if not exist "%TOOLDIR%\node_modules" (
 echo Checking that the app is actually running first...
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
   "$web = Test-NetConnection -ComputerName localhost -Port 3000 -WarningAction SilentlyContinue; " ^
-  "$api = Test-NetConnection -ComputerName localhost -Port 4000 -WarningAction SilentlyContinue; " ^
+  "$api = Test-NetConnection -ComputerName localhost -Port 4043 -WarningAction SilentlyContinue; " ^
   "if (-not $web.TcpTestSucceeded -or -not $api.TcpTestSucceeded) { " ^
-  "  Write-Host 'ERROR: Web (3000) or API (4000) is not responding. Run start_all.bat first.' -ForegroundColor Red; " ^
+  "  Write-Host 'ERROR: Web (3000) or API (4043) is not responding. Run start_all.bat first.' -ForegroundColor Red; " ^
   "  exit 1 " ^
   "}"
 
@@ -121,5 +121,5 @@ echo.
 echo All three are included automatically next time you run Reviewzip.bat.
 echo.
 
-pause
+if "%~1"=="" pause
 exit /b %TESTEXIT%

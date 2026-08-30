@@ -42,7 +42,7 @@ test.describe.serial('Phase 9: Personalized Practice & Adaptive Mastery', () => 
   test('student can generate targeted practice paper and interact with practice player', async ({ page }) => {
     await loginAs(page, 'student');
     // Ensure student is subscribed to PREMIUM tier to unlock personalized practice
-    await page.request.post('http://localhost:4000/api/v1/subscriptions', {
+    await page.request.post('http://localhost:4043/api/v1/subscriptions', {
       data: { planCode: 'PREMIUM' },
       headers: { Authorization: `Bearer ${await page.evaluate(() => localStorage.getItem('token'))}` },
     });

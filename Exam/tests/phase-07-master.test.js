@@ -1,6 +1,6 @@
 const http = require('http');
 
-const API_BASE = 'http://localhost:4000/api/v1';
+const API_BASE = process.env.API_BASE || 'http://localhost:4043/api/v1';
 
 function request(method, path, body = null, token = null) {
   return new Promise((resolve, reject) => {

@@ -52,7 +52,7 @@ if not exist "Exam\.env" (
             echo DATABASE_URL="postgresql://examos:examos_password@localhost:5432/examos_db?schema=public"
             echo JWT_SECRET="examos_super_secret_jwt_key_2026_production"
             echo JWT_REFRESH_SECRET="examos_super_secret_refresh_jwt_key_2026_production"
-            echo PORT=4000
+            echo PORT=4043
         ) > "Exam\.env"
         echo       Created default Exam\.env configuration.
     )
@@ -110,7 +110,7 @@ echo     stop_all.bat
 echo.
 echo   Service Endpoints:
 echo     - Web Application: http://localhost:3000
-echo     - API Server:      http://localhost:4000
+echo     - API Server:      http://localhost:4043
 echo     - Build Tracker:   http://localhost:3050
 echo.
 echo   Seeded Login Credentials:

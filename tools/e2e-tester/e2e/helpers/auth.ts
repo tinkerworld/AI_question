@@ -9,6 +9,7 @@ import { Page, expect } from '@playwright/test';
 export const PERSONAS = {
   admin: { email: 'admin@examos.com', password: 'Admin@123', role: 'MAIN_ADMIN' },
   subAdmin: { email: 'subadmin@examos.com', password: 'SubAdmin@123', role: 'SUB_ADMIN' },
+  subadmin: { email: 'subadmin@examos.com', password: 'SubAdmin@123', role: 'SUB_ADMIN' },
   teacher: { email: 'teacher@examos.com', password: 'Teacher@123', role: 'TEACHER' },
   student: { email: 'student@examos.com', password: 'Student@123', role: 'STUDENT' },
   student2: { email: 'student2@examos.com', password: 'Student2@123', role: 'STUDENT' },

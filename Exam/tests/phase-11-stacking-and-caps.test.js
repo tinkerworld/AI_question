@@ -1,6 +1,6 @@
 const assert = require('assert');
 
-const API_BASE = 'http://127.0.0.1:4000/api/v1';
+const API_BASE = process.env.API_BASE || 'http://localhost:4043/api/v1';
 
 async function login(email, password) {
   const res = await fetch(`${API_BASE}/auth/login`, {

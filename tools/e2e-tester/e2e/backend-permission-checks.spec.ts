@@ -22,19 +22,19 @@ test.describe('Backend permission enforcement (API-level, not UI simulation)', (
 
     const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
 
-    const courseRes = await page.request.post('http://localhost:4000/api/v1/courses', {
+    const courseRes = await page.request.post('http://localhost:4043/api/v1/courses', {
       headers,
       data: { name: 'Should Be Rejected', code: 'REJ-001', durationMonths: 6 },
     });
     expect(courseRes.status()).toBe(403);
 
-    const patternRes = await page.request.post('http://localhost:4000/api/v1/exam-patterns', {
+    const patternRes = await page.request.post('http://localhost:4043/api/v1/exam-patterns', {
       headers,
       data: { name: 'Should Be Rejected', courseId: 'c1', durationMinutes: 60, type: 'SINGLE' },
     });
     expect(patternRes.status()).toBe(403);
 
-    const userRes = await page.request.post('http://localhost:4000/api/v1/users', {
+    const userRes = await page.request.post('http://localhost:4043/api/v1/users', {
       headers,
       data: { email: 'rejected@examos.com', password: 'Test@123', roleIds: [] },
     });
@@ -48,7 +48,7 @@ test.describe('Backend permission enforcement (API-level, not UI simulation)', (
 
     // Teacher has questions.create - this should NOT 403 (may still fail
     // validation for other reasons, but never on permission grounds).
-    const questionRes = await page.request.post('http://localhost:4000/api/v1/questions', {
+    const questionRes = await page.request.post('http://localhost:4043/api/v1/questions', {
       headers,
       data: {
         subjectId: 'sub_phy',
@@ -72,13 +72,13 @@ test.describe('Backend permission enforcement (API-level, not UI simulation)', (
     // wrong.
     const createdQuestion = await questionRes.json().catch(() => null);
     if (createdQuestion?.data?.id) {
-      await page.request.delete(`http://localhost:4000/api/v1/questions/${createdQuestion.data.id}`, {
+      await page.request.delete(`http://localhost:4043/api/v1/questions/${createdQuestion.data.id}`, {
         headers,
       }).catch(() => {});
     }
 
     // Teacher has no users.create - this should 403.
-    const userRes = await page.request.post('http://localhost:4000/api/v1/users', {
+    const userRes = await page.request.post('http://localhost:4043/api/v1/users', {
       headers,
       data: { email: 'rejected@examos.com', password: 'Test@123', roleIds: [] },
     });

@@ -8,8 +8,8 @@ export const LoginPage: React.FC = () => {
   const { login } = useAuth();
   const { t } = useTranslation();
 
-  const [email, setEmail] = useState('admin@examos.com');
-  const [password, setPassword] = useState('Admin@123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -113,6 +113,8 @@ export const LoginPage: React.FC = () => {
           {/* Error Alert */}
           {error && (
             <div
+              id="login-error-alert"
+              data-testid="login-error-alert"
               style={{
                 background: 'rgba(239, 68, 68, 0.15)',
                 border: '1px solid #ef4444',
@@ -134,6 +136,8 @@ export const LoginPage: React.FC = () => {
                 Email Address
               </label>
               <input
+                id="input-login-email"
+                data-testid="input-login-email"
                 type="email"
                 required
                 placeholder="name@examos.com"
@@ -158,6 +162,8 @@ export const LoginPage: React.FC = () => {
               </label>
               <div style={{ position: 'relative' }}>
                 <input
+                  id="input-login-password"
+                  data-testid="input-login-password"
                   type={showPassword ? 'text' : 'password'}
                   required
                   placeholder="••••••••"
@@ -195,6 +201,8 @@ export const LoginPage: React.FC = () => {
             </div>
 
             <button
+              id="btn-login-submit"
+              data-testid="btn-login-submit"
               type="submit"
               disabled={loading}
               style={{

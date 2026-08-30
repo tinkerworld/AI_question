@@ -31,7 +31,7 @@ through an agent running in a restricted environment.
 ```
 
 `run_ui_tests.bat`:
-- Checks ports 3000 and 4000 are actually responding first, and fails fast
+- Checks ports 3000 and 4043 are actually responding first, and fails fast
   with a clear message if the stack isn't running, instead of a wall of
   cryptic "connection refused" errors from every test.
 - Runs the suite, showing output live in the terminal.

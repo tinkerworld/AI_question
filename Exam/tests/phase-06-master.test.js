@@ -3,7 +3,7 @@ const assert = require('assert');
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
-const API_BASE = 'http://localhost:4000/api/v1';
+const API_BASE = process.env.API_BASE || 'http://localhost:4043/api/v1';
 
 function request(method, urlPath, data = null, token = null) {
   return new Promise((resolve, reject) => {

@@ -150,7 +150,7 @@ test.describe('Student Analytics & Personalized Practice Pipeline', () => {
   test('student can generate a new practice test from their weak topics', async ({ page }) => {
     await loginAs(page, 'student');
     // Ensure student is on PREMIUM tier for personalized practice capability
-    await page.request.post('http://localhost:4000/api/v1/subscriptions', {
+    await page.request.post('http://localhost:4043/api/v1/subscriptions', {
       data: { planCode: 'PREMIUM' },
       headers: { Authorization: `Bearer ${await page.evaluate(() => localStorage.getItem('token'))}` },
     });
