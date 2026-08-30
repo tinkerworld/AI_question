@@ -71,6 +71,7 @@ zip -r "$OUTFILE" . \
   -x "*.db" "*.db-journal" \
   -x ".env" ".env.*" "*/.env" "*/.env.*" \
   -x "agyssessionid.txt" \
+  -x "__pycache__/*" "*/__pycache__/*" "*.pyc" "*/*.pyc" \
   -x "*.log" \
   -x "*.tsbuildinfo" \
   -x ".vscode/*" "*/.vscode/*" \

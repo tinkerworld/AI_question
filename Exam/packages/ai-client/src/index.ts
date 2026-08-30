@@ -97,7 +97,7 @@ export class AIClient {
 
   constructor(config: AIClientConfig = {}) {
     this.config = {
-      baseUrl: config.baseUrl || 'http://localhost:4000/api/v1/ai/gateway',
+      baseUrl: config.baseUrl || 'http://localhost:4043/api/v1/ai/gateway',
       internalApiKey: config.internalApiKey || 'examos-internal-ai-key',
       timeoutMs: config.timeoutMs || 15000,
       maxRetries: config.maxRetries || 3,

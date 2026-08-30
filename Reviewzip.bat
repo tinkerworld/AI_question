@@ -94,6 +94,8 @@ echo.
   -xr!.env ^
   -xr!.env.* ^
   -xr!agyssessionid.txt ^
+  -xr!__pycache__ ^
+  -xr!*.pyc ^
   -xr!*.log ^
   -xr!*.tsbuildinfo ^
   -xr!.vscode ^

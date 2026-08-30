@@ -38,13 +38,13 @@ pnpm run db:seed
 pnpm run dev
 
 # 8. Verify
-# API should be running on http://localhost:4000
+# API should be running on http://localhost:4043
 # Web frontend should be running on http://localhost:3000
 ```
 
 ## Environment Variables
 Key variables in `.env` (see `.env.example` for the full list):
-- `PORT`: API Port (Default: 4000)
+- `PORT`: API Port (Default: 4043)
 - `DATABASE_URL`: Required. PostgreSQL connection string.
 - `REDIS_URL`: Required. Redis connection string.
 - `JWT_SECRET`: Required. Secret for signing access tokens.
@@ -69,7 +69,7 @@ Run these from the workspace root:
 - `pnpm db:studio`: Open Prisma Studio.
 
 ## Troubleshooting
-- **Port Conflicts**: Ensure ports 3000, 4000, 5432, and 6379 are free.
+- **Port Conflicts**: Ensure ports 3000, 4043, 5432, and 6379 are free.
 - **Docker Issues**: Ensure Docker Desktop is running. Try `docker-compose down -v` and `up -d` again.
 - **Migration Failures**: Check `DATABASE_URL` in `.env`. Ensure the DB is running.
 - **Permission Errors**: On Unix, you might need `sudo` for Docker, or add your user to the `docker` group.

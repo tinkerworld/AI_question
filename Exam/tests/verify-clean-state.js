@@ -7,7 +7,7 @@ function request(method, path, body = null, token = null) {
       ? path
       : `/api/v1${path.startsWith('/') ? '' : '/'}${path}`;
 
-    const url = new URL(formattedPath, 'http://localhost:4000');
+    const url = new URL(formattedPath, process.env.API_BASE_URL || 'http://localhost:4043');
     const payload = body ? JSON.stringify(body) : null;
 
     const headers = {

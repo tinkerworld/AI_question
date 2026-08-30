@@ -24,7 +24,7 @@ async function runFrontendInteractionTests() {
   assert.ok(examsPageCode.includes('setShowGenerateModal(true)'), 'Trigger button must set showGenerateModal(true)');
   assert.ok(examsPageCode.includes('{showGenerateModal && ('), 'showGenerateModal conditional block must render modal');
   assert.ok(examsPageCode.includes('onSubmit={handleGenerateExam}'), 'Generate modal form must connect to handleGenerateExam');
-  assert.ok(examsPageCode.includes("fetch('http://localhost:4000/api/v1/exams/generate'"), 'Submit handler must call POST /api/v1/exams/generate');
+  assert.ok(examsPageCode.includes('/api/v1/exams/generate'), 'Submit handler must call POST /api/v1/exams/generate');
   console.log('   [PASS] Feature 5.1 UI: Trigger, modal DOM render, and API call fully wired');
 
   // Test 5.2-UI: Draft Exam Inspector & Question Swap / Reorder
@@ -59,7 +59,7 @@ async function runFrontendInteractionTests() {
   assert.ok(examsPageCode.includes('setShowManualModal(true)'), 'Manual trigger must set showManualModal(true)');
   assert.ok(examsPageCode.includes('{showManualModal && ('), 'showManualModal conditional block must render form');
   assert.ok(examsPageCode.includes('onSubmit={handleCreateManualExam}'), 'Manual form must connect to handleCreateManualExam');
-  assert.ok(examsPageCode.includes("fetch('http://localhost:4000/api/v1/exams/manual'"), 'Manual submit must call POST /api/v1/exams/manual');
+  assert.ok(examsPageCode.includes('/api/v1/exams/manual'), 'Manual submit must call POST /api/v1/exams/manual');
   
   // Add Section Modal Verification
   assert.ok(examsPageCode.includes('const [showAddSectionModal, setShowAddSectionModal] = useState'), 'showAddSectionModal state declared');

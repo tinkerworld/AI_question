@@ -5,7 +5,7 @@ function req(path, method='GET', body=null, token=null) {
     const payload = body !== null ? JSON.stringify(body) : null;
     const r = http.request({
       hostname: 'localhost',
-      port: 4000,
+      port: process.env.API_PORT || 4043,
       path: '/api/v1' + path,
       method,
       headers: {

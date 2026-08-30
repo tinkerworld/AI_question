@@ -2,7 +2,7 @@ const dotenv = require('dotenv');
 const path = require('path');
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
-const BASE_URL = 'http://localhost:4000/api/v1';
+const BASE_URL = process.env.API_BASE_URL || 'http://localhost:4043/api/v1';
 
 async function test() {
   const loginRes = await fetch(`${BASE_URL}/auth/login`, {
