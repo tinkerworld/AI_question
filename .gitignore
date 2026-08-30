@@ -4,6 +4,8 @@ node_modules
 package-lock.json
 
 # Build & Database Artifacts
+postgres-data
+postgres-data/
 test-db
 test-output.txt
 
@@ -18,7 +20,6 @@ coverage
 .env
 .env.local
 .env.*.local
-tools/build-tracker/state.json
 
 # Logs & Temporary Files
 *.log
