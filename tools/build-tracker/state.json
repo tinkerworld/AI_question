@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-08-24T16:24:44.134Z",
+  "lastUpdated": "2026-08-31T16:37:59.208Z",
   "activePhase": 7,
   "phases": [
     {
@@ -529,6 +529,60 @@
           "source": "plan",
           "state": "done",
           "addedAt": "2026-08-13T13:40:00.000Z"
+        },
+        {
+          "id": "7.8",
+          "phase": 7,
+          "title": "[CCR-SECURITY] Fix Missing Authentication / Tenancy Scope in Node.js: The provided code snippets are from various parts of a larger applicat",
+          "source": "ai-suggested",
+          "state": "done",
+          "addedAt": "2026-08-31T15:55:29.482Z",
+          "note": "[QA Hub] Endpoints lacking authentication decorators or tenant isolation filters permit cross-tenant data leakage and unauthorized privilege escalation. (ref: DEV-102)"
+        },
+        {
+          "id": "7.9",
+          "phase": 7,
+          "title": "[CCR-SECURITY] Fix Missing Authentication / Tenancy Scope in test-user.spec.js: The provided code snippets are from various parts of a large",
+          "source": "ai-suggested",
+          "state": "done",
+          "addedAt": "2026-08-31T15:55:29.487Z",
+          "note": "[QA Hub] Endpoints lacking authentication decorators or tenant isolation filters permit cross-tenant data leakage and unauthorized privilege escalation. (ref: DEV-103)"
+        },
+        {
+          "id": "7.10",
+          "phase": 7,
+          "title": "[CCR-SECURITY] Fix Missing Authentication / Tenancy Scope in analytics.controller.ts: The provided code snippets are from various parts of a",
+          "source": "ai-suggested",
+          "state": "done",
+          "addedAt": "2026-08-31T15:57:41.616Z",
+          "note": "[QA Hub] Endpoints lacking authentication decorators or tenant isolation filters permit cross-tenant data leakage and unauthorized privilege escalation. (ref: DEV-104)"
+        },
+        {
+          "id": "7.11",
+          "phase": 7,
+          "title": "[CCR-SECURITY] Fix Missing Authentication / Tenancy Scope in test_user_profile_update.py: The provided code snippets represent various parts",
+          "source": "ai-suggested",
+          "state": "done",
+          "addedAt": "2026-08-31T15:57:41.624Z",
+          "note": "[QA Hub] Endpoints lacking authentication decorators or tenant isolation filters permit cross-tenant data leakage and unauthorized privilege escalation. (ref: DEV-105)"
+        },
+        {
+          "id": "7.12",
+          "phase": 7,
+          "title": "[CCR-SECURITY] Fix Missing Authentication / Tenancy Scope in package.js: ### Summary of Changes and Observations\n\n#### 1. **Root `package.js",
+          "source": "ai-suggested",
+          "state": "done",
+          "addedAt": "2026-08-31T16:01:53.959Z",
+          "note": "[QA Hub] Endpoints lacking authentication decorators or tenant isolation filters permit cross-tenant data leakage and unauthorized privilege escalation. (ref: DEV-106)"
+        },
+        {
+          "id": "7.13",
+          "phase": 7,
+          "title": "[CCR-SECURITY] Fix SQL Injection Vulnerability in Git Diff: This is a **code diff** showing changes to a JavaScript/TypeScript fil",
+          "source": "ai-suggested",
+          "state": "done",
+          "addedAt": "2026-08-31T16:15:30.167Z",
+          "note": "[QA Hub] Direct string concatenation in database queries enables attackers to inject malicious SQL fragments and manipulate query logic. (ref: DEV-107)"
         }
       ]
     },

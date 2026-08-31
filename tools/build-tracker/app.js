@@ -1,6 +1,7 @@
 let stateData = null;
 let currentPhaseId = 1;
 let pollTimer = null;
+let hasSetInitialPhase = false;
 
 // DOM Elements
 const sidebarList = document.getElementById('sidebar-phase-list');
@@ -55,6 +56,16 @@ async function fetchState() {
     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
     const data = await res.json();
     stateData = data;
+    // Open on whichever phase is actually active, not always Phase 1 -- otherwise newly
+    // filed tasks (e.g. AI-suggested bugs, which land under the active phase) are invisible
+    // until the user happens to click the right sidebar item themselves. Only on first load,
+    // so it never yanks the view away while someone's browsing a different phase.
+    if (!hasSetInitialPhase) {
+      hasSetInitialPhase = true;
+      if (data.activePhase && data.phases.some(p => p.id === data.activePhase)) {
+        currentPhaseId = data.activePhase;
+      }
+    }
     renderApp();
     syncText.textContent = 'LIVE SYNCED';
   } catch (err) {

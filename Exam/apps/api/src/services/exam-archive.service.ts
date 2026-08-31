@@ -442,8 +442,17 @@ export class ExamArchiveService {
       values.push(`%${search}%`);
     }
 
+    const allowedSortColumns: Record<string, string> = {
+      publishedAt: 'publishedAt',
+      examName: 'examName',
+      totalMarks: 'totalMarks',
+      createdAt: 'createdAt',
+    };
+    const safeSortBy = allowedSortColumns[sortBy] || 'publishedAt';
+    const safeSortOrder = sortOrder?.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
-    const orderClause = `ORDER BY s."${sortBy}" ${sortOrder}`;
+    const orderClause = `ORDER BY s."${safeSortBy}" ${safeSortOrder}`;
 
     const countRes = await pgDb.query(`SELECT COUNT(*) as total FROM "exam_snapshots" s ${whereClause}`, values);
     const total = parseInt((countRes.rows[0] as any).total, 10);

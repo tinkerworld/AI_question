@@ -84,4 +84,33 @@ test.describe('Backend permission enforcement (API-level, not UI simulation)', (
     });
     expect(userRes.status()).toBe(403);
   });
+
+  test('cross-student analytics access is rejected with 403 (IDOR/tenancy isolation)', async ({ page }) => {
+    await loginAs(page, 'student');
+    const token = await page.evaluate(() => localStorage.getItem('token'));
+    const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+
+    // Student 1 trying to access student2's analytics
+    const idorRes = await page.request.get('http://localhost:4043/api/v1/students/usr_student2_test/mastery', {
+      headers,
+    });
+    expect(idorRes.status()).toBe(403);
+    const body = await idorRes.json();
+    expect(body.errorCode).toBe('FORBIDDEN_ANALYTICS_ACCESS');
+  });
+
+  test('archive search protects against SQL injection in sortBy/sortOrder parameters', async ({ page }) => {
+    await loginAs(page, 'student');
+    const token = await page.evaluate(() => localStorage.getItem('token'));
+    const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+
+    // Malicious sortBy injection attempt
+    const sqlInjRes = await page.request.get('http://localhost:4043/api/v1/archive/exams?sortBy=publishedAt%22;DROP%20TABLE%20users;--&sortOrder=DESC', {
+      headers,
+    });
+    expect(sqlInjRes.status()).toBe(200);
+    const body = await sqlInjRes.json();
+    expect(body.success).toBe(true);
+  });
 });
+
