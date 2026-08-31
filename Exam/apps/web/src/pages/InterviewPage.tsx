@@ -216,6 +216,11 @@ export const InterviewPage: React.FC = () => {
         clearTimeout(recordingTimeoutRef.current);
         recordingTimeoutRef.current = null;
       }
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        try {
+          window.speechSynthesis.cancel();
+        } catch {}
+      }
     };
   }, [token]);
 
@@ -926,7 +931,15 @@ export const InterviewPage: React.FC = () => {
               </div>
 
               <button
-                onClick={() => setTtsEnabled(!ttsEnabled)}
+                onClick={() => {
+                  const nextState = !ttsEnabled;
+                  setTtsEnabled(nextState);
+                  if (!nextState && typeof window !== 'undefined' && window.speechSynthesis) {
+                    try {
+                      window.speechSynthesis.cancel();
+                    } catch {}
+                  }
+                }}
                 title={ttsEnabled ? 'Mute AI Voice' : 'Unmute AI Voice'}
                 style={{
                   background: 'none',
