@@ -4169,29 +4169,9 @@ export async function runSeed() {
       scope: 'writing_analysis',
       isActive: true,
     },
-
-    // Legacy Fallback Provider Aliases (ensures zero regression for legacy scripts)
-    {
-      id: 'prov_mock_01',
-      name: 'Deterministic Fallback Mock Engine (Offline Safety Net)',
-      type: 'MOCK',
-      modelId: 'mock-gpt-4o-deterministic',
-      baseUrl: 'http://localhost:4043/internal/ai/mock',
-      priority: 999,
-      scope: 'question_authoring',
-      isActive: true,
-    },
-    {
-      id: 'prov_interview_mock_01',
-      name: 'Deterministic Mock Engine (Interview Scope)',
-      type: 'MOCK',
-      modelId: 'mock-interview-v1',
-      baseUrl: 'http://localhost:4043/internal/ai/mock-interview',
-      priority: 999,
-      scope: 'interview',
-      isActive: true,
-    },
   ];
+
+  await pgDb.query(`DELETE FROM "ai_providers" WHERE "id" IN ('prov_mock_01', 'prov_interview_mock_01')`);
 
   for (const prov of defaultProviders) {
     await pgDb.query(

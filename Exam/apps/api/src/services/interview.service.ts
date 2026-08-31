@@ -625,7 +625,7 @@ ${nextMainIndex === 5 && nextFollowUpCount >= 2 ? 'NOTICE: This is the final fol
       .filter((t: any) => t.speaker === 'CANDIDATE' && t.message && t.message.trim().length > 0)
       .map((t: any) => t.message.trim());
 
-    // 2. Perform AI Rubric Evaluation Pass via AI Gateway (scope: 'interview')
+    // 2. Perform AI Rubric Evaluation Pass via AI Gateway (scope: 'interview_grading')
     const evaluationMessages = [
       {
         role: 'system' as any,
