@@ -11,7 +11,15 @@ import { encryptSecret, decryptSecret, maskApiKey } from '../utils/crypto';
 
 export interface RouteAIRequest {
   featureKey: string;
-  scope: 'question_authoring' | 'interview' | string;
+  scope:
+    | 'question_generation'
+    | 'question_paraphrase'
+    | 'interview_conversation'
+    | 'interview_grading'
+    | 'writing_analysis'
+    | 'question_authoring'
+    | 'interview'
+    | string;
   prompt?: string;
   variables?: Record<string, any>;
   userId?: string;
@@ -22,7 +30,12 @@ export interface RouteAIRequest {
 
 export interface RouteAIConversationRequest {
   featureKey: 'interview_conversation' | 'interview_evaluation' | string;
-  scope: 'interview' | string;
+  scope:
+    | 'interview_conversation'
+    | 'interview_grading'
+    | 'writing_analysis'
+    | 'interview'
+    | string;
   systemPrompt?: string;
   messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>;
   contextData?: {
@@ -56,6 +69,30 @@ export interface RouteAIResponse {
   status: AIGatewayStatus;
 }
 
+/**
+ * Normalizes scope strings to the 5 canonical scopes, preserving backward compatibility with legacy aliases.
+ */
+export function normalizeScope(scope?: string, featureKey?: string): string {
+  if (!scope || typeof scope !== 'string' || scope.trim() === '') {
+    if (featureKey === 'question_generation') return 'question_generation';
+    if (featureKey === 'question_modification') return 'question_paraphrase';
+    if (featureKey === 'interview_conversation') return 'interview_conversation';
+    if (featureKey === 'interview_evaluation') return 'interview_grading';
+    if (featureKey === 'writing_evaluation') return 'writing_analysis';
+    throw new Error(
+      'SCOPE_REQUIRED: Every AI Gateway request must explicitly specify a scope (question_generation, question_paraphrase, interview_conversation, interview_grading, writing_analysis)'
+    );
+  }
+  const s = scope.trim();
+  if (s === 'question_authoring') {
+    return featureKey === 'question_modification' ? 'question_paraphrase' : 'question_generation';
+  }
+  if (s === 'interview') {
+    return featureKey === 'interview_evaluation' ? 'interview_grading' : 'interview_conversation';
+  }
+  return s;
+}
+
 export class AIGatewayService {
   private static circuitBreakerResetMs = 5 * 60 * 1000; // 5 minutes
 
@@ -64,9 +101,10 @@ export class AIGatewayService {
    */
   static async routeRequest(req: RouteAIRequest): Promise<RouteAIResponse> {
     if (!req.scope || typeof req.scope !== 'string' || req.scope.trim() === '') {
-      throw new Error('SCOPE_REQUIRED: Every AI Gateway request must explicitly specify a scope (e.g. question_authoring, interview)');
+      throw new Error('SCOPE_REQUIRED: Every AI Gateway request must explicitly specify a scope (e.g. question_generation, question_paraphrase, interview_conversation, interview_grading, writing_analysis)');
     }
 
+    const targetScope = normalizeScope(req.scope, req.featureKey);
     const db = pgDb;
     const startTime = Date.now();
 
@@ -92,8 +130,8 @@ export class AIGatewayService {
     let providers: AIProviderDTO[] = [];
     if (req.preferredProviderId) {
       const prefRes = await db.query(
-        `SELECT * FROM "ai_providers" WHERE "id" = $1 AND "isActive" = true AND "scope" = $2`,
-        [req.preferredProviderId, req.scope]
+        `SELECT * FROM "ai_providers" WHERE "id" = $1 AND "isActive" = true AND ("scope" = $2 OR "scope" = $3)`,
+        [req.preferredProviderId, targetScope, req.scope]
       );
       if (prefRes.rows.length > 0) {
         providers = prefRes.rows as any[];
@@ -101,15 +139,21 @@ export class AIGatewayService {
     }
 
     if (providers.length === 0) {
-      const providersRes = await db.query(
+      let providersRes = await db.query(
         `SELECT * FROM "ai_providers" WHERE "isActive" = true AND "scope" = $1 ORDER BY "priority" ASC`,
-        [req.scope]
+        [targetScope]
       );
+      if (providersRes.rows.length === 0 && req.scope !== targetScope) {
+        providersRes = await db.query(
+          `SELECT * FROM "ai_providers" WHERE "isActive" = true AND "scope" = $1 ORDER BY "priority" ASC`,
+          [req.scope]
+        );
+      }
       providers = (providersRes.rows as any[]) || [];
     }
 
     if (providers.length === 0) {
-      throw new Error(`NO_AI_PROVIDERS_AVAILABLE: No active providers found for scope '${req.scope}'`);
+      throw new Error(`NO_AI_PROVIDERS_AVAILABLE: No active providers found for scope '${targetScope}'`);
     }
 
     let lastError: Error | null = null;
@@ -151,9 +195,13 @@ export class AIGatewayService {
         // Output validation against expected schema
         try {
           parsedJson = typeof rawResult === 'string' ? JSON.parse(rawResult) : rawResult;
-          if (req.scope === 'interview') {
-            if (typeof parsedJson.score !== 'number' || !parsedJson.feedback) {
+          if (targetScope === 'interview_grading' || targetScope === 'interview' || req.featureKey === 'interview_evaluation') {
+            if (typeof parsedJson.score !== 'number' && typeof parsedJson.finalScore !== 'number') {
               throw new Error('SCHEMA_VALIDATION_FAILED: Missing required interview evaluation fields');
+            }
+          } else if (targetScope === 'writing_analysis' || req.featureKey === 'writing_evaluation') {
+            if (typeof parsedJson.score !== 'number' && typeof parsedJson.finalScore !== 'number' && !parsedJson.feedback) {
+              throw new Error('SCHEMA_VALIDATION_FAILED: Missing required writing analysis fields');
             }
           } else {
             if (!parsedJson.content || !parsedJson.type || !parsedJson.data) {
@@ -260,11 +308,32 @@ export class AIGatewayService {
     userPrompt: string
   ): Promise<{ content: string; promptTokens: number; completionTokens: number }> {
     if (provider.type === 'MOCK') {
-      if (provider.scope === 'interview') {
+      if (
+        provider.scope === 'interview_grading' ||
+        provider.scope === 'interview' ||
+        systemPrompt.toLowerCase().includes('interview') ||
+        systemPrompt.toLowerCase().includes('ielts speaking') ||
+        systemPrompt.toLowerCase().includes('rubric')
+      ) {
         const interviewMockOutput = {
           score: 8.5,
-          feedback: 'Candidate displayed articulate conceptual comprehension, rigorous scientific rationale, and sound edge case handling.',
-          followUpQuestion: 'How does the observed outcome scale when velocity approaches relativistic limits?',
+          finalScore: 8.5,
+          maxScore: 9.0,
+          percentage: 94.4,
+          gradeBand: 'Band 8.5 (Very Good User - Proficient Master)',
+          feedback:
+            'Candidate displayed articulate conceptual comprehension, rigorous scientific rationale, and sound edge case handling.',
+          followUpQuestion:
+            'How does the observed outcome scale when velocity approaches relativistic limits?',
+          rubricScores: [
+            { id: 'fluency', name: 'Fluency & Coherence', score: 8.5, maxScore: 9.0, feedback: 'Smooth discourse flow.' },
+            { id: 'lexical', name: 'Lexical Resource', score: 8.5, maxScore: 9.0, feedback: 'Rich and accurate vocabulary.' },
+            { id: 'grammar', name: 'Grammatical Range & Accuracy', score: 8.0, maxScore: 9.0, feedback: 'Varied structures.' },
+            { id: 'pronunciation', name: 'Pronunciation & Intonation', score: 8.5, maxScore: 9.0, feedback: 'Clear pronunciation.' },
+          ],
+          strengths: ['Clear structure and rationale.', 'Effective domain knowledge.'],
+          weaknesses: ['Minor moments of hesitation on complex edge cases.'],
+          recommendations: ['Incorporate specific case examples earlier.'],
         };
         return {
           content: JSON.stringify(interviewMockOutput),
@@ -273,7 +342,41 @@ export class AIGatewayService {
         };
       }
 
-      const isModification = userPrompt.includes('variation') || userPrompt.includes('alternative') || userPrompt.includes('Reference Question');
+      if (
+        provider.scope === 'writing_analysis' ||
+        systemPrompt.toLowerCase().includes('writing') ||
+        systemPrompt.toLowerCase().includes('essay')
+      ) {
+        const writingMockOutput = {
+          score: 8.0,
+          finalScore: 8.0,
+          maxScore: 9.0,
+          percentage: 88.9,
+          gradeBand: 'Band 8.0 (Very Good User)',
+          feedback:
+            'Candidate presents a well-developed response with a clear central position and logically sequenced ideas.',
+          criteria: [
+            { name: 'Task Achievement', score: 8.0, maxScore: 9.0, feedback: 'Addresses all parts of the task effectively.' },
+            { name: 'Coherence & Cohesion', score: 8.0, maxScore: 9.0, feedback: 'Sequences information with clear paragraphing.' },
+            { name: 'Lexical Resource', score: 8.5, maxScore: 9.0, feedback: 'Uses a wide range of vocabulary with natural collocations.' },
+            { name: 'Grammatical Accuracy', score: 7.5, maxScore: 9.0, feedback: 'Uses a variety of complex structures with rare errors.' },
+          ],
+          strengths: ['Strong thesis statement and coherent progression.', 'Sophisticated lexical variety.'],
+          weaknesses: ['Occasional minor punctuation slip in conditional clause.'],
+          recommendations: ['Maintain strict proofreading for punctuation in complex sentences.'],
+        };
+        return {
+          content: JSON.stringify(writingMockOutput),
+          promptTokens: 120 + Math.floor(userPrompt.length / 4),
+          completionTokens: 95,
+        };
+      }
+
+      const isModification =
+        userPrompt.includes('variation') ||
+        userPrompt.includes('alternative') ||
+        userPrompt.includes('Reference Question') ||
+        provider.scope === 'question_paraphrase';
       const subjectMatch = userPrompt.match(/Subject\s*:\s*([^,\n]+)/i) || userPrompt.match(/Subject\s+"([^"]+)"/i);
       const topicMatch = userPrompt.match(/Topic\s*:\s*([^,\n]+)/i) || userPrompt.match(/Topic\s+"([^"]+)"/i);
       const diffMatch = userPrompt.match(/Difficulty\s*:\s*(EASY|MEDIUM|HARD)/i);
@@ -310,36 +413,59 @@ export class AIGatewayService {
     }
 
     if (provider.type === 'LOCAL') {
-      // Ollama / Local API format
       try {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 120000); // 120s timeout for local model cold load & generation
-        const baseUrl = (provider.baseUrl || 'http://localhost:11434').replace(/\/+$/, '');
-        const res = await fetch(`${baseUrl}/api/generate`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+        const timeout = setTimeout(() => controller.abort(), 120000);
+        let baseUrl = provider.baseUrl?.trim() || 'http://localhost:11434';
+        baseUrl = baseUrl.replace(/\/+$/, '');
+
+        const isOllamaNative = !baseUrl.endsWith('/v1') && !baseUrl.includes('/chat/completions');
+        let endpoint = isOllamaNative ? `${baseUrl}/api/chat` : (baseUrl.endsWith('/chat/completions') ? baseUrl : `${baseUrl}/chat/completions`);
+
+        let reqBody: any;
+        if (isOllamaNative) {
+          reqBody = {
             model: provider.modelId,
-            prompt: `${systemPrompt}\n\n${userPrompt}`,
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: userPrompt },
+            ],
             stream: false,
             options: {
-              num_predict: 256,
+              num_predict: 512,
               temperature: 0.7,
             },
             format: 'json',
-          }),
+          };
+        } else {
+          reqBody = {
+            model: provider.modelId,
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: userPrompt },
+            ],
+            temperature: 0.7,
+            response_format: { type: 'json_object' },
+          };
+        }
+
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(reqBody),
           signal: controller.signal,
         });
         clearTimeout(timeout);
         if (!res.ok) {
           const errBody = await res.json().catch(() => ({}));
-          throw new Error(`Local provider status ${res.status}: ${errBody.error || res.statusText}`);
+          throw new Error(`Local provider error (${res.status}): ${errBody.error || res.statusText}`);
         }
         const data = await res.json();
+        const content = data.message?.content || data.choices?.[0]?.message?.content || data.response || '';
         return {
-          content: data.response,
-          promptTokens: data.prompt_eval_count || 100,
-          completionTokens: data.eval_count || 80,
+          content,
+          promptTokens: data.prompt_eval_count || data.usage?.prompt_tokens || 120,
+          completionTokens: data.eval_count || data.usage?.completion_tokens || 80,
         };
       } catch (err: any) {
         throw new Error(`LOCAL_PROVIDER_FAILED: ${err.message}`);
@@ -347,21 +473,24 @@ export class AIGatewayService {
     }
 
     if (provider.type === 'CLOUD') {
-      // Cloud OpenAI / Anthropic format
-      const decryptedApiKey = decryptSecret(provider.apiKey || '');
-      if (!decryptedApiKey || decryptedApiKey.trim() === '') {
-        throw new Error('CLOUD_API_KEY_NOT_CONFIGURED');
-      }
+      const decryptedApiKey = decryptSecret(provider.apiKey || '') || provider.apiKey || '';
+      let baseUrl = provider.baseUrl?.trim() || 'https://api.openai.com/v1';
+      baseUrl = baseUrl.replace(/\/+$/, '');
+      const endpoint = baseUrl.endsWith('/chat/completions') ? baseUrl : `${baseUrl}/chat/completions`;
 
       try {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 12000);
-        const res = await fetch(`${provider.baseUrl || 'https://api.openai.com/v1'}/chat/completions`, {
+        const timeout = setTimeout(() => controller.abort(), 30000);
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+        };
+        if (decryptedApiKey && decryptedApiKey.trim() !== '') {
+          headers['Authorization'] = `Bearer ${decryptedApiKey.trim()}`;
+        }
+
+        const res = await fetch(endpoint, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${decryptedApiKey}`,
-          },
+          headers,
           body: JSON.stringify({
             model: provider.modelId,
             messages: [
@@ -397,14 +526,21 @@ export class AIGatewayService {
    */
   static async routeConversation(req: RouteAIConversationRequest): Promise<RouteAIResponse> {
     const db = pgDb;
-    const scope = req.scope || 'interview';
+    const targetScope = normalizeScope(req.scope, req.featureKey);
     const featureKey = req.featureKey || 'interview_conversation';
 
     // 1. Fetch available providers for this scope ordered by priority ASC
-    const provRes = await db.query(
+    let provRes = await db.query(
       `SELECT * FROM "ai_providers" WHERE "scope" = $1 AND "isActive" = true ORDER BY "priority" ASC`,
-      [scope]
+      [targetScope]
     );
+
+    if (provRes.rows.length === 0 && req.scope && req.scope !== targetScope) {
+      provRes = await db.query(
+        `SELECT * FROM "ai_providers" WHERE "scope" = $1 AND "isActive" = true ORDER BY "priority" ASC`,
+        [req.scope]
+      );
+    }
 
     let providers = provRes.rows as AIProviderDTO[];
 
@@ -416,7 +552,7 @@ export class AIGatewayService {
     }
 
     if (providers.length === 0) {
-      throw new Error(`NO_ACTIVE_PROVIDERS: No active providers configured for AI scope '${scope}'`);
+      throw new Error(`NO_ACTIVE_PROVIDERS: No active providers configured for AI scope '${targetScope}'`);
     }
 
     let selectedProvider: AIProviderDTO | null = null;

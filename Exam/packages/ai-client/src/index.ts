@@ -55,7 +55,15 @@ export class AIVendorUnavailableError extends AIClientError {
 
 export interface AICompletionRequest {
   featureKey: string;
-  scope?: 'question_authoring' | 'interview' | string;
+  scope?:
+    | 'question_generation'
+    | 'question_paraphrase'
+    | 'interview_conversation'
+    | 'interview_grading'
+    | 'writing_analysis'
+    | 'question_authoring'
+    | 'interview'
+    | string;
   prompt: string;
   systemPrompt?: string;
   temperature?: number;

@@ -21,7 +21,17 @@ interface AIProvider {
 export const SettingsPage: React.FC = () => {
   const { theme, setTheme } = useTheme();
   const [activeSubtab, setActiveSubtab] = useState<'AI' | 'APPEARANCE' | 'EXAM_THEMES'>('AI');
-  const [selectedScopeFilter, setSelectedScopeFilter] = useState<'ALL' | 'question_authoring' | 'interview'>('ALL');
+  type ScopeFilterType =
+    | 'ALL'
+    | 'question_generation'
+    | 'question_paraphrase'
+    | 'interview_conversation'
+    | 'interview_grading'
+    | 'writing_analysis'
+    | 'question_authoring'
+    | 'interview';
+
+  const [selectedScopeFilter, setSelectedScopeFilter] = useState<ScopeFilterType>('ALL');
 
   // AI Configuration State
   const [providers, setProviders] = useState<AIProvider[]>([]);
@@ -250,30 +260,8 @@ export const SettingsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Config Form Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
-          <div>
-            <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>
-              Priority Order (1 = highest)
-            </label>
-            <input
-              type="number"
-              id={`priority-provider-${p.id}`}
-              data-testid={`priority-provider-${p.id}`}
-              value={form.priority}
-              onChange={(e) => handleFieldChange(p.id, 'priority', parseInt(e.target.value, 10) || 1)}
-              style={{
-                width: '100%',
-                padding: '6px 10px',
-                background: 'rgba(255,255,255,0.03)',
-                border: '1px solid var(--border-color)',
-                borderRadius: '6px',
-                color: 'var(--text-main)',
-                fontSize: '12px',
-              }}
-            />
-          </div>
-
+        {/* Configuration Fields */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
           <div>
             <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>
               Model Identifier
@@ -287,147 +275,172 @@ export const SettingsPage: React.FC = () => {
               style={{
                 width: '100%',
                 padding: '6px 10px',
-                background: 'rgba(255,255,255,0.03)',
+                borderRadius: '4px',
                 border: '1px solid var(--border-color)',
-                borderRadius: '6px',
+                background: 'var(--bg-main)',
                 color: 'var(--text-main)',
+                fontFamily: 'JetBrains Mono',
                 fontSize: '12px',
               }}
             />
           </div>
 
-          {p.type !== 'MOCK' && (
+          <div>
+            <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>
+              Base API URL
+            </label>
+            <input
+              type="text"
+              id={`baseurl-provider-${p.id}`}
+              data-testid={`baseurl-provider-${p.id}`}
+              value={form.baseUrl}
+              onChange={(e) => handleFieldChange(p.id, 'baseUrl', e.target.value)}
+              placeholder="e.g. https://api.groq.com/openai/v1"
+              style={{
+                width: '100%',
+                padding: '6px 10px',
+                borderRadius: '4px',
+                border: '1px solid var(--border-color)',
+                background: 'var(--bg-main)',
+                color: 'var(--text-main)',
+                fontFamily: 'JetBrains Mono',
+                fontSize: '12px',
+              }}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>
+              Priority (1 = Highest)
+            </label>
+            <input
+              type="number"
+              min={1}
+              max={999}
+              id={`priority-provider-${p.id}`}
+              data-testid={`priority-provider-${p.id}`}
+              value={form.priority}
+              onChange={(e) => handleFieldChange(p.id, 'priority', parseInt(e.target.value) || 1)}
+              style={{
+                width: '100%',
+                padding: '6px 10px',
+                borderRadius: '4px',
+                border: '1px solid var(--border-color)',
+                background: 'var(--bg-main)',
+                color: 'var(--text-main)',
+                fontFamily: 'JetBrains Mono',
+                fontSize: '12px',
+              }}
+            />
+          </div>
+
+          {p.type === 'CLOUD' && (
             <div>
-              <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>
-                Base URL / Endpoint
-              </label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                <label style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                  API Key (Encrypted at Rest)
+                </label>
+                <button
+                  type="button"
+                  onClick={() => handleFieldChange(p.id, 'showKey', !form.showKey)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#06b6d4',
+                    fontSize: '10px',
+                    cursor: 'pointer',
+                    padding: 0,
+                  }}
+                >
+                  {form.showKey ? 'Hide' : 'Reveal'}
+                </button>
+              </div>
               <input
-                type="text"
-                id={`url-provider-${p.id}`}
-                data-testid={`url-provider-${p.id}`}
-                value={form.baseUrl}
-                onChange={(e) => handleFieldChange(p.id, 'baseUrl', e.target.value)}
-                placeholder={p.type === 'LOCAL' ? 'http://localhost:11434/api/generate' : 'https://api.openai.com/v1'}
+                type={form.showKey ? 'text' : 'password'}
+                id={`apikey-provider-${p.id}`}
+                data-testid={`apikey-provider-${p.id}`}
+                value={form.apiKey}
+                onChange={(e) => handleFieldChange(p.id, 'apiKey', e.target.value)}
+                placeholder="Paste API Key here..."
                 style={{
                   width: '100%',
                   padding: '6px 10px',
-                  background: 'rgba(255,255,255,0.03)',
+                  borderRadius: '4px',
                   border: '1px solid var(--border-color)',
-                  borderRadius: '6px',
+                  background: 'var(--bg-main)',
                   color: 'var(--text-main)',
+                  fontFamily: 'JetBrains Mono',
                   fontSize: '12px',
                 }}
               />
             </div>
           )}
-
-          {p.type === 'CLOUD' && (
-            <div>
-              <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>
-                API Key (AES-256 Encrypted at Rest)
-              </label>
-              <div style={{ display: 'flex', gap: '6px' }}>
-                <input
-                  type={form.showKey ? 'text' : 'password'}
-                  id={`key-provider-${p.id}`}
-                  data-testid={`key-provider-${p.id}`}
-                  value={form.apiKey}
-                  onChange={(e) => handleFieldChange(p.id, 'apiKey', e.target.value)}
-                  placeholder="sk-..."
-                  style={{
-                    flex: 1,
-                    padding: '6px 10px',
-                    background: 'rgba(255,255,255,0.03)',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '6px',
-                    color: 'var(--text-main)',
-                    fontSize: '12px',
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => handleFieldChange(p.id, 'showKey', !form.showKey)}
-                  style={{
-                    padding: '4px 8px',
-                    background: 'rgba(255,255,255,0.05)',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '6px',
-                    color: 'var(--text-main)',
-                    fontSize: '11px',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {form.showKey ? 'Hide' : 'Show'}
-                </button>
-              </div>
-            </div>
-          )}
         </div>
 
-        {/* Test Connection Output */}
+        {/* Live Test Status Feedback */}
         {testState && (
           <div
             style={{
               padding: '8px 12px',
               borderRadius: '6px',
               fontSize: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
               background: testState.testing
                 ? 'rgba(6, 182, 212, 0.1)'
                 : testState.success
                 ? 'rgba(16, 185, 129, 0.1)'
                 : 'rgba(239, 68, 68, 0.1)',
+              border: testState.testing
+                ? '1px solid #06b6d4'
+                : testState.success
+                ? '1px solid #10b981'
+                : '1px solid #ef4444',
               color: testState.testing
                 ? '#06b6d4'
                 : testState.success
                 ? '#10b981'
                 : '#ef4444',
-              border: `1px solid ${
-                testState.testing
-                  ? '#06b6d4'
-                  : testState.success
-                  ? '#10b981'
-                  : '#ef4444'
-              }`,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
             }}
           >
-            <span>{testState.testing ? '⏳' : testState.success ? '✓' : '⚠️'}</span>
             <span>
               {testState.testing
-                ? 'Testing connection to provider endpoint...'
-                : testState.message}
+                ? 'Testing live connection...'
+                : testState.success
+                ? `✓ Connection operational! ${testState.message || ''}`
+                : `✗ Connection failed: ${testState.message || ''}`}
             </span>
             {testState.latencyMs !== undefined && (
-              <span style={{ marginLeft: 'auto', fontWeight: 'bold' }}>
+              <span style={{ fontFamily: 'JetBrains Mono', fontWeight: 'bold' }}>
                 Latency: {testState.latencyMs}ms
               </span>
             )}
           </div>
         )}
 
-        {/* Card Action Buttons */}
-        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', paddingTop: '4px' }}>
+        {/* Card Actions */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '2px' }}>
           <button
             type="button"
             id={`test-provider-btn-${p.id}`}
             data-testid={`test-provider-btn-${p.id}`}
-            onClick={() => handleTestConnection(p.id)}
             disabled={testState?.testing}
+            onClick={() => handleTestConnection(p.id)}
             style={{
-              padding: '6px 12px',
-              borderRadius: '6px',
-              background: 'rgba(255,255,255,0.05)',
+              padding: '6px 14px',
+              borderRadius: '4px',
               border: '1px solid var(--border-color)',
+              background: 'transparent',
               color: 'var(--text-main)',
               fontSize: '12px',
-              fontWeight: 600,
-              cursor: testState?.testing ? 'wait' : 'pointer',
+              cursor: testState?.testing ? 'not-allowed' : 'pointer',
+              opacity: testState?.testing ? 0.6 : 1,
             }}
           >
-            {testState?.testing ? 'Testing...' : '🧪 Test Connection'}
+            {testState?.testing ? 'Testing...' : 'Test Connection'}
           </button>
+
           <button
             type="button"
             id={`save-provider-btn-${p.id}`}
@@ -435,7 +448,7 @@ export const SettingsPage: React.FC = () => {
             onClick={() => handleSaveProvider(p.id)}
             style={{
               padding: '6px 14px',
-              borderRadius: '6px',
+              borderRadius: '4px',
               background: '#06b6d4',
               border: 'none',
               color: '#000',
@@ -451,13 +464,18 @@ export const SettingsPage: React.FC = () => {
     );
   };
 
-  const questionAuthoringProviders = providers
-    .filter((p) => !p.scope || p.scope === 'question_authoring')
-    .sort((a, b) => (editForms[a.id]?.priority ?? a.priority) - (editForms[b.id]?.priority ?? b.priority));
+  const getProvidersForScope = (scopeName: string) =>
+    providers
+      .filter((p) => p.scope === scopeName)
+      .sort((a, b) => (editForms[a.id]?.priority ?? a.priority) - (editForms[b.id]?.priority ?? b.priority));
 
-  const interviewProviders = providers
-    .filter((p) => p.scope === 'interview')
-    .sort((a, b) => (editForms[a.id]?.priority ?? a.priority) - (editForms[b.id]?.priority ?? b.priority));
+  const qgenProviders = getProvidersForScope('question_generation');
+  const qparaProviders = getProvidersForScope('question_paraphrase');
+  const ivconvProviders = getProvidersForScope('interview_conversation');
+  const ivgradeProviders = getProvidersForScope('interview_grading');
+  const writingProviders = getProvidersForScope('writing_analysis');
+  const legacyQaProviders = getProvidersForScope('question_authoring');
+  const legacyIvProviders = getProvidersForScope('interview');
 
   return (
     <div style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', overflowY: 'auto' }}>
@@ -570,7 +588,7 @@ export const SettingsPage: React.FC = () => {
           </div>
 
           {/* Scope Filter Buttons */}
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             <button
               id="scope-filter-all"
               type="button"
@@ -589,38 +607,106 @@ export const SettingsPage: React.FC = () => {
               All Scopes ({providers.length})
             </button>
             <button
-              id="scope-filter-question_authoring"
+              id="scope-filter-question_generation"
               type="button"
-              onClick={() => setSelectedScopeFilter('question_authoring')}
+              onClick={() => setSelectedScopeFilter('question_generation')}
               style={{
                 padding: '6px 12px',
                 borderRadius: '6px',
                 fontSize: '12px',
-                fontWeight: selectedScopeFilter === 'question_authoring' ? 'bold' : 'normal',
-                background: selectedScopeFilter === 'question_authoring' ? 'rgba(6, 182, 212, 0.15)' : 'transparent',
-                border: selectedScopeFilter === 'question_authoring' ? '1px solid #06b6d4' : '1px solid var(--border-color)',
-                color: selectedScopeFilter === 'question_authoring' ? '#06b6d4' : 'var(--text-main)',
+                fontWeight: selectedScopeFilter === 'question_generation' ? 'bold' : 'normal',
+                background: selectedScopeFilter === 'question_generation' ? 'rgba(6, 182, 212, 0.15)' : 'transparent',
+                border: selectedScopeFilter === 'question_generation' ? '1px solid #06b6d4' : '1px solid var(--border-color)',
+                color: selectedScopeFilter === 'question_generation' ? '#06b6d4' : 'var(--text-main)',
                 cursor: 'pointer',
               }}
             >
-              📚 Question Authoring AI ({questionAuthoringProviders.length})
+              📝 Question Generation ({qgenProviders.length})
+            </button>
+            <button
+              id="scope-filter-question_paraphrase"
+              type="button"
+              onClick={() => setSelectedScopeFilter('question_paraphrase')}
+              style={{
+                padding: '6px 12px',
+                borderRadius: '6px',
+                fontSize: '12px',
+                fontWeight: selectedScopeFilter === 'question_paraphrase' ? 'bold' : 'normal',
+                background: selectedScopeFilter === 'question_paraphrase' ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
+                border: selectedScopeFilter === 'question_paraphrase' ? '1px solid #3b82f6' : '1px solid var(--border-color)',
+                color: selectedScopeFilter === 'question_paraphrase' ? '#3b82f6' : 'var(--text-main)',
+                cursor: 'pointer',
+              }}
+            >
+              🔄 Question Paraphrase & Modify ({qparaProviders.length})
+            </button>
+            <button
+              id="scope-filter-interview_conversation"
+              type="button"
+              onClick={() => setSelectedScopeFilter('interview_conversation')}
+              style={{
+                padding: '6px 12px',
+                borderRadius: '6px',
+                fontSize: '12px',
+                fontWeight: selectedScopeFilter === 'interview_conversation' ? 'bold' : 'normal',
+                background: selectedScopeFilter === 'interview_conversation' ? 'rgba(168, 85, 247, 0.15)' : 'transparent',
+                border: selectedScopeFilter === 'interview_conversation' ? '1px solid #a855f7' : '1px solid var(--border-color)',
+                color: selectedScopeFilter === 'interview_conversation' ? '#a855f7' : 'var(--text-main)',
+                cursor: 'pointer',
+              }}
+            >
+              🎙️ Live Interview Dialogue ({ivconvProviders.length})
+            </button>
+            <button
+              id="scope-filter-interview_grading"
+              type="button"
+              onClick={() => setSelectedScopeFilter('interview_grading')}
+              style={{
+                padding: '6px 12px',
+                borderRadius: '6px',
+                fontSize: '12px',
+                fontWeight: selectedScopeFilter === 'interview_grading' ? 'bold' : 'normal',
+                background: selectedScopeFilter === 'interview_grading' ? 'rgba(236, 72, 153, 0.15)' : 'transparent',
+                border: selectedScopeFilter === 'interview_grading' ? '1px solid #ec4899' : '1px solid var(--border-color)',
+                color: selectedScopeFilter === 'interview_grading' ? '#ec4899' : 'var(--text-main)',
+                cursor: 'pointer',
+              }}
+            >
+              ⚖️ Interview Rubric Evaluation ({ivgradeProviders.length})
+            </button>
+            <button
+              id="scope-filter-writing_analysis"
+              type="button"
+              onClick={() => setSelectedScopeFilter('writing_analysis')}
+              style={{
+                padding: '6px 12px',
+                borderRadius: '6px',
+                fontSize: '12px',
+                fontWeight: selectedScopeFilter === 'writing_analysis' ? 'bold' : 'normal',
+                background: selectedScopeFilter === 'writing_analysis' ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
+                border: selectedScopeFilter === 'writing_analysis' ? '1px solid #10b981' : '1px solid var(--border-color)',
+                color: selectedScopeFilter === 'writing_analysis' ? '#10b981' : 'var(--text-main)',
+                cursor: 'pointer',
+              }}
+            >
+              ✍️ Writing & Essay Analysis ({writingProviders.length})
+            </button>
+            {/* Legacy compatibility filter buttons */}
+            <button
+              id="scope-filter-question_authoring"
+              type="button"
+              onClick={() => setSelectedScopeFilter('question_authoring')}
+              style={{ display: 'none' }}
+            >
+              Question Authoring
             </button>
             <button
               id="scope-filter-interview"
               type="button"
               onClick={() => setSelectedScopeFilter('interview')}
-              style={{
-                padding: '6px 12px',
-                borderRadius: '6px',
-                fontSize: '12px',
-                fontWeight: selectedScopeFilter === 'interview' ? 'bold' : 'normal',
-                background: selectedScopeFilter === 'interview' ? 'rgba(168, 85, 247, 0.15)' : 'transparent',
-                border: selectedScopeFilter === 'interview' ? '1px solid #a855f7' : '1px solid var(--border-color)',
-                color: selectedScopeFilter === 'interview' ? '#a855f7' : 'var(--text-main)',
-                cursor: 'pointer',
-              }}
+              style={{ display: 'none' }}
             >
-              🎙️ Interview & Grading AI ({interviewProviders.length})
+              Interview Scope
             </button>
           </div>
 
@@ -630,50 +716,140 @@ export const SettingsPage: React.FC = () => {
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-              {/* SECTION 1: QUESTION AUTHORING POOL */}
-              {(selectedScopeFilter === 'ALL' || selectedScopeFilter === 'question_authoring') && (
-                <div id="scope-section-question_authoring" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {/* SECTION 1: QUESTION GENERATION */}
+              {(selectedScopeFilter === 'ALL' || selectedScopeFilter === 'question_generation' || selectedScopeFilter === 'question_authoring') && qgenProviders.length > 0 && (
+                <div id="scope-section-question_generation" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '16px' }}>📚</span>
-                      <h2 style={{ margin: 0, fontSize: '15px', fontWeight: 'bold' }}>Question Authoring AI Cascade</h2>
+                      <span style={{ fontSize: '16px' }}>📝</span>
+                      <h2 style={{ margin: 0, fontSize: '15px', fontWeight: 'bold' }}>Question Generation AI Cascade</h2>
                       <span style={{ fontSize: '11px', background: 'rgba(6, 182, 212, 0.15)', color: '#06b6d4', padding: '2px 8px', borderRadius: '4px', fontFamily: 'JetBrains Mono' }}>
-                        scope: question_authoring
+                        scope: question_generation
                       </span>
                     </div>
                     <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                      {questionAuthoringProviders.filter((p) => editForms[p.id]?.isActive).length} active / {questionAuthoringProviders.length} configured
+                      {qgenProviders.filter((p) => editForms[p.id]?.isActive).length} active / {qgenProviders.length} configured
                     </span>
                   </div>
                   <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-muted)' }}>
-                    Providers serving single & batch question blueprint synthesis, pedagogical variation authoring, and distractor generation.
+                    Deep subject synthesis models creating high-rigor questions, multi-distractor choices, and comprehensive step-by-step explanations from syllabus blueprints.
                   </p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '4px' }}>
-                    {questionAuthoringProviders.map(renderProviderCard)}
+                    {qgenProviders.map(renderProviderCard)}
                   </div>
                 </div>
               )}
 
-              {/* SECTION 2: INTERVIEW & GRADING POOL */}
-              {(selectedScopeFilter === 'ALL' || selectedScopeFilter === 'interview') && (
-                <div id="scope-section-interview" style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: selectedScopeFilter === 'ALL' ? '12px' : '0' }}>
+              {/* SECTION 2: QUESTION PARAPHRASE */}
+              {(selectedScopeFilter === 'ALL' || selectedScopeFilter === 'question_paraphrase' || selectedScopeFilter === 'question_authoring') && qparaProviders.length > 0 && (
+                <div id="scope-section-question_paraphrase" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '16px' }}>🎙️</span>
-                      <h2 style={{ margin: 0, fontSize: '15px', fontWeight: 'bold' }}>Interview & Oral Grading AI Cascade</h2>
-                      <span style={{ fontSize: '11px', background: 'rgba(168, 85, 247, 0.15)', color: '#a855f7', padding: '2px 8px', borderRadius: '4px', fontFamily: 'JetBrains Mono' }}>
-                        scope: interview (Preparatory Isolation)
+                      <span style={{ fontSize: '16px' }}>🔄</span>
+                      <h2 style={{ margin: 0, fontSize: '15px', fontWeight: 'bold' }}>Question Paraphrase & Modify AI Cascade</h2>
+                      <span style={{ fontSize: '11px', background: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6', padding: '2px 8px', borderRadius: '4px', fontFamily: 'JetBrains Mono' }}>
+                        scope: question_paraphrase
                       </span>
                     </div>
                     <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                      {interviewProviders.filter((p) => editForms[p.id]?.isActive).length} active / {interviewProviders.length} configured
+                      {qparaProviders.filter((p) => editForms[p.id]?.isActive).length} active / {qparaProviders.length} configured
                     </span>
                   </div>
                   <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-muted)' }}>
-                    Dedicated isolated AI pool for interactive oral examinations, audio viva voce, and Socratic evaluation. Operates on independent quotas, isolated circuit breakers, and separate rate limits.
+                    High-speed models optimized for creating pedagogical variations, adjusting numeric constants, and rephrasing question stems while preserving core answer validity.
                   </p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '4px' }}>
-                    {interviewProviders.map(renderProviderCard)}
+                    {qparaProviders.map(renderProviderCard)}
+                  </div>
+                </div>
+              )}
+
+              {/* SECTION 3: INTERVIEW CONVERSATION */}
+              {(selectedScopeFilter === 'ALL' || selectedScopeFilter === 'interview_conversation' || selectedScopeFilter === 'interview') && ivconvProviders.length > 0 && (
+                <div id="scope-section-interview_conversation" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '16px' }}>🎙️</span>
+                      <h2 style={{ margin: 0, fontSize: '15px', fontWeight: 'bold' }}>Live Interview Dialogue AI Cascade</h2>
+                      <span style={{ fontSize: '11px', background: 'rgba(168, 85, 247, 0.15)', color: '#a855f7', padding: '2px 8px', borderRadius: '4px', fontFamily: 'JetBrains Mono' }}>
+                        scope: interview_conversation
+                      </span>
+                    </div>
+                    <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                      {ivconvProviders.filter((p) => editForms[p.id]?.isActive).length} active / {ivconvProviders.length} configured
+                    </span>
+                  </div>
+                  <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-muted)' }}>
+                    Ultra-low-latency conversational models conducting real-time oral exams, follow-up probing questions, and audio viva voce sessions.
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '4px' }}>
+                    {ivconvProviders.map(renderProviderCard)}
+                  </div>
+                </div>
+              )}
+
+              {/* SECTION 4: INTERVIEW GRADING */}
+              {(selectedScopeFilter === 'ALL' || selectedScopeFilter === 'interview_grading' || selectedScopeFilter === 'interview') && ivgradeProviders.length > 0 && (
+                <div id="scope-section-interview_grading" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '16px' }}>⚖️</span>
+                      <h2 style={{ margin: 0, fontSize: '15px', fontWeight: 'bold' }}>Interview Rubric Evaluation AI Cascade</h2>
+                      <span style={{ fontSize: '11px', background: 'rgba(236, 72, 153, 0.15)', color: '#ec4899', padding: '2px 8px', borderRadius: '4px', fontFamily: 'JetBrains Mono' }}>
+                        scope: interview_grading
+                      </span>
+                    </div>
+                    <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                      {ivgradeProviders.filter((p) => editForms[p.id]?.isActive).length} active / {ivgradeProviders.length} configured
+                    </span>
+                  </div>
+                  <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-muted)' }}>
+                    High-reasoning evaluators performing deep post-interview rubric scoring (IELTS 4-criterion band mapping, strengths, weaknesses, and concrete recommendations).
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '4px' }}>
+                    {ivgradeProviders.map(renderProviderCard)}
+                  </div>
+                </div>
+              )}
+
+              {/* SECTION 5: WRITING & ESSAY ANALYSIS */}
+              {(selectedScopeFilter === 'ALL' || selectedScopeFilter === 'writing_analysis') && writingProviders.length > 0 && (
+                <div id="scope-section-writing_analysis" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '16px' }}>✍️</span>
+                      <h2 style={{ margin: 0, fontSize: '15px', fontWeight: 'bold' }}>Writing & Essay Analysis AI Cascade</h2>
+                      <span style={{ fontSize: '11px', background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', padding: '2px 8px', borderRadius: '4px', fontFamily: 'JetBrains Mono' }}>
+                        scope: writing_analysis
+                      </span>
+                    </div>
+                    <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                      {writingProviders.filter((p) => editForms[p.id]?.isActive).length} active / {writingProviders.length} configured
+                    </span>
+                  </div>
+                  <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-muted)' }}>
+                    Evaluation models scoring long-form essay responses across Task Achievement, Coherence & Cohesion, Lexical Resource, and Grammatical Range.
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '4px' }}>
+                    {writingProviders.map(renderProviderCard)}
+                  </div>
+                </div>
+              )}
+
+              {/* SECTION 6: LEGACY FALLBACK PROVIDERS (IF ANY) */}
+              {selectedScopeFilter === 'ALL' && (legacyQaProviders.length > 0 || legacyIvProviders.length > 0) && (
+                <div id="scope-section-legacy" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '16px' }}>🛡️</span>
+                      <h2 style={{ margin: 0, fontSize: '15px', fontWeight: 'bold' }}>Fallback & Legacy AI Providers</h2>
+                      <span style={{ fontSize: '11px', background: 'rgba(255, 255, 255, 0.1)', color: 'var(--text-muted)', padding: '2px 8px', borderRadius: '4px', fontFamily: 'JetBrains Mono' }}>
+                        legacy aliases
+                      </span>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '4px' }}>
+                    {[...legacyQaProviders, ...legacyIvProviders].map(renderProviderCard)}
                   </div>
                 </div>
               )}

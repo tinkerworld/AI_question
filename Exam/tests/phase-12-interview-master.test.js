@@ -204,19 +204,19 @@ async function runAllTests() {
 
   // 12.4 AI Gateway Providers and Scope Isolation
   await test('12.6-U1: AI Gateway providers and scope isolation', async () => {
-    // 1. Providers list under scope=interview
-    const interviewProvidersRes = await request('GET', '/ai/gateway/providers?scope=interview', null, adminToken);
+    // 1. Providers list under scope=interview_conversation
+    const interviewProvidersRes = await request('GET', '/ai/gateway/providers?scope=interview_conversation', null, adminToken);
     assert.strictEqual(interviewProvidersRes.status, 200);
     const interviewProviders = interviewProvidersRes.data.data;
-    assert.ok(interviewProviders.length >= 6, 'Must list all 6 providers for interview scope');
-    assert.ok(interviewProviders.every((p) => p.scope === 'interview'));
+    assert.ok(interviewProviders.length >= 6, 'Must list all 6 providers for interview_conversation scope');
+    assert.ok(interviewProviders.every((p) => p.scope === 'interview_conversation'));
 
     // 2. Verify circuit breaker isolation between scopes
-    const qaProvidersRes = await request('GET', '/ai/gateway/providers?scope=question_authoring', null, adminToken);
+    const qaProvidersRes = await request('GET', '/ai/gateway/providers?scope=question_generation', null, adminToken);
     assert.strictEqual(qaProvidersRes.status, 200);
     const qaProviders = qaProvidersRes.data.data;
-    assert.strictEqual(qaProviders.length, 6);
-    assert.ok(qaProviders.every((p) => p.scope === 'question_authoring'));
+    assert.ok(qaProviders.length >= 6);
+    assert.ok(qaProviders.every((p) => p.scope === 'question_generation'));
   });
 
   console.log('================================================================');

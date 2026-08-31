@@ -203,7 +203,7 @@ export class InterviewService {
     }
 
     const provRes = await db.query(
-      `SELECT id, name, "modelId", type FROM "ai_providers" WHERE scope = 'interview' AND "isActive" = true ORDER BY priority ASC LIMIT 1`
+      `SELECT id, name, "modelId", type FROM "ai_providers" WHERE scope = 'interview_conversation' AND "isActive" = true ORDER BY priority ASC LIMIT 1`
     );
     const activeProv = provRes.rows[0] as any;
     const initialProviderId = activeProv?.id || 'prov_interview_local_01';
@@ -471,7 +471,7 @@ ${nextMainIndex === 5 && nextFollowUpCount >= 2 ? 'NOTICE: This is the final fol
 
     const aiResponse = await AIGatewayService.routeConversation({
       featureKey: 'interview_conversation',
-      scope: 'interview',
+      scope: 'interview_conversation',
       userId: user.userId,
       messages: conversationMessages,
       contextData: {
@@ -498,7 +498,7 @@ ${nextMainIndex === 5 && nextFollowUpCount >= 2 ? 'NOTICE: This is the final fol
     } catch {}
 
     const activeRealProvRes = await db.query(
-      `SELECT id, type, "modelId" FROM "ai_providers" WHERE scope = 'interview' AND "isActive" = true AND type != 'MOCK' ORDER BY priority ASC LIMIT 1`
+      `SELECT id, type, "modelId" FROM "ai_providers" WHERE scope = 'interview_conversation' AND "isActive" = true AND type != 'MOCK' ORDER BY priority ASC LIMIT 1`
     );
     const hadRealActiveProvider = activeRealProvRes.rows.length > 0;
     const isFallback = hadRealActiveProvider && (aiResponse.providerId.includes('mock') || aiResponse.modelUsed.includes('mock'));
@@ -684,7 +684,7 @@ Return valid JSON with finalScore, maxScore, percentage, gradeBand, rubricScores
 
     const aiEvalRes = await AIGatewayService.routeConversation({
       featureKey: 'interview_evaluation',
-      scope: 'interview',
+      scope: 'interview_grading',
       userId: user.userId,
       messages: evaluationMessages,
       contextData: {

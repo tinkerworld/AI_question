@@ -30,10 +30,10 @@ export class AIQuestionService {
     const { usageId } = await AIUsageService.deductCredits(userId, 'question_modification', 1);
 
     try {
-      // 3. Call AI Gateway with explicit question_authoring scope
+      // 3. Call AI Gateway with explicit question_paraphrase scope
       const aiResponse = await AIGatewayService.routeRequest({
         featureKey: 'question_modification',
-        scope: 'question_authoring',
+        scope: 'question_paraphrase',
         prompt: dto.instructions || `Create a distinct variation with ${dto.varianceLevel || 'MEDIUM'} variance.`,
         variables: {
           originalQuestion: orig.content,
@@ -150,7 +150,7 @@ export class AIQuestionService {
       for (let i = 0; i < count; i++) {
         const aiResponse = await AIGatewayService.routeRequest({
           featureKey: 'question_generation',
-          scope: 'question_authoring',
+          scope: 'question_generation',
           prompt: dto.customPrompt || `Generate item #${i + 1} with high academic rigor.`,
           variables: {
             subject: subjectName,

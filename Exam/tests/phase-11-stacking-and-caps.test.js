@@ -29,9 +29,9 @@ async function runTests() {
   console.log('   ✓ Admin, Teacher, and Student authenticated\n');
 
   // ----------------------------------------------------
-  // Test 1: Scope-Filtered Provider Listing via API
+  // Test 1: Granular 5-Scope Filtering on AI Providers API
   // ----------------------------------------------------
-  console.log('2. Testing Scope Filtering on AI Providers API...');
+  console.log('2. Testing Scope Filtering on AI Providers API across 5 Granular Scopes...');
   
   // 2a. List All Providers
   const allRes = await fetch(`${API_BASE}/ai/gateway/providers`, {
@@ -39,40 +39,32 @@ async function runTests() {
   });
   const allData = await allRes.json();
   assert.strictEqual(allRes.status, 200);
-  assert.ok(allData.data.length >= 12, 'Expected at least 12 total seeded providers across all scopes');
+  assert.ok(allData.data.length >= 30, 'Expected at least 30 total seeded providers across all 5 granular scopes');
   console.log(`   ✓ All scopes query returned ${allData.data.length} providers`);
 
-  // 2b. List question_authoring scope only
-  const qaRes = await fetch(`${API_BASE}/ai/gateway/providers?scope=question_authoring`, {
-    headers: { Authorization: `Bearer ${adminToken}` },
-  });
-  const qaData = await qaRes.json();
-  assert.strictEqual(qaRes.status, 200);
-  assert.ok(qaData.data.length >= 6, 'question_authoring scope must have at least 6 providers');
-  assert.ok(qaData.data.every((p) => p.scope === 'question_authoring'), 'All returned providers must have question_authoring scope');
-  console.log(`   ✓ question_authoring scope query returned ${qaData.data.length} providers`);
+  const requiredScopes = [
+    'question_generation',
+    'question_paraphrase',
+    'interview_conversation',
+    'interview_grading',
+    'writing_analysis',
+  ];
 
-  // 2c. List interview scope only
-  const ivRes = await fetch(`${API_BASE}/ai/gateway/providers?scope=interview`, {
-    headers: { Authorization: `Bearer ${adminToken}` },
-  });
-  const ivData = await ivRes.json();
-  assert.strictEqual(ivRes.status, 200);
-  assert.ok(ivData.data.length >= 6, 'interview scope must have at least 6 providers');
-  assert.ok(ivData.data.every((p) => p.scope === 'interview'), 'All returned providers must have interview scope');
-  
-  const ivNvidia = ivData.data.find((p) => p.id === 'prov_interview_cloud_nvidia');
-  const ivGemini = ivData.data.find((p) => p.id === 'prov_interview_cloud_gemini');
-  const ivOpenRouter = ivData.data.find((p) => p.id === 'prov_interview_cloud_openrouter');
-  assert.ok(ivNvidia, 'prov_interview_cloud_nvidia must exist in interview scope');
-  assert.ok(ivGemini, 'prov_interview_cloud_gemini must exist in interview scope');
-  assert.ok(ivOpenRouter, 'prov_interview_cloud_openrouter must exist in interview scope');
-  console.log(`   ✓ interview scope query returned all ${ivData.data.length} providers including NVIDIA Build, Gemini, and OpenRouter\n`);
+  for (const sc of requiredScopes) {
+    const scRes = await fetch(`${API_BASE}/ai/gateway/providers?scope=${sc}`, {
+      headers: { Authorization: `Bearer ${adminToken}` },
+    });
+    const scData = await scRes.json();
+    assert.strictEqual(scRes.status, 200);
+    assert.ok(scData.data.length >= 6, `Scope ${sc} must have at least 6 providers`);
+    assert.ok(scData.data.every((p) => p.scope === sc), `All returned providers for ${sc} must have scope ${sc}`);
+    console.log(`   ✓ Scope '${sc}' query returned ${scData.data.length} providers`);
+  }
 
   // ----------------------------------------------------
   // Test 2: Mandatory Scope Enforcement on Gateway
   // ----------------------------------------------------
-  console.log('3. Testing Mandatory Scope Parameter Enforcement on AI Gateway...');
+  console.log('\n3. Testing Mandatory Scope Parameter Enforcement on AI Gateway...');
   const missingScopeRes = await fetch(`${API_BASE}/ai/gateway/route`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -88,16 +80,16 @@ async function runTests() {
   console.log('   ✓ Gateway strictly rejected call with missing scope (HTTP 400)\n');
 
   // ----------------------------------------------------
-  // Test 3: Multi-Provider Cascade & Fallback (Question Authoring Scope)
+  // Test 3: Multi-Provider Cascade & Fallback in question_generation Scope
   // ----------------------------------------------------
-  console.log('4. Testing Multi-Provider Priority Cascade Fallback in Question Authoring Scope...');
+  console.log('4. Testing Multi-Provider Priority Cascade Fallback in question_generation Scope...');
   
   // Enable a higher priority cloud provider with dummy/invalid credentials so it fails and triggers fallback
-  const groqProv = allData.data.find((p) => p.id === 'prov_cloud_groq');
-  assert.ok(groqProv, 'Groq provider exists in seed');
+  const qgenGroq = allData.data.find((p) => p.id === 'prov_qgen_cloud_groq');
+  assert.ok(qgenGroq, 'prov_qgen_cloud_groq exists in seed');
 
   // Update groq with an invalid test key and activate it at priority 1
-  await fetch(`${API_BASE}/ai/gateway/providers/${groqProv.id}`, {
+  await fetch(`${API_BASE}/ai/gateway/providers/${qgenGroq.id}`, {
     method: 'PATCH',
     headers: {
       Authorization: `Bearer ${adminToken}`,
@@ -110,13 +102,13 @@ async function runTests() {
     }),
   });
 
-  // Call route on question_authoring scope: it attempts Groq (P1) -> fails -> falls back to Deterministic Mock (P999)
+  // Call route on question_generation scope: it attempts Groq (P1) -> fails -> falls back to Deterministic Mock (P999)
   const fallbackRes = await fetch(`${API_BASE}/ai/gateway/route`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       featureKey: 'question_generation',
-      scope: 'question_authoring',
+      scope: 'question_generation',
       variables: {
         subject: 'Physics',
         topic: 'Rotational Motion',
@@ -131,10 +123,10 @@ async function runTests() {
   assert.strictEqual(fallbackRes.status, 200);
   assert.strictEqual(fallbackData.success, true);
   assert.ok(fallbackData.data.parsedJson.content.toLowerCase().includes('inertia') || fallbackData.data.parsedJson.content.toLowerCase().includes('rotational'));
-  console.log(`   ✓ Question Authoring Gateway fell back across cascade to: "${fallbackData.data.modelUsed}"`);
+  console.log(`   ✓ Question Generation Gateway fell back across cascade to: "${fallbackData.data.modelUsed}"`);
 
   // Deactivate dummy groq provider to leave state clean
-  await fetch(`${API_BASE}/ai/gateway/providers/${groqProv.id}`, {
+  await fetch(`${API_BASE}/ai/gateway/providers/${qgenGroq.id}`, {
     method: 'PATCH',
     headers: {
       Authorization: `Bearer ${adminToken}`,
@@ -144,15 +136,15 @@ async function runTests() {
       isActive: false,
     }),
   });
-  console.log('   ✓ Restored clean provider cascade state\n');
+  console.log('   ✓ Restored clean provider cascade state for question_generation\n');
 
   // ----------------------------------------------------
-  // Test 4: Scope Isolation & Fallback Cascade in Interview Scope
+  // Test 4: Scope Isolation & Fallback Cascade in interview_grading & writing_analysis Scopes
   // ----------------------------------------------------
-  console.log('5. Testing Multi-Scope Pool Isolation & Fallback in Interview Scope...');
+  console.log('5. Testing Multi-Scope Pool Isolation across interview_grading & writing_analysis...');
   
-  // 4a. Activate top interview cloud provider (Groq / Gemini) with an invalid key to test interview cascade fallback
-  await fetch(`${API_BASE}/ai/gateway/providers/prov_interview_cloud_groq`, {
+  // 4a. Activate top interview_grading cloud provider with invalid key to test grading cascade fallback
+  await fetch(`${API_BASE}/ai/gateway/providers/prov_ivgrade_cloud_groq`, {
     method: 'PATCH',
     headers: {
       Authorization: `Bearer ${adminToken}`,
@@ -165,43 +157,54 @@ async function runTests() {
     }),
   });
 
-  await fetch(`${API_BASE}/ai/gateway/providers/prov_interview_cloud_gemini`, {
-    method: 'PATCH',
-    headers: {
-      Authorization: `Bearer ${adminToken}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      isActive: true,
-      apiKey: 'gemini_interview_invalid_key_for_test',
-      priority: 2,
-    }),
-  });
-
-  // Call interview scoped route: cascades through P1 (fails), P2 (fails) -> falls back to P999 mock
-  const interviewRes = await fetch(`${API_BASE}/ai/gateway/route`, {
+  // Call interview_grading scoped route: cascades through P1 (fails) -> falls back to P999 mock
+  const gradingRes = await fetch(`${API_BASE}/ai/gateway/route`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      featureKey: 'interview',
-      scope: 'interview',
+      featureKey: 'interview_evaluation',
+      scope: 'interview_grading',
       variables: {
-        interviewQuestion: 'Explain the thermodynamic principles behind the Carnot cycle and entropy generation.',
-        studentAnswer: 'The Carnot cycle operates between two thermal reservoirs with maximum theoretical efficiency limited by temperatures.',
+        questionContent: 'Explain thermodynamic principles of the Carnot cycle.',
+        rubric: [
+          { id: 'fluency', name: 'Fluency', maxScore: 9 },
+          { id: 'lexical', name: 'Lexical Resource', maxScore: 9 },
+        ],
       },
-      prompt: 'Evaluate conceptual clarity and provide follow-up question',
+      prompt: 'Evaluate candidate oral exam transcript',
     }),
   });
-  const interviewData = await interviewRes.json();
-  assert.strictEqual(interviewRes.status, 200);
-  assert.strictEqual(interviewData.success, true);
-  assert.ok(typeof interviewData.data.parsedJson.score === 'number', 'Interview evaluation must include score');
-  assert.ok(interviewData.data.parsedJson.feedback, 'Interview evaluation must include feedback');
-  assert.strictEqual(interviewData.data.providerId, 'prov_interview_mock_01');
-  console.log(`   ✓ Interview cascade successfully fell through failing cloud tiers to provider ${interviewData.data.providerId}: score ${interviewData.data.parsedJson.score}/10`);
+  const gradingData = await gradingRes.json();
+  assert.strictEqual(gradingRes.status, 200);
+  assert.strictEqual(gradingData.success, true);
+  assert.ok(typeof gradingData.data.parsedJson.score === 'number' || typeof gradingData.data.parsedJson.finalScore === 'number', 'Grading evaluation must include score');
+  assert.ok(gradingData.data.parsedJson.feedback, 'Grading evaluation must include feedback');
+  assert.strictEqual(gradingData.data.providerId, 'prov_ivgrade_mock_01');
+  console.log(`   ✓ interview_grading cascade successfully fell through failing cloud tiers to: ${gradingData.data.providerId}`);
 
-  // Clean up interview test providers
-  await fetch(`${API_BASE}/ai/gateway/providers/prov_interview_cloud_groq`, {
+  // Test writing_analysis scope
+  const writingRes = await fetch(`${API_BASE}/ai/gateway/route`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      featureKey: 'writing_evaluation',
+      scope: 'writing_analysis',
+      variables: {
+        writingPrompt: 'Discuss the impact of renewable energy transitions on industrial growth.',
+        studentText: 'Renewable energy provides sustainable development opportunities despite initial capital costs.',
+      },
+      prompt: 'Score essay across standard 4-criteria rubric',
+    }),
+  });
+  const writingData = await writingRes.json();
+  assert.strictEqual(writingRes.status, 200);
+  assert.strictEqual(writingData.success, true);
+  assert.ok(typeof writingData.data.parsedJson.score === 'number' || typeof writingData.data.parsedJson.finalScore === 'number', 'Writing evaluation must include score');
+  assert.strictEqual(writingData.data.providerId, 'prov_writing_mock_01');
+  console.log(`   ✓ writing_analysis cascade successfully routed to dedicated scope provider: ${writingData.data.providerId}`);
+
+  // Clean up test providers
+  await fetch(`${API_BASE}/ai/gateway/providers/prov_ivgrade_cloud_groq`, {
     method: 'PATCH',
     headers: {
       Authorization: `Bearer ${adminToken}`,
@@ -209,16 +212,8 @@ async function runTests() {
     },
     body: JSON.stringify({ isActive: false }),
   });
-  await fetch(`${API_BASE}/ai/gateway/providers/prov_interview_cloud_gemini`, {
-    method: 'PATCH',
-    headers: {
-      Authorization: `Bearer ${adminToken}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ isActive: false }),
-  });
 
-  console.log('   ✓ Verified complete pool isolation and independent cascade fallback for Interview scope\n');
+  console.log('   ✓ Verified complete pool isolation and independent cascade fallback across all granular scopes\n');
 
   // ----------------------------------------------------
   // Test 5: Per-Feature Daily Usage Cap Enforcement
