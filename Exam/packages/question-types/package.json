@@ -6,7 +6,9 @@
   "types": "src/index.ts",
   "scripts": {
     "build": "tsc --noEmit",
-    "test": "node --test"
+    "test": "node --test",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
   },
   "dependencies": {
     "@repo/types": "workspace:*"

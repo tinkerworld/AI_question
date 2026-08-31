@@ -306,11 +306,19 @@ export const UsersPage: React.FC = () => {
   });
 
   return (
-    <div style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', overflowY: 'auto' }}>
+    <div
+      id="users-page-container"
+      data-testid="users-page-container"
+      style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', overflowY: 'auto' }}
+    >
       {/* Header & Subtab Switcher */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: '22px', fontFamily: 'JetBrains Mono', color: 'var(--text-main)' }}>
+          <h1
+            id="users-page-heading"
+            data-testid="users-page-heading"
+            style={{ margin: 0, fontSize: '22px', fontFamily: 'JetBrains Mono', color: 'var(--text-main)' }}
+          >
             User Management & Security Audit Center
           </h1>
           <p style={{ margin: '4px 0 0 0', color: 'var(--text-muted)', fontSize: '13px' }}>

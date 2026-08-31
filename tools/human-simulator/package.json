@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node simulation-server.js",
     "simulate": "node exam-simulation-agent.js",
-    "install-browser": "npx playwright install chromium"
+    "install-browser": "npx playwright install chromium",
+    "test": "node --test",
+    "lint": "eslint ."
   },
   "dependencies": {
     "cors": "^2.8.5",

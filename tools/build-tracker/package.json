@@ -5,7 +5,9 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "test": "node --test",
+    "lint": "eslint ."
   },
   "keywords": ["examos", "kanban", "tracker", "dev-tool"],
   "author": "ExamOS Core Engineering",
