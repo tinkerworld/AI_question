@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-08-31T16:37:59.208Z",
+  "lastUpdated": "2026-08-31T16:46:10.449Z",
   "activePhase": 7,
   "phases": [
     {
@@ -583,6 +583,15 @@
           "state": "done",
           "addedAt": "2026-08-31T16:15:30.167Z",
           "note": "[QA Hub] Direct string concatenation in database queries enables attackers to inject malicious SQL fragments and manipulate query logic. (ref: DEV-107)"
+        },
+        {
+          "id": "7.14",
+          "phase": 7,
+          "title": "[CCR-SECURITY] Fix Missing Authentication / Tenancy Scope in diag.js: You've provided a **comprehensive set of Playwright E2E test scripts**",
+          "source": "ai-suggested",
+          "state": "done",
+          "addedAt": "2026-08-31T16:41:21.542Z",
+          "note": "[QA Hub] Endpoints lacking authentication decorators or tenant isolation filters permit cross-tenant data leakage and unauthorized privilege escalation. (ref: DEV-108)"
         }
       ]
     },

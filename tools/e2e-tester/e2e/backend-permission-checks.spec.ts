@@ -112,5 +112,31 @@ test.describe('Backend permission enforcement (API-level, not UI simulation)', (
     const body = await sqlInjRes.json();
     expect(body.success).toBe(true);
   });
+
+  test('AI Gateway route rejects unauthenticated external requests without internal API key (401)', async ({ page }) => {
+    // Unauthenticated request without internal key
+    const unauthRes = await page.request.post('http://localhost:4043/api/v1/ai/gateway/route', {
+      data: {
+        featureKey: 'question_generation',
+        scope: 'question_authoring',
+        prompt: 'Generate questions',
+      },
+    });
+    expect(unauthRes.status()).toBe(401);
+
+    // Request with valid internal key succeeds
+    const internalRes = await page.request.post('http://localhost:4043/api/v1/ai/gateway/route', {
+      headers: {
+        'x-ai-internal-key': 'examos_ai_internal_secret_key_v1',
+      },
+      data: {
+        featureKey: 'question_generation',
+        scope: 'question_authoring',
+        prompt: 'Generate questions',
+      },
+    });
+    expect(internalRes.status()).toBe(200);
+  });
 });
+
 

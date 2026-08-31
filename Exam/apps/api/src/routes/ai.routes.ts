@@ -42,34 +42,46 @@ router.get('/gateway/health', async (_req: Request, res: Response) => {
 /**
  * Internal / Direct Gateway Route (used by AIClient SDK & internal workers)
  */
-router.post('/gateway/route', async (req: Request, res: Response) => {
-  try {
-    const { featureKey, scope, prompt, variables, userId, preferredProviderId } = req.body;
-    if (!featureKey) {
-      return res.status(400).json({ success: false, message: 'featureKey is required' });
+router.post(
+  '/gateway/route',
+  (req: Request, res: Response, next: any) => {
+    const internalKey = req.headers['x-ai-internal-key'];
+    const expectedKey = process.env.AI_GATEWAY_INTERNAL_KEY || 'examos_ai_internal_secret_key_v1';
+    if (internalKey && internalKey === expectedKey) {
+      return next();
     }
-    if (!scope) {
-      return res.status(400).json({ success: false, message: 'scope is required (e.g. question_authoring, interview)' });
-    }
+    return authenticate(req, res, next);
+  },
+  async (req: Request, res: Response) => {
+    try {
+      const { featureKey, scope, prompt, variables, preferredProviderId } = req.body;
+      const userId = req.body.userId || (req as any).user?.userId;
+      if (!featureKey) {
+        return res.status(400).json({ success: false, message: 'featureKey is required' });
+      }
+      if (!scope) {
+        return res.status(400).json({ success: false, message: 'scope is required (e.g. question_authoring, interview)' });
+      }
 
-    const response = await AIGatewayService.routeRequest({
-      featureKey,
-      scope,
-      prompt,
-      variables,
-      userId,
-      preferredProviderId,
-    });
+      const response = await AIGatewayService.routeRequest({
+        featureKey,
+        scope,
+        prompt,
+        variables,
+        userId,
+        preferredProviderId,
+      });
 
-    return res.json({ success: true, data: response });
-  } catch (err: any) {
-    if (err.message.includes('FEATURE_DAILY_LIMIT_EXCEEDED')) {
-      return res.status(429).json({ success: false, errorCode: 'FEATURE_DAILY_LIMIT_EXCEEDED', message: err.message });
+      return res.json({ success: true, data: response });
+    } catch (err: any) {
+      if (err.message?.includes('FEATURE_DAILY_LIMIT_EXCEEDED')) {
+        return res.status(429).json({ success: false, errorCode: 'FEATURE_DAILY_LIMIT_EXCEEDED', message: err.message });
+      }
+      const status = err.message?.startsWith('NO_AI_PROVIDERS_AVAILABLE') ? 503 : 500;
+      return res.status(status).json({ success: false, message: err.message });
     }
-    const status = err.message?.startsWith('NO_AI_PROVIDERS_AVAILABLE') ? 503 : 500;
-    return res.status(status).json({ success: false, message: err.message });
   }
-});
+);
 
 /**
  * List AI Providers (Admin)
