@@ -20,8 +20,12 @@ test.describe('Active Exam Exit Protection (Back-button, Tab Close, Refresh)', (
     const modalHeading = page.locator('text=Exam Hall Instructions');
     await modalHeading.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
     if (await modalHeading.isVisible()) {
-      await page.locator('input[type="checkbox"]').check();
-      await page.getByRole('button', { name: /Enter Exam Hall & Start/i }).click();
+      const checkbox = page.locator('input[type="checkbox"]');
+      await expect(checkbox).toBeVisible({ timeout: 10000 });
+      await checkbox.check();
+      const enterBtn = page.getByRole('button', { name: /Enter Exam Hall & Start/i });
+      await expect(enterBtn).toBeEnabled({ timeout: 10000 });
+      await enterBtn.click();
     }
 
     // 5. Verify active inside Exam Player
@@ -164,8 +168,12 @@ test.describe('Active Exam Exit Protection (Back-button, Tab Close, Refresh)', (
     const modalHeading = page.locator('text=Exam Hall Instructions');
     await modalHeading.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
     if (await modalHeading.isVisible()) {
-      await page.locator('input[type="checkbox"]').check();
-      await page.getByRole('button', { name: /Enter Exam Hall & Start/i }).click();
+      const checkbox = page.locator('input[type="checkbox"]');
+      await expect(checkbox).toBeVisible({ timeout: 10000 });
+      await checkbox.check();
+      const enterBtn = page.getByRole('button', { name: /Enter Exam Hall & Start/i });
+      await expect(enterBtn).toBeEnabled({ timeout: 10000 });
+      await enterBtn.click();
     }
 
     // 5. Verify active inside Exam Player

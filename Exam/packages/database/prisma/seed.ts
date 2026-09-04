@@ -4427,10 +4427,10 @@ export async function runSeed() {
   }
 
   // Seed Subscriptions for test personas
-  // Student 1 -> FREE tier
+  // Student 1 -> PREMIUM tier (allows test runs without mock test quota exhaustion)
   await pgDb.query(
     `INSERT INTO "subscriptions" ("id", "userId", "planCode", "status", "startDate", "endDate")
-     VALUES ('sub_student_1', 'usr_student_test', 'FREE', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '1 year')
+     VALUES ('sub_student_1', 'usr_student_test', 'PREMIUM', 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '1 year')
      ON CONFLICT ("id") DO UPDATE SET "planCode" = EXCLUDED."planCode", "status" = EXCLUDED."status"`
   );
 

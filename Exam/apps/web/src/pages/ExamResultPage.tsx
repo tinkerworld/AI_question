@@ -180,10 +180,16 @@ export const ExamResultPage: React.FC<ExamResultPageProps> = ({ attemptId, onBac
     );
   }
 
+  const isUnanswered = (ans: any) => {
+    if (ans === null || ans === undefined || ans === '' || ans === 'null') return true;
+    if (Array.isArray(ans) && ans.length === 0) return true;
+    return false;
+  };
+
   const filteredQuestions = result.questions.filter((q) => {
     if (filter === 'CORRECT') return q.isCorrect === true;
     if (filter === 'WRONG') return q.isCorrect === false;
-    if (filter === 'UNATTEMPTED') return q.studentAnswer === null || q.studentAnswer === undefined || q.studentAnswer === '';
+    if (filter === 'UNATTEMPTED') return isUnanswered(q.studentAnswer);
     return true;
   });
 

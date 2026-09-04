@@ -227,6 +227,7 @@ export const ExamPlayerPage: React.FC<ExamPlayerPageProps> = ({
 
     const handlePopState = (e?: any) => {
       if (isCompletedRef.current) return;
+      window.history.pushState({ inExam: true }, '', window.location.href);
       setShowExitModal(true);
     };
 

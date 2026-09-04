@@ -637,6 +637,7 @@ export class AttemptService {
       const isUnanswered =
         studentAnswer === null ||
         studentAnswer === undefined ||
+        studentAnswer === 'null' ||
         (typeof studentAnswer === 'string' && studentAnswer.trim() === '') ||
         (Array.isArray(studentAnswer) && studentAnswer.length === 0);
 
@@ -670,6 +671,11 @@ export class AttemptService {
           // If partial score exists (e.g. partial multiple-select)
           if (evalResult.score > 0) {
             awardedMarks = evalResult.score * marksCorrect;
+            if (evalResult.score >= 0.5) {
+              correctAnswers++;
+            } else {
+              wrongAnswers++;
+            }
           } else {
             wrongAnswers++;
             // Apply negative marking
@@ -759,7 +765,14 @@ export class AttemptService {
 
       secQs.forEach((q: any) => {
         secScore += q.marksAwarded || 0;
-        if (q.studentAnswer) secAttempted++;
+        const parsedAns = safeParseJson(q.studentAnswer);
+        const isAttempted =
+          parsedAns !== null &&
+          parsedAns !== undefined &&
+          parsedAns !== 'null' &&
+          !(typeof parsedAns === 'string' && parsedAns.trim() === '') &&
+          !(Array.isArray(parsedAns) && parsedAns.length === 0);
+        if (isAttempted) secAttempted++;
         if (q.isCorrect === true) secCorrect++;
         if (q.isCorrect === false) secWrong++;
       });
@@ -831,7 +844,7 @@ export class AttemptService {
 
     const attemptedCount = (attempt.correctAnswers || 0) + (attempt.wrongAnswers || 0);
     const accuracy = attemptedCount > 0
-      ? Math.round(((attempt.correctAnswers || 0) / attemptedCount) * 100 * 100) / 100
+      ? Math.min(100, Math.max(0, Math.round(((attempt.correctAnswers || 0) / attemptedCount) * 100 * 100) / 100))
       : 0;
 
     return {
