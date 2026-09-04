@@ -1,4 +1,5 @@
 import { z } from 'zod';
+export { z };
 
 export const loginSchema = z.object({
   email: z.string().email('Invalid email address format'),
@@ -454,6 +455,17 @@ export const updateAIProviderSchema = z.object({
   priority: z.number().optional(),
   isActive: z.boolean().optional(),
   circuitBroken: z.boolean().optional(),
+});
+
+export const routeAIRequestSchema = z.object({
+  featureKey: z.string().min(1, 'featureKey is required'),
+  scope: z.string().min(1, 'scope is required (e.g. question_authoring, interview)'),
+  prompt: z.string().optional(),
+  messages: z.array(z.any()).optional(),
+  variables: z.record(z.any()).optional(),
+  preferredProviderId: z.string().optional(),
+  userId: z.string().optional(),
+  contextData: z.record(z.any()).optional(),
 });
 
 // Phase 12 Validation Schemas (AI Interview System)

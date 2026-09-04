@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-09-04T15:14:27.126Z",
+  "lastUpdated": "2026-09-04T20:04:10.932Z",
   "activePhase": 7,
   "phases": [
     {
@@ -601,6 +601,24 @@
           "state": "done",
           "addedAt": "2026-09-04T14:27:47.995Z",
           "note": "[QA Hub] Logical defects cause incorrect scoring or invalid state transitions during student exam workflows. (ref: DEV-109)"
+        },
+        {
+          "id": "7.16",
+          "phase": 7,
+          "title": "[CCR-SECURITY] Fix Missing Authentication / Tenancy Scope in project: You've provided a large and detailed codebase snippet from an educatio",
+          "source": "ai-suggested",
+          "state": "done",
+          "addedAt": "2026-09-04T15:17:58.201Z",
+          "note": "[QA Hub] Endpoints lacking authentication decorators or tenant isolation filters permit cross-tenant data leakage and unauthorized privilege escalation. (ref: DEV-110)"
+        },
+        {
+          "id": "7.17",
+          "phase": 7,
+          "title": "[CCR-SECURITY] Fix Missing Authentication / Tenancy Scope in Next.js: You're working with a complex **end-to-end (E2E) testing suite** for a",
+          "source": "ai-suggested",
+          "state": "done",
+          "addedAt": "2026-09-04T15:17:58.207Z",
+          "note": "[QA Hub] Endpoints lacking authentication decorators or tenant isolation filters permit cross-tenant data leakage and unauthorized privilege escalation. (ref: DEV-111)"
         }
       ]
     },

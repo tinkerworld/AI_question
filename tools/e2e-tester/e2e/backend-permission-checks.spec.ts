@@ -137,6 +137,23 @@ test.describe('Backend permission enforcement (API-level, not UI simulation)', (
     });
     expect(internalRes.status()).toBe(200);
   });
+
+  test('AI Gateway route rejects malformed payload with 400 validation error', async ({ page }) => {
+    const internalRes = await page.request.post('http://localhost:4043/api/v1/ai/gateway/route', {
+      headers: {
+        'x-ai-internal-key': 'examos_ai_internal_secret_key_v1',
+      },
+      data: {
+        // Missing required featureKey and scope
+        prompt: 'Malformed prompt without required fields',
+      },
+    });
+    expect(internalRes.status()).toBe(400);
+    const body = await internalRes.json();
+    expect(body.success).toBe(false);
+    expect(body.message).toBe('Invalid input parameters');
+    expect(body.errors).toBeDefined();
+  });
 });
 
 
