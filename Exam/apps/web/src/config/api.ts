@@ -12,19 +12,15 @@
 export const getApiBase = (): string => {
   const envUrl = import.meta.env.VITE_API_BASE_URL;
 
-  // In a browser environment, resolve host dynamically from the active network connection.
-  // Using relative path '/api/v1' routes through the same host and port (e.g. :3000 proxy),
-  // ensuring zero CORS issues and immunity to external firewall (UFW) port restrictions on port 4043.
+  // In a browser environment, route through relative path '/api/v1'
+  // to leverage Vite's dev server reverse proxy (or production reverse proxy).
+  // This guarantees zero CORS issues, immunity to external firewall (UFW) port restrictions on port 4043,
+  // and seamless access whether browsing via localhost, LAN IP (192.168.x.x, 10.x.x.x), or domain.
   if (typeof window !== 'undefined' && window.location) {
-    const { protocol, hostname, port } = window.location;
-    const formattedHost =
-      hostname.includes(':') && !hostname.startsWith('[')
-        ? `[${hostname}]`
-        : hostname;
-
+    const { hostname } = window.location;
     const isClientOnLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
 
-    // 1. If explicit URL is provided in env
+    // 1. If explicit external URL is provided in env
     if (envUrl) {
       if (!isClientOnLocalhost && /https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/i.test(envUrl)) {
         return '/api/v1';
@@ -32,18 +28,11 @@ export const getApiBase = (): string => {
       return envUrl;
     }
 
-    const apiPort = import.meta.env.VITE_API_PORT || '4043';
-
-    // 2. If frontend is served directly on backend port 4043 or through standard web ports (80/443)
-    if (!port || port === '80' || port === '443' || port === apiPort) {
-      return `${protocol}//${formattedHost}:${port ? port : ''}/api/v1`;
-    }
-
-    // 3. Dynamic LAN/WAN/Localhost: connect to backend API server on current host machine
-    return `${protocol}//${formattedHost}:${apiPort}/api/v1`;
+    // 2. Default: route through current origin's proxy
+    return '/api/v1';
   }
 
-  // 4. Non-browser / SSR / backend test scripts fallback
+  // 3. Non-browser / SSR / backend test scripts fallback
   return envUrl || 'http://localhost:4043/api/v1';
 };
 
