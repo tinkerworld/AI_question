@@ -42,12 +42,27 @@ test.describe.serial('Phase 11: System Settings & AI Gateway Configuration', () 
       await expect(mockCard.getByText(/Connection operational|Successfully connected/i).first()).toBeVisible({ timeout: 10_000 });
     }
 
-    // 6. Test Scope-Isolated Provider Filter Switches
+    // 6. Test Scope-Isolated Provider Filter Switches & Clarity Banners
+    const scopeIvconvBtn = page.locator('#scope-filter-interview_conversation');
+    const scopeIvgradeBtn = page.locator('#scope-filter-interview_grading');
     const scopeQuestionAuthoringBtn = page.locator('#scope-filter-question_authoring');
     const scopeInterviewBtn = page.locator('#scope-filter-interview');
     const scopeAllBtn = page.locator('#scope-filter-all');
 
-    if (await scopeQuestionAuthoringBtn.isVisible().catch(() => false)) {
+    if (await scopeIvconvBtn.isVisible().catch(() => false)) {
+      // Filter by Live Interview Dialogue
+      await scopeIvconvBtn.click();
+      await expect(page.locator('#scope-section-interview_conversation')).toBeVisible();
+      await expect(page.getByText('Live back-and-forth during the interview').first()).toBeVisible();
+
+      // Filter by Post-Interview Grading
+      await scopeIvgradeBtn.click();
+      await expect(page.locator('#scope-section-interview_grading')).toBeVisible();
+      await expect(page.getByText('One-time evaluation after the interview ends').first()).toBeVisible();
+
+      // Reset to All Scopes
+      await scopeAllBtn.click();
+    } else if (await scopeQuestionAuthoringBtn.isVisible().catch(() => false)) {
       // Filter by Question Authoring
       await scopeQuestionAuthoringBtn.click();
       await expect(mockCard).toBeVisible();

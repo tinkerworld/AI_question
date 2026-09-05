@@ -56,10 +56,13 @@ def run_main_admin_audit() -> int:
 
     # 3. Live AI Gateway Connection Test (Mock Provider)
     try:
+        mock_prov = next((p for p in providers if p.get("type") == "MOCK"), None)
+        mock_id = mock_prov.get("id") if mock_prov else "prov_qgen_mock_01"
+        model_id = mock_prov.get("modelId", "mock-qgen-v1") if mock_prov else "mock-qgen-v1"
         res = requests.post(
-            f"{api}/ai/gateway/providers/prov_mock_01/test",
+            f"{api}/ai/gateway/providers/{mock_id}/test",
             headers=headers,
-            json={"modelId": "mock-gpt-4o-deterministic"},
+            json={"modelId": model_id},
             timeout=15
         )
         passed = res.status_code == 200

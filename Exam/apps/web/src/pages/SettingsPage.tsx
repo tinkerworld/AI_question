@@ -224,7 +224,19 @@ export const SettingsPage: React.FC = () => {
               {p.type === 'CLOUD' ? '☁️' : p.type === 'LOCAL' ? '🖥️' : '🎲'}
             </span>
             <div>
-              <div style={{ fontWeight: 'bold', fontSize: '14px' }}>{p.name}</div>
+              <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+                <span style={{ fontWeight: 'bold', fontSize: '14px' }}>{p.name}</span>
+                {p.scope === 'interview_conversation' && (
+                  <span style={{ fontSize: '11px', background: 'rgba(168, 85, 247, 0.2)', color: '#a855f7', padding: '1px 6px', borderRadius: '4px', fontWeight: 'bold' }}>
+                    🎙️ Live back-and-forth during the interview
+                  </span>
+                )}
+                {p.scope === 'interview_grading' && (
+                  <span style={{ fontSize: '11px', background: 'rgba(236, 72, 153, 0.2)', color: '#ec4899', padding: '1px 6px', borderRadius: '4px', fontWeight: 'bold' }}>
+                    ⚖️ One-time evaluation after the interview ends
+                  </span>
+                )}
+              </div>
               <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
                 ID: {p.id} | Type: {p.type} | Scope: <span style={{ fontFamily: 'JetBrains Mono', color: '#06b6d4' }}>{p.scope}</span>
               </div>
@@ -655,7 +667,7 @@ export const SettingsPage: React.FC = () => {
                 cursor: 'pointer',
               }}
             >
-              🎙️ Live Interview Dialogue ({ivconvProviders.length})
+              🎙️ Live Interview Dialogue (Live back-and-forth) ({ivconvProviders.length})
             </button>
             <button
               id="scope-filter-interview_grading"
@@ -672,7 +684,7 @@ export const SettingsPage: React.FC = () => {
                 cursor: 'pointer',
               }}
             >
-              ⚖️ Interview Rubric Evaluation ({ivgradeProviders.length})
+              ⚖️ Interview Rubric Evaluation (Post-Interview) ({ivgradeProviders.length})
             </button>
             <button
               id="scope-filter-writing_analysis"
@@ -779,6 +791,22 @@ export const SettingsPage: React.FC = () => {
                       {ivconvProviders.filter((p) => editForms[p.id]?.isActive).length} active / {ivconvProviders.length} configured
                     </span>
                   </div>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '10px 14px',
+                    borderRadius: '6px',
+                    background: 'rgba(168, 85, 247, 0.12)',
+                    border: '1px solid #a855f7',
+                    fontSize: '12px',
+                    color: 'var(--text-main)',
+                  }}>
+                    <span style={{ fontSize: '18px' }}>⚡</span>
+                    <div>
+                      <strong style={{ color: '#a855f7' }}>Live back-and-forth during the interview:</strong> Powers the real-time AI oral examiner in the Live Interview Room. These models converse turn-by-turn with candidates, asking progressive follow-up probes and viva voce questions. Configure your live oral examiner (e.g. NVIDIA Nemotron, Groq, Ollama) here.
+                    </div>
+                  </div>
                   <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-muted)' }}>
                     Ultra-low-latency conversational models conducting real-time oral exams, follow-up probing questions, and audio viva voce sessions.
                   </p>
@@ -802,6 +830,22 @@ export const SettingsPage: React.FC = () => {
                     <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
                       {ivgradeProviders.filter((p) => editForms[p.id]?.isActive).length} active / {ivgradeProviders.length} configured
                     </span>
+                  </div>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '10px 14px',
+                    borderRadius: '6px',
+                    background: 'rgba(236, 72, 153, 0.12)',
+                    border: '1px solid #ec4899',
+                    fontSize: '12px',
+                    color: 'var(--text-main)',
+                  }}>
+                    <span style={{ fontSize: '18px' }}>📋</span>
+                    <div>
+                      <strong style={{ color: '#ec4899' }}>One-time evaluation after the interview ends:</strong> Powers final post-interview rubric evaluation (IELTS band criteria, analytical scoring, strengths, weaknesses, and concrete recommendations). Evaluated ONLY once the interview concludes; does NOT interact during the live conversation.
+                    </div>
                   </div>
                   <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-muted)' }}>
                     High-reasoning evaluators performing deep post-interview rubric scoring (IELTS 4-criterion band mapping, strengths, weaknesses, and concrete recommendations).

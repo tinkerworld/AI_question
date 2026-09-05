@@ -94,9 +94,11 @@ test.describe('Phase 12: AI Interview & Oral Assessment System', () => {
     await expect(beginBtn).toBeEnabled();
     await beginBtn.click();
 
-    // 5. Verify Live Interview Room mounts
+    // 5. Verify Live Interview Room mounts and active provider badge is displayed
     await expect(page.locator('#interview-main-counter')).toBeVisible({ timeout: 15000 });
     await expect(page.getByText('🤖 AI Examiner').first()).toBeVisible();
+    await expect(page.locator('#active-provider-badge')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('#active-provider-badge')).toContainText(/Cloud: nvidia\/llama-3.1-nemotron-70b-instruct|Cloud:|Local:/i);
 
     // 6. Submit Candidate Turn 1 Answer
     const inputField = page.locator('#input-interview-response');

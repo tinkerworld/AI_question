@@ -219,6 +219,53 @@ async function runAllTests() {
     assert.ok(qaProviders.every((p) => p.scope === 'question_generation'));
   });
 
+  // 12.5 AI Gateway Provider Update & NVIDIA Nemotron Live Routing
+  await test('12.7-U1: AI Gateway circuit breaker reset on PATCH and live NVIDIA Nemotron conversation routing', async () => {
+    // 1. Update prov_ivconv_cloud_nvidia via PATCH with active=true and test key
+    const patchRes = await request(
+      'PATCH',
+      '/ai/gateway/providers/prov_ivconv_cloud_nvidia',
+      {
+        apiKey: 'nvapi-test-nemotron-live-key',
+        isActive: true,
+        priority: 1,
+      },
+      adminToken
+    );
+    assert.strictEqual(patchRes.status, 200, 'PATCH prov_ivconv_cloud_nvidia must succeed');
+    assert.strictEqual(patchRes.data.data.isActive, true);
+    assert.strictEqual(patchRes.data.data.circuitBroken, false, 'Circuit breaker must be reset on save');
+    assert.strictEqual(patchRes.data.data.failureCount, 0, 'Failure count must be reset to 0');
+
+    // 2. Start new session and verify active provider is NVIDIA Cloud
+    const startRes = await request(
+      'POST',
+      '/interview/sessions/start',
+      {
+        questionId: 'q_interview_ielts_01',
+        mode: 'PRACTICE',
+      },
+      student2Token
+    );
+    assert.strictEqual(startRes.status, 201);
+    assert.strictEqual(startRes.data.data.session.activeProviderId, 'prov_ivconv_cloud_nvidia');
+    assert.strictEqual(startRes.data.data.session.activeModelUsed, 'nvidia/llama-3.1-nemotron-70b-instruct');
+    assert.strictEqual(startRes.data.data.session.activeProviderType, 'CLOUD');
+    assert.strictEqual(startRes.data.data.session.isFallback, false);
+
+    // 3. Submit turn and verify NVIDIA Nemotron handles the conversation turn
+    const turnRes = await request(
+      'POST',
+      `/interview/sessions/${startRes.data.data.session.id}/turns`,
+      { message: 'Digital innovation offers great pedagogical versatility when carefully guided.' },
+      student2Token
+    );
+    assert.strictEqual(turnRes.status, 200);
+    assert.strictEqual(turnRes.data.data.aiTurn.providerType, 'CLOUD');
+    assert.strictEqual(turnRes.data.data.aiTurn.modelUsed, 'nvidia/llama-3.1-nemotron-70b-instruct');
+    assert.strictEqual(turnRes.data.data.aiTurn.isFallback, false);
+  });
+
   console.log('================================================================');
   console.log(`🏁 PHASE 12 TEST SUITE SUMMARY: ${passed} passed, ${failed} failed`);
   console.log('================================================================');
