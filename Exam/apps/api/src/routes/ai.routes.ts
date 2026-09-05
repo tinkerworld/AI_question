@@ -37,9 +37,42 @@ function aiGatewayRateLimiter(req: Request, res: Response, next: any) {
 }
 router.use(aiGatewayRateLimiter);
 
-// Schemas for provider operations
-const listProvidersQuerySchema = z.object({ scope: z.string().optional() });
-const testProviderSchema = z.object({ prompt: z.string().optional(), modelId: z.string().optional(), baseUrl: z.string().optional(), apiKey: z.string().optional() });
+// Strict validation & sanitization schemas against SQL injection and invalid payloads
+const identifierRegex = /^[a-zA-Z0-9_\-]+$/;
+
+const idParamSchema = z.object({
+  id: z.string().min(1, 'Identifier required').max(128).regex(identifierRegex, 'Invalid identifier format'),
+});
+
+const listProvidersQuerySchema = z.object({
+  scope: z.string().max(64).regex(/^[a-zA-Z0-9_\-]*$/, 'Invalid scope format').optional(),
+});
+
+const draftQuestionsQuerySchema = z.object({
+  subjectId: z.string().max(128).regex(identifierRegex, 'Invalid subject identifier format').optional(),
+  isAiOnly: z.enum(['true', 'false']).optional(),
+});
+
+const testProviderSchema = z.object({
+  prompt: z.string().optional(),
+  modelId: z.string().optional(),
+  baseUrl: z.string().optional(),
+  apiKey: z.string().optional(),
+});
+
+function validateParams<T>(schema: z.ZodSchema<T>, data: any, res: Response): T | null {
+  const result = schema.safeParse(data);
+  if (!result.success) {
+    res.status(400).json({
+      success: false,
+      errorCode: 'INVALID_INPUT_PARAMETERS',
+      message: 'Input parameter failed sanitization or validation check',
+      errors: result.error.flatten(),
+    });
+    return null;
+  }
+  return result.data;
+}
 
 // Authentication Guard supporting internal service keys and external JWT tokens
 function gatewayAuthGuard(req: Request, res: Response, next: any) {
@@ -111,8 +144,9 @@ router.post('/gateway/route', gatewayAuthGuard, requireTenantScope, requirePermi
 router.get('/gateway/providers', authenticate, requireTenantScope, requirePermission(PERMISSIONS.AI_ADMIN_CONFIG), async (req: Request, res: Response) => {
   try {
     const tenantId = (req as any).tenantId;
-    const qParse = listProvidersQuerySchema.safeParse(req.query);
-    const providers = await AIGatewayService.listProviders(qParse.success ? qParse.data.scope : undefined);
+    const qParse = validateParams(listProvidersQuerySchema, req.query, res);
+    if (!qParse) return;
+    const providers = await AIGatewayService.listProviders(qParse.scope);
     const scopedProviders = providers.filter((p: any) => !p.tenantId || p.tenantId === tenantId);
     return res.json({ success: true, data: scopedProviders });
   } catch (err: any) { return res.status(500).json({ success: false, message: err.message }); }
@@ -120,19 +154,23 @@ router.get('/gateway/providers', authenticate, requireTenantScope, requirePermis
 
 router.patch('/gateway/providers/:id', authenticate, requireTenantScope, requirePermission(PERMISSIONS.AI_ADMIN_CONFIG), async (req: Request, res: Response) => {
   try {
+    const params = validateParams(idParamSchema, req.params, res);
+    if (!params) return;
     const tenantId = (req as any).tenantId;
     const parseResult = updateAIProviderSchema.safeParse(req.body);
     if (!parseResult.success) return res.status(400).json({ success: false, message: parseResult.error.errors[0]?.message || 'Invalid input' });
-    const updated = await AIGatewayService.updateProvider(req.params.id, { ...parseResult.data, tenantId });
+    const updated = await AIGatewayService.updateProvider(params.id, { ...parseResult.data, tenantId });
     return res.json({ success: true, data: updated });
   } catch (err: any) { return res.status(500).json({ success: false, message: err.message }); }
 });
 
 router.post('/gateway/providers/:id/test', authenticate, requireTenantScope, requirePermission(PERMISSIONS.AI_ADMIN_CONFIG), async (req: Request, res: Response) => {
   try {
+    const params = validateParams(idParamSchema, req.params, res);
+    if (!params) return;
     const parseResult = testProviderSchema.safeParse(req.body);
     if (!parseResult.success) return res.status(400).json({ success: false, message: 'Invalid input parameters', errors: parseResult.error.flatten() });
-    const result = await AIGatewayService.testProviderConnection(req.params.id, parseResult.data);
+    const result = await AIGatewayService.testProviderConnection(params.id, parseResult.data);
     return res.json({ success: result.success, data: result });
   } catch (err: any) { return res.status(500).json({ success: false, message: err.message }); }
 });
@@ -173,8 +211,10 @@ router.post('/questions/generate', authenticate, requireTenantScope, requirePerm
 
 router.get('/questions/generation-jobs/:id', authenticate, requireTenantScope, requirePermission(PERMISSIONS.AI_GENERATE), async (req: Request, res: Response) => {
   try {
+    const params = validateParams(idParamSchema, req.params, res);
+    if (!params) return;
     const tenantId = (req as any).tenantId;
-    const job = await AIQueueService.getJobStatus(req.params.id);
+    const job = await AIQueueService.getJobStatus(params.id);
     if (job && (job as any).tenantId && (job as any).tenantId !== tenantId) {
       return res.status(403).json({ success: false, errorCode: 'FORBIDDEN_TENANT_ACCESS', message: 'Cross-tenant job access forbidden' });
     }
@@ -184,8 +224,10 @@ router.get('/questions/generation-jobs/:id', authenticate, requireTenantScope, r
 
 router.get('/questions/drafts', authenticate, requireTenantScope, requirePermission(PERMISSIONS.AI_REVIEW), async (req: Request, res: Response) => {
   try {
+    const query = validateParams(draftQuestionsQuerySchema, req.query, res);
+    if (!query) return;
     const tenantId = (req as any).tenantId;
-    const drafts = await AIQuestionService.listDraftQuestions({ subjectId: req.query.subjectId as string, isAiOnly: req.query.isAiOnly === 'true' });
+    const drafts = await AIQuestionService.listDraftQuestions({ subjectId: query.subjectId, isAiOnly: query.isAiOnly === 'true' });
     const scopedDrafts = drafts.filter((d: any) => !d.tenantId || d.tenantId === tenantId);
     return res.json({ success: true, data: scopedDrafts });
   } catch (err: any) { return res.status(500).json({ success: false, message: err.message }); }
@@ -193,10 +235,12 @@ router.get('/questions/drafts', authenticate, requireTenantScope, requirePermiss
 
 router.post('/questions/drafts/:id/review', authenticate, requireTenantScope, requirePermission(PERMISSIONS.AI_REVIEW), async (req: Request, res: Response) => {
   try {
+    const params = validateParams(idParamSchema, req.params, res);
+    if (!params) return;
     const parseResult = reviewDraftQuestionSchema.safeParse(req.body);
     if (!parseResult.success) return res.status(400).json({ success: false, message: parseResult.error.errors[0]?.message || 'Invalid input' });
     const tenantId = (req as any).tenantId;
-    const result = await AIQuestionService.reviewDraft(req.user!.userId, req.params.id, { ...parseResult.data, tenantId });
+    const result = await AIQuestionService.reviewDraft(req.user!.userId, params.id, { ...parseResult.data, tenantId });
     return res.json({ success: true, data: result });
   } catch (err: any) { return res.status(err.message === 'QUESTION_NOT_FOUND' ? 404 : 500).json({ success: false, message: err.message }); }
 });

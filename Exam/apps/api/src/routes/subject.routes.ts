@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { pgDb } from '@repo/database';
-import { createSubjectSchema, updateSubjectSchema } from '@repo/validation';
+import { createSubjectSchema, updateSubjectSchema, z } from '@repo/validation';
 import { PERMISSIONS } from '@repo/permissions';
 import { authenticate } from '../middleware/auth';
 import { requirePermission } from '../middleware/permission';
@@ -13,18 +13,49 @@ const router = Router({ mergeParams: true });
 
 router.use(authenticate);
 
+// Strict validation & sanitization schemas against SQL injection and invalid payloads
+const identifierRegex = /^[a-zA-Z0-9_\-]+$/;
+
+const courseIdOptionalParamSchema = z.object({
+  courseId: z.string().max(128).regex(identifierRegex, 'Invalid course identifier format').optional(),
+});
+
+const courseIdRequiredParamSchema = z.object({
+  courseId: z.string().min(1, 'Course ID required').max(128).regex(identifierRegex, 'Invalid course identifier format'),
+});
+
+const subjectIdParamSchema = z.object({
+  id: z.string().min(1, 'Subject ID required').max(128).regex(identifierRegex, 'Invalid subject identifier format'),
+});
+
+function validateParams<T>(schema: z.ZodSchema<T>, data: any, res: Response): T | null {
+  const result = schema.safeParse(data);
+  if (!result.success) {
+    res.status(400).json({
+      success: false,
+      errorCode: 'INVALID_INPUT_PARAMETERS',
+      message: 'Input parameter failed sanitization or validation check',
+      errors: result.error.flatten(),
+    });
+    return null;
+  }
+  return result.data;
+}
+
 // List subjects for a course
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { courseId } = req.params;
+    const parsedParams = validateParams(courseIdOptionalParamSchema, req.params, res);
+    if (!parsedParams) return;
+    const courseId = parsedParams.courseId;
     let query = `SELECT * FROM "subjects"`;
-    const params: any[] = [];
+    const queryParams: any[] = [];
     if (courseId) {
-      params.push(courseId);
+      queryParams.push(courseId);
       query += ` WHERE "courseId" = $1`;
     }
     query += ` ORDER BY "order" ASC`;
-    const subjectsRes = await pgDb.query(query, params);
+    const subjectsRes = await pgDb.query(query, queryParams);
     res.json({ success: true, data: subjectsRes.rows });
   } catch (err) {
     next(err);
@@ -39,7 +70,9 @@ router.post(
   auditLog('CREATE', 'subject'),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { courseId } = req.params;
+      const params = validateParams(courseIdRequiredParamSchema, req.params, res);
+      if (!params) return;
+      const { courseId } = params;
       const { name, code, description, credits = 4, order = 0 } = req.body;
 
       const courseRes = await pgDb.query(`SELECT "id" FROM "courses" WHERE "id" = $1`, [courseId]);
@@ -70,7 +103,9 @@ router.post(
 // Get single subject
 router.get('/subject/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.params;
+    const params = validateParams(subjectIdParamSchema, req.params, res);
+    if (!params) return;
+    const { id } = params;
     const subRes = await pgDb.query(`SELECT * FROM "subjects" WHERE "id" = $1`, [id]);
     if (subRes.rows.length === 0) {
       throw new AppError(404, 'SUBJECT_NOT_FOUND', 'Subject not found');
@@ -93,7 +128,9 @@ router.patch(
   auditLog('UPDATE', 'subject'),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { id } = req.params;
+      const params = validateParams(subjectIdParamSchema, req.params, res);
+      if (!params) return;
+      const { id } = params;
       const { name, description, credits, order } = req.body;
 
       const subRes = await pgDb.query(`SELECT * FROM "subjects" WHERE "id" = $1`, [id]);
@@ -129,7 +166,9 @@ router.delete(
   auditLog('DELETE', 'subject'),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { id } = req.params;
+      const params = validateParams(subjectIdParamSchema, req.params, res);
+      if (!params) return;
+      const { id } = params;
       await pgDb.query(`DELETE FROM "subjects" WHERE "id" = $1`, [id]);
       res.json({ success: true, message: 'Subject deleted successfully' });
     } catch (err) {

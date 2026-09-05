@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { pgDb } from '@repo/database';
-import { createSyllabusNodeSchema, updateSyllabusNodeSchema, reorderSyllabusNodeSchema } from '@repo/validation';
+import { createSyllabusNodeSchema, updateSyllabusNodeSchema, reorderSyllabusNodeSchema, z } from '@repo/validation';
 import { PERMISSIONS } from '@repo/permissions';
 import { authenticate } from '../middleware/auth';
 import { requirePermission } from '../middleware/permission';
@@ -12,6 +12,35 @@ import crypto from 'crypto';
 const router = Router({ mergeParams: true });
 
 router.use(authenticate);
+
+// Strict validation & sanitization schemas against SQL injection and invalid payloads
+const identifierRegex = /^[a-zA-Z0-9_\-]+$/;
+
+const subjectIdOptionalParamSchema = z.object({
+  subjectId: z.string().max(128).regex(identifierRegex, 'Invalid subject identifier format').optional(),
+});
+
+const subjectIdRequiredParamSchema = z.object({
+  subjectId: z.string().min(1, 'Subject ID required').max(128).regex(identifierRegex, 'Invalid subject identifier format'),
+});
+
+const nodeIdParamSchema = z.object({
+  id: z.string().min(1, 'Node ID required').max(128).regex(identifierRegex, 'Invalid node identifier format'),
+});
+
+function validateParams<T>(schema: z.ZodSchema<T>, data: any, res: Response): T | null {
+  const result = schema.safeParse(data);
+  if (!result.success) {
+    res.status(400).json({
+      success: false,
+      errorCode: 'INVALID_INPUT_PARAMETERS',
+      message: 'Input parameter failed sanitization or validation check',
+      errors: result.error.flatten(),
+    });
+    return null;
+  }
+  return result.data;
+}
 
 const MAX_DEPTH = 3; // Depths 0 (UNIT), 1 (TOPIC), 2 (SUBTOPIC), 3 (CONCEPT) -> total 4 levels
 
@@ -39,7 +68,13 @@ function buildTree(nodes: any[]): any[] {
 // Get flat list of syllabus nodes
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const subjectId = (req.params as any).subjectId || (req.query as any).subjectId;
+    const rawSubjectId = (req.params as any).subjectId || (req.query as any).subjectId;
+    let subjectId: string | undefined;
+    if (rawSubjectId) {
+      const parsed = validateParams(subjectIdRequiredParamSchema, { subjectId: rawSubjectId }, res);
+      if (!parsed) return;
+      subjectId = parsed.subjectId;
+    }
     let query = `SELECT * FROM "syllabus_nodes"`;
     const params: any[] = [];
     if (subjectId) {
@@ -57,7 +92,13 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 // Get nested tree structure for syllabus
 router.get('/tree', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const subjectId = (req.params as any).subjectId || (req.query as any).subjectId;
+    const rawSubjectId = (req.params as any).subjectId || (req.query as any).subjectId;
+    let subjectId: string | undefined;
+    if (rawSubjectId) {
+      const parsed = validateParams(subjectIdRequiredParamSchema, { subjectId: rawSubjectId }, res);
+      if (!parsed) return;
+      subjectId = parsed.subjectId;
+    }
     const caller = req.user!;
     const isStudent = caller.roles.includes('STUDENT') && !caller.roles.includes('MAIN_ADMIN') && !caller.roles.includes('SUB_ADMIN');
 
@@ -88,11 +129,15 @@ router.post(
   auditLog('CREATE', 'syllabus_node'),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { subjectId } = req.params;
+      const parsedParam = validateParams(subjectIdRequiredParamSchema, { subjectId: (req.params as any).subjectId || (req.body as any).subjectId }, res);
+      if (!parsedParam) return;
+      const { subjectId } = parsedParam;
       const { parentId, title, type = 'TOPIC', orderIndex = 0, description, learningObjectives, estimatedMinutes = 60, status = 'PUBLISHED', tags = [] } = req.body;
 
       let depth = 0;
       if (parentId) {
+        const parsedParent = validateParams(nodeIdParamSchema, { id: parentId }, res);
+        if (!parsedParent) return;
         const parentRes = await pgDb.query(`SELECT * FROM "syllabus_nodes" WHERE "id" = $1`, [parentId]);
         if (parentRes.rows.length === 0) {
           throw new AppError(404, 'PARENT_NODE_NOT_FOUND', `Parent node ${parentId} not found`);
@@ -140,7 +185,9 @@ router.patch(
   auditLog('UPDATE', 'syllabus_node'),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { id } = req.params;
+      const parsedParam = validateParams(nodeIdParamSchema, req.params, res);
+      if (!parsedParam) return;
+      const { id } = parsedParam;
       const { title, type, description, learningObjectives, estimatedMinutes, status, tags } = req.body;
 
       const existingRes = await pgDb.query(`SELECT * FROM "syllabus_nodes" WHERE "id" = $1`, [id]);
@@ -180,7 +227,9 @@ router.patch(
   auditLog('REORDER', 'syllabus_node'),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { id } = req.params;
+      const parsedParam = validateParams(nodeIdParamSchema, req.params, res);
+      if (!parsedParam) return;
+      const { id } = parsedParam;
       const { parentId, orderIndex = 0 } = req.body;
 
       // Cyclic parent check
@@ -190,6 +239,8 @@ router.patch(
 
       let newDepth = 0;
       if (parentId) {
+        const parsedParent = validateParams(nodeIdParamSchema, { id: parentId }, res);
+        if (!parsedParent) return;
         const targetRes = await pgDb.query(`SELECT * FROM "syllabus_nodes" WHERE "id" = $1`, [parentId]);
         if (targetRes.rows.length === 0) throw new AppError(404, 'TARGET_PARENT_NOT_FOUND', 'Target parent node not found');
         newDepth = targetRes.rows[0].depth + 1;
@@ -220,7 +271,9 @@ router.delete(
   auditLog('DELETE', 'syllabus_node'),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { id } = req.params;
+      const parsedParam = validateParams(nodeIdParamSchema, req.params, res);
+      if (!parsedParam) return;
+      const { id } = parsedParam;
       await pgDb.query(`DELETE FROM "syllabus_nodes" WHERE "id" = $1 OR "parentId" = $1`, [id]);
       res.json({ success: true, message: 'Node and children deleted successfully' });
     } catch (err) {

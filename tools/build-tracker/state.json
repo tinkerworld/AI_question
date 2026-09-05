@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-09-05T05:02:31.465Z",
+  "lastUpdated": "2026-09-05T15:23:52.586Z",
   "activePhase": 7,
   "phases": [
     {
@@ -628,6 +628,24 @@
           "state": "done",
           "addedAt": "2026-09-04T20:08:50.055Z",
           "note": "[QA Hub] Direct string concatenation in database queries enables attackers to inject malicious SQL fragments and manipulate query logic. (ref: DEV-112)"
+        },
+        {
+          "id": "7.19",
+          "phase": 7,
+          "title": "[CCR-SECURITY] Fix SQL Injection Vulnerability in ai-question.routes.ts: You've provided a detailed set of route definitions and middleware",
+          "source": "ai-suggested",
+          "state": "done",
+          "addedAt": "2026-09-05T05:23:40.576Z",
+          "note": "[QA Hub] Direct string concatenation in database queries enables attackers to inject malicious SQL fragments and manipulate query logic. (ref: DEV-113)"
+        },
+        {
+          "id": "7.20",
+          "phase": 7,
+          "title": "[CCR-SECURITY] Fix SQL Injection Vulnerability in Express.js: You've provided a comprehensive set of route definitions and middlewar",
+          "source": "ai-suggested",
+          "state": "done",
+          "addedAt": "2026-09-05T14:56:44.805Z",
+          "note": "[QA Hub] Direct string concatenation in database queries enables attackers to inject malicious SQL fragments and manipulate query logic. (ref: DEV-114)"
         }
       ]
     },

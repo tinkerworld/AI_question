@@ -7,6 +7,7 @@ import {
   questionStatusSchema,
   addExamUsageSchema,
   tagSchema,
+  z,
 } from '@repo/validation';
 import { PERMISSIONS } from '@repo/permissions';
 import { authenticate } from '../middleware/auth';
@@ -19,6 +20,42 @@ import crypto from 'crypto';
 const router = Router();
 
 router.use(authenticate);
+
+// Strict validation & sanitization schemas against SQL injection and invalid payloads
+const identifierRegex = /^[a-zA-Z0-9_\-]+$/;
+
+const questionIdParamSchema = z.object({
+  id: z.string().min(1, 'Question ID required').max(128).regex(identifierRegex, 'Invalid question identifier format'),
+});
+
+const rollbackParamSchema = z.object({
+  id: z.string().min(1).max(128).regex(identifierRegex, 'Invalid question identifier format'),
+  version: z.string().regex(/^\d+$/, 'Version must be a numeric string'),
+});
+
+const listQuestionsQuerySchema = z.object({
+  courseId: z.string().max(128).regex(identifierRegex, 'Invalid course identifier format').optional(),
+  subjectId: z.string().max(128).regex(identifierRegex, 'Invalid subject identifier format').optional(),
+  syllabusNodeId: z.string().max(128).regex(identifierRegex, 'Invalid syllabus node identifier format').optional(),
+  difficulty: z.enum(['EASY', 'MEDIUM', 'HARD']).optional(),
+  type: z.string().max(32).regex(/^[a-zA-Z_]+$/, 'Invalid question type format').optional(),
+  status: z.enum(['DRAFT', 'REVIEW', 'PUBLISHED', 'ARCHIVED']).optional(),
+  limit: z.string().regex(/^\d+$/).optional(),
+});
+
+function validateParams<T>(schema: z.ZodSchema<T>, data: any, res: Response): T | null {
+  const result = schema.safeParse(data);
+  if (!result.success) {
+    res.status(400).json({
+      success: false,
+      errorCode: 'INVALID_INPUT_PARAMETERS',
+      message: 'Input parameter failed sanitization or validation check',
+      errors: result.error.flatten(),
+    });
+    return null;
+  }
+  return result.data;
+}
 
 // ----------------------------------------------------------------------------
 // Feature 3.8 — Analytics Summary (Must be placed before /:id routes)
@@ -84,7 +121,9 @@ router.get('/tags/all', async (req: Request, res: Response, next: NextFunction) 
 // ----------------------------------------------------------------------------
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { courseId, subjectId, syllabusNodeId, difficulty, type, status, limit } = req.query;
+    const query = validateParams(listQuestionsQuerySchema, req.query, res);
+    if (!query) return;
+    const { courseId, subjectId, syllabusNodeId, difficulty, type, status, limit } = query;
 
     let whereClause = `WHERE 1=1`;
     const params: any[] = [];
@@ -278,7 +317,9 @@ function inferQuestionChangeSummary(
 // ----------------------------------------------------------------------------
 router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.params;
+    const params = validateParams(questionIdParamSchema, req.params, res);
+    if (!params) return;
+    const { id } = params;
     const qRes = await pgDb.query(`SELECT * FROM "questions" WHERE "id" = $1`, [id]);
     if (qRes.rows.length === 0) {
       throw new AppError(404, 'QUESTION_NOT_FOUND', `Question ${id} not found`);
@@ -320,7 +361,9 @@ router.patch(
   auditLog('UPDATE', 'question'),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { id } = req.params;
+      const params = validateParams(questionIdParamSchema, req.params, res);
+      if (!params) return;
+      const { id } = params;
       const { content, data, difficulty, marks, status, courseId, subjectId, syllabusNodeId } = req.body;
 
       const qRes = await pgDb.query(`SELECT * FROM "questions" WHERE "id" = $1`, [id]);
@@ -393,7 +436,9 @@ router.patch(
 // ----------------------------------------------------------------------------
 router.get('/:id/versions', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.params;
+    const params = validateParams(questionIdParamSchema, req.params, res);
+    if (!params) return;
+    const { id } = params;
     const versionsRes = await pgDb.query(
       `SELECT * FROM "question_versions" WHERE "questionId" = $1 ORDER BY "version" DESC`,
       [id]
@@ -410,7 +455,9 @@ router.post(
   auditLog('ROLLBACK', 'question'),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { id, version } = req.params;
+      const params = validateParams(rollbackParamSchema, req.params, res);
+      if (!params) return;
+      const { id, version } = params;
       const targetVersionNum = parseInt(version, 10);
 
       const targetRes = await pgDb.query(
@@ -477,7 +524,9 @@ router.patch(
   auditLog('STATUS_CHANGE', 'question'),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { id } = req.params;
+      const params = validateParams(questionIdParamSchema, req.params, res);
+      if (!params) return;
+      const { id } = params;
       const { status } = req.body;
 
       const qRes = await pgDb.query(`SELECT "status" FROM "questions" WHERE "id" = $1`, [id]);
@@ -511,7 +560,9 @@ router.post(
   auditLog('CREATE', 'exam_history'),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { id } = req.params;
+      const params = validateParams(questionIdParamSchema, req.params, res);
+      if (!params) return;
+      const { id } = params;
       const { examName, year, shift } = req.body;
 
       const usageId = `peu_${crypto.randomBytes(8).toString('hex')}`;
@@ -531,7 +582,9 @@ router.post(
 
 router.get('/:id/exam-history', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.params;
+    const params = validateParams(questionIdParamSchema, req.params, res);
+    if (!params) return;
+    const { id } = params;
     const historyRes = await pgDb.query(
       `SELECT * FROM "previous_exam_usages" WHERE "questionId" = $1 ORDER BY "year" DESC`,
       [id]
@@ -551,7 +604,9 @@ router.delete(
   auditLog('DELETE', 'question'),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { id } = req.params;
+      const params = validateParams(questionIdParamSchema, req.params, res);
+      if (!params) return;
+      const { id } = params;
       await pgDb.query(`DELETE FROM "question_tags" WHERE "questionId" = $1`, [id]);
       await pgDb.query(`DELETE FROM "question_versions" WHERE "questionId" = $1`, [id]);
       await pgDb.query(`DELETE FROM "previous_exam_usages" WHERE "questionId" = $1`, [id]);

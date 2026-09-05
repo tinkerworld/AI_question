@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { pgDb } from '@repo/database';
-import { createCourseSchema, updateCourseSchema } from '@repo/validation';
+import { createCourseSchema, updateCourseSchema, z } from '@repo/validation';
 import { PERMISSIONS } from '@repo/permissions';
 import { authenticate } from '../middleware/auth';
 import { requirePermission } from '../middleware/permission';
@@ -12,6 +12,32 @@ import crypto from 'crypto';
 const router = Router();
 
 router.use(authenticate);
+
+// Strict validation & sanitization schemas against SQL injection and invalid payloads
+const identifierRegex = /^[a-zA-Z0-9_\-]+$/;
+
+const courseIdParamSchema = z.object({
+  id: z.string().min(1, 'Course ID required').max(128).regex(identifierRegex, 'Invalid course identifier format'),
+});
+
+const listCoursesQuerySchema = z.object({
+  status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']).optional(),
+  search: z.string().max(256).regex(/^[a-zA-Z0-9_\s\-.]*$/, 'Invalid search format').optional(),
+});
+
+function validateParams<T>(schema: z.ZodSchema<T>, data: any, res: Response): T | null {
+  const result = schema.safeParse(data);
+  if (!result.success) {
+    res.status(400).json({
+      success: false,
+      errorCode: 'INVALID_INPUT_PARAMETERS',
+      message: 'Input parameter failed sanitization or validation check',
+      errors: result.error.flatten(),
+    });
+    return null;
+  }
+  return result.data;
+}
 
 // List courses
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
@@ -31,8 +57,10 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         ? [sessionData.courseAccess]
         : null);
 
-    const statusFilter = req.query.status as string;
-    const search = req.query.search as string;
+    const queryParams = validateParams(listCoursesQuerySchema, req.query, res);
+    if (!queryParams) return;
+    const statusFilter = queryParams.status;
+    const search = queryParams.search;
 
     let query = `SELECT * FROM "courses" WHERE 1=1`;
     const params: any[] = [];
@@ -102,7 +130,9 @@ router.post(
 // Get course by ID
 router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.params;
+    const params = validateParams(courseIdParamSchema, req.params, res);
+    if (!params) return;
+    const { id } = params;
 
     const sessionData = req.impersonation?.sessionData;
     const restrictedCourses =
@@ -146,7 +176,9 @@ router.patch(
   auditLog('UPDATE', 'course'),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { id } = req.params;
+      const params = validateParams(courseIdParamSchema, req.params, res);
+      if (!params) return;
+      const { id } = params;
       const { name, description, status, thumbnailUrl, durationMonths } = req.body;
 
       const existingRes = await pgDb.query(`SELECT * FROM "courses" WHERE "id" = $1`, [id]);
@@ -190,7 +222,9 @@ router.delete(
   auditLog('DELETE', 'course'),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { id } = req.params;
+      const params = validateParams(courseIdParamSchema, req.params, res);
+      if (!params) return;
+      const { id } = params;
       await pgDb.query(`DELETE FROM "courses" WHERE "id" = $1`, [id]);
       res.json({ success: true, message: 'Course deleted successfully' });
     } catch (err) {
