@@ -1,0 +1,106 @@
+
+Running 78 tests using 1 worker
+
+  ✓   1 [chromium] › e2e/analytics.spec.ts:11:7 › Phase 8: Student Analytics, Mastery Engine & Institutional Dashboards › student can navigate to Analytics & Mastery, view summary metric cards, strengths, and weaknesses panels (880ms)
+  ✓   2 [chromium] › e2e/analytics.spec.ts:29:7 › Phase 8: Student Analytics, Mastery Engine & Institutional Dashboards › student can view Syllabus Proficiency Map with color status badges and progress trends (805ms)
+  ✓   3 [chromium] › e2e/analytics.spec.ts:47:7 › Phase 8: Student Analytics, Mastery Engine & Institutional Dashboards › teacher/admin can view Faculty & Institutional Analytics, cohort common weaknesses, and student performance roster (778ms)
+  ✓   4 [chromium] › e2e/analytics.spec.ts:68:7 › Phase 8: Student Analytics, Mastery Engine & Institutional Dashboards › student 1 (student@examos.com) displays Mechanics & Physical Chem strengths, and Organic & Probability weaknesses (853ms)
+  ✓   5 [chromium] › e2e/analytics.spec.ts:88:7 › Phase 8: Student Analytics, Mastery Engine & Institutional Dashboards › student 2 (student2@examos.com) displays contrasting Organic & Probability strengths, and Mechanics & Physical Chem weaknesses (967ms)
+  ✓   6 [chromium] › e2e/analytics.spec.ts:117:7 › Phase 8: Student Analytics, Mastery Engine & Institutional Dashboards › teacher can open student drilldown modal to inspect individual student mastery tree (995ms)
+  ✓   7 [chromium] › e2e/analytics.spec.ts:153:7 › Phase 8: Student Analytics, Mastery Engine & Institutional Dashboards › admin can view pre-published exams in Exam Archive vault (822ms)
+  ✓   8 [chromium] › e2e/backend-permission-checks.spec.ts:18:7 › Backend permission enforcement (API-level, not UI simulation) › student is rejected from course/pattern/user creation (403) (686ms)
+  ✓   9 [chromium] › e2e/backend-permission-checks.spec.ts:44:7 › Backend permission enforcement (API-level, not UI simulation) › teacher can create questions but is rejected from user management (403) (660ms)
+  ✓  10 [chromium] › e2e/backend-permission-checks.spec.ts:88:7 › Backend permission enforcement (API-level, not UI simulation) › cross-student analytics access is rejected with 403 (IDOR/tenancy isolation) (732ms)
+  ✓  11 [chromium] › e2e/backend-permission-checks.spec.ts:102:7 › Backend permission enforcement (API-level, not UI simulation) › archive search protects against SQL injection in sortBy/sortOrder parameters (679ms)
+  ✓  12 [chromium] › e2e/backend-permission-checks.spec.ts:116:7 › Backend permission enforcement (API-level, not UI simulation) › AI Gateway route rejects unauthenticated external requests without internal API key (401) (166ms)
+  ✓  13 [chromium] › e2e/backend-permission-checks.spec.ts:141:7 › Backend permission enforcement (API-level, not UI simulation) › AI Gateway route rejects malformed payload with 400 validation error (177ms)
+  ✓  14 [chromium] › e2e/courses.spec.ts:60:7 › Courses / Academic Structure workbench › admin can create a course (133ms)
+  ✓  15 [chromium] › e2e/courses.spec.ts:76:7 › Courses / Academic Structure workbench › syllabus tree renders and nodes can be expanded (seeded data, no fixture created) (150ms)
+  ✓  16 [chromium] › e2e/courses.spec.ts:87:7 › Courses / Academic Structure workbench › REGRESSION: subject create/edit/delete round-trip correctly (previously returned 404) (411ms)
+  ✓  17 [chromium] › e2e/exam_player_flow.spec.ts:4:5 › Simulates a student taking an exam and submitting (1.0s)
+  ✓  18 [chromium] › e2e/exam_result_flow.spec.ts:4:5 › Simulate student viewing assessment scorecard and solution analysis (815ms)
+  ✓  19 [chromium] › e2e/exam-archive.spec.ts:55:7 › Phase 7: Published Exam Archive & Immutability Workbench › admin can navigate to Published Archive, search, and view global vault statistics (1.2s)
+  ✓  20 [chromium] › e2e/exam-archive.spec.ts:67:7 › Phase 7: Published Exam Archive & Immutability Workbench › admin can open frozen snapshot viewer and inspect read-only question paper (993ms)
+  ✓  21 [chromium] › e2e/exam-archive.spec.ts:83:7 › Phase 7: Published Exam Archive & Immutability Workbench › teacher can view preserved answer keys and explanations (944ms)
+  ✓  22 [chromium] › e2e/exam-archive.spec.ts:97:7 › Phase 7: Published Exam Archive & Immutability Workbench › admin can open version history and post-publish errata correction (997ms)
+  ✓  23 [chromium] › e2e/exam-exit-protection.spec.ts:5:7 › Active Exam Exit Protection (Back-button, Tab Close, Refresh) › Exit Path 1: Browser Back-Button is intercepted and displays in-app warning modal (1.0s)
+  ✓  24 [chromium] › e2e/exam-exit-protection.spec.ts:60:7 › Active Exam Exit Protection (Back-button, Tab Close, Refresh) › Exit Path 2: Page Refresh / beforeunload is prevented with confirmation during IN_PROGRESS attempt (5.8s)
+  ✓  25 [chromium] › e2e/exam-exit-protection.spec.ts:103:7 › Active Exam Exit Protection (Back-button, Tab Close, Refresh) › Exit Path 3: Tab Close / Navigation protection is scoped ONLY to active attempt and disengages on submit (6.0s)
+  ✓  26 [chromium] › e2e/exam-exit-protection.spec.ts:153:7 › Active Exam Exit Protection (Back-button, Tab Close, Refresh) › Exit Path 4: App-level sidebar navigation & header logout are locked during active exam attempt and prompt warning modal (1.1s)
+  ✓  27 [chromium] › e2e/exam-generator.spec.ts:56:7 › Exam Generator workbench › admin can generate an exam from the seeded JEE Main blueprint (893ms)
+  ✓  28 [chromium] › e2e/exam-generator.spec.ts:63:7 › Exam Generator workbench › draft exam inspection shows section/question breakdown (1.2s)
+  ✓  29 [chromium] › e2e/exam-generator.spec.ts:76:7 › Exam Generator workbench › publishing an exam locks it from further edits (984ms)
+  ✓  30 [chromium] › e2e/exam-patterns.spec.ts:65:7 › Exam Patterns workbench › admin can create a pattern via the UI and see it in the list (681ms)
+  ✓  31 [chromium] › e2e/exam-patterns.spec.ts:84:7 › Exam Patterns workbench › admin can edit an existing pattern and the change persists (160ms)
+  ✓  32 [chromium] › e2e/exam-patterns.spec.ts:113:7 › Exam Patterns workbench › sub-admin has exams.create permission and can create a pattern (535ms)
+  ✓  33 [chromium] › e2e/interview-system.spec.ts:5:7 › Phase 12: AI Interview & Oral Assessment System › 1. Sidebar Gating: Student enrolled in IELTS sees AI Interview tab and catalog (962ms)
+  ✓  34 [chromium] › e2e/interview-system.spec.ts:24:7 › Phase 12: AI Interview & Oral Assessment System › 2. Question Bank Authoring: Admin authors and previews an INTERVIEW question with custom rubric (1.2s)
+  ✓  35 [chromium] › e2e/interview-system.spec.ts:60:7 › Phase 12: AI Interview & Oral Assessment System › 3. Live Multi-Turn Interview Session & Rubric Evaluation Scorecard (1.1s)
+  ✓  36 [chromium] › e2e/LoginPage.spec.ts:5:7 › LoginPage › should display login form with email and password fields (639ms)
+  ✓  37 [chromium] › e2e/LoginPage.spec.ts:14:7 › LoginPage › should allow admin user to login successfully (644ms)
+  ✓  38 [chromium] › e2e/LoginPage.spec.ts:19:7 › LoginPage › should allow teacher user to login successfully (628ms)
+  ✓  39 [chromium] › e2e/LoginPage.spec.ts:24:7 › LoginPage › should allow student user to login successfully (627ms)
+  ✓  40 [chromium] › e2e/LoginPage.spec.ts:29:7 › LoginPage › should show error message for invalid credentials (676ms)
+  ✓  41 [chromium] › e2e/LoginPage.spec.ts:50:7 › LoginPage › should logout user successfully (679ms)
+  ✓  42 [chromium] › e2e/navigation.spec.ts:33:9 › Navigation - no silently-empty tabs › "exams" tab renders a real page, not the placeholder (712ms)
+  ✓  43 [chromium] › e2e/navigation.spec.ts:33:9 › Navigation - no silently-empty tabs › "exam_patterns" tab renders a real page, not the placeholder (711ms)
+  ✓  44 [chromium] › e2e/navigation.spec.ts:33:9 › Navigation - no silently-empty tabs › "question_bank" tab renders a real page, not the placeholder (797ms)
+  ✓  45 [chromium] › e2e/navigation.spec.ts:33:9 › Navigation - no silently-empty tabs › "courses" tab renders a real page, not the placeholder (727ms)
+  ✓  46 [chromium] › e2e/navigation.spec.ts:33:9 › Navigation - no silently-empty tabs › "users" tab renders a real page, not the placeholder (759ms)
+  ✓  47 [chromium] › e2e/navigation.spec.ts:33:9 › Navigation - no silently-empty tabs › "analytics" tab renders a real page, not the placeholder (671ms)
+  ✓  48 [chromium] › e2e/navigation.spec.ts:46:7 › Navigation - no silently-empty tabs › unbuilt tab (dashboard) is honestly still placeholder (604ms)
+  ✓  49 [chromium] › e2e/personalized-practice.spec.ts:25:7 › Phase 9: Personalized Practice & Adaptive Mastery › student can inspect weakness pool with error rates and focus areas (819ms)
+  ✓  50 [chromium] › e2e/personalized-practice.spec.ts:42:7 › Phase 9: Personalized Practice & Adaptive Mastery › student can generate targeted practice paper and interact with practice player (1.1s)
+  ✓  51 [chromium] › e2e/preview-system.spec.ts:23:7 › Phase 10: Preview System & Impersonation Workbench › staff can configure and launch Preview mode with simulated plans and visual banner (1.1s)
+  ✓  52 [chromium] › e2e/preview-system.spec.ts:84:7 › Phase 10: Preview System & Impersonation Workbench › per-row impersonate button is visible for student rows but strictly hidden for teacher and admin rows (489ms)
+  ✓  53 [chromium] › e2e/preview-system.spec.ts:118:7 › Phase 10: Preview System & Impersonation Workbench › admin can impersonate real student with mandatory justification and inspect entry in Security Audit Trail (808ms)
+  ✓  54 [chromium] › e2e/preview-system.spec.ts:181:7 › Phase 10: Preview System & Impersonation Workbench › staff can click Preview as Student on a draft exam, land directly in the exam player, answer questions, submit, and exit cleanly back to exam editor (1.1s)
+  ✓  55 [chromium] › e2e/question-bank.spec.ts:49:7 › Question Bank workbench › admin can create a question via the authoring modal (452ms)
+  ✓  56 [chromium] › e2e/question-bank.spec.ts:57:7 › Question Bank workbench › REGRESSION: freshly created question has a non-empty version history (294ms)
+  ✓  57 [chromium] › e2e/question-bank.spec.ts:81:7 › Question Bank workbench › lifecycle status transition updates and persists (845ms)
+  ✓  58 [chromium] › e2e/question-bank.spec.ts:109:7 › Question Bank workbench › multi-filter toolbar filters the list without erroring (seeded data, no fixture created) (158ms)
+  ✓  59 [chromium] › e2e/role-based-access.spec.ts:23:7 › Role-based access control › all four personas can log in successfully (2.1s)
+  ✓  60 [chromium] › e2e/role-based-access.spec.ts:31:7 › Role-based access control › TARGET: student does not see admin-only nav tabs (question bank, courses, users) (678ms)
+  ✓  61 [chromium] › e2e/role-based-access.spec.ts:44:7 › Role-based access control › TARGET: teacher does not see user management or course administration (683ms)
+Student Exams Scroll Info: {
+  scrollHeight: 1130,
+  clientHeight: 661,
+  overflowY: 'auto',
+  overflowX: 'hidden'
+}
+  ✓  62 [chromium] › e2e/scrollbar-verification.spec.ts:5:7 › Systemic Scrollbar Verification & Modal Safety › 1. Student Assessments tab is scrollable (711ms)
+Question Bank Scroll Info: {
+  scrollHeight: 21543,
+  clientHeight: 661,
+  overflowY: 'auto',
+  overflowX: 'hidden'
+}
+  ✓  63 [chromium] › e2e/scrollbar-verification.spec.ts:23:7 › Systemic Scrollbar Verification & Modal Safety › 2. Admin Question Bank tab is scrollable (1.4s)
+Analytics Scroll Info: {
+  scrollHeight: 661,
+  clientHeight: 661,
+  overflowY: 'auto',
+  overflowX: 'hidden'
+}
+  ✓  64 [chromium] › e2e/scrollbar-verification.spec.ts:55:7 › Systemic Scrollbar Verification & Modal Safety › 3. Analytics tab is scrollable (751ms)
+  ✓  65 [chromium] › e2e/settings.spec.ts:15:7 › Phase 11: System Settings & AI Gateway Configuration › admin can access Settings tab and configure AI Gateway multi-provider cascade (1.0s)
+  ✓  66 [chromium] › e2e/student-analytics-flow.spec.ts:39:7 › Student Analytics & Personalized Practice Pipeline › student answers Physics questions poorly, and Analytics correctly flags a Physics topic as weak (5.2s)
+  ✓  67 [chromium] › e2e/student-analytics-flow.spec.ts:150:7 › Student Analytics & Personalized Practice Pipeline › student can generate a new practice test from their weak topics (918ms)
+  ✓  68 [chromium] › e2e/student-exams.spec.ts:5:7 › Student Exam-Taking & Results Portal › student logs in, views assessment list, reads instructions, takes exam, submits, and views scorecard (1.2s)
+  ✓  69 [chromium] › e2e/student-exams.spec.ts:53:7 › Student Exam-Taking & Results Portal › question card maintains stable layout and minimum height across questions of varying length (2.3s)
+  ✓  70 [chromium] › e2e/subscription-billing.spec.ts:5:7 › Phase 13: Subscriptions & Entitlements System › 1. Plan Matrix & Subscription Dashboard: Student views active tier, plan tiers and feature limits (841ms)
+  ✓  71 [chromium] › e2e/subscription-billing.spec.ts:34:7 › Phase 13: Subscriptions & Entitlements System › 2. Subscription Upgrade Flow: Student upgrades plan tier via simulated checkout modal (846ms)
+  ✓  72 [chromium] › e2e/subscription-billing.spec.ts:60:7 › Phase 13: Subscriptions & Entitlements System › 3. AI Credit Pack Top-Up: Student purchases booster pack and balance increments (1.0s)
+  ✓  73 [chromium] › e2e/subscription-billing.spec.ts:96:7 › Phase 13: Subscriptions & Entitlements System › 4. Admin Refund Engine & Financial Audit Trail: Main Admin issues refund with entitlement clawback (869ms)
+  ✓  74 [chromium] › e2e/users_page_flow.spec.ts:7:5 › User navigates to UsersPage via dashboard (4.5s)
+  ✓  75 [chromium] › e2e/UsersPage.spec.ts:5:7 › Users Page Navigation and Access Control › admin can access users page and see user list (808ms)
+  ✓  76 [chromium] › e2e/UsersPage.spec.ts:21:7 › Users Page Navigation and Access Control › subadmin can access users page and see user list (750ms)
+  ✓  77 [chromium] › e2e/UsersPage.spec.ts:37:7 › Users Page Navigation and Access Control › teacher cannot access users page (669ms)
+  ✓  78 [chromium] › e2e/UsersPage.spec.ts:43:7 › Users Page Navigation and Access Control › student cannot access users page (604ms)
+
+  78 passed (1.4m)
+
+To open last HTML report run:
+[36m[39m
+[36m  npx playwright show-report[39m
+[36m[39m
