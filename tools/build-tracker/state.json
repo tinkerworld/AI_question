@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-09-04T20:04:10.932Z",
+  "lastUpdated": "2026-09-05T05:02:31.465Z",
   "activePhase": 7,
   "phases": [
     {
@@ -619,6 +619,15 @@
           "state": "done",
           "addedAt": "2026-09-04T15:17:58.207Z",
           "note": "[QA Hub] Endpoints lacking authentication decorators or tenant isolation filters permit cross-tenant data leakage and unauthorized privilege escalation. (ref: DEV-111)"
+        },
+        {
+          "id": "7.18",
+          "phase": 7,
+          "title": "[CCR-SECURITY] Fix SQL Injection Vulnerability in Node.js: You've provided a large and detailed codebase snippet from what appear",
+          "source": "ai-suggested",
+          "state": "done",
+          "addedAt": "2026-09-04T20:08:50.055Z",
+          "note": "[QA Hub] Direct string concatenation in database queries enables attackers to inject malicious SQL fragments and manipulate query logic. (ref: DEV-112)"
         }
       ]
     },
