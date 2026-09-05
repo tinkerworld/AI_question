@@ -12,7 +12,9 @@
 export const getApiBase = (): string => {
   const envUrl = import.meta.env.VITE_API_BASE_URL;
 
-  // In a browser environment, resolve host dynamically from the active network connection
+  // In a browser environment, resolve host dynamically from the active network connection.
+  // Using relative path '/api/v1' routes through the same host and port (e.g. :3000 proxy),
+  // ensuring zero CORS issues and immunity to external firewall (UFW) port restrictions on port 4043.
   if (typeof window !== 'undefined' && window.location) {
     const { protocol, hostname, port } = window.location;
     const formattedHost =
@@ -24,26 +26,24 @@ export const getApiBase = (): string => {
 
     // 1. If explicit URL is provided in env
     if (envUrl) {
-      // If the client is accessing over LAN/remote IP, but the env was hardcoded to localhost/127.0.0.1,
-      // dynamically swap the host to match the client's network connection to prevent ERR_CONNECTION_REFUSED.
       if (!isClientOnLocalhost && /https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/i.test(envUrl)) {
-        return envUrl.replace(/localhost|127\.0\.0\.1/i, formattedHost);
+        return '/api/v1';
       }
       return envUrl;
     }
 
     const apiPort = import.meta.env.VITE_API_PORT || '4043';
 
-    // 2. If served via standard HTTP/HTTPS ports (80/443) or reverse proxy without port
-    if (!port || port === '80' || port === '443') {
-      return `${protocol}//${formattedHost}/api/v1`;
+    // 2. If frontend is served directly on backend port 4043 or through standard web ports (80/443)
+    if (!port || port === '80' || port === '443' || port === apiPort) {
+      return `${protocol}//${formattedHost}:${port ? port : ''}/api/v1`;
     }
 
     // 3. Dynamic LAN/WAN/Localhost: connect to backend API server on current host machine
     return `${protocol}//${formattedHost}:${apiPort}/api/v1`;
   }
 
-  // 4. Non-browser / SSR / fallback
+  // 4. Non-browser / SSR / backend test scripts fallback
   return envUrl || 'http://localhost:4043/api/v1';
 };
 
