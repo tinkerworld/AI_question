@@ -6,6 +6,7 @@ import {
   InterviewEligibilityDTO,
   InterviewRubricItemDTO,
   InterviewMode,
+  InterviewLongitudinalProgressDTO,
 } from '@repo/types';
 import { getAuthHeaders } from '../utils/api';
 import { API_BASE } from '../config/api';
@@ -20,6 +21,8 @@ const getSafeRubricScores = (rubricScores: any, defaultRubric: any[] = []): any[
         score: r.maxScore ? Math.round(r.maxScore * 0.85 * 10) / 10 : 8.5,
         maxScore: r.maxScore || 10,
         feedback: r.description || 'Proficient demonstration across evaluated indicators.',
+        evidenceQuotes: r.evidenceQuotes || [],
+        improvementTip: r.improvementTip || '',
       }));
     }
     return [];
@@ -34,6 +37,8 @@ const getSafeRubricScores = (rubricScores: any, defaultRubric: any[] = []): any[
           score: typeof crit.score === 'number' ? crit.score : (Number(crit.score) || 8),
           maxScore: typeof crit.maxScore === 'number' ? crit.maxScore : 10,
           feedback: crit.feedback || crit.comments || 'Evaluated standard performance.',
+          evidenceQuotes: crit.evidenceQuotes || [],
+          improvementTip: crit.improvementTip || '',
         };
       }
       return {
@@ -42,6 +47,8 @@ const getSafeRubricScores = (rubricScores: any, defaultRubric: any[] = []): any[
         score: Number(crit) || 8,
         maxScore: 10,
         feedback: 'Evaluated criterion.',
+        evidenceQuotes: [],
+        improvementTip: '',
       };
     });
   }
@@ -55,6 +62,8 @@ const getSafeRubricScores = (rubricScores: any, defaultRubric: any[] = []): any[
           score: typeof v.score === 'number' ? v.score : (Number(v.score) || 8),
           maxScore: typeof v.maxScore === 'number' ? v.maxScore : 10,
           feedback: v.feedback || v.comments || `Evaluated score for ${k}.`,
+          evidenceQuotes: v.evidenceQuotes || [],
+          improvementTip: v.improvementTip || '',
         };
       }
       return {
@@ -63,6 +72,8 @@ const getSafeRubricScores = (rubricScores: any, defaultRubric: any[] = []): any[
         score: typeof v === 'number' ? v : (Number(v) || 8),
         maxScore: 10,
         feedback: `Evaluated score: ${v}`,
+        evidenceQuotes: [],
+        improvementTip: '',
       };
     });
   }
@@ -82,7 +93,7 @@ export const InterviewPage: React.FC = () => {
   const { user, token } = useAuth();
 
   // Navigation & View States
-  const [activeView, setActiveView] = useState<'CATALOG' | 'ROOM' | 'EVALUATION' | 'HISTORY'>('CATALOG');
+  const [activeView, setActiveView] = useState<'CATALOG' | 'ROOM' | 'EVALUATION' | 'HISTORY' | 'GROWTH'>('CATALOG');
   const [selectedMode, setSelectedMode] = useState<InterviewMode>('PRACTICE');
   const [selectedCourseFilter, setSelectedCourseFilter] = useState<string>('');
 
@@ -91,11 +102,16 @@ export const InterviewPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Longitudinal Growth & Analytics States
+  const [longitudinalProgress, setLongitudinalProgress] = useState<InterviewLongitudinalProgressDTO | null>(null);
+  const [loadingProgress, setLoadingProgress] = useState<boolean>(false);
+
   // Active Interview Session States
   const [activeSession, setActiveSession] = useState<InterviewSessionDTO | null>(null);
   const [candidateInput, setCandidateInput] = useState<string>('');
   const [isSubmittingTurn, setIsSubmittingTurn] = useState<boolean>(false);
   const [isEvaluating, setIsEvaluating] = useState<boolean>(false);
+  const [showReferenceDrawer, setShowReferenceDrawer] = useState<boolean>(false);
   const isSubmittingRef = useRef<boolean>(false);
 
   // Instructions Modal State (Modeled on Exam Hall Instructions pattern)
@@ -424,9 +440,29 @@ export const InterviewPage: React.FC = () => {
     }
   };
 
+  // Fetch Longitudinal Growth & Analytics History
+  const fetchLongitudinalProgress = async () => {
+    if (!user?.id) return;
+    setLoadingProgress(true);
+    try {
+      const res = await fetch(`${API_BASE}/interview/analytics/student/${user.id}`, {
+        headers: getAuthHeaders(token),
+      });
+      const data = await res.json();
+      if (data.success && data.data) {
+        setLongitudinalProgress(data.data);
+      }
+    } catch (err: any) {
+      console.error('Failed to load longitudinal progress', err);
+    } finally {
+      setLoadingProgress(false);
+    }
+  };
+
   useEffect(() => {
     fetchEligibility();
     fetchPastSessions();
+    fetchLongitudinalProgress();
 
     // Check Speech Recognition support in browser
     if (typeof window !== 'undefined') {
@@ -692,6 +728,25 @@ export const InterviewPage: React.FC = () => {
             }}
           >
             📊 My Attempts ({pastSessions.length})
+          </button>
+          <button
+            id="btn-interview-growth"
+            onClick={() => {
+              setActiveView('GROWTH');
+              fetchLongitudinalProgress();
+            }}
+            style={{
+              padding: '8px 16px',
+              borderRadius: '6px',
+              border: activeView === 'GROWTH' ? '1px solid #10b981' : '1px solid var(--border-color)',
+              background: activeView === 'GROWTH' ? 'rgba(16, 185, 129, 0.15)' : 'var(--bg-secondary)',
+              color: activeView === 'GROWTH' ? '#10b981' : 'var(--text-main)',
+              fontWeight: 600,
+              fontSize: '12px',
+              cursor: 'pointer',
+            }}
+          >
+            📈 My Growth & History
           </button>
         </div>
       </div>
@@ -1457,6 +1512,28 @@ export const InterviewPage: React.FC = () => {
               </div>
 
               <button
+                id="btn-toggle-reference-drawer"
+                onClick={() => setShowReferenceDrawer(!showReferenceDrawer)}
+                title="View Case Study & Ground Truth Reference Materials"
+                style={{
+                  background: showReferenceDrawer ? 'rgba(6, 182, 212, 0.15)' : 'none',
+                  border: showReferenceDrawer ? '1px solid #06b6d4' : '1px solid var(--border-color)',
+                  borderRadius: '4px',
+                  color: showReferenceDrawer ? '#06b6d4' : 'var(--text-muted)',
+                  padding: '4px 10px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <span>📚</span>
+                <span>Case Study Materials</span>
+              </button>
+
+              <button
                 onClick={() => {
                   const nextState = !ttsEnabled;
                   setTtsEnabled(nextState);
@@ -1497,18 +1574,20 @@ export const InterviewPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Conversational Feed */}
-          <div
-            ref={chatScrollRef}
-            style={{
-              flex: 1,
-              padding: '20px',
-              overflowY: 'auto',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '16px',
-            }}
-          >
+          {/* Main Area: Conversational Feed + Optional Collapsible Reference Materials Drawer */}
+          <div style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+            {/* Conversational Feed */}
+            <div
+              ref={chatScrollRef}
+              style={{
+                flex: 1,
+                padding: '20px',
+                overflowY: 'auto',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '16px',
+              }}
+            >
             {/* Mid-Interview Fallback Transition Banner */}
             {activeSession.isFallback && (
               <div
@@ -1655,9 +1734,95 @@ export const InterviewPage: React.FC = () => {
               );
             })}
 
-            {isSubmittingTurn && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#06b6d4', fontSize: '12px', padding: '8px 12px' }}>
-                <span className="animate-spin">⏳</span> AI Examiner is analyzing response and formulating probing follow-up...
+              {isSubmittingTurn && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#06b6d4', fontSize: '12px', padding: '8px 12px' }}>
+                  <span className="animate-spin">⏳</span> AI Examiner is analyzing response and formulating probing follow-up...
+                </div>
+              )}
+            </div>
+
+            {/* Collapsible Reference Materials & Case Study Panel (INT-UI001) */}
+            {showReferenceDrawer && (
+              <div
+                id="case-study-reference-panel"
+                style={{
+                  width: '360px',
+                  borderLeft: '1px solid var(--border-color)',
+                  background: 'var(--bg-color)',
+                  padding: '16px',
+                  overflowY: 'auto',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '14px',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h3 style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-main)', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span>📚</span>
+                    <span>Case Study & Reference Materials</span>
+                  </h3>
+                  <button
+                    onClick={() => setShowReferenceDrawer(false)}
+                    style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '14px' }}
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {/* Scenario / Context */}
+                <div style={{ padding: '12px', background: 'var(--bg-secondary)', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+                  <div style={{ fontSize: '10px', fontWeight: 700, color: '#06b6d4', textTransform: 'uppercase', marginBottom: '4px' }}>
+                    Examination Scenario
+                  </div>
+                  <p style={{ fontSize: '12px', color: 'var(--text-main)', margin: 0, lineHeight: '1.5' }}>
+                    {activeSession.question?.data?.scenario || activeSession.question?.content}
+                  </p>
+                </div>
+
+                {/* Factual Context & Ground Truth Facts */}
+                {activeSession.question?.data?.knowledgeDataset?.summary && (
+                  <div style={{ padding: '12px', background: 'var(--bg-secondary)', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+                    <div style={{ fontSize: '10px', fontWeight: 700, color: '#10b981', textTransform: 'uppercase', marginBottom: '4px' }}>
+                      Ground Truth Factual Summary
+                    </div>
+                    <p style={{ fontSize: '12px', color: 'var(--text-main)', margin: 0, lineHeight: '1.5' }}>
+                      {activeSession.question.data.knowledgeDataset.summary}
+                    </p>
+                  </div>
+                )}
+
+                {/* Facts Array */}
+                {((activeSession.question?.data?.knowledgeDataset?.facts || activeSession.question?.data?.knowledgeDataset?.groundTruthFacts) || []).length > 0 && (
+                  <div style={{ padding: '12px', background: 'var(--bg-secondary)', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+                    <div style={{ fontSize: '10px', fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase', marginBottom: '6px' }}>
+                      Ground Truth Axioms & Constraints
+                    </div>
+                    <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '12px', color: 'var(--text-main)', lineHeight: '1.5' }}>
+                      {(activeSession.question?.data?.knowledgeDataset?.facts || activeSession.question?.data?.knowledgeDataset?.groundTruthFacts || []).map((f: string, i: number) => (
+                        <li key={i}>{f}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Source Documents */}
+                {(activeSession.question?.data?.knowledgeDataset?.sourceDocuments || []).length > 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)' }}>
+                      Reference Documents
+                    </div>
+                    {activeSession.question?.data?.knowledgeDataset?.sourceDocuments?.map((doc: any, i: number) => (
+                      <div key={i} style={{ padding: '10px', background: 'var(--bg-secondary)', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+                        <div style={{ fontSize: '11px', fontWeight: 600, color: '#06b6d4', marginBottom: '4px' }}>
+                          📄 {doc.title}
+                        </div>
+                        <div style={{ fontSize: '11px', color: 'var(--text-muted)', lineHeight: '1.4' }}>
+                          {doc.content}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -1878,6 +2043,73 @@ export const InterviewPage: React.FC = () => {
                   <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0, lineHeight: '1.4' }}>
                     {crit.feedback}
                   </p>
+
+                  {/* Verbatim Evidence Quotes (IGRADE-UI001) */}
+                  {crit.evidenceQuotes && crit.evidenceQuotes.length > 0 && (
+                    <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px dashed var(--border-color)' }}>
+                      <div style={{ fontSize: '11px', fontWeight: 600, color: '#06b6d4', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span>💬</span>
+                        <span>Verbatim Evidence Quotes:</span>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        {crit.evidenceQuotes.map((eq: any, qIdx: number) => (
+                          <div
+                            key={qIdx}
+                            className="evidence-quote-badge"
+                            style={{
+                              padding: '6px 10px',
+                              background: 'rgba(6, 182, 212, 0.08)',
+                              borderLeft: '3px solid #06b6d4',
+                              borderRadius: '4px',
+                              fontSize: '11px',
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
+                              <span
+                                style={{
+                                  fontSize: '10px',
+                                  fontWeight: 700,
+                                  background: 'rgba(6, 182, 212, 0.2)',
+                                  color: '#06b6d4',
+                                  padding: '1px 5px',
+                                  borderRadius: '3px',
+                                }}
+                              >
+                                Turn {eq.turnNumber}
+                              </span>
+                              <span style={{ fontStyle: 'italic', color: 'var(--text-main)' }}>"{eq.quote}"</span>
+                            </div>
+                            {eq.assessment && (
+                              <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                                ↳ {eq.assessment}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Improvement Tip */}
+                  {crit.improvementTip && (
+                    <div
+                      style={{
+                        marginTop: '8px',
+                        padding: '6px 10px',
+                        background: 'rgba(245, 158, 11, 0.08)',
+                        borderRadius: '4px',
+                        border: '1px solid rgba(245, 158, 11, 0.25)',
+                        fontSize: '11px',
+                        color: '#f59e0b',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                      }}
+                    >
+                      <span>💡</span>
+                      <span><strong>Tip:</strong> {crit.improvementTip}</span>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -2035,6 +2267,317 @@ export const InterviewPage: React.FC = () => {
                 </div>
               ))}
             </div>
+          )}
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 5. LONGITUDINAL GROWTH & SKILL PROGRESSION (Phase 15.4)                   */}
+      {/* ========================================================================= */}
+      {activeView === 'GROWTH' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {/* Growth Header Banner */}
+          <div
+            style={{
+              padding: '22px 26px',
+              background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(6, 182, 212, 0.12))',
+              borderRadius: '8px',
+              border: '1px solid rgba(16, 185, 129, 0.3)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <div>
+              <span style={{ fontSize: '11px', color: '#10b981', fontWeight: 700, letterSpacing: '0.5px' }}>
+                LONGITUDINAL PERFORMANCE & GROWTH ENGINE
+              </span>
+              <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-main)', margin: '4px 0' }}>
+                Multi-Attempt Oral Skill Trajectory
+              </h2>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0 }}>
+                Comprehensive cross-session analytics tracking fluency, vocabulary diversity, response latency, and rubric progression over time.
+              </p>
+            </div>
+
+            <button
+              onClick={fetchLongitudinalProgress}
+              disabled={loadingProgress}
+              style={{
+                padding: '8px 14px',
+                borderRadius: '6px',
+                border: '1px solid var(--border-color)',
+                background: 'var(--bg-secondary)',
+                color: 'var(--text-main)',
+                fontSize: '12px',
+                fontWeight: 600,
+                cursor: loadingProgress ? 'wait' : 'pointer',
+              }}
+            >
+              {loadingProgress ? 'Refreshing...' : '🔄 Refresh Trends'}
+            </button>
+          </div>
+
+          {loadingProgress ? (
+            <div style={{ textAlign: 'center', padding: '50px', background: 'var(--bg-secondary)', borderRadius: '8px' }}>
+              <div style={{ fontSize: '24px', marginBottom: '8px' }}>⏳</div>
+              <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: 0 }}>Aggregating cross-session longitudinal attempt data...</p>
+            </div>
+          ) : !longitudinalProgress || longitudinalProgress.totalSessions === 0 ? (
+            <div style={{ textAlign: 'center', padding: '50px', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px dashed var(--border-color)' }}>
+              <div style={{ fontSize: '32px', marginBottom: '8px' }}>📈</div>
+              <h3 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-main)', margin: '0 0 6px 0' }}>
+                No Evaluated Sessions Yet
+              </h3>
+              <p style={{ fontSize: '13px', color: 'var(--text-muted)', maxWidth: '460px', margin: '0 auto 16px auto', lineHeight: '1.5' }}>
+                Complete an oral interview assessment from the catalog to activate personalized longitudinal tracking, trend detection, and multi-criteria skill curves.
+              </p>
+              <button
+                onClick={() => setActiveView('CATALOG')}
+                style={{
+                  padding: '8px 18px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #06b6d4, #3b82f6)',
+                  color: '#fff',
+                  fontWeight: 600,
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                }}
+              >
+                Go to Interview Catalog →
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* 4 Key Performance Indicator Tiles */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
+                {/* 1. Trajectory Card */}
+                <div style={{ padding: '16px', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '6px' }}>
+                    MATHEMATICAL TRAJECTORY
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span
+                      id="growth-trend-badge"
+                      style={{
+                        fontSize: '14px',
+                        fontWeight: 700,
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        background:
+                          longitudinalProgress.trend === 'IMPROVING'
+                            ? 'rgba(16, 185, 129, 0.15)'
+                            : longitudinalProgress.trend === 'DEGRADING'
+                            ? 'rgba(239, 68, 68, 0.15)'
+                            : 'rgba(59, 130, 246, 0.15)',
+                        color:
+                          longitudinalProgress.trend === 'IMPROVING'
+                            ? '#10b981'
+                            : longitudinalProgress.trend === 'DEGRADING'
+                            ? '#ef4444'
+                            : '#3b82f6',
+                        border: `1px solid ${
+                          longitudinalProgress.trend === 'IMPROVING'
+                            ? '#10b981'
+                            : longitudinalProgress.trend === 'DEGRADING'
+                            ? '#ef4444'
+                            : '#3b82f6'
+                        }`,
+                      }}
+                    >
+                      {longitudinalProgress.trend === 'IMPROVING'
+                        ? '↗️ IMPROVING'
+                        : longitudinalProgress.trend === 'DEGRADING'
+                        ? '↘️ ATTENTION'
+                        : '➡️ PLATEAU'}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '8px' }}>
+                    Delta: {longitudinalProgress.trendDelta > 0 ? `+${longitudinalProgress.trendDelta}` : longitudinalProgress.trendDelta} net score change
+                  </div>
+                </div>
+
+                {/* 2. Average Score Card */}
+                <div style={{ padding: '16px', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '6px' }}>
+                    CUMULATIVE AVERAGE SCORE
+                  </div>
+                  <div style={{ fontSize: '24px', fontWeight: 800, color: '#06b6d4' }}>
+                    {longitudinalProgress.averageScore} <span style={{ fontSize: '14px', color: 'var(--text-muted)' }}>/ 9.0 (Band)</span>
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                    {longitudinalProgress.averagePercentage}% normalized average
+                  </div>
+                </div>
+
+                {/* 3. Completed Sessions Card */}
+                <div style={{ padding: '16px', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '6px' }}>
+                    EVALUATED ATTEMPTS
+                  </div>
+                  <div style={{ fontSize: '24px', fontWeight: 800, color: '#10b981' }}>
+                    {longitudinalProgress.totalSessions} <span style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Sessions</span>
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                    With evidence-grounded rubric evaluations
+                  </div>
+                </div>
+
+                {/* 4. Response Latency Card */}
+                <div style={{ padding: '16px', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '6px' }}>
+                    AVG RESPONSE LATENCY
+                  </div>
+                  <div style={{ fontSize: '24px', fontWeight: 800, color: '#f59e0b' }}>
+                    {longitudinalProgress.averageLatencySeconds || 4.2}s
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                    Average candidate speaking articulation time
+                  </div>
+                </div>
+              </div>
+
+              {/* Longitudinal Rubric Criteria Averages */}
+              {Object.keys(longitudinalProgress.criteriaAverages || {}).length > 0 && (
+                <div style={{ padding: '20px', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                  <h3 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-main)', margin: '0 0 16px 0' }}>
+                    📊 Multi-Session Criteria Performance Breakdown
+                  </h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
+                    {Object.entries(longitudinalProgress.criteriaAverages).map(([critId, avgScore]: [string, any]) => (
+                      <div key={critId} style={{ padding: '12px', background: 'var(--bg-color)', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                          <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-main)' }}>
+                            {critId.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
+                          </span>
+                          <span style={{ fontSize: '13px', fontWeight: 700, color: '#10b981' }}>
+                            {typeof avgScore === 'number' ? avgScore.toFixed(1) : avgScore}
+                          </span>
+                        </div>
+                        <div style={{ width: '100%', height: '6px', background: 'var(--bg-secondary)', borderRadius: '3px', overflow: 'hidden' }}>
+                          <div
+                            style={{
+                              width: `${Math.min(100, Math.round(((Number(avgScore) || 0) / 9) * 100))}%`,
+                              height: '100%',
+                              background: '#10b981',
+                            }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Recurring Demonstrations & Growth Areas */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                {/* Strengths */}
+                <div style={{ padding: '16px', background: 'rgba(16, 185, 129, 0.08)', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.25)' }}>
+                  <h4 style={{ fontSize: '13px', fontWeight: 700, color: '#10b981', margin: '0 0 10px 0', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    🌟 Recurring Candidate Strengths
+                  </h4>
+                  {longitudinalProgress.recurringStrengths.length === 0 ? (
+                    <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0 }}>Accumulating pattern data across future attempts...</p>
+                  ) : (
+                    <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '12px', color: 'var(--text-main)', lineHeight: '1.6' }}>
+                      {longitudinalProgress.recurringStrengths.map((str, idx) => (
+                        <li key={idx}>{str}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
+                {/* Weaknesses */}
+                <div style={{ padding: '16px', background: 'rgba(245, 158, 11, 0.08)', borderRadius: '8px', border: '1px solid rgba(245, 158, 11, 0.25)' }}>
+                  <h4 style={{ fontSize: '13px', fontWeight: 700, color: '#f59e0b', margin: '0 0 10px 0', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    🎯 Recurring Focus Areas & Coaching Targets
+                  </h4>
+                  {longitudinalProgress.recurringWeaknesses.length === 0 ? (
+                    <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0 }}>No persistent weakness clusters identified.</p>
+                  ) : (
+                    <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '12px', color: 'var(--text-main)', lineHeight: '1.6' }}>
+                      {longitudinalProgress.recurringWeaknesses.map((wk, idx) => (
+                        <li key={idx}>{wk}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+
+              {/* Historical Timeseries Attempts Timeline */}
+              {longitudinalProgress.timeseries.length > 0 && (
+                <div style={{ padding: '20px', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                  <h3 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-main)', margin: '0 0 16px 0' }}>
+                    📅 Attempt Score History ({longitudinalProgress.timeseries.length} Evaluated)
+                  </h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {longitudinalProgress.timeseries.map((item, idx) => (
+                      <div
+                        key={item.sessionId || idx}
+                        style={{
+                          padding: '12px 16px',
+                          background: 'var(--bg-color)',
+                          borderRadius: '6px',
+                          border: '1px solid var(--border-color)',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                        }}
+                      >
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                              #{longitudinalProgress.timeseries.length - idx} • {new Date(item.date).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-main)' }}>
+                            {item.questionTitle || item.questionId}
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontSize: '16px', fontWeight: 700, color: '#06b6d4' }}>
+                              Band {item.score} <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>/ {item.maxScore}</span>
+                            </div>
+                            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                              {item.percentage}%
+                            </div>
+                          </div>
+
+                          <button
+                            onClick={async () => {
+                              try {
+                                const res = await fetch(`${API_BASE}/interview/sessions/${item.sessionId}`, {
+                                  headers: getAuthHeaders(token),
+                                });
+                                const d = await res.json();
+                                if (d.success) {
+                                  setActiveSession(d.data);
+                                  setActiveView('EVALUATION');
+                                }
+                              } catch {}
+                            }}
+                            style={{
+                              padding: '6px 12px',
+                              borderRadius: '4px',
+                              border: '1px solid var(--border-color)',
+                              background: 'var(--bg-secondary)',
+                              color: 'var(--text-main)',
+                              fontSize: '12px',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Scorecard →
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       )}

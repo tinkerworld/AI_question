@@ -3953,7 +3953,7 @@ export async function runSeed() {
       baseUrl: 'https://api.groq.com/openai/v1',
       priority: 1,
       scope: 'interview_conversation',
-      isActive: false,
+      isActive: true,
     },
     {
       id: 'prov_ivconv_cloud_nvidia',

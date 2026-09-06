@@ -20,6 +20,8 @@ export interface RouteAIRequest {
     | 'question_authoring'
     | 'interview'
     | string;
+  systemPrompt?: string;
+  tenantId?: string;
   prompt?: string;
   variables?: Record<string, any>;
   userId?: string;
@@ -38,7 +40,9 @@ export interface RouteAIConversationRequest {
     | string;
   systemPrompt?: string;
   messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>;
+  sessionId?: string;
   contextData?: {
+    sessionId?: string;
     scenario?: string;
     questionContent?: string;
     rubric?: any[];
@@ -48,9 +52,22 @@ export interface RouteAIConversationRequest {
     followUpIndex?: number;
     isMainQuestion?: boolean;
     preset?: string;
+    selectedTemplate?: 'FOLLOW_UP_PROMPT' | 'NEW_TOPIC_PROMPT' | 'CLARIFY_PROMPT' | string;
+    templateReason?: string;
+    targetFacet?: { name: string; focus: string } | string;
+    wordCount?: number;
+    isLiveTurn?: boolean;
+    isPrep?: boolean;
+    isRephrase?: boolean;
+    baseFollowUp?: string;
+    candidateAnswer?: string;
+    answerPattern?: string;
+    facets?: any[];
     [key: string]: any;
   };
   userId?: string;
+  tenantId?: string;
+  isLiveTurn?: boolean;
   preferredProviderId?: string;
   temperature?: number;
   maxTokens?: number;
@@ -68,6 +85,12 @@ export interface RouteAIResponse {
   latencyMs: number;
   status: AIGatewayStatus;
 }
+
+/**
+ * Named constants for AI provider timeouts to split prep-phase / standard calls from live-turn calls.
+ */
+export const LOCAL_PROVIDER_DEFAULT_TIMEOUT_MS = 25000; // 25s for prep-phase calls and other scopes
+export const LOCAL_PROVIDER_LIVE_TURN_TIMEOUT_MS = 8000; // 8s for interview_conversation live-turn calls
 
 /**
  * Normalizes scope strings to the 5 canonical scopes, preserving backward compatibility with legacy aliases.
@@ -94,6 +117,9 @@ export function normalizeScope(scope?: string, featureKey?: string): string {
 }
 
 export class AIGatewayService {
+  static readonly LOCAL_PROVIDER_DEFAULT_TIMEOUT_MS = LOCAL_PROVIDER_DEFAULT_TIMEOUT_MS;
+  static readonly LOCAL_PROVIDER_LIVE_TURN_TIMEOUT_MS = LOCAL_PROVIDER_LIVE_TURN_TIMEOUT_MS;
+
   private static circuitBreakerResetMs = 5 * 60 * 1000; // 5 minutes
 
   /**
@@ -115,10 +141,10 @@ export class AIGatewayService {
     );
 
     const template: AIPromptTemplateDTO | undefined = templateRes.rows[0] as any;
-    let systemPrompt = template?.systemPrompt || 'You are an AI assistant specialized in academic assessment item authoring.';
+    let systemPrompt = req.systemPrompt || template?.systemPrompt || 'You are an AI assistant specialized in academic assessment item authoring.';
     let userPrompt = req.prompt || '';
 
-    if (template && req.variables) {
+    if (!req.systemPrompt && template && req.variables) {
       let interpolated = template.userPromptTemplate;
       for (const [k, v] of Object.entries(req.variables)) {
         interpolated = interpolated.replace(new RegExp(`{${k}}`, 'g'), String(v ?? ''));
@@ -187,14 +213,22 @@ export class AIGatewayService {
 
       try {
         selectedProvider = provider;
-        const callResult = await this.executeProviderCall(provider, systemPrompt, userPrompt);
+        const callResult = await this.executeProviderCall(provider, systemPrompt, userPrompt, req.maxTokens);
         rawResult = callResult.content;
         promptTokens = callResult.promptTokens;
         completionTokens = callResult.completionTokens;
 
+        // Clean markdown code block fences if present
+        let cleanJsonStr = (rawResult || '').trim();
+        if (cleanJsonStr.startsWith('```json')) {
+          cleanJsonStr = cleanJsonStr.replace(/^```json\s*/i, '').replace(/```\s*$/, '').trim();
+        } else if (cleanJsonStr.startsWith('```')) {
+          cleanJsonStr = cleanJsonStr.replace(/^```\s*/, '').replace(/```\s*$/, '').trim();
+        }
+
         // Output validation against expected schema
         try {
-          parsedJson = typeof rawResult === 'string' ? JSON.parse(rawResult) : rawResult;
+          parsedJson = typeof cleanJsonStr === 'string' ? JSON.parse(cleanJsonStr) : cleanJsonStr;
           if (targetScope === 'interview_grading' || targetScope === 'interview' || req.featureKey === 'interview_evaluation') {
             if (typeof parsedJson.score !== 'number' && typeof parsedJson.finalScore !== 'number') {
               throw new Error('SCHEMA_VALIDATION_FAILED: Missing required interview evaluation fields');
@@ -202,6 +236,10 @@ export class AIGatewayService {
           } else if (targetScope === 'writing_analysis' || req.featureKey === 'writing_evaluation') {
             if (typeof parsedJson.score !== 'number' && typeof parsedJson.finalScore !== 'number' && !parsedJson.feedback) {
               throw new Error('SCHEMA_VALIDATION_FAILED: Missing required writing analysis fields');
+            }
+          } else if (req.featureKey === 'interview_doc_generate' || parsedJson.knowledgeDataset || parsedJson.scenarioContext) {
+            if (!parsedJson.knowledgeDataset || !parsedJson.scenarioContext) {
+              throw new Error('SCHEMA_VALIDATION_FAILED: Missing required interview generation fields');
             }
           } else {
             if (!parsedJson.content || !parsedJson.type || !parsedJson.data) {
@@ -213,9 +251,16 @@ export class AIGatewayService {
           const retryCall = await this.executeProviderCall(
             provider,
             systemPrompt + ' Output MUST be valid JSON only matching expected schema.',
-            userPrompt
+            userPrompt,
+            req.maxTokens
           );
-          parsedJson = typeof retryCall.content === 'string' ? JSON.parse(retryCall.content) : retryCall.content;
+          let retryClean = (retryCall.content || '').trim();
+          if (retryClean.startsWith('```json')) {
+            retryClean = retryClean.replace(/^```json\s*/i, '').replace(/```\s*$/, '').trim();
+          } else if (retryClean.startsWith('```')) {
+            retryClean = retryClean.replace(/^```\s*/, '').replace(/```\s*$/, '').trim();
+          }
+          parsedJson = typeof retryClean === 'string' ? JSON.parse(retryClean) : retryClean;
           rawResult = retryCall.content;
           promptTokens += retryCall.promptTokens;
           completionTokens += retryCall.completionTokens;
@@ -305,9 +350,27 @@ export class AIGatewayService {
   private static async executeProviderCall(
     provider: AIProviderDTO,
     systemPrompt: string,
-    userPrompt: string
+    userPrompt: string,
+    maxTokens?: number
   ): Promise<{ content: string; promptTokens: number; completionTokens: number }> {
     if (provider.type === 'MOCK') {
+      const isDocGenerate =
+        systemPrompt.toLowerCase().includes('technical interview question from reference material') ||
+        userPrompt.includes('Source Document Material');
+
+      if (isDocGenerate) {
+        const roleMatch = userPrompt.match(/Role \/ Scenario Target:\s*([^\n]+)/i);
+        const generated = AIMockGenerator.generateInterviewFromDocument({
+          documentText: userPrompt,
+          roleContext: roleMatch ? roleMatch[1].trim() : undefined,
+        });
+        return {
+          content: JSON.stringify(generated),
+          promptTokens: Math.min(4096, 250 + Math.floor(userPrompt.length / 4)),
+          completionTokens: Math.min(4096, 350 + Math.floor(JSON.stringify(generated).length / 4)),
+        };
+      }
+
       if (
         provider.scope === 'interview_grading' ||
         provider.scope === 'interview' ||
@@ -337,7 +400,7 @@ export class AIGatewayService {
         };
         return {
           content: JSON.stringify(interviewMockOutput),
-          promptTokens: 110 + Math.floor(userPrompt.length / 4),
+          promptTokens: Math.min(4096, 110 + Math.floor(userPrompt.length / 4)),
           completionTokens: 90,
         };
       }
@@ -367,7 +430,7 @@ export class AIGatewayService {
         };
         return {
           content: JSON.stringify(writingMockOutput),
-          promptTokens: 120 + Math.floor(userPrompt.length / 4),
+          promptTokens: Math.min(4096, 120 + Math.floor(userPrompt.length / 4)),
           completionTokens: 95,
         };
       }
@@ -407,15 +470,15 @@ export class AIGatewayService {
 
       return {
         content: JSON.stringify(generatedItem),
-        promptTokens: 120 + Math.floor(userPrompt.length / 4),
-        completionTokens: 85 + Math.floor(generatedItem.content.length / 4),
+        promptTokens: Math.min(4096, 120 + Math.floor(userPrompt.length / 4)),
+        completionTokens: Math.min(4096, 85 + Math.floor(generatedItem.content.length / 4)),
       };
     }
 
     if (provider.type === 'LOCAL') {
       try {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 120000);
+        const timeout = setTimeout(() => controller.abort(), LOCAL_PROVIDER_DEFAULT_TIMEOUT_MS);
         let baseUrl = provider.baseUrl?.trim() || 'http://localhost:11434';
         baseUrl = baseUrl.replace(/\/+$/, '');
 
@@ -432,7 +495,7 @@ export class AIGatewayService {
             ],
             stream: false,
             options: {
-              num_predict: 512,
+              num_predict: maxTokens || 4096,
               temperature: 0.7,
             },
             format: 'json',
@@ -445,6 +508,7 @@ export class AIGatewayService {
               { role: 'user', content: userPrompt },
             ],
             temperature: 0.7,
+            max_tokens: maxTokens || 4096,
             response_format: { type: 'json_object' },
           };
         }
@@ -480,25 +544,12 @@ export class AIGatewayService {
 
       try {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 30000);
+        const timeout = setTimeout(() => controller.abort(), 120000);
         const headers: Record<string, string> = {
           'Content-Type': 'application/json',
         };
         if (decryptedApiKey && decryptedApiKey.trim() !== '') {
           headers['Authorization'] = `Bearer ${decryptedApiKey.trim()}`;
-        }
-
-        if (decryptedApiKey.startsWith('nvapi-test') || decryptedApiKey.includes('demo') || decryptedApiKey.includes('mock') || decryptedApiKey === 'nvapi-examos-live-nemotron-key') {
-          return {
-            content: JSON.stringify({
-              question: 'Kinematics: Calculate velocity after 5 seconds of constant acceleration 2 m/s^2 from rest.',
-              options: ['5 m/s', '10 m/s', '15 m/s', '20 m/s'],
-              correctAnswer: '10 m/s',
-              explanation: 'v = u + at = 0 + (2)(5) = 10 m/s',
-            }),
-            promptTokens: 120,
-            completionTokens: 80,
-          };
         }
 
         const res = await fetch(endpoint, {
@@ -512,6 +563,7 @@ export class AIGatewayService {
             ],
             response_format: { type: 'json_object' },
             temperature: 0.7,
+            max_tokens: maxTokens || 4096,
           }),
           signal: controller.signal,
         });
@@ -532,6 +584,27 @@ export class AIGatewayService {
     }
 
     throw new Error(`UNSUPPORTED_PROVIDER_TYPE: ${provider.type}`);
+  }
+
+  /**
+   * Reconstructs authoritative multi-turn conversation messages from raw DB turns.
+   * Requirement 4: Mid-interview failover reconstruction.
+   */
+  static reconstructMessagesFromTurns(
+    systemPrompt: string | undefined,
+    dbTurns: Array<{ speaker: string; message: string; turnNumber?: number }>
+  ): Array<{ role: 'system' | 'user' | 'assistant'; content: string }> {
+    const reconstructed: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [];
+    if (systemPrompt) {
+      reconstructed.push({ role: 'system', content: systemPrompt });
+    }
+    for (const t of dbTurns) {
+      reconstructed.push({
+        role: t.speaker === 'AI' ? 'assistant' : 'user',
+        content: t.message,
+      });
+    }
+    return reconstructed;
   }
 
   /**
@@ -575,6 +648,7 @@ export class AIGatewayService {
     let completionTokens = 0;
     let latencyMs = 0;
     let lastError: Error | null = null;
+    let attemptIndex = 0;
 
     for (const provider of providers) {
       if (provider.circuitBroken) {
@@ -590,9 +664,38 @@ export class AIGatewayService {
         provider.failureCount = 0;
       }
 
+      let currentReq = req;
+      const targetSessionId = req.sessionId || req.contextData?.sessionId;
+      if (attemptIndex > 0 && targetSessionId) {
+        // Requirement 4: Mid-interview provider failover prompt context reconstruction.
+        // Rebuild full turn history from authoritative DB records to prevent context loss or window reset on failover.
+        try {
+          const dbTurns = await db.query(
+            `SELECT "speaker", "message", "turnNumber"
+             FROM "interview_turns"
+             WHERE "sessionId" = $1
+             ORDER BY "turnNumber" ASC, "createdAt" ASC`,
+            [targetSessionId]
+          );
+          if (dbTurns.rows.length > 0) {
+            const systemMsg = req.messages.find((m) => m.role === 'system');
+            const reconstructedMessages = AIGatewayService.reconstructMessagesFromTurns(
+              systemMsg?.content,
+              dbTurns.rows as any[]
+            );
+            currentReq = {
+              ...req,
+              messages: reconstructedMessages,
+            };
+          }
+        } catch {
+          // Keep original req if DB query fails
+        }
+      }
+
       try {
         const callStart = Date.now();
-        const result = await this.executeProviderConversationCall(provider, req);
+        const result = await this.executeProviderConversationCall(provider, currentReq);
         latencyMs = Date.now() - callStart;
 
         rawResult = result.content;
@@ -618,6 +721,7 @@ export class AIGatewayService {
 
         break; // Success!
       } catch (err: any) {
+        attemptIndex++;
         lastError = err;
         const newFailures = (provider.failureCount || 0) + 1;
         const shouldBreak = newFailures >= 3;
@@ -691,6 +795,13 @@ export class AIGatewayService {
     const scenario = req.contextData?.scenario || '';
     const rubric = req.contextData?.rubric || [];
 
+    const isLiveTurn = Boolean(
+      req.isLiveTurn ??
+      req.contextData?.isLiveTurn ??
+      (req.featureKey === 'interview_conversation' && !req.contextData?.isPrep)
+    );
+    const localTimeoutMs = isLiveTurn ? LOCAL_PROVIDER_LIVE_TURN_TIMEOUT_MS : LOCAL_PROVIDER_DEFAULT_TIMEOUT_MS;
+
     if (provider.type === 'MOCK') {
       if (featureKey === 'interview_evaluation') {
         // Build realistic dynamic rubric scores
@@ -751,15 +862,77 @@ export class AIGatewayService {
       }
 
       // featureKey === 'interview_conversation'
-      // Dynamically extract core concepts and terms from the candidate's actual input
-      const userWords = lastUserMessage.replace(/[^\w\s]/g, '').split(/\s+/).filter((w) => w.length > 4);
-      const salientKeyword = userWords.length > 0 ? `regarding "${userWords[Math.floor(Math.random() * userWords.length)]}"` : 'on that specific point';
+      // 1. Prep-phase bank generation for mock
+      if (req.contextData?.isPrep) {
+        const facets = req.contextData?.facets || [];
+        const prepBank: Record<string, Record<string, string>> = {};
+        for (const facet of facets) {
+          prepBank[String(facet.index)] = {
+            STRONG_ANSWER: `Candidate, building on that comprehensive foundation in ${facet.name}, what specific high-concurrency failure modes and recovery trade-offs have you designed for?`,
+            VAGUE_ANSWER: `You mentioned the broad concept in ${facet.name}. Could you walk us through the concrete step-by-step operational mechanisms and protocols you would apply?`,
+            OFF_TOPIC_ANSWER: `While that point has merit, our current focus is ${facet.name}. How does your solution specifically address ${facet.focus.toLowerCase()}?`,
+            DONT_KNOW_ANSWER: `To simplify this aspect of ${facet.name}, consider a scenario where resources are constrained: what fundamental principle would guide your initial decision?`,
+            OPENING: `Let us turn to ${facet.name}: ${facet.focus} What is your core approach?`,
+          };
+        }
+        return {
+          content: JSON.stringify(prepBank),
+          promptTokens: 200,
+          completionTokens: 300,
+        };
+      }
 
+      // 2. Live turn rephrase call for mock
+      if (req.contextData?.isRephrase && req.contextData?.baseFollowUp) {
+        const base = req.contextData.baseFollowUp;
+        const targetFacet = req.contextData?.targetFacet;
+        const facetName = typeof targetFacet === 'string' ? targetFacet : (targetFacet?.name || '');
+        const coveredAreas = req.contextData?.coveredFocusAreas || [];
+        const focusContext = coveredAreas.length > 0 ? `regarding ${coveredAreas[0]}` : (facetName ? `regarding ${facetName}` : '');
+        const rephrased = focusContext
+          ? `Building on your point ${focusContext}, ${base.charAt(0).toLowerCase() + base.slice(1)}`
+          : base;
+        return {
+          content: rephrased,
+          promptTokens: 90,
+          completionTokens: 45,
+        };
+      }
+
+      const selectedTemplate = req.contextData?.selectedTemplate;
+      const targetFacet = req.contextData?.targetFacet;
+      const targetFacetName = typeof targetFacet === 'string' ? targetFacet : (targetFacet?.name || `Topic ${turnNumber}`);
+      const coveredAreas = req.contextData?.coveredFocusAreas || [];
+      const focusContext = coveredAreas.length > 0 ? ` specifically regarding ${coveredAreas[0]}` : '';
+
+      if (selectedTemplate === 'CLARIFY_PROMPT') {
+        const clarifyProbes = [
+          `Your response was quite brief. Could you elaborate specifically on your reasoning and explain the underlying operational mechanism in detail?`,
+          `Could you unpack that statement further? Please explain how you would practically implement that approach in production.`,
+          `That touches on the general concept, but lacks technical depth. What specific architecture and failure safeguards would you establish?`,
+        ];
+        return {
+          content: clarifyProbes[(turnNumber - 1) % clarifyProbes.length],
+          promptTokens: 120 + messages.length * 30,
+          completionTokens: 35,
+        };
+      }
+
+      if (selectedTemplate === 'NEW_TOPIC_PROMPT') {
+        return {
+          content: `Thank you for addressing those aspects. Moving forward to our next key area: ${targetFacetName}. How do you approach this in your system architecture?`,
+          promptTokens: 140 + messages.length * 30,
+          completionTokens: 45,
+        };
+      }
+
+      // Requirement 4: FOLLOW_UP_PROMPT without random keyword-splice.
+      // Produces facet-aware and focus-area-aware coherent follow-ups.
       const dynamicProbes = [
-        `You raised a critical point ${salientKeyword}. To examine this more closely: (1) What specific operational mechanisms would you use to prevent cascading failures under heavy load? and (2) How would you address the immediate trade-offs if resource constraints reduce your available budget by 40%?`,
-        `That is a constructive perspective ${salientKeyword}. Let us explore two key dimensions: (1) What quantitative metrics would you track in the first 90 days to verify that this solution is working? and (2) How would you resolve pushback from key stakeholders who favor an alternative approach?`,
-        `Your emphasis ${salientKeyword} touches on an essential trade-off. To probe deeper: (1) What edge cases or security vulnerabilities could emerge under peak concurrency? and (2) What rollback procedure would you enforce if unexpected anomalies are detected?`,
-        `Thank you for detailing that approach ${salientKeyword}. Building directly on your explanation: (1) How does this strategy maintain strict compliance with ethical and regulatory standards? and (2) What architectural compromises were made to achieve this throughput?`,
+        `Can you elaborate on how your approach handles edge cases in ${targetFacetName}${focusContext}?`,
+        `Regarding ${targetFacetName}, what specific trade-offs and operational safeguards would you prioritize when deploying this architecture${focusContext}?`,
+        `How does your design address failure recovery and data integrity within ${targetFacetName}${focusContext}?`,
+        `What concrete administrative and technical protocols would you enforce to validate ${targetFacetName}${focusContext}?`,
       ];
 
       const chosenFollowUp = turnNumber >= maxTurns
@@ -769,14 +942,14 @@ export class AIGatewayService {
       return {
         content: chosenFollowUp,
         promptTokens: 120 + messages.length * 30,
-        completionTokens: 65,
+        completionTokens: 55,
       };
     }
 
     if (provider.type === 'LOCAL') {
       try {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 120000); // 120s timeout for local model conversation inference
+        const timeout = setTimeout(() => controller.abort(), localTimeoutMs);
         let baseUrl = provider.baseUrl?.trim() || 'http://localhost:11434';
         baseUrl = baseUrl.replace(/\/+$/, '');
 
@@ -838,11 +1011,13 @@ export class AIGatewayService {
 
       try {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 30000);
+        const cloudTimeoutMs = isLiveTurn ? 6000 : 30000;
+        const timeout = setTimeout(() => controller.abort(), cloudTimeoutMs);
         const bodyPayload: any = {
           model: provider.modelId,
           messages,
-          temperature: req.temperature || 0.7,
+          temperature: req.temperature ?? (featureKey === 'interview_evaluation' ? 0.2 : 0.7),
+          max_tokens: req.maxTokens || (featureKey === 'interview_evaluation' ? 1200 : 350),
         };
         if (featureKey === 'interview_evaluation') {
           bodyPayload.response_format = { type: 'json_object' };
@@ -853,15 +1028,6 @@ export class AIGatewayService {
         };
         if (decryptedApiKey && decryptedApiKey.trim() !== '') {
           headers['Authorization'] = `Bearer ${decryptedApiKey.trim()}`;
-        }
-
-        if (decryptedApiKey.startsWith('nvapi-test') || decryptedApiKey.includes('demo') || decryptedApiKey.includes('mock') || decryptedApiKey === 'nvapi-examos-live-nemotron-key') {
-          const lastUser = [...messages].reverse().find((m) => m.role === 'user')?.content || 'your response';
-          return {
-            content: `[NVIDIA Nemotron 70B Examiner] Candidate, thank you for detailing your analysis. Regarding "${lastUser.slice(0, 50)}...", what specific operational safeguards and metrics would you establish to guarantee continuous reliability under high contention?`,
-            promptTokens: 185,
-            completionTokens: 65,
-          };
         }
 
         const res = await fetch(endpoint, {

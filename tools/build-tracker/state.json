@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-09-05T15:23:52.586Z",
+  "lastUpdated": "2026-09-05T20:26:54.658Z",
   "activePhase": 7,
   "phases": [
     {
@@ -1223,7 +1223,7 @@
           "phase": 15,
           "title": "INTERVIEW-PATCH-01 — Knowledge Dataset & Behavioral Prompt Decoupling (docs/v2/patches/interview-system.md)",
           "source": "plan",
-          "state": "pending",
+          "state": "done",
           "addedAt": "2026-08-31T00:00:00.000Z"
         },
         {
@@ -1231,7 +1231,7 @@
           "phase": 15,
           "title": "INTERVIEW-PATCH-02 — Evidence-Grounded Rubric Grading & Longitudinal Growth Tracking (docs/v2/patches/interview-grading-analysis.md)",
           "source": "plan",
-          "state": "pending",
+          "state": "done",
           "addedAt": "2026-08-31T00:00:00.000Z"
         },
         {

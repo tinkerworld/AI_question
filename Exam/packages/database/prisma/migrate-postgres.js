@@ -889,6 +889,8 @@ async function migrate() {
       "mainQuestionIndex" INT NOT NULL DEFAULT 1,
       "followUpCountForCurrentMain" INT NOT NULL DEFAULT 0,
       "totalMainQuestions" INT NOT NULL DEFAULT 5,
+      "lastSelectedTemplate" TEXT,
+      "debugInfo" JSONB DEFAULT '{}'::jsonb,
       "startedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       "completedAt" TIMESTAMP,
       "finalScore" DOUBLE PRECISION,
@@ -918,6 +920,7 @@ async function migrate() {
       "modelUsed" TEXT,
       "providerType" TEXT,
       "isFallback" BOOLEAN NOT NULL DEFAULT false,
+      "selectedTemplate" TEXT,
       "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
 

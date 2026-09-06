@@ -6,8 +6,8 @@ package-lock.json
 # Build & Database Artifacts
 __pycache__/
 *.pyc
-postgres-data
-postgres-data/
+postgres-data*
+postgres-data*/
 test-db
 test-output.txt
 

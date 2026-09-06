@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from '../context/I18nContext';
+import { useAuth } from '../context/AuthContext';
 import { EntityDiffViewer } from '../components/EntityDiffViewer';
 import { AIGeneratorModal } from '../components/ai/AIGeneratorModal';
 import { AIQuestionModifierModal } from '../components/ai/AIQuestionModifierModal';
 import { AIUsageModal } from '../components/ai/AIUsageModal';
 import { API_BASE } from '../config/api';
+import { getAuthHeaders } from '../utils/api';
 
 interface Question {
   id: string;
@@ -94,6 +96,8 @@ const extractApiErrorMessage = (data: any, fallback: string = 'Operation failed'
 
 export const QuestionBankPage: React.FC = () => {
   const { t } = useTranslation();
+  const { token: authToken, logout } = useAuth();
+  const token = authToken || (typeof window !== 'undefined' ? localStorage.getItem('token') : '') || '';
   const [questions, setQuestions] = useState<Question[]>([]);
   const [analytics, setAnalytics] = useState<AnalyticsSummary | null>(null);
   const [availableTags, setAvailableTags] = useState<Tag[]>([]);
@@ -183,6 +187,52 @@ export const QuestionBankPage: React.FC = () => {
     { id: 'critical_thinking', name: 'Analytical Depth & Foresight', description: 'Multi-dimensional policy view', maxScore: 25 },
   ]);
 
+  // Phase 15.3: Decoupled Knowledge Dataset & Behavioral Prompt States
+  const [interviewKnowledgeSummary, setInterviewKnowledgeSummary] = useState<string>('');
+  const [interviewFacts, setInterviewFacts] = useState<string[]>([]);
+  const [newFactInput, setNewFactInput] = useState<string>('');
+  const [interviewSourceDocuments, setInterviewSourceDocuments] = useState<Array<{ title: string; content: string }>>([]);
+  const [newDocTitle, setNewDocTitle] = useState<string>('');
+  const [newDocContent, setNewDocContent] = useState<string>('');
+
+  const [interviewPersona, setInterviewPersona] = useState<string>('');
+  const [interviewTone, setInterviewTone] = useState<'FORMAL' | 'SOCRATIC' | 'CHALLENGING' | 'SUPPORTIVE'>('FORMAL');
+  const [interviewDifficultyLevel, setInterviewDifficultyLevel] = useState<'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'EXPERT'>('INTERMEDIATE');
+  const [interviewFocusAreas, setInterviewFocusAreas] = useState<string[]>([]);
+  const [newFocusAreaInput, setNewFocusAreaInput] = useState<string>('');
+  const [interviewAvoidList, setInterviewAvoidList] = useState<string[]>([]);
+  const [newAvoidTopicInput, setNewAvoidTopicInput] = useState<string>('');
+  const [interviewAggressiveness, setInterviewAggressiveness] = useState<'LOW' | 'MODERATE' | 'HIGH'>('MODERATE');
+
+  // Authoring Workbench Tab State
+  const [interviewActiveTab, setInterviewActiveTab] = useState<'SETTINGS' | 'KNOWLEDGE' | 'BEHAVIOR' | 'SIMULATE'>('SETTINGS');
+
+  // Simulation Workbench States
+  const [simulationCandidateMessage, setSimulationCandidateMessage] = useState<string>('');
+  const [simulationResult, setSimulationResult] = useState<any | null>(null);
+  const [isSimulating, setIsSimulating] = useState<boolean>(false);
+  const [simulationError, setSimulationError] = useState<string | null>(null);
+
+  // Ground Truth Non-Negotiable Axioms
+  const [interviewAxioms, setInterviewAxioms] = useState<string[]>([]);
+  const [newAxiomInput, setNewAxiomInput] = useState<string>('');
+
+  // Boundary Simulator Generated Test Cases
+  const [interviewBoundaryTests, setInterviewBoundaryTests] = useState<Array<{
+    candidateMessage: string;
+    testType: string;
+    expectedBehavior: string;
+    failSignal: string;
+  }>>([]);
+  const [selectedBoundaryTest, setSelectedBoundaryTest] = useState<any | null>(null);
+
+  // Generate from Document Modal States
+  const [showDocUploadModal, setShowDocUploadModal] = useState<boolean>(false);
+  const [docUploadFile, setDocUploadFile] = useState<File | null>(null);
+  const [docRoleContext, setDocRoleContext] = useState<string>('');
+  const [isGeneratingDoc, setIsGeneratingDoc] = useState<boolean>(false);
+  const [docGenerateError, setDocGenerateError] = useState<string | null>(null);
+
   const loadInterviewPreset = (preset: string) => {
     setInterviewPreset(preset);
     if (preset === 'IELTS_SPEAKING') {
@@ -190,6 +240,14 @@ export const QuestionBankPage: React.FC = () => {
       setInterviewMaxTurns(4);
       setFormMarks(9);
       setInterviewInstructions('You are a certified IELTS Speaking Examiner. Evaluate lexical resource, grammatical range, fluency, and pronunciation.');
+      setInterviewPersona('Certified British Council / IDP IELTS Senior Examiner');
+      setInterviewTone('FORMAL');
+      setInterviewDifficultyLevel('ADVANCED');
+      setInterviewKnowledgeSummary('Academic IELTS oral testing framework covering personal life, societal views, and abstract hypothesis reasoning.');
+      setInterviewFacts(['Candidate must speak at length with coherent sequencing', 'Avoid one-word answers or excessive pauses']);
+      setInterviewFocusAreas(['Fluency & Coherence', 'Lexical Resource', 'Grammatical Accuracy', 'Pronunciation']);
+      setInterviewAvoidList(['Premature answer revelation', 'Unprofessional casual slang']);
+      setInterviewAggressiveness('MODERATE');
       setInterviewRubric([
         { id: 'fluency', name: 'Fluency & Coherence', description: 'Speaks at length with ease, logical sequencing and smooth connectives', maxScore: 9 },
         { id: 'lexical', name: 'Lexical Resource', description: 'Uses wide range of academic and idiomatic vocabulary with precision', maxScore: 9 },
@@ -201,6 +259,14 @@ export const QuestionBankPage: React.FC = () => {
       setInterviewMaxTurns(4);
       setFormMarks(100);
       setInterviewInstructions('You are the Chairperson of the UPSC Interview Board. Probe for ethical balance, constitutional adherence, and administrative realism.');
+      setInterviewPersona('Chairperson of the UPSC Personality Test Board');
+      setInterviewTone('CHALLENGING');
+      setInterviewDifficultyLevel('EXPERT');
+      setInterviewKnowledgeSummary('Constitutional values, public interest administration, disaster relief ethics, and statutory governance rules.');
+      setInterviewFacts(['Constitutional Articles 14 to 21 protection', 'Civil servant code of conduct and political neutrality']);
+      setInterviewFocusAreas(['Ethical Balance', 'Constitutional Grounding', 'Crisis Decision Making']);
+      setInterviewAvoidList(['Partisan politics', 'Personal speculation outside administrative facts']);
+      setInterviewAggressiveness('HIGH');
       setInterviewRubric([
         { id: 'integrity', name: 'Ethical Integrity & Public Service', description: 'Constitutional compliance and impartiality', maxScore: 25 },
         { id: 'decision_making', name: 'Administrative Problem Solving', description: 'Practical stakeholder resolution and resource optimization', maxScore: 25 },
@@ -212,6 +278,14 @@ export const QuestionBankPage: React.FC = () => {
       setInterviewMaxTurns(5);
       setFormMarks(50);
       setInterviewInstructions('You are a Principal Software Architect. Conduct a rigorous technical system design interview.');
+      setInterviewPersona('Principal Infrastructure & Distributed Systems Architect');
+      setInterviewTone('SOCRATIC');
+      setInterviewDifficultyLevel('ADVANCED');
+      setInterviewKnowledgeSummary('Scalable microservices topology handling 100,000 RPS, multi-region database replication, Redis caching, and circuit breaking.');
+      setInterviewFacts(['Single primary database with 3 asynchronous read replicas', 'Redis volatile-lru eviction policy']);
+      setInterviewFocusAreas(['Scalability & Partitioning', 'CAP Theorem Trade-offs', 'Resilience & Circuit Breaking']);
+      setInterviewAvoidList(['Frontend styling', 'Cloud vendor pricing tiers']);
+      setInterviewAggressiveness('HIGH');
       setInterviewRubric([
         { id: 'architecture', name: 'Architectural Rigor & Scalability', description: 'Handling load, partitioning, and high availability', maxScore: 15 },
         { id: 'tradeoffs', name: 'Trade-off Evaluation', description: 'Weighing CAP theorem, latency vs throughput, consistency models', maxScore: 15 },
@@ -223,6 +297,14 @@ export const QuestionBankPage: React.FC = () => {
       setInterviewMaxTurns(4);
       setFormMarks(40);
       setInterviewInstructions('You are an Executive Hiring Manager. Conduct a behavioral STAR-method interview.');
+      setInterviewPersona('Head of People & Organizational Talent');
+      setInterviewTone('SUPPORTIVE');
+      setInterviewDifficultyLevel('INTERMEDIATE');
+      setInterviewKnowledgeSummary('Behavioral competency evaluation based on Situation, Task, Action, and Result (STAR) framework.');
+      setInterviewFacts(['Candidate responses must outline specific actions taken rather than generic team efforts']);
+      setInterviewFocusAreas(['Conflict Resolution', 'Ownership & Integrity', 'STAR Method Articulation']);
+      setInterviewAvoidList(['Discriminatory personal inquiries', 'Unstructured banter']);
+      setInterviewAggressiveness('MODERATE');
       setInterviewRubric([
         { id: 'leadership', name: 'Leadership & Conflict Resolution', description: 'Handling team disagreement and guiding outcomes', maxScore: 10 },
         { id: 'adaptability', name: 'Adaptability & Problem Solving', description: 'Navigating ambiguity and unexpected blockers', maxScore: 10 },
@@ -232,7 +314,175 @@ export const QuestionBankPage: React.FC = () => {
     }
   };
 
-  const token = localStorage.getItem('token') || '';
+  const handleSimulateTurn = async (customCandidateMsg?: string) => {
+    const msgToUse = typeof customCandidateMsg === 'string' ? customCandidateMsg : simulationCandidateMessage;
+    if (!msgToUse.trim()) return;
+    setSimulationCandidateMessage(msgToUse);
+    setIsSimulating(true);
+    setSimulationError(null);
+    setSimulationResult(null);
+    try {
+      const res = await fetch(`${API_BASE}/interview/simulate-turn`, {
+        method: 'POST',
+        headers: {
+          ...getAuthHeaders(token),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          knowledgeDataset: {
+            summary: interviewKnowledgeSummary.trim(),
+            facts: interviewFacts.filter((f) => f.trim().length > 0),
+            groundTruthAxioms: interviewAxioms.filter((a) => a.trim().length > 0),
+            sourceDocuments: interviewSourceDocuments.filter((d) => d.title.trim() && d.content.trim()),
+          },
+          behavioralPrompt: {
+            persona: interviewPersona.trim() || interviewInstructions.trim(),
+            tone: interviewTone,
+            difficultyLevel: interviewDifficultyLevel,
+            focusAreas: interviewFocusAreas.filter((f) => f.trim().length > 0),
+            avoidList: interviewAvoidList.filter((a) => a.trim().length > 0),
+            followUpAggressiveness: interviewAggressiveness,
+          },
+          candidateMessage: msgToUse.trim(),
+          conversationHistory: [],
+        }),
+      });
+      if (res.status === 401) {
+        setSimulationError('Session expired or unauthorized (401). Please re-login to ExamOS.');
+        return;
+      }
+      const data = await res.json();
+      if (data.success) {
+        setSimulationResult(data.data);
+      } else {
+        setSimulationError(data.message || 'Simulation turn failed');
+      }
+    } catch (err: any) {
+      setSimulationError(err.message || 'Network error executing simulation turn');
+    } finally {
+      setIsSimulating(false);
+    }
+  };
+
+  const handleGenerateFromDocument = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!docUploadFile) {
+      setDocGenerateError('Please select a reference document (PDF, TXT, or MD).');
+      return;
+    }
+    if (docUploadFile.size > 50 * 1024 * 1024) {
+      setDocGenerateError(`Selected file exceeds the maximum 50MB limit (${(docUploadFile.size / (1024 * 1024)).toFixed(1)}MB). Please upload a file up to 50MB.`);
+      return;
+    }
+
+    try {
+      setIsGeneratingDoc(true);
+      setDocGenerateError(null);
+
+      // Convert file to base64
+      const reader = new FileReader();
+      const base64Promise = new Promise<string>((resolve, reject) => {
+        reader.onload = () => {
+          const res = reader.result as string;
+          const base64 = res.includes('base64,') ? res.split('base64,')[1] : res;
+          resolve(base64);
+        };
+        reader.onerror = (err) => reject(err);
+      });
+      reader.readAsDataURL(docUploadFile);
+      const fileBase64 = await base64Promise;
+
+      const res = await fetch(`${API_BASE}/interview/generate-from-document`, {
+        method: 'POST',
+        headers: {
+          ...getAuthHeaders(token),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fileBase64,
+          fileName: docUploadFile.name,
+          mimeType: docUploadFile.type || (docUploadFile.name.endsWith('.pdf') ? 'application/pdf' : 'text/plain'),
+          roleContext: docRoleContext.trim() || undefined,
+        }),
+      });
+
+      if (res.status === 401) {
+        setDocGenerateError('Session expired or unauthorized (401). Please re-login to ExamOS.');
+        return;
+      }
+
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || !json.success) {
+        console.error('[GENERATE_FROM_DOC_ERROR]', res.status, json);
+        setDocGenerateError(extractApiErrorMessage(json, `Failed to generate interview fields (${res.status})`));
+        return;
+      }
+
+      const generated = json.data;
+
+      // Populate form fields across all three authoring tabs (never auto-publish)
+      if (generated.questionStem) {
+        setFormContent(generated.questionStem);
+      }
+      if (generated.scenarioContext) {
+        setInterviewScenario(generated.scenarioContext);
+      }
+      if (generated.openingPrompt) {
+        setInterviewOpeningQuestion(generated.openingPrompt);
+      }
+      if (generated.knowledgeDataset) {
+        if (generated.knowledgeDataset.summary) {
+          setInterviewKnowledgeSummary(generated.knowledgeDataset.summary);
+        }
+        if (Array.isArray(generated.knowledgeDataset.facts)) {
+          setInterviewFacts(generated.knowledgeDataset.facts);
+        }
+        if (Array.isArray(generated.knowledgeDataset.groundTruthAxioms)) {
+          setInterviewAxioms(generated.knowledgeDataset.groundTruthAxioms);
+        }
+        if (Array.isArray(generated.knowledgeDataset.sourceDocuments)) {
+          setInterviewSourceDocuments(generated.knowledgeDataset.sourceDocuments);
+        }
+      }
+      if (generated.behavioralPrompt) {
+        if (generated.behavioralPrompt.persona) {
+          setInterviewPersona(generated.behavioralPrompt.persona);
+        }
+        if (generated.behavioralPrompt.tone) {
+          setInterviewTone(generated.behavioralPrompt.tone);
+        }
+        if (generated.behavioralPrompt.difficultyLevel) {
+          setInterviewDifficultyLevel(generated.behavioralPrompt.difficultyLevel);
+        }
+        if (Array.isArray(generated.behavioralPrompt.focusAreas)) {
+          setInterviewFocusAreas(generated.behavioralPrompt.focusAreas);
+        }
+        if (Array.isArray(generated.behavioralPrompt.avoidList)) {
+          setInterviewAvoidList(generated.behavioralPrompt.avoidList);
+        }
+        if (generated.behavioralPrompt.followUpAggressiveness) {
+          setInterviewAggressiveness(generated.behavioralPrompt.followUpAggressiveness as any);
+        }
+      }
+      if (Array.isArray(generated.boundarySimulatorTests)) {
+        setInterviewBoundaryTests(generated.boundarySimulatorTests);
+        if (generated.boundarySimulatorTests.length > 0) {
+          setSelectedBoundaryTest(generated.boundarySimulatorTests[0]);
+          setSimulationCandidateMessage(generated.boundarySimulatorTests[0].candidateMessage);
+        }
+      }
+
+      setShowDocUploadModal(false);
+      setDocUploadFile(null);
+      setDocRoleContext('');
+      setActionSuccess('Interview fields populated from document! Review and edit each tab before saving.');
+      setInterviewActiveTab('KNOWLEDGE');
+    } catch (err: any) {
+      setDocGenerateError(err.message || 'Error generating interview fields from document');
+    } finally {
+      setIsGeneratingDoc(false);
+    }
+  };
 
   const fetchQuestions = async () => {
     try {
@@ -251,6 +501,10 @@ export const QuestionBankPage: React.FC = () => {
       const res = await fetch(`${API_BASE}/questions?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      if (res.status === 401) {
+        setError('Session expired or unauthorized (401). Please re-login to ExamOS.');
+        return;
+      }
       const data = await res.json();
       if (data.success) {
         setQuestions(data.data.items || []);
@@ -395,12 +649,39 @@ export const QuestionBankPage: React.FC = () => {
     setInterviewDuration(15);
     setInterviewInstructions('');
     setInterviewOpeningQuestion('');
+    setInterviewKnowledgeSummary('');
+    setInterviewFacts([]);
+    setNewFactInput('');
+    setInterviewSourceDocuments([]);
+    setNewDocTitle('');
+    setNewDocContent('');
+    setInterviewPersona('');
+    setInterviewTone('FORMAL');
+    setInterviewDifficultyLevel('INTERMEDIATE');
+    setInterviewFocusAreas([]);
+    setNewFocusAreaInput('');
+    setInterviewAvoidList([]);
+    setNewAvoidTopicInput('');
+    setInterviewAggressiveness('MODERATE');
+    setInterviewActiveTab('SETTINGS');
+    setSimulationCandidateMessage('');
+    setSimulationResult(null);
+    setSimulationError(null);
     setInterviewRubric([
       { id: 'integrity', name: 'Ethical Integrity & Public Service', description: 'Constitutional compliance and impartiality', maxScore: 25 },
       { id: 'decision_making', name: 'Administrative Problem Solving', description: 'Practical stakeholder resolution', maxScore: 25 },
       { id: 'communication', name: 'Clarity, Articulation & Poise', description: 'Logical structure and calm composure', maxScore: 25 },
       { id: 'critical_thinking', name: 'Analytical Depth & Foresight', description: 'Multi-dimensional policy view', maxScore: 25 },
     ]);
+    setInterviewAxioms([]);
+    setNewAxiomInput('');
+    setInterviewBoundaryTests([]);
+    setSelectedBoundaryTest(null);
+    setShowDocUploadModal(false);
+    setDocUploadFile(null);
+    setDocRoleContext('');
+    setDocGenerateError(null);
+    setIsGeneratingDoc(false);
     setEditingQuestion(null);
   };
 
@@ -450,7 +731,31 @@ export const QuestionBankPage: React.FC = () => {
       setInterviewDuration(Number(d.expectedDurationMinutes || 15));
       setInterviewInstructions(d.systemInstructions || '');
       setInterviewOpeningQuestion(d.openingQuestion || '');
-      setInterviewRubric(d.rubric || []);
+      setInterviewRubric(
+        Array.isArray(d.rubric)
+          ? d.rubric.map((r: any) => ({
+              ...r,
+              maxScore: typeof r.maxScore === 'number' && !isNaN(r.maxScore) ? r.maxScore : Number(r.maxScore) || 5,
+            }))
+          : []
+      );
+      setInterviewKnowledgeSummary(d.knowledgeDataset?.summary || '');
+      setInterviewFacts(d.knowledgeDataset?.facts || d.knowledgeDataset?.groundTruthFacts || []);
+      setInterviewAxioms(d.knowledgeDataset?.groundTruthAxioms || []);
+      setInterviewSourceDocuments(d.knowledgeDataset?.sourceDocuments || []);
+      setInterviewPersona(d.behavioralPrompt?.persona || d.systemInstructions || '');
+      setInterviewTone(d.behavioralPrompt?.tone || 'FORMAL');
+      setInterviewDifficultyLevel(d.behavioralPrompt?.difficultyLevel || 'INTERMEDIATE');
+      setInterviewFocusAreas(d.behavioralPrompt?.focusAreas || []);
+      setInterviewAvoidList(d.behavioralPrompt?.avoidList || []);
+      setInterviewAggressiveness(d.behavioralPrompt?.followUpAggressiveness || 'MODERATE');
+      setInterviewBoundaryTests(d.boundarySimulatorTests || []);
+      if (d.boundarySimulatorTests && d.boundarySimulatorTests.length > 0) {
+        setSelectedBoundaryTest(d.boundarySimulatorTests[0]);
+      }
+      setInterviewActiveTab('SETTINGS');
+      setSimulationResult(null);
+      setSimulationError(null);
     }
 
     setShowCreateModal(true);
@@ -483,6 +788,21 @@ export const QuestionBankPage: React.FC = () => {
           systemInstructions: interviewInstructions.trim(),
           openingQuestion: interviewOpeningQuestion.trim(),
           rubric: interviewRubric.filter((r) => r.name.trim().length > 0),
+          knowledgeDataset: {
+            summary: interviewKnowledgeSummary.trim(),
+            facts: interviewFacts.filter((f) => f.trim().length > 0),
+            groundTruthAxioms: interviewAxioms.filter((a) => a.trim().length > 0),
+            sourceDocuments: interviewSourceDocuments.filter((d) => d.title.trim() && d.content.trim()),
+          },
+          boundarySimulatorTests: interviewBoundaryTests,
+          behavioralPrompt: {
+            persona: interviewPersona.trim() || interviewInstructions.trim(),
+            tone: interviewTone,
+            difficultyLevel: interviewDifficultyLevel,
+            focusAreas: interviewFocusAreas.filter((f) => f.trim().length > 0),
+            avoidList: interviewAvoidList.filter((a) => a.trim().length > 0),
+            followUpAggressiveness: interviewAggressiveness,
+          },
         };
       default:
         return {};
@@ -513,6 +833,10 @@ export const QuestionBankPage: React.FC = () => {
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify(payload),
         });
+        if (res.status === 401) {
+          setError('Session expired or unauthorized (401). Please re-login to ExamOS.');
+          return;
+        }
         const data = await res.json();
         if (data.success) {
           setActionSuccess(`Question ${editingQuestion.id} updated to version ${data.data.version}`);
@@ -527,6 +851,10 @@ export const QuestionBankPage: React.FC = () => {
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify(payload),
         });
+        if (res.status === 401) {
+          setError('Session expired or unauthorized (401). Please re-login to ExamOS.');
+          return;
+        }
         const data = await res.json();
         if (data.success) {
           setActionSuccess(`Question ${data.data.id} created successfully`);
@@ -1534,8 +1862,11 @@ export const QuestionBankPage: React.FC = () => {
                     type="number"
                     step="0.5"
                     min="0.5"
-                    value={formMarks}
-                    onChange={(e) => setFormMarks(parseFloat(e.target.value))}
+                    value={isNaN(formMarks) || formMarks === null || formMarks === undefined ? '' : formMarks}
+                    onChange={(e) => {
+                      const v = parseFloat(e.target.value);
+                      setFormMarks(isNaN(v) ? ('' as any) : v);
+                    }}
                     style={{
                       width: '100%',
                       padding: '8px',
@@ -1762,8 +2093,11 @@ export const QuestionBankPage: React.FC = () => {
                       <input
                         type="number"
                         step="any"
-                        value={numTargetValue}
-                        onChange={(e) => setNumTargetValue(parseFloat(e.target.value))}
+                        value={isNaN(numTargetValue) || numTargetValue === null || numTargetValue === undefined ? '' : numTargetValue}
+                        onChange={(e) => {
+                          const v = parseFloat(e.target.value);
+                          setNumTargetValue(isNaN(v) ? ('' as any) : v);
+                        }}
                         style={{
                           width: '100%',
                           padding: '6px 10px',
@@ -1781,8 +2115,11 @@ export const QuestionBankPage: React.FC = () => {
                       <input
                         type="number"
                         step="any"
-                        value={numTolerance}
-                        onChange={(e) => setNumTolerance(parseFloat(e.target.value))}
+                        value={isNaN(numTolerance) || numTolerance === null || numTolerance === undefined ? '' : numTolerance}
+                        onChange={(e) => {
+                          const v = parseFloat(e.target.value);
+                          setNumTolerance(isNaN(v) ? ('' as any) : v);
+                        }}
                         style={{
                           width: '100%',
                           padding: '6px 10px',
@@ -1928,230 +2265,153 @@ export const QuestionBankPage: React.FC = () => {
                   </div>
                 )}
 
-                {/* INTERVIEW TYPE CONFIGURATION */}
+                {/* INTERVIEW TYPE CONFIGURATION (Phase 15.3 Decoupled Authoring Workbench) */}
                 {formType === 'INTERVIEW' && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                    {/* Preset & Parameters Grid */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
-                      <div>
-                        <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
-                          Rubric Preset
-                        </label>
-                        <select
-                          id="select-rubric-preset"
-                          value={interviewPreset}
-                          onChange={(e) => loadInterviewPreset(e.target.value)}
-                          style={{
-                            width: '100%',
-                            padding: '6px 10px',
-                            background: 'var(--bg-color)',
-                            border: '1px solid var(--border-color)',
-                            color: 'var(--text-main)',
-                            borderRadius: '4px',
-                            fontSize: '12px',
-                          }}
-                        >
-                          <option value="UPSC_PERSONALITY">UPSC Personality Test (4 Criteria)</option>
-                          <option value="IELTS_SPEAKING">IELTS Speaking (4 Bands)</option>
-                          <option value="TECH_SYSTEM_DESIGN">Technical System Design (4 Criteria)</option>
-                          <option value="GENERAL_HR">Behavioral / HR Interview (4 Criteria)</option>
-                          <option value="CUSTOM">Custom Rubric</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
-                          Max Turns
-                        </label>
-                        <input
-                          type="number"
-                          min="1"
-                          max="15"
-                          value={interviewMaxTurns}
-                          onChange={(e) => setInterviewMaxTurns(Number(e.target.value))}
-                          style={{
-                            width: '100%',
-                            padding: '6px 10px',
-                            background: 'var(--bg-color)',
-                            border: '1px solid var(--border-color)',
-                            color: 'var(--text-main)',
-                            borderRadius: '4px',
-                            fontSize: '12px',
-                          }}
-                          required
-                        />
-                      </div>
-
-                      <div>
-                        <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
-                          Expected Duration (min)
-                        </label>
-                        <input
-                          type="number"
-                          min="1"
-                          max="120"
-                          value={interviewDuration}
-                          onChange={(e) => setInterviewDuration(Number(e.target.value))}
-                          style={{
-                            width: '100%',
-                            padding: '6px 10px',
-                            background: 'var(--bg-color)',
-                            border: '1px solid var(--border-color)',
-                            color: 'var(--text-main)',
-                            borderRadius: '4px',
-                            fontSize: '12px',
-                          }}
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    {/* Opening Scenario */}
-                    <div>
-                      <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
-                        Interview Scenario & Context <span style={{ color: '#ef4444' }}>*</span>
-                      </label>
-                      <textarea
-                        rows={2}
-                        value={interviewScenario}
-                        onChange={(e) => setInterviewScenario(e.target.value)}
-                        placeholder="e.g. You are facing the UPSC Personality Test Board discussing public administration and ethical crisis management..."
+                    {/* Workbench Sub-Navigation Tabs */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px', flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        id="tab-interview-settings"
+                        onClick={() => setInterviewActiveTab('SETTINGS')}
                         style={{
-                          width: '100%',
-                          padding: '8px',
-                          background: 'var(--bg-color)',
-                          border: '1px solid var(--border-color)',
-                          color: 'var(--text-main)',
+                          padding: '6px 12px',
                           borderRadius: '4px',
-                          fontSize: '12px',
+                          border: interviewActiveTab === 'SETTINGS' ? '1px solid #06b6d4' : '1px solid var(--border-color)',
+                          background: interviewActiveTab === 'SETTINGS' ? 'rgba(6, 182, 212, 0.15)' : 'var(--bg-secondary)',
+                          color: interviewActiveTab === 'SETTINGS' ? '#06b6d4' : 'var(--text-main)',
+                          fontSize: '11px',
+                          fontWeight: 600,
+                          cursor: 'pointer',
                         }}
-                        required
-                      />
-                    </div>
-
-                    {/* Opening Examiner Question */}
-                    <div>
-                      <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
-                        Initial Examiner Question / Opening Prompt
-                      </label>
-                      <input
-                        type="text"
-                        value={interviewOpeningQuestion}
-                        onChange={(e) => setInterviewOpeningQuestion(e.target.value)}
-                        placeholder="e.g. Candidate, please introduce your immediate framework to address this crisis..."
+                      >
+                        ⚙️ General & Scenario
+                      </button>
+                      <button
+                        type="button"
+                        id="tab-interview-knowledge"
+                        onClick={() => setInterviewActiveTab('KNOWLEDGE')}
                         style={{
-                          width: '100%',
-                          padding: '6px 10px',
-                          background: 'var(--bg-color)',
-                          border: '1px solid var(--border-color)',
-                          color: 'var(--text-main)',
+                          padding: '6px 12px',
                           borderRadius: '4px',
-                          fontSize: '12px',
+                          border: interviewActiveTab === 'KNOWLEDGE' ? '1px solid #10b981' : '1px solid var(--border-color)',
+                          background: interviewActiveTab === 'KNOWLEDGE' ? 'rgba(16, 185, 129, 0.15)' : 'var(--bg-secondary)',
+                          color: interviewActiveTab === 'KNOWLEDGE' ? '#10b981' : 'var(--text-main)',
+                          fontSize: '11px',
+                          fontWeight: 600,
+                          cursor: 'pointer',
                         }}
-                      />
-                    </div>
-
-                    {/* Persona / System Instructions */}
-                    <div>
-                      <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
-                        Examiner AI Persona & Socratic Instructions
-                      </label>
-                      <textarea
-                        rows={2}
-                        value={interviewInstructions}
-                        onChange={(e) => setInterviewInstructions(e.target.value)}
-                        placeholder="e.g. You are the Chairperson of the board. Challenge candidate assumptions with realistic administrative constraints..."
+                      >
+                        📚 Knowledge Dataset ({interviewFacts.length} Facts, {interviewAxioms.length} Axioms)
+                      </button>
+                      <button
+                        type="button"
+                        id="tab-interview-behavior"
+                        onClick={() => setInterviewActiveTab('BEHAVIOR')}
                         style={{
-                          width: '100%',
-                          padding: '8px',
-                          background: 'var(--bg-color)',
-                          border: '1px solid var(--border-color)',
-                          color: 'var(--text-main)',
+                          padding: '6px 12px',
                           borderRadius: '4px',
-                          fontSize: '12px',
+                          border: interviewActiveTab === 'BEHAVIOR' ? '1px solid #f59e0b' : '1px solid var(--border-color)',
+                          background: interviewActiveTab === 'BEHAVIOR' ? 'rgba(245, 158, 11, 0.15)' : 'var(--bg-secondary)',
+                          color: interviewActiveTab === 'BEHAVIOR' ? '#f59e0b' : 'var(--text-main)',
+                          fontSize: '11px',
+                          fontWeight: 600,
+                          cursor: 'pointer',
                         }}
-                      />
+                      >
+                        🎭 Examiner Persona & Behavior ({interviewFocusAreas.length} Focus, {interviewAvoidList.length} Avoid)
+                      </button>
+                      <button
+                        type="button"
+                        id="tab-interview-simulate"
+                        onClick={() => setInterviewActiveTab('SIMULATE')}
+                        style={{
+                          padding: '6px 12px',
+                          borderRadius: '4px',
+                          border: interviewActiveTab === 'SIMULATE' ? '1px solid #8b5cf6' : '1px solid var(--border-color)',
+                          background: interviewActiveTab === 'SIMULATE' ? 'rgba(139, 92, 246, 0.15)' : 'var(--bg-secondary)',
+                          color: interviewActiveTab === 'SIMULATE' ? '#8b5cf6' : 'var(--text-main)',
+                          fontSize: '11px',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        🧪 Boundary Simulator {interviewBoundaryTests.length > 0 ? `(${interviewBoundaryTests.length} Tests)` : ''}
+                      </button>
+                      <button
+                        type="button"
+                        id="btn-interview-generate-doc"
+                        onClick={() => {
+                          setDocGenerateError(null);
+                          setShowDocUploadModal(true);
+                        }}
+                        style={{
+                          marginLeft: 'auto',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '6px 14px',
+                          borderRadius: '6px',
+                          border: '1px solid #3b82f6',
+                          background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2))',
+                          color: '#60a5fa',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <span>📄</span>
+                        <span>Generate from Document</span>
+                      </button>
                     </div>
 
-                    {/* Dynamic Rubric Builder */}
-                    <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                        <label style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                          Grading Rubric Criteria ({interviewRubric.length})
-                        </label>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setInterviewRubric([
-                              ...interviewRubric,
-                              {
-                                id: `crit_${Date.now()}`,
-                                name: 'New Criterion',
-                                description: '',
-                                maxScore: 25,
-                              },
-                            ])
-                          }
-                          style={{
-                            background: 'none',
-                            border: '1px dashed var(--border-color)',
-                            color: 'var(--accent-color)',
-                            padding: '2px 8px',
-                            borderRadius: '4px',
-                            fontSize: '11px',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          + Add Criterion
-                        </button>
-                      </div>
-
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        {interviewRubric.map((crit, idx) => (
-                          <div
-                            key={crit.id || idx}
-                            style={{
-                              display: 'grid',
-                              gridTemplateColumns: '2fr 1fr 3fr auto',
-                              gap: '8px',
-                              alignItems: 'center',
-                              padding: '8px',
-                              background: 'var(--bg-secondary)',
-                              border: '1px solid var(--border-color)',
-                              borderRadius: '6px',
-                            }}
-                          >
-                            <input
-                              type="text"
-                              value={crit.name}
-                              onChange={(e) => {
-                                const copy = [...interviewRubric];
-                                copy[idx].name = e.target.value;
-                                setInterviewRubric(copy);
-                              }}
-                              placeholder="Criterion Name (e.g. Fluency)"
+                    {/* TAB 1: General & Scenario */}
+                    {interviewActiveTab === 'SETTINGS' && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        {/* Preset & Parameters Grid */}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+                          <div>
+                            <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                              Rubric Preset
+                            </label>
+                            <select
+                              id="select-rubric-preset"
+                              value={interviewPreset}
+                              onChange={(e) => loadInterviewPreset(e.target.value)}
                               style={{
-                                padding: '4px 8px',
+                                width: '100%',
+                                padding: '6px 10px',
                                 background: 'var(--bg-color)',
                                 border: '1px solid var(--border-color)',
                                 color: 'var(--text-main)',
                                 borderRadius: '4px',
                                 fontSize: '12px',
                               }}
-                              required
-                            />
+                            >
+                              <option value="UPSC_PERSONALITY">UPSC Personality Test (4 Criteria)</option>
+                              <option value="IELTS_SPEAKING">IELTS Speaking (4 Bands)</option>
+                              <option value="TECH_SYSTEM_DESIGN">Technical System Design (4 Criteria)</option>
+                              <option value="GENERAL_HR">Behavioral / HR Interview (4 Criteria)</option>
+                              <option value="CUSTOM">Custom Rubric</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                              Max Turns
+                            </label>
                             <input
                               type="number"
-                              min="0.5"
-                              value={crit.maxScore}
+                              min="1"
+                              max="15"
+                              value={isNaN(interviewMaxTurns) || interviewMaxTurns === null || interviewMaxTurns === undefined ? '' : interviewMaxTurns}
                               onChange={(e) => {
-                                const copy = [...interviewRubric];
-                                copy[idx].maxScore = Number(e.target.value);
-                                setInterviewRubric(copy);
+                                const v = parseInt(e.target.value, 10);
+                                setInterviewMaxTurns(isNaN(v) ? ('' as any) : v);
                               }}
-                              placeholder="Max Score"
                               style={{
-                                padding: '4px 8px',
+                                width: '100%',
+                                padding: '6px 10px',
                                 background: 'var(--bg-color)',
                                 border: '1px solid var(--border-color)',
                                 color: 'var(--text-main)',
@@ -2160,17 +2420,253 @@ export const QuestionBankPage: React.FC = () => {
                               }}
                               required
                             />
+                          </div>
+
+                          <div>
+                            <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                              Expected Duration (min)
+                            </label>
+                            <input
+                              type="number"
+                              min="1"
+                              max="120"
+                              value={isNaN(interviewDuration) || interviewDuration === null || interviewDuration === undefined ? '' : interviewDuration}
+                              onChange={(e) => {
+                                const v = parseInt(e.target.value, 10);
+                                setInterviewDuration(isNaN(v) ? ('' as any) : v);
+                              }}
+                              style={{
+                                width: '100%',
+                                padding: '6px 10px',
+                                background: 'var(--bg-color)',
+                                border: '1px solid var(--border-color)',
+                                color: 'var(--text-main)',
+                                borderRadius: '4px',
+                                fontSize: '12px',
+                              }}
+                              required
+                            />
+                          </div>
+                        </div>
+
+                        {/* Opening Scenario */}
+                        <div>
+                          <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                            Interview Scenario & Context <span style={{ color: '#ef4444' }}>*</span>
+                          </label>
+                          <textarea
+                            rows={2}
+                            value={interviewScenario}
+                            onChange={(e) => setInterviewScenario(e.target.value)}
+                            placeholder="e.g. You are facing the UPSC Personality Test Board discussing public administration and ethical crisis management..."
+                            style={{
+                              width: '100%',
+                              padding: '8px',
+                              background: 'var(--bg-color)',
+                              border: '1px solid var(--border-color)',
+                              color: 'var(--text-main)',
+                              borderRadius: '4px',
+                              fontSize: '12px',
+                            }}
+                            required
+                          />
+                        </div>
+
+                        {/* Opening Examiner Question */}
+                        <div>
+                          <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                            Initial Examiner Question / Opening Prompt
+                          </label>
+                          <input
+                            type="text"
+                            value={interviewOpeningQuestion}
+                            onChange={(e) => setInterviewOpeningQuestion(e.target.value)}
+                            placeholder="e.g. Candidate, please introduce your immediate framework to address this crisis..."
+                            style={{
+                              width: '100%',
+                              padding: '6px 10px',
+                              background: 'var(--bg-color)',
+                              border: '1px solid var(--border-color)',
+                              color: 'var(--text-main)',
+                              borderRadius: '4px',
+                              fontSize: '12px',
+                            }}
+                          />
+                        </div>
+
+                        {/* Dynamic Rubric Builder */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                            <label style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                              Grading Rubric Criteria ({interviewRubric.length})
+                            </label>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setInterviewRubric([
+                                  ...interviewRubric,
+                                  {
+                                    id: `crit_${Date.now()}`,
+                                    name: 'New Criterion',
+                                    description: '',
+                                    maxScore: 25,
+                                  },
+                                ])
+                              }
+                              style={{
+                                background: 'none',
+                                border: '1px dashed var(--border-color)',
+                                color: 'var(--accent-color)',
+                                padding: '2px 8px',
+                                borderRadius: '4px',
+                                fontSize: '11px',
+                                cursor: 'pointer',
+                              }}
+                            >
+                              + Add Criterion
+                            </button>
+                          </div>
+
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            {interviewRubric.map((crit, idx) => (
+                              <div
+                                key={crit.id || idx}
+                                style={{
+                                  display: 'grid',
+                                  gridTemplateColumns: '2fr 1fr 3fr auto',
+                                  gap: '8px',
+                                  alignItems: 'center',
+                                  padding: '8px',
+                                  background: 'var(--bg-secondary)',
+                                  border: '1px solid var(--border-color)',
+                                  borderRadius: '6px',
+                                }}
+                              >
+                                <input
+                                  type="text"
+                                  value={crit.name}
+                                  onChange={(e) => {
+                                    const copy = [...interviewRubric];
+                                    copy[idx].name = e.target.value;
+                                    setInterviewRubric(copy);
+                                  }}
+                                  placeholder="Criterion Name (e.g. Fluency)"
+                                  style={{
+                                    padding: '4px 8px',
+                                    background: 'var(--bg-color)',
+                                    border: '1px solid var(--border-color)',
+                                    color: 'var(--text-main)',
+                                    borderRadius: '4px',
+                                    fontSize: '12px',
+                                  }}
+                                  required
+                                />
+                                <input
+                                  type="number"
+                                  min="0.5"
+                                  value={isNaN(crit.maxScore) || crit.maxScore === null || crit.maxScore === undefined ? '' : crit.maxScore}
+                                  onChange={(e) => {
+                                    const copy = [...interviewRubric];
+                                    const val = parseFloat(e.target.value);
+                                    copy[idx].maxScore = isNaN(val) ? ('' as any) : val;
+                                    setInterviewRubric(copy);
+                                  }}
+                                  placeholder="Max Score"
+                                  style={{
+                                    padding: '4px 8px',
+                                    background: 'var(--bg-color)',
+                                    border: '1px solid var(--border-color)',
+                                    color: 'var(--text-main)',
+                                    borderRadius: '4px',
+                                    fontSize: '12px',
+                                  }}
+                                  required
+                                />
+                                <input
+                                  type="text"
+                                  value={crit.description || ''}
+                                  onChange={(e) => {
+                                    const copy = [...interviewRubric];
+                                    copy[idx].description = e.target.value;
+                                    setInterviewRubric(copy);
+                                  }}
+                                  placeholder="Criterion Description / Descriptors"
+                                  style={{
+                                    padding: '4px 8px',
+                                    background: 'var(--bg-color)',
+                                    border: '1px solid var(--border-color)',
+                                    color: 'var(--text-main)',
+                                    borderRadius: '4px',
+                                    fontSize: '12px',
+                                  }}
+                                />
+                                {interviewRubric.length > 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setInterviewRubric(interviewRubric.filter((_, i) => i !== idx))}
+                                    style={{
+                                      background: 'none',
+                                      border: 'none',
+                                      color: '#ef4444',
+                                      cursor: 'pointer',
+                                      padding: '4px',
+                                    }}
+                                  >
+                                    ✕
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* TAB 2: Knowledge Dataset */}
+                    {interviewActiveTab === 'KNOWLEDGE' && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                        <div>
+                          <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                            Ground Truth Factual Summary / Context Narrative
+                          </label>
+                          <textarea
+                            rows={3}
+                            value={interviewKnowledgeSummary}
+                            onChange={(e) => setInterviewKnowledgeSummary(e.target.value)}
+                            placeholder="Provide exhaustive context facts and domain rules that the examiner must strictly ground their questions in..."
+                            style={{
+                              width: '100%',
+                              padding: '8px',
+                              background: 'var(--bg-color)',
+                              border: '1px solid var(--border-color)',
+                              color: 'var(--text-main)',
+                              borderRadius: '4px',
+                              fontSize: '12px',
+                            }}
+                          />
+                        </div>
+
+                        {/* Ground Truth Facts Builder */}
+                        <div>
+                          <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                            Ground Truth Discrete Facts ({interviewFacts.length}) <span style={{ fontSize: '10px', color: '#10b981' }}>— Verifiable technical realities and metrics</span>
+                          </label>
+                          <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
                             <input
                               type="text"
-                              value={crit.description || ''}
-                              onChange={(e) => {
-                                const copy = [...interviewRubric];
-                                copy[idx].description = e.target.value;
-                                setInterviewRubric(copy);
+                              value={newFactInput}
+                              onChange={(e) => setNewFactInput(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' && newFactInput.trim()) {
+                                  e.preventDefault();
+                                  setInterviewFacts([...interviewFacts, newFactInput.trim()]);
+                                  setNewFactInput('');
+                                }
                               }}
-                              placeholder="Criterion Description / Descriptors"
+                              placeholder="e.g. Redis cache eviction policy is volatile-lru..."
                               style={{
-                                padding: '4px 8px',
+                                flex: 1,
+                                padding: '6px 10px',
                                 background: 'var(--bg-color)',
                                 border: '1px solid var(--border-color)',
                                 color: 'var(--text-main)',
@@ -2178,25 +2674,715 @@ export const QuestionBankPage: React.FC = () => {
                                 fontSize: '12px',
                               }}
                             />
-                            {interviewRubric.length > 1 && (
-                              <button
-                                type="button"
-                                onClick={() => setInterviewRubric(interviewRubric.filter((_, i) => i !== idx))}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (newFactInput.trim()) {
+                                  setInterviewFacts([...interviewFacts, newFactInput.trim()]);
+                                  setNewFactInput('');
+                                }
+                              }}
+                              style={{
+                                padding: '6px 12px',
+                                background: 'var(--bg-secondary)',
+                                border: '1px solid var(--border-color)',
+                                color: 'var(--text-main)',
+                                borderRadius: '4px',
+                                fontSize: '11px',
+                                cursor: 'pointer',
+                              }}
+                            >
+                              + Add Fact
+                            </button>
+                          </div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                            {interviewFacts.map((fact, idx) => (
+                              <span
+                                key={idx}
                                 style={{
-                                  background: 'none',
-                                  border: 'none',
-                                  color: '#ef4444',
-                                  cursor: 'pointer',
-                                  padding: '4px',
+                                  padding: '4px 8px',
+                                  background: 'rgba(16, 185, 129, 0.12)',
+                                  border: '1px solid #10b981',
+                                  color: '#10b981',
+                                  borderRadius: '4px',
+                                  fontSize: '11px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '6px',
                                 }}
                               >
-                                ✕
-                              </button>
+                                <span>{fact}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => setInterviewFacts(interviewFacts.filter((_, i) => i !== idx))}
+                                  style={{ background: 'none', border: 'none', color: '#10b981', cursor: 'pointer', padding: 0 }}
+                                >
+                                  ✕
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Non-Negotiable Axioms Builder */}
+                        <div>
+                          <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                            Non-Negotiable Axioms ({interviewAxioms.length}) <span style={{ fontSize: '10px', color: '#f59e0b' }}>— Hard boundary rules ("X is true; do not accept claims that Y")</span>
+                          </label>
+                          <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                            <input
+                              type="text"
+                              id="input-interview-axiom"
+                              value={newAxiomInput}
+                              onChange={(e) => setNewAxiomInput(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' && newAxiomInput.trim()) {
+                                  e.preventDefault();
+                                  setInterviewAxioms([...interviewAxioms, newAxiomInput.trim()]);
+                                  setNewAxiomInput('');
+                                }
+                              }}
+                              placeholder="e.g. eBPF programs must pass static verifier before loading; reject claims that verifier can be disabled at runtime..."
+                              style={{
+                                flex: 1,
+                                padding: '6px 10px',
+                                background: 'var(--bg-color)',
+                                border: '1px solid var(--border-color)',
+                                color: 'var(--text-main)',
+                                borderRadius: '4px',
+                                fontSize: '12px',
+                              }}
+                            />
+                            <button
+                              type="button"
+                              id="btn-add-interview-axiom"
+                              onClick={() => {
+                                if (newAxiomInput.trim()) {
+                                  setInterviewAxioms([...interviewAxioms, newAxiomInput.trim()]);
+                                  setNewAxiomInput('');
+                                }
+                              }}
+                              style={{
+                                padding: '6px 12px',
+                                background: 'rgba(245, 158, 11, 0.15)',
+                                border: '1px solid #f59e0b',
+                                color: '#f59e0b',
+                                borderRadius: '4px',
+                                fontSize: '11px',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              + Add Axiom
+                            </button>
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                            {interviewAxioms.map((axiom, idx) => (
+                              <div
+                                key={idx}
+                                style={{
+                                  padding: '6px 10px',
+                                  background: 'rgba(245, 158, 11, 0.08)',
+                                  border: '1px solid rgba(245, 158, 11, 0.3)',
+                                  color: 'var(--text-main)',
+                                  borderRadius: '4px',
+                                  fontSize: '11px',
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                  gap: '8px',
+                                }}
+                              >
+                                <span style={{ flex: 1, lineHeight: '1.4' }}>⚖️ <strong>Axiom {idx + 1}:</strong> {axiom}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => setInterviewAxioms(interviewAxioms.filter((_, i) => i !== idx))}
+                                  style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 0 }}
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Source Reference Documents Builder */}
+                        <div>
+                          <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                            Source Documents & Reference Files ({interviewSourceDocuments.length})
+                          </label>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '8px', padding: '10px', background: 'var(--bg-secondary)', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+                            <input
+                              type="text"
+                              value={newDocTitle}
+                              onChange={(e) => setNewDocTitle(e.target.value)}
+                              placeholder="Document Title (e.g. Incident Report RC-402)"
+                              style={{
+                                padding: '6px 10px',
+                                background: 'var(--bg-color)',
+                                border: '1px solid var(--border-color)',
+                                color: 'var(--text-main)',
+                                borderRadius: '4px',
+                                fontSize: '12px',
+                              }}
+                            />
+                            <textarea
+                              rows={2}
+                              value={newDocContent}
+                              onChange={(e) => setNewDocContent(e.target.value)}
+                              placeholder="Document Text / Context Specifications..."
+                              style={{
+                                padding: '6px 10px',
+                                background: 'var(--bg-color)',
+                                border: '1px solid var(--border-color)',
+                                color: 'var(--text-main)',
+                                borderRadius: '4px',
+                                fontSize: '12px',
+                              }}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (newDocTitle.trim() && newDocContent.trim()) {
+                                  setInterviewSourceDocuments([...interviewSourceDocuments, { title: newDocTitle.trim(), content: newDocContent.trim() }]);
+                                  setNewDocTitle('');
+                                  setNewDocContent('');
+                                }
+                              }}
+                              style={{
+                                alignSelf: 'flex-start',
+                                padding: '4px 10px',
+                                background: 'var(--bg-color)',
+                                border: '1px solid var(--border-color)',
+                                color: '#06b6d4',
+                                borderRadius: '4px',
+                                fontSize: '11px',
+                                cursor: 'pointer',
+                              }}
+                            >
+                              + Add Document
+                            </button>
+                          </div>
+
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                            {interviewSourceDocuments.map((doc, idx) => (
+                              <div
+                                key={idx}
+                                style={{
+                                  padding: '8px 12px',
+                                  background: 'var(--bg-secondary)',
+                                  borderRadius: '4px',
+                                  border: '1px solid var(--border-color)',
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                }}
+                              >
+                                <div>
+                                  <span style={{ fontWeight: 600, fontSize: '12px', color: 'var(--text-main)' }}>📄 {doc.title}</span>
+                                  <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: '2px 0 0 0', maxWidth: '480px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    {doc.content}
+                                  </p>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => setInterviewSourceDocuments(interviewSourceDocuments.filter((_, i) => i !== idx))}
+                                  style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* TAB 3: Examiner Persona & Behavior */}
+                    {interviewActiveTab === 'BEHAVIOR' && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                        <div>
+                          <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                            Examiner AI Persona Definition
+                          </label>
+                          <textarea
+                            rows={2}
+                            value={interviewPersona}
+                            onChange={(e) => setInterviewPersona(e.target.value)}
+                            placeholder="e.g. Senior Principal Infrastructure Architect evaluating candidate system trade-offs..."
+                            style={{
+                              width: '100%',
+                              padding: '8px',
+                              background: 'var(--bg-color)',
+                              border: '1px solid var(--border-color)',
+                              color: 'var(--text-main)',
+                              borderRadius: '4px',
+                              fontSize: '12px',
+                            }}
+                          />
+                        </div>
+
+                        {/* Tone, Difficulty, Aggressiveness Grid */}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+                          <div>
+                            <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                              Examiner Tone
+                            </label>
+                            <select
+                              value={interviewTone}
+                              onChange={(e) => setInterviewTone(e.target.value as any)}
+                              style={{
+                                width: '100%',
+                                padding: '6px 10px',
+                                background: 'var(--bg-color)',
+                                border: '1px solid var(--border-color)',
+                                color: 'var(--text-main)',
+                                borderRadius: '4px',
+                                fontSize: '12px',
+                              }}
+                            >
+                              <option value="FORMAL">Formal / Objective</option>
+                              <option value="SOCRATIC">Socratic / Probing</option>
+                              <option value="CHALLENGING">Challenging / Rigorous</option>
+                              <option value="SUPPORTIVE">Supportive / Mentoring</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                              Target Difficulty Level
+                            </label>
+                            <select
+                              value={interviewDifficultyLevel}
+                              onChange={(e) => setInterviewDifficultyLevel(e.target.value as any)}
+                              style={{
+                                width: '100%',
+                                padding: '6px 10px',
+                                background: 'var(--bg-color)',
+                                border: '1px solid var(--border-color)',
+                                color: 'var(--text-main)',
+                                borderRadius: '4px',
+                                fontSize: '12px',
+                              }}
+                            >
+                              <option value="BEGINNER">Beginner (Foundational)</option>
+                              <option value="INTERMEDIATE">Intermediate (Competent)</option>
+                              <option value="ADVANCED">Advanced (Senior)</option>
+                              <option value="EXPERT">Expert (Domain Master)</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                              Follow-Up Aggressiveness
+                            </label>
+                            <select
+                              value={interviewAggressiveness}
+                              onChange={(e) => setInterviewAggressiveness(e.target.value as any)}
+                              style={{
+                                width: '100%',
+                                padding: '6px 10px',
+                                background: 'var(--bg-color)',
+                                border: '1px solid var(--border-color)',
+                                color: 'var(--text-main)',
+                                borderRadius: '4px',
+                                fontSize: '12px',
+                              }}
+                            >
+                              <option value="LOW">Low (Allow topic pivots)</option>
+                              <option value="MODERATE">Moderate (Standard Socratic drill)</option>
+                              <option value="HIGH">High (Aggressively challenge vague statements)</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        {/* Focus Areas Checklist */}
+                        <div>
+                          <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                            Mandatory Focus Areas Agenda ({interviewFocusAreas.length})
+                          </label>
+                          <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                            <input
+                              type="text"
+                              value={newFocusAreaInput}
+                              onChange={(e) => setNewFocusAreaInput(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' && newFocusAreaInput.trim()) {
+                                  e.preventDefault();
+                                  setInterviewFocusAreas([...interviewFocusAreas, newFocusAreaInput.trim()]);
+                                  setNewFocusAreaInput('');
+                                }
+                              }}
+                              placeholder="e.g. Database replica lag identification..."
+                              style={{
+                                flex: 1,
+                                padding: '6px 10px',
+                                background: 'var(--bg-color)',
+                                border: '1px solid var(--border-color)',
+                                color: 'var(--text-main)',
+                                borderRadius: '4px',
+                                fontSize: '12px',
+                              }}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (newFocusAreaInput.trim()) {
+                                  setInterviewFocusAreas([...interviewFocusAreas, newFocusAreaInput.trim()]);
+                                  setNewFocusAreaInput('');
+                                }
+                              }}
+                              style={{
+                                padding: '6px 12px',
+                                background: 'var(--bg-secondary)',
+                                border: '1px solid var(--border-color)',
+                                color: 'var(--text-main)',
+                                borderRadius: '4px',
+                                fontSize: '11px',
+                                cursor: 'pointer',
+                              }}
+                            >
+                              + Add Focus Area
+                            </button>
+                          </div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                            {interviewFocusAreas.map((area, idx) => (
+                              <span
+                                key={idx}
+                                style={{
+                                  padding: '4px 8px',
+                                  background: 'rgba(6, 182, 212, 0.12)',
+                                  border: '1px solid #06b6d4',
+                                  color: '#06b6d4',
+                                  borderRadius: '4px',
+                                  fontSize: '11px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '6px',
+                                }}
+                              >
+                                <span>🎯 {area}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => setInterviewFocusAreas(interviewFocusAreas.filter((_, i) => i !== idx))}
+                                  style={{ background: 'none', border: 'none', color: '#06b6d4', cursor: 'pointer', padding: 0 }}
+                                >
+                                  ✕
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Avoid-List Topics */}
+                        <div>
+                          <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                            Strict Prohibited Topics / Avoid-List ({interviewAvoidList.length})
+                          </label>
+                          <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                            <input
+                              type="text"
+                              value={newAvoidTopicInput}
+                              onChange={(e) => setNewAvoidTopicInput(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' && newAvoidTopicInput.trim()) {
+                                  e.preventDefault();
+                                  setInterviewAvoidList([...interviewAvoidList, newAvoidTopicInput.trim()]);
+                                  setNewAvoidTopicInput('');
+                                }
+                              }}
+                              placeholder="e.g. Frontend rendering, cloud billing pricing..."
+                              style={{
+                                flex: 1,
+                                padding: '6px 10px',
+                                background: 'var(--bg-color)',
+                                border: '1px solid var(--border-color)',
+                                color: 'var(--text-main)',
+                                borderRadius: '4px',
+                                fontSize: '12px',
+                              }}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (newAvoidTopicInput.trim()) {
+                                  setInterviewAvoidList([...interviewAvoidList, newAvoidTopicInput.trim()]);
+                                  setNewAvoidTopicInput('');
+                                }
+                              }}
+                              style={{
+                                padding: '6px 12px',
+                                background: 'var(--bg-secondary)',
+                                border: '1px solid var(--border-color)',
+                                color: 'var(--text-main)',
+                                borderRadius: '4px',
+                                fontSize: '11px',
+                                cursor: 'pointer',
+                              }}
+                            >
+                              + Add Prohibited Topic
+                            </button>
+                          </div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                            {interviewAvoidList.map((topic, idx) => (
+                              <span
+                                key={idx}
+                                style={{
+                                  padding: '4px 8px',
+                                  background: 'rgba(239, 68, 68, 0.12)',
+                                  border: '1px solid #ef4444',
+                                  color: '#ef4444',
+                                  borderRadius: '4px',
+                                  fontSize: '11px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '6px',
+                                }}
+                              >
+                                <span>🚫 {topic}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => setInterviewAvoidList(interviewAvoidList.filter((_, i) => i !== idx))}
+                                  style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 0 }}
+                                >
+                                  ✕
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* TAB 4: Boundary Simulator Workbench */}
+                    {interviewActiveTab === 'SIMULATE' && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', padding: '14px', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                        <div>
+                          <h4 style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-main)', margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span>🧪</span>
+                            <span>Examiner Boundary & Grounding Simulator</span>
+                          </h4>
+                          <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0 }}>
+                            Test conversational turns in real time against the configured Knowledge Dataset and Behavioral Prompt boundaries before saving.
+                          </p>
+                        </div>
+
+                        {/* Opening Question Preview */}
+                        <div style={{ padding: '10px 12px', background: 'var(--bg-color)', borderRadius: '6px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: '11px', fontWeight: 700, color: '#06b6d4' }}>
+                              🎯 Examiner Opening Question
+                            </span>
+                            <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                              Initial viva prompt sent to candidate
+                            </span>
+                          </div>
+                          <p style={{ fontSize: '12px', color: 'var(--text-main)', margin: 0, fontStyle: 'italic', lineHeight: '1.4' }}>
+                            "{interviewOpeningQuestion || 'No opening question configured yet. Go to General & Scenario tab to set one.'}"
+                          </p>
+                        </div>
+
+                        {/* Adversarial Boundary Test Cases */}
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                            <div>
+                              <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-main)' }}>
+                                🧪 Adversarial Boundary Test Cases ({interviewBoundaryTests.length})
+                              </span>
+                              <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
+                                Pre-constructed boundary stress tests (including fabrication probes, drift bypasses, and axiom defenses). Click any test case to test examiner grounding:
+                              </p>
+                            </div>
+                          </div>
+
+                          {interviewBoundaryTests.length === 0 ? (
+                            <div style={{ padding: '12px', background: 'var(--bg-color)', borderRadius: '6px', border: '1px dashed var(--border-color)', textAlign: 'center', fontSize: '11px', color: 'var(--text-muted)' }}>
+                              No boundary test cases loaded yet. Use <strong>"📄 Generate from Document"</strong> above to auto-generate adversarial stress test cases from your technical materials.
+                            </div>
+                          ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                              {interviewBoundaryTests.map((tc, idx) => {
+                                const isSelected = selectedBoundaryTest === tc;
+                                const isFabrication = tc.testType.toLowerCase().includes('fabrication') || tc.testType.toLowerCase().includes('hallucination');
+                                return (
+                                  <div
+                                    key={idx}
+                                    style={{
+                                      padding: '10px 12px',
+                                      background: isSelected ? 'rgba(139, 92, 246, 0.12)' : 'var(--bg-color)',
+                                      borderRadius: '6px',
+                                      border: isSelected ? '1px solid #8b5cf6' : '1px solid var(--border-color)',
+                                      display: 'flex',
+                                      flexDirection: 'column',
+                                      gap: '6px',
+                                      transition: 'all 0.15s ease',
+                                    }}
+                                  >
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <span
+                                          style={{
+                                            fontSize: '10px',
+                                            fontWeight: 700,
+                                            padding: '2px 8px',
+                                            borderRadius: '4px',
+                                            background: isFabrication ? 'rgba(239, 68, 68, 0.15)' : 'rgba(139, 92, 246, 0.15)',
+                                            color: isFabrication ? '#ef4444' : '#a78bfa',
+                                            border: `1px solid ${isFabrication ? 'rgba(239, 68, 68, 0.3)' : 'rgba(139, 92, 246, 0.3)'}`,
+                                          }}
+                                        >
+                                          {isFabrication ? '🔥 ' : '⚡ '} Test {idx + 1}: {tc.testType}
+                                        </span>
+                                      </div>
+                                      <div style={{ display: 'flex', gap: '6px' }}>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setSelectedBoundaryTest(tc);
+                                            setSimulationCandidateMessage(tc.candidateMessage);
+                                          }}
+                                          style={{
+                                            padding: '3px 8px',
+                                            borderRadius: '4px',
+                                            background: 'var(--bg-secondary)',
+                                            border: '1px solid var(--border-color)',
+                                            color: 'var(--text-main)',
+                                            fontSize: '10px',
+                                            cursor: 'pointer',
+                                          }}
+                                        >
+                                          📋 Copy to Input
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setSelectedBoundaryTest(tc);
+                                            handleSimulateTurn(tc.candidateMessage);
+                                          }}
+                                          style={{
+                                            padding: '3px 10px',
+                                            borderRadius: '4px',
+                                            background: 'linear-gradient(135deg, #8b5cf6, #3b82f6)',
+                                            border: 'none',
+                                            color: '#fff',
+                                            fontSize: '10px',
+                                            fontWeight: 600,
+                                            cursor: 'pointer',
+                                          }}
+                                        >
+                                          ⚡ Run This Test
+                                        </button>
+                                      </div>
+                                    </div>
+
+                                    <div style={{ fontSize: '11px', color: 'var(--text-main)', lineHeight: '1.4' }}>
+                                      <strong style={{ color: 'var(--text-muted)' }}>Candidate Prompt:</strong> "{tc.candidateMessage}"
+                                    </div>
+
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '10px', color: 'var(--text-muted)' }}>
+                                      <div style={{ background: 'var(--bg-secondary)', padding: '6px 8px', borderRadius: '4px' }}>
+                                        <span style={{ color: '#10b981', fontWeight: 600 }}>Expected: </span>
+                                        {tc.expectedBehavior}
+                                      </div>
+                                      <div style={{ background: 'var(--bg-secondary)', padding: '6px 8px', borderRadius: '4px' }}>
+                                        <span style={{ color: '#ef4444', fontWeight: 600 }}>Fail Signal: </span>
+                                        {tc.failSignal}
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+
+                        {simulationError && (
+                          <div style={{ padding: '8px 12px', background: 'rgba(239, 68, 68, 0.12)', border: '1px solid #ef4444', color: '#ef4444', borderRadius: '4px', fontSize: '12px' }}>
+                            ⚠️ {simulationError}
+                          </div>
+                        )}
+
+                        <div>
+                          <label style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                            Test Candidate Speech Input
+                          </label>
+                          <textarea
+                            rows={3}
+                            id="input-simulate-candidate-message"
+                            value={simulationCandidateMessage}
+                            onChange={(e) => setSimulationCandidateMessage(e.target.value)}
+                            placeholder="Enter a test response to see how the AI examiner responds (e.g. 'I propose sharding the database by customer ID to mitigate write replication lag')..."
+                            style={{
+                              width: '100%',
+                              padding: '8px',
+                              background: 'var(--bg-color)',
+                              border: '1px solid var(--border-color)',
+                              color: 'var(--text-main)',
+                              borderRadius: '4px',
+                              fontSize: '12px',
+                            }}
+                          />
+                        </div>
+
+                        <button
+                          type="button"
+                          id="btn-run-simulation"
+                          onClick={() => handleSimulateTurn()}
+                          disabled={!simulationCandidateMessage.trim() || isSimulating}
+                          style={{
+                            alignSelf: 'flex-start',
+                            padding: '8px 18px',
+                            borderRadius: '4px',
+                            border: 'none',
+                            background: simulationCandidateMessage.trim() && !isSimulating ? 'linear-gradient(135deg, #8b5cf6, #3b82f6)' : 'var(--border-color)',
+                            color: '#fff',
+                            fontWeight: 600,
+                            fontSize: '12px',
+                            cursor: simulationCandidateMessage.trim() && !isSimulating ? 'pointer' : 'not-allowed',
+                          }}
+                        >
+                          {isSimulating ? '⏳ Simulating Turn...' : '⚡ Run Simulation Turn'}
+                        </button>
+
+                        {simulationResult && (
+                          <div style={{ padding: '12px', background: 'var(--bg-color)', borderRadius: '6px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontSize: '11px', fontWeight: 700, color: '#8b5cf6' }}>
+                                🤖 SIMULATED EXAMINER OUTPUT:
+                              </span>
+                              <span
+                                style={{
+                                  fontSize: '10px',
+                                  fontWeight: 700,
+                                  padding: '2px 8px',
+                                  borderRadius: '4px',
+                                  background: simulationResult.boundaryCheck?.passed ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                                  color: simulationResult.boundaryCheck?.passed ? '#10b981' : '#ef4444',
+                                  border: `1px solid ${simulationResult.boundaryCheck?.passed ? '#10b981' : '#ef4444'}`,
+                                }}
+                              >
+                                {simulationResult.boundaryCheck?.passed ? '✅ Boundary Check: Passed' : '❌ Boundary Violation'}
+                              </span>
+                            </div>
+
+                            <p id="simulated-ai-message" style={{ fontSize: '13px', color: 'var(--text-main)', margin: 0, lineHeight: '1.5' }}>
+                              {simulationResult.aiMessage}
+                            </p>
+
+                            {simulationResult.coveredFocusAreas && simulationResult.coveredFocusAreas.length > 0 && (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px' }}>
+                                <span style={{ color: 'var(--text-muted)' }}>Covered Focus Areas:</span>
+                                {simulationResult.coveredFocusAreas.map((fa: string, i: number) => (
+                                  <span key={i} style={{ padding: '2px 6px', borderRadius: '3px', background: 'rgba(6, 182, 212, 0.15)', color: '#06b6d4', fontWeight: 600 }}>
+                                    ✓ {fa}
+                                  </span>
+                                ))}
+                              </div>
                             )}
                           </div>
-                        ))}
+                        )}
                       </div>
-                    </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -2232,6 +3418,219 @@ export const QuestionBankPage: React.FC = () => {
                   }}
                 >
                   {editingQuestion ? 'Save & Create Revision' : 'Create Question'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* GENERATE INTERVIEW FROM DOCUMENT MODAL */}
+      {showDocUploadModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.75)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1100,
+            padding: '20px',
+          }}
+        >
+          <div
+            style={{
+              background: 'var(--panel-bg)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '12px',
+              width: '100%',
+              maxWidth: '560px',
+              padding: '24px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '18px' }}>📄</span>
+                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--text-main)' }}>
+                  Generate Interview from Document
+                </h3>
+              </div>
+              <button
+                type="button"
+                id="btn-close-doc-upload-modal"
+                disabled={isGeneratingDoc}
+                onClick={() => {
+                  if (!isGeneratingDoc) {
+                    setShowDocUploadModal(false);
+                    setDocGenerateError(null);
+                  }
+                }}
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '18px', cursor: isGeneratingDoc ? 'not-allowed' : 'pointer' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-muted)', lineHeight: '1.5' }}>
+              Upload a technical specification, textbook chapter, or reference document (<strong>PDF</strong>, <strong>TXT</strong>, or <strong>MD</strong>).
+              ExamOS will automatically synthesize structured facts, non-negotiable axioms, examiner persona, opening questions, and boundary test cases.
+            </p>
+
+            {docGenerateError && (
+              <div style={{ padding: '10px 12px', background: 'rgba(239, 68, 68, 0.12)', border: '1px solid #ef4444', color: '#ef4444', borderRadius: '6px', fontSize: '12px', lineHeight: '1.4' }}>
+                ⚠️ {docGenerateError}
+              </div>
+            )}
+
+            <form onSubmit={handleGenerateFromDocument} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {/* File Input */}
+              <div>
+                <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
+                  Reference Document File (PDF, TXT, or Markdown) *
+                </label>
+                <div
+                  style={{
+                    border: '2px dashed var(--border-color)',
+                    borderRadius: '8px',
+                    padding: '20px',
+                    textAlign: 'center',
+                    background: 'var(--bg-color)',
+                    cursor: 'pointer',
+                  }}
+                  onClick={() => document.getElementById('input-doc-upload')?.click()}
+                >
+                  <input
+                    type="file"
+                    id="input-doc-upload"
+                    accept=".pdf,.txt,.md,text/plain,text/markdown,application/pdf"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        const file = e.target.files[0];
+                        if (file.size > 50 * 1024 * 1024) {
+                          setDocGenerateError(`Selected file exceeds the maximum 50MB limit (${(file.size / (1024 * 1024)).toFixed(1)}MB). Please choose a file up to 50MB.`);
+                          setDocUploadFile(null);
+                          return;
+                        }
+                        setDocUploadFile(file);
+                        setDocGenerateError(null);
+                      }
+                    }}
+                    style={{ display: 'none' }}
+                  />
+                  {docUploadFile ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                      <span style={{ fontSize: '24px' }}>📑</span>
+                      <span style={{ fontSize: '13px', fontWeight: 600, color: '#3b82f6' }}>{docUploadFile.name}</span>
+                      <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                        {docUploadFile.size >= 1024 * 1024
+                          ? `${(docUploadFile.size / (1024 * 1024)).toFixed(2)} MB`
+                          : `${(docUploadFile.size / 1024).toFixed(1)} KB`} • Click to choose another file
+                      </span>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                      <span style={{ fontSize: '24px' }}>📁</span>
+                      <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-main)' }}>
+                        Click to select or drop a file here
+                      </span>
+                      <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                        Supports PDF (text layer), TXT, and Markdown up to 50MB
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Optional Role / Scenario Context */}
+              <div>
+                <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
+                  Target Role / Scenario Context (Optional)
+                </label>
+                <input
+                  type="text"
+                  id="input-doc-role-context"
+                  value={docRoleContext}
+                  onChange={(e) => setDocRoleContext(e.target.value)}
+                  placeholder="e.g. Kernel Driver Developer Technical Interview or Systems SRE Incident Lead"
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    background: 'var(--bg-color)',
+                    border: '1px solid var(--border-color)',
+                    color: 'var(--text-main)',
+                    borderRadius: '6px',
+                    fontSize: '12px',
+                  }}
+                />
+                <span style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
+                  Provides directional context to align examiner persona, tone, and questioning depth beyond the document text.
+                </span>
+              </div>
+
+              {/* Information / Entitlement Banner */}
+              <div style={{ padding: '8px 12px', background: 'rgba(59, 130, 246, 0.08)', borderRadius: '6px', border: '1px solid rgba(59, 130, 246, 0.2)', fontSize: '11px', color: 'var(--text-muted)', lineHeight: '1.4' }}>
+                ℹ️ <strong>Human-in-the-Loop:</strong> Generation populates all tabs for your review and editing. The question is <strong>never auto-published</strong> until you inspect and save it.
+              </div>
+
+              {/* Footer Actions */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '8px' }}>
+                <button
+                  type="button"
+                  id="btn-cancel-doc-upload"
+                  disabled={isGeneratingDoc}
+                  onClick={() => {
+                    setShowDocUploadModal(false);
+                    setDocGenerateError(null);
+                  }}
+                  style={{
+                    background: 'transparent',
+                    border: '1px solid var(--border-color)',
+                    color: 'var(--text-muted)',
+                    padding: '8px 16px',
+                    borderRadius: '6px',
+                    fontSize: '12px',
+                    cursor: isGeneratingDoc ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  id="btn-submit-doc-generate"
+                  disabled={isGeneratingDoc || !docUploadFile}
+                  style={{
+                    background: isGeneratingDoc || !docUploadFile ? 'var(--border-color)' : 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                    border: 'none',
+                    color: '#fff',
+                    padding: '8px 20px',
+                    borderRadius: '6px',
+                    fontWeight: 'bold',
+                    fontSize: '12px',
+                    cursor: isGeneratingDoc || !docUploadFile ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                >
+                  {isGeneratingDoc ? (
+                    <>
+                      <span>⏳</span>
+                      <span>Synthesizing Interview Fields (AI)...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>✨</span>
+                      <span>Generate Interview Fields</span>
+                    </>
+                  )}
                 </button>
               </div>
             </form>
@@ -2867,8 +4266,11 @@ export const QuestionBankPage: React.FC = () => {
                 <input
                   type="number"
                   placeholder="Year"
-                  value={newExamYear}
-                  onChange={(e) => setNewExamYear(parseInt(e.target.value, 10))}
+                  value={isNaN(newExamYear) || newExamYear === null || newExamYear === undefined ? '' : newExamYear}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value, 10);
+                    setNewExamYear(isNaN(val) ? ('' as any) : val);
+                  }}
                   style={{
                     padding: '6px 8px',
                     borderRadius: '4px',

@@ -1310,6 +1310,33 @@ export type InterviewMode = 'PRACTICE' | 'EXAM';
 export type InterviewStatus = 'IN_PROGRESS' | 'COMPLETED' | 'ABANDONED';
 export type InterviewSpeaker = 'AI' | 'CANDIDATE';
 
+export interface InterviewEvidenceQuote {
+  turnNumber: number;
+  quote: string;
+  assessment: string;
+}
+
+export interface InterviewKnowledgeDocument {
+  title: string;
+  content: string;
+}
+
+export interface InterviewKnowledgeDataset {
+  summary?: string;
+  sourceDocuments?: InterviewKnowledgeDocument[];
+  groundTruthFacts?: string[];
+  facts?: string[];
+}
+
+export interface InterviewBehavioralPrompt {
+  persona?: string;
+  tone?: 'FORMAL' | 'RIGOROUS_PROBING' | 'SUPPORTIVE' | 'CHALLENGING' | string;
+  difficultyLevel?: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'EXPERT' | string;
+  focusAreas?: string[];
+  avoidList?: string[];
+  followUpAggressiveness?: 'LOW' | 'MEDIUM' | 'HIGH' | string;
+}
+
 export interface InterviewRubricItemDTO {
   id: string;
   name: string;
@@ -1319,6 +1346,8 @@ export interface InterviewRubricItemDTO {
   score?: number;
   feedback?: string;
   criteria?: string[];
+  evidenceQuotes?: InterviewEvidenceQuote[];
+  improvementTip?: string;
 }
 
 export interface InterviewTurnDTO {
@@ -1337,6 +1366,7 @@ export interface InterviewTurnDTO {
   modelUsed?: string | null;
   providerType?: 'LOCAL' | 'CLOUD' | 'MOCK' | string | null;
   isFallback?: boolean;
+  selectedTemplate?: 'FOLLOW_UP_PROMPT' | 'NEW_TOPIC_PROMPT' | 'CLARIFY_PROMPT' | string | null;
   createdAt: string;
 }
 
@@ -1364,6 +1394,31 @@ export interface InterviewSessionDTO {
   mainQuestionIndex?: number;
   followUpCountForCurrentMain?: number;
   totalMainQuestions?: number;
+  lastSelectedTemplate?: 'FOLLOW_UP_PROMPT' | 'NEW_TOPIC_PROMPT' | 'CLARIFY_PROMPT' | string | null;
+  debugInfo?: {
+    lastSelectedTemplate?: string;
+    lastWordCount?: number;
+    lastReason?: string;
+    templateHistory?: Array<{
+      turnNumber: number;
+      candidateTurnNumber?: number;
+      selectedTemplate: string;
+      wordCount: number;
+      reason: string;
+      mainQuestionIndex?: number;
+      followUpCount?: number;
+      timestamp: string;
+    }>;
+    [key: string]: any;
+  } | null;
+  facetFollowUpBank?: Record<string, {
+    STRONG_ANSWER: string;
+    VAGUE_ANSWER: string;
+    OFF_TOPIC_ANSWER: string;
+    DONT_KNOW_ANSWER: string;
+    OPENING?: string;
+    [key: string]: any;
+  }> | null;
   startedAt: string;
   completedAt?: string | null;
   finalScore?: number | null;
@@ -1420,6 +1475,57 @@ export interface InterviewEligibilityDTO {
     preset?: string;
     maxTurns?: number;
   }>;
+}
+
+export interface InterviewProgressTimeseriesItemDTO {
+  date: string;
+  sessionId: string;
+  questionId: string;
+  questionTitle?: string;
+  score: number;
+  maxScore: number;
+  percentage: number;
+  gradeBand?: string;
+  criteriaScores: Record<string, number>;
+}
+
+export interface InterviewLongitudinalProgressDTO {
+  userId: string;
+  courseId?: string;
+  totalSessions: number;
+  averageScore: number;
+  averagePercentage: number;
+  trend: 'IMPROVING' | 'PLATEAU' | 'DEGRADING';
+  trendDelta: number;
+  timeseries: InterviewProgressTimeseriesItemDTO[];
+  criteriaAverages: Record<string, { name: string; averageScore: number; maxScore: number }>;
+  recurringStrengths: string[];
+  recurringWeaknesses: string[];
+  averageLatencySeconds?: number;
+}
+
+export interface InterviewScorecardDTO {
+  session: InterviewSessionDTO;
+  rubricScores: InterviewRubricItemDTO[];
+  evidenceQuotes: InterviewEvidenceQuote[];
+  strengths: string[];
+  weaknesses: string[];
+  recommendations: string[];
+  summary: string;
+}
+
+export interface InterviewSimulateTurnDTO {
+  scenario: string;
+  candidateMessage: string;
+  knowledgeDataset?: InterviewKnowledgeDataset;
+  behavioralPrompt?: InterviewBehavioralPrompt;
+  previousTurns?: { speaker: 'AI' | 'CANDIDATE'; message: string }[];
+}
+
+export interface InterviewOverrideScoreDTO {
+  finalScore: number;
+  rubricScores?: InterviewRubricItemDTO[];
+  teacherNotes?: string;
 }
 
 // Phase 13 DTOs (Subscriptions, Entitlements & Billing)

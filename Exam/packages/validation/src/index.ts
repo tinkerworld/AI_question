@@ -481,6 +481,29 @@ export const submitInterviewTurnSchema = z.object({
   durationSeconds: z.number().optional(),
 });
 
+export const interviewKnowledgeDatasetSchema = z.object({
+  summary: z.string().optional(),
+  sourceDocuments: z
+    .array(
+      z.object({
+        title: z.string(),
+        content: z.string(),
+      })
+    )
+    .optional(),
+  groundTruthFacts: z.array(z.string()).optional(),
+  facts: z.array(z.string()).optional(),
+});
+
+export const interviewBehavioralPromptSchema = z.object({
+  persona: z.string().optional(),
+  tone: z.string().optional(),
+  difficultyLevel: z.string().optional(),
+  focusAreas: z.array(z.string()).optional(),
+  avoidList: z.array(z.string()).optional(),
+  followUpAggressiveness: z.string().optional(),
+});
+
 export const interviewQuestionDataSchema = z.object({
   scenario: z.string().min(5, 'Interview opening scenario is required'),
   rubric: z
@@ -492,6 +515,8 @@ export const interviewQuestionDataSchema = z.object({
         maxScore: z.number().min(0.5, 'Max score must be positive'),
         weight: z.number().optional(),
         criteria: z.array(z.string()).optional(),
+        evidenceQuotes: z.array(z.any()).optional(),
+        improvementTip: z.string().optional(),
       })
     )
     .min(1, 'At least one rubric criterion is required'),
@@ -500,6 +525,30 @@ export const interviewQuestionDataSchema = z.object({
   expectedDurationMinutes: z.number().min(1).max(120).default(15),
   systemInstructions: z.string().optional(),
   openingQuestion: z.string().optional(),
+  knowledgeDataset: interviewKnowledgeDatasetSchema.optional(),
+  behavioralPrompt: interviewBehavioralPromptSchema.optional(),
+});
+
+export const simulateInterviewTurnSchema = z.object({
+  scenario: z.string().optional().default('Standard viva voce examination'),
+  candidateMessage: z.string().min(1, 'Candidate message is required'),
+  knowledgeDataset: interviewKnowledgeDatasetSchema.optional(),
+  behavioralPrompt: interviewBehavioralPromptSchema.optional(),
+  previousTurns: z
+    .array(
+      z.object({
+        speaker: z.enum(['AI', 'CANDIDATE']),
+        message: z.string(),
+      })
+    )
+    .optional(),
+  conversationHistory: z.array(z.any()).optional(),
+});
+
+export const overrideScoreSchema = z.object({
+  finalScore: z.number().min(0, 'Final score must be non-negative'),
+  rubricScores: z.array(z.any()).optional(),
+  teacherNotes: z.string().optional(),
 });
 
 // Phase 13 Validation Schemas (Subscriptions, Entitlements & Billing)

@@ -19,6 +19,7 @@ export function errorHandler(
   res: Response,
   next: NextFunction
 ) {
+  console.error('[API ERROR]', req.method, req.originalUrl, err);
   if (err.name === 'ZodError' || (err.issues && Array.isArray(err.issues))) {
     return res.status(400).json({
       success: false,

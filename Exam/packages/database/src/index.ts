@@ -30,12 +30,38 @@ function getDbPath(): string {
 }
 
 const dbPath = getDbPath();
-const pidFile = path.join(dbPath, 'postmaster.pid');
-if (fs.existsSync(pidFile)) {
-  try {
-    fs.unlinkSync(pidFile);
-  } catch {}
+let _pgDbInstance: PGlite | null = null;
+
+function getOrInitDb(): PGlite {
+  if (!_pgDbInstance) {
+    const pidFile = path.join(dbPath, 'postmaster.pid');
+    if (fs.existsSync(pidFile)) {
+      try {
+        fs.unlinkSync(pidFile);
+      } catch {}
+    }
+    _pgDbInstance = new PGlite(dbPath);
+  }
+  return _pgDbInstance;
 }
 
 // Primary in-process PostgreSQL 16 engine for all runtime services and routes
-export const pgDb = new PGlite(dbPath);
+// Uses lazy Proxy so importing @repo/database in unit tests without queries does not lock postgres-data
+export const pgDb: PGlite = new Proxy({} as PGlite, {
+  get(_target, prop) {
+    if (prop === 'close') {
+      return async () => {
+        if (_pgDbInstance) {
+          await _pgDbInstance.close();
+          _pgDbInstance = null;
+        }
+      };
+    }
+    const db = getOrInitDb();
+    const val = (db as any)[prop];
+    if (typeof val === 'function') {
+      return val.bind(db);
+    }
+    return val;
+  },
+});

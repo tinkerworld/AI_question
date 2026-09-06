@@ -1,9 +1,11 @@
-import { Router, Request, Response, NextFunction } from 'express';
+import express, { Router, Request, Response, NextFunction } from 'express';
 import { authenticate } from '../middleware/auth';
 import { requirePermission } from '../middleware/permission';
 import { PERMISSIONS } from '@repo/permissions';
 import { startInterviewSchema, submitInterviewTurnSchema } from '@repo/validation';
 import { InterviewService } from '../services/interview.service';
+import { AppError } from '../middleware/error';
+import { pgDb } from '@repo/database';
 
 const router = Router();
 
@@ -35,7 +37,7 @@ router.get(
  * Starts a new interview session (Practice or Exam mode).
  */
 router.post(
-  '/sessions/start',
+  ['/sessions', '/sessions/start'],
   requirePermission(PERMISSIONS.INTERVIEW_ATTEMPT),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -76,7 +78,7 @@ router.get(
  * Submits candidate response for current turn and gets the AI follow-up.
  */
 router.post(
-  '/sessions/:id/turns',
+  ['/sessions/:id/turns', '/sessions/:id/turn'],
   requirePermission(PERMISSIONS.INTERVIEW_ATTEMPT),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -137,6 +139,176 @@ router.get(
         query
       );
       res.json({ success: true, data: sessions });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+/**
+ * POST /api/v1/interview/simulate-turn
+ * Authoring workbench simulation for staff/admin to test interview persona and boundary rules.
+ */
+router.post(
+  '/simulate-turn',
+  requirePermission(PERMISSIONS.QUESTIONS_CREATE),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const result = await InterviewService.simulateTurn(req.body);
+      res.json({ success: true, data: result });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+/**
+ * POST /api/v1/interview/generate-from-document
+ * Authoring workbench: generates interview question structure from reference document (PDF/TXT/MD).
+ */
+router.post(
+  '/generate-from-document',
+  express.json({ limit: '100mb' }),
+  requirePermission(PERMISSIONS.QUESTIONS_CREATE),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { fileBase64, fileText, fileName, mimeType, roleContext } = req.body;
+      const user = (req as any).user;
+      const result = await InterviewService.generateFromDocument({
+        fileBase64,
+        fileText,
+        fileName,
+        mimeType,
+        roleContext,
+        userId: user.userId,
+        tenantId: user.tenantId || user.userId,
+      });
+      res.json({ success: true, data: result });
+    } catch (err: any) {
+      if (err instanceof AppError) {
+        return res.status(err.statusCode).json({
+          success: false,
+          errorCode: err.errorCode,
+          message: err.message,
+          details: err.details,
+        });
+      }
+      if (err.message === 'INSUFFICIENT_AI_CREDITS' || err.message === 'AI_MONTHLY_TOKEN_CAP_REACHED') {
+        return res.status(402).json({
+          success: false,
+          errorCode: err.message,
+          message: err.message === 'AI_MONTHLY_TOKEN_CAP_REACHED'
+            ? 'Monthly AI token limit reached. Please contact your administrator or upgrade.'
+            : 'Insufficient AI credits.',
+        });
+      }
+      next(err);
+    }
+  }
+);
+
+/**
+ * GET /api/v1/interview/questions/:id/dataset
+ * Retrieves decoupled knowledge dataset and behavioral prompt settings for a question.
+ */
+router.get(
+  '/questions/:id/dataset',
+  requirePermission(PERMISSIONS.QUESTIONS_READ),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const result = await InterviewService.getQuestionDataset(req.params.id);
+      res.json({ success: true, data: result });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+/**
+ * GET /api/v1/interview/sessions/:id/scorecard
+ * Retrieves full evidence-grounded rubric scorecard for a completed session.
+ */
+router.get(
+  '/sessions/:id/scorecard',
+  requirePermission(PERMISSIONS.INTERVIEW_READ_OWN),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const scorecard = await InterviewService.getSessionScorecard(req.params.id, {
+        userId: (req as any).user.userId,
+        roles: (req as any).user.roles || [],
+      });
+      res.json({ success: true, data: scorecard });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+/**
+ * GET /api/v1/interview/analytics/student/:userId
+ * Retrieves longitudinal interview progress timeseries and trend analysis with Section 7 IDOR check.
+ */
+router.get(
+  '/analytics/student/:userId',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const courseId = typeof req.query.courseId === 'string' ? req.query.courseId : undefined;
+      const progress = await InterviewService.getStudentLongitudinalProgress(
+        req.params.userId,
+        {
+          userId: (req as any).user.userId,
+          roles: (req as any).user.roles || [],
+        },
+        courseId
+      );
+      res.json({ success: true, data: progress });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+/**
+ * POST /api/v1/interview/sessions/:id/override-score
+ * Teacher / Administrator manual grade adjustment with audit logging.
+ */
+router.post(
+  '/sessions/:id/override-score',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const result = await InterviewService.overrideSessionScore(
+        req.params.id,
+        req.body,
+        {
+          userId: (req as any).user.userId,
+          roles: (req as any).user.roles || [],
+        }
+      );
+      res.json({ success: true, data: result });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+/**
+ * DELETE /api/v1/interview/admin/user-sessions/:userId
+ * Admin route to purge test sessions for a user (for testing repeatability and admin cleanup).
+ */
+router.delete(
+  '/admin/user-sessions/:userId',
+  requirePermission(PERMISSIONS.QUESTIONS_CREATE),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { userId } = req.params;
+      const db = pgDb;
+      await db.query(
+        `DELETE FROM "interview_turns" WHERE "sessionId" IN (SELECT id FROM "interview_sessions" WHERE "userId" = $1)`,
+        [userId]
+      );
+      await db.query(`DELETE FROM "interview_sessions" WHERE "userId" = $1`, [userId]);
+      await db.query(`DELETE FROM "ai_usage_history" WHERE "userId" = $1 AND "feature" = 'interview'`, [userId]);
+      res.json({ success: true, message: `Sessions for user ${userId} deleted` });
     } catch (err) {
       next(err);
     }

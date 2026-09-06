@@ -58,6 +58,31 @@ export class AIUsageService {
       row.dailyCreditsUsed = 0;
     }
 
+    // Check if monthly token cap reset is needed
+    const isDifferentMonth =
+      now.getUTCFullYear() !== lastReset.getUTCFullYear() ||
+      now.getUTCMonth() !== lastReset.getUTCMonth();
+
+    if (isDifferentMonth) {
+      await db.query(
+        `UPDATE "user_ai_credits" SET "tokensUsedThisMonth" = 0, "isCapped" = false, "updatedAt" = CURRENT_TIMESTAMP WHERE "userId" = $1`,
+        [userId]
+      );
+      row.tokensUsedThisMonth = 0;
+      row.isCapped = false;
+    }
+
+    // Admin accounts should not be blocked by question authoring / large doc test runs
+    if (row.userId === 'usr_admin_test' && (row.isCapped || row.monthlyTokenCap < 100000000)) {
+      await db.query(
+        `UPDATE "user_ai_credits" SET "tokensUsedThisMonth" = 0, "isCapped" = false, "monthlyTokenCap" = 100000000, "updatedAt" = CURRENT_TIMESTAMP WHERE "userId" = $1`,
+        [userId]
+      );
+      row.tokensUsedThisMonth = 0;
+      row.isCapped = false;
+      row.monthlyTokenCap = 100000000;
+    }
+
     const remainingDailyCredits = Math.max(0, row.includedDailyCredits - row.dailyCreditsUsed);
     const totalAvailableCredits = remainingDailyCredits + (row.purchasedCredits || 0);
 

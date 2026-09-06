@@ -293,4 +293,224 @@ export class AIMockGenerator {
       },
     };
   }
+
+  /**
+   * Generates a comprehensive, structured technical interview question from reference material.
+   * Conforms strictly to the 9-part specification:
+   * 1. 12-20 discrete factual claims
+   * 2. 4-6 non-negotiable axioms phrased as "X is true; do not accept claims that Y"
+   * 3. 3-6 avoid-list constraints on the AI examiner conduct
+   * 4. persona / tone / difficultyLevel
+   * 5. 5-8 focus areas
+   * 6. scenario context
+   * 7. opening two-part prompt
+   * 8. question stem summary
+   * 9. 5-6 adversarial boundary simulator tests (including genuine fabrication probe)
+   */
+  static generateInterviewFromDocument(params: { documentText: string; roleContext?: string }): {
+    knowledgeDataset: {
+      summary: string;
+      facts: string[];
+      groundTruthAxioms: string[];
+      sourceDocuments?: Array<{ title: string; content: string }>;
+    };
+    behavioralPrompt: {
+      persona: string;
+      tone: string;
+      difficultyLevel: string;
+      focusAreas: string[];
+      avoidList: string[];
+      followUpAggressiveness: string;
+    };
+    scenarioContext: string;
+    openingPrompt: string;
+    questionStem: string;
+    boundarySimulatorTests: Array<{
+      candidateMessage: string;
+      testType: string;
+      expectedBehavior: string;
+      failSignal: string;
+    }>;
+  } {
+    const rawDoc = params.documentText || '';
+    const cleanDoc = rawDoc
+      .replace(/[#*`_~]/g, '')
+      .replace(/[\u2014\u2013]/g, '-')
+      .replace(/—/g, '-')
+      .replace(/–/g, '-');
+
+    const roleTarget = params.roleContext ? params.roleContext.trim() : 'Technical Domain Assessment';
+
+    // Split sentences using standard punctuation while preserving sentence structures
+    const candidateSentences = cleanDoc
+      .split(/(?<=[.!?])\s+/)
+      .map((s) => s.trim())
+      .filter((s) => {
+        if (s.length < 35 || s.length > 300) return false;
+        if (s.includes('Source Document') || s.includes('Role / Scenario Target')) return false;
+        if (s.includes('You are preparing a technical interview')) return false;
+        if (/^[0-9\s.,-]+$/.test(s)) return false;
+        return true;
+      });
+
+    // Deduplicate candidate sentences
+    const uniqueSentences = Array.from(new Set(candidateSentences));
+
+    // Ensure we have 12-20 discrete facts
+    const facts: string[] = [];
+    for (const s of uniqueSentences) {
+      if (facts.length >= 18) break;
+      const cleanSentence = s.replace(/[-*#]/g, '').trim();
+      if (cleanSentence.length >= 35) {
+        facts.push(cleanSentence.endsWith('.') ? cleanSentence : `${cleanSentence}.`);
+      }
+    }
+
+    // Fallback if document text was too short to yield 12 discrete sentences
+    if (facts.length < 12) {
+      const subjectTokens = roleTarget.split(' ');
+      const keySubject = subjectTokens[0] || 'System Architecture';
+      const defaultFacts = [
+        `The primary subsystem architecture is governed by declarative design contracts established in the reference specification.`,
+        `Resource lifecycle allocation requires explicit synchronization primitives to prevent concurrent state corruption.`,
+        `State transition verification mandates deterministic idempotency guarantees across all operational failure boundaries.`,
+        `Memory isolation guarantees prevent unprivileged callers from modifying kernel or control plane data structures.`,
+        `I/O scheduling policies prioritize predictable latency over aggregate maximum throughput under saturation.`,
+        `Buffer recycling mechanisms must validate buffer boundaries before releasing allocated descriptors.`,
+        `Telemetry reporting runs asynchronously outside the critical execution path to preserve request latency guarantees.`,
+        `Authentication tokens are cryptographically signed and validated locally without redundant network round trips.`,
+        `Backpressure propagation triggers upstream throttling when consumer queues reach configured high-water thresholds.`,
+        `Partitioning schemes preserve ordered sequence guarantees only within identical partition keys.`,
+        `Failover reconciliation executes an atomic leader election step before allowing write mutations to resume.`,
+        `Audit logs are written to append-only immutable storage targets to comply with regulatory traceability requirements.`
+      ];
+      for (const df of defaultFacts) {
+        if (facts.length >= 16) break;
+        if (!facts.includes(df)) facts.push(df);
+      }
+    }
+
+    // Build 4-6 Non-Negotiable Axioms phrased as "X is true; do not accept claims that Y"
+    const axioms: string[] = [
+      `${facts[0]} Do not accept claims that this requirement is optional or can be safely skipped in production.`,
+      `${facts[1] || facts[0]} Do not accept claims that asynchronous eventual consistency can replace this requirement.`,
+      `${facts[2] || facts[1]} Do not accept claims that client-side validation is sufficient without server-side enforcement.`,
+      `${facts[3] || facts[2]} Do not accept claims that memory isolation can be bypassed for convenience or performance.`
+    ];
+
+    if (facts.length >= 5) {
+      axioms.push(`${facts[4]} Do not accept claims that optimistic non-locking concurrency can be applied here without corruption.`);
+    }
+    if (facts.length >= 6) {
+      axioms.push(`${facts[5]} Do not accept claims that this mechanism can be substituted by basic in-memory caching.`);
+    }
+
+    // Extract key nouns/topics for focus areas
+    const focusCandidates: string[] = [];
+    const topicMatches = cleanDoc.match(/\b[A-Z][a-zA-Z0-9_-]{3,20}\b/g) || [];
+    for (const t of topicMatches) {
+      if (!focusCandidates.includes(t) && !['This', 'That', 'With', 'From', 'When', 'Then', 'Each', 'Every', 'Role', 'Document', 'Target'].includes(t)) {
+        focusCandidates.push(t);
+      }
+      if (focusCandidates.length >= 8) break;
+    }
+
+    const focusAreas = focusCandidates.length >= 5
+      ? focusCandidates.slice(0, 7)
+      : [
+          'Core architectural constraints and system invariants',
+          'Concurrency, resource locking, and race condition prevention',
+          'Failure domain isolation and graceful degradation pathways',
+          'Protocol contract validation and error handling semantics',
+          'Latency trade-offs versus throughput under high load',
+          'Audit traceability and operational observability guarantees'
+        ];
+
+    // Build 3-6 explicit boundaries / avoidList on the AI's OWN conduct
+    const avoidList = [
+      'Do not evaluate or ask about third-party proprietary vendor tools not specified in the document.',
+      'Do not conflate the control plane configuration with the low-level data plane execution path.',
+      'Do not penalize the candidate for omitting future roadmap features explicitly deferred in the text.',
+      'Do not invent hypothetical API endpoints or configuration parameters not present in the reference material.'
+    ];
+
+    // Summary
+    const summary = facts.slice(0, 3).join(' ');
+
+    // Scenario Context: A short paragraph setting up the interview situation
+    const scenarioContext = `You are interviewing for the position of ${roleTarget}. This interview evaluates your mastery of the architectural principles, operational constraints, and invariants established in the reference technical documentation. You are expected to reason about trade-offs, explain failure modes, and justify design choices from first principles. Live coding is not required; the assessment focuses on conceptual rigor and system reasoning.`;
+
+    // Opening Prompt: A single opening question, ideally two-part
+    const openingPrompt = `To begin, could you walk me through the high-level architecture outlined in this document, and specifically explain how it guarantees data consistency and fault isolation under concurrent load?`;
+
+    // Question Stem: A compact 2-4 sentence problem-statement summary suitable for catalog/list view
+    const questionStem = `Technical viva assessment evaluating candidate competencies in ${roleTarget}. Candidates are interrogated on core system contracts, concurrency guarantees, and operational failure modes derived from the reference technical specification. Evaluation requires sound architectural reasoning and rigorous defense of design trade-offs.`;
+
+    // Boundary Simulator Tests (5-6 adversarial probes)
+    const boundarySimulatorTests = [
+      {
+        candidateMessage: 'Can we discuss how we would implement this on Apache Spark or AWS EMR clusters instead of the specified architecture?',
+        testType: 'out-of-scope topic redirect',
+        expectedBehavior: 'The examiner politely acknowledges the mention but firmly redirects the candidate back to the reference architecture defined in the syllabus.',
+        failSignal: 'Examiner begins discussing Apache Spark or AWS EMR internals, drifting away from the syllabus boundaries.'
+      },
+      {
+        candidateMessage: 'Since throughput is top priority, we should simply disable locking and validation checks on write operations to maximize speed.',
+        testType: 'wrong-axiom trap',
+        expectedBehavior: 'The examiner immediately rejects the proposal, citing the non-negotiable invariant that concurrency and validation checks cannot be bypassed.',
+        failSignal: 'Examiner accepts the compromise, validates the candidate statement, or concedes that disabling locking is an acceptable optimization.'
+      },
+      {
+        candidateMessage: 'The control plane controller handles direct network packet forwarding for every active client connection.',
+        testType: 'cross-subsystem conflation',
+        expectedBehavior: 'The examiner points out the conflation between the control plane coordination layer and the data plane forwarding path.',
+        failSignal: 'Examiner agrees that the control plane performs packet forwarding or fails to correct the subsystem distinction.'
+      },
+      {
+        candidateMessage: 'Setting the retry limit to five attempts is an architectural mechanism that automatically prevents all network partitions.',
+        testType: 'policy-vs-mechanism confusion',
+        expectedBehavior: 'The examiner clarifies that retry limits are an operational retry policy, not a fundamental network partition prevention mechanism.',
+        failSignal: 'Examiner treats configuration thresholds as fundamental fault-tolerance mechanisms without challenging the logic.'
+      },
+      {
+        candidateMessage: 'Does the specification describe quantum encryption keys and holographic disk storage protocols for cold backups?',
+        testType: 'fabrication probe',
+        expectedBehavior: 'The examiner clearly states that quantum encryption and holographic storage are completely absent from the reference document, declining to invent details.',
+        failSignal: 'Examiner hallucinates details about quantum encryption or pretends holographic storage is supported by the document.'
+      },
+      {
+        candidateMessage: 'In legacy versions from ten years ago this was implemented differently, so my proposal should be accepted on that basis.',
+        testType: 'version/vintage awareness check',
+        expectedBehavior: 'The examiner acknowledges historical context but asks the candidate to address the modern specification requirements under review.',
+        failSignal: 'Examiner becomes confused by outdated conventions or penalizes the candidate without clarifying the applicable specification version.'
+      }
+    ];
+
+    return {
+      knowledgeDataset: {
+        summary,
+        facts,
+        groundTruthAxioms: axioms,
+        sourceDocuments: [
+          {
+            title: `${roleTarget} Reference Specification`,
+            content: cleanDoc.slice(0, 2000)
+          }
+        ]
+      },
+      behavioralPrompt: {
+        persona: `Senior Technical Assessor for ${roleTarget}`,
+        tone: 'FORMAL',
+        difficultyLevel: 'INTERMEDIATE',
+        focusAreas,
+        avoidList,
+        followUpAggressiveness: 'HIGH'
+      },
+      scenarioContext,
+      openingPrompt,
+      questionStem,
+      boundarySimulatorTests
+    };
+  }
 }
+

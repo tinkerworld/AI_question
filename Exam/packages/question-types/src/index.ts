@@ -9,6 +9,12 @@ export type BuiltInQuestionType =
   | 'SUBJECTIVE'
   | 'INTERVIEW';
 
+export interface InterviewEvidenceQuote {
+  turnNumber: number;
+  quote: string;
+  assessment: string;
+}
+
 export interface InterviewRubricCriterion {
   id: string;
   name: string;
@@ -16,6 +22,30 @@ export interface InterviewRubricCriterion {
   maxScore: number;
   weight?: number;
   criteria?: string[];
+  feedback?: string;
+  evidenceQuotes?: InterviewEvidenceQuote[];
+  improvementTip?: string;
+}
+
+export interface InterviewKnowledgeDocument {
+  title: string;
+  content: string;
+}
+
+export interface InterviewKnowledgeDataset {
+  summary?: string;
+  sourceDocuments?: InterviewKnowledgeDocument[];
+  groundTruthFacts?: string[];
+  facts?: string[];
+}
+
+export interface InterviewBehavioralPrompt {
+  persona?: string;
+  tone?: 'FORMAL' | 'RIGOROUS_PROBING' | 'SUPPORTIVE' | 'CHALLENGING' | string;
+  difficultyLevel?: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'EXPERT' | string;
+  focusAreas?: string[];
+  avoidList?: string[];
+  followUpAggressiveness?: 'LOW' | 'MEDIUM' | 'HIGH' | string;
 }
 
 export interface InterviewQuestionData {
@@ -26,6 +56,8 @@ export interface InterviewQuestionData {
   expectedDurationMinutes?: number;
   systemInstructions?: string;
   openingQuestion?: string;
+  knowledgeDataset?: InterviewKnowledgeDataset;
+  behavioralPrompt?: InterviewBehavioralPrompt;
 }
 
 export interface EvaluationResult {
@@ -299,9 +331,24 @@ export const SubjectiveHandler: QuestionTypeHandler<{
 };
 
 // 9. Interview / Oral Assessment Handler
-export const InterviewHandler: QuestionTypeHandler<InterviewQuestionData> = {
-  type: 'INTERVIEW',
-  validate(data) {
+export class InterviewHandler implements QuestionTypeHandler<InterviewQuestionData> {
+  static type = 'INTERVIEW';
+  type = 'INTERVIEW';
+
+  static validate(data: any): boolean {
+    return new InterviewHandler().validate(data);
+  }
+  static evaluate(data: any, userAnswer: any): EvaluationResult {
+    return new InterviewHandler().evaluate(data, userAnswer);
+  }
+  static serialize(data: any): any {
+    return new InterviewHandler().serialize(data);
+  }
+  static deserialize(json: any): InterviewQuestionData {
+    return new InterviewHandler().deserialize(json);
+  }
+
+  validate(data: any): boolean {
     if (!data || typeof data !== 'object') return false;
     if (typeof data.scenario !== 'string' || data.scenario.trim() === '') return false;
     if (!Array.isArray(data.rubric) || data.rubric.length === 0) return false;
@@ -309,9 +356,21 @@ export const InterviewHandler: QuestionTypeHandler<InterviewQuestionData> = {
       if (!r || typeof r !== 'object') return false;
       if (!r.id || !r.name || typeof r.maxScore !== 'number' || r.maxScore <= 0) return false;
     }
+    if (data.knowledgeDataset !== undefined && data.knowledgeDataset !== null) {
+      if (typeof data.knowledgeDataset !== 'object') return false;
+      if (data.knowledgeDataset.sourceDocuments !== undefined && !Array.isArray(data.knowledgeDataset.sourceDocuments)) return false;
+      if (data.knowledgeDataset.groundTruthFacts !== undefined && !Array.isArray(data.knowledgeDataset.groundTruthFacts)) return false;
+      if (data.knowledgeDataset.facts !== undefined && !Array.isArray(data.knowledgeDataset.facts)) return false;
+    }
+    if (data.behavioralPrompt !== undefined && data.behavioralPrompt !== null) {
+      if (typeof data.behavioralPrompt !== 'object') return false;
+      if (data.behavioralPrompt.focusAreas !== undefined && !Array.isArray(data.behavioralPrompt.focusAreas)) return false;
+      if (data.behavioralPrompt.avoidList !== undefined && !Array.isArray(data.behavioralPrompt.avoidList)) return false;
+    }
     return true;
-  },
-  evaluate(data, userAnswer) {
+  }
+
+  evaluate(data: any, userAnswer: any): EvaluationResult {
     // userAnswer format: full conversation transcript or evaluation payload
     const hasTurns = Array.isArray(userAnswer)
       ? userAnswer.length > 0
@@ -326,8 +385,9 @@ export const InterviewHandler: QuestionTypeHandler<InterviewQuestionData> = {
         ? 'Interview session recorded and submitted for multi-criteria AI rubric evaluation'
         : 'No interview turns or transcript submitted',
     };
-  },
-  serialize(data) {
+  }
+
+  serialize(data: any) {
     return {
       scenario: data.scenario,
       rubric: data.rubric,
@@ -336,9 +396,12 @@ export const InterviewHandler: QuestionTypeHandler<InterviewQuestionData> = {
       expectedDurationMinutes: data.expectedDurationMinutes || 15,
       systemInstructions: data.systemInstructions,
       openingQuestion: data.openingQuestion,
+      knowledgeDataset: data.knowledgeDataset,
+      behavioralPrompt: data.behavioralPrompt,
     };
-  },
-  deserialize(json) {
+  }
+
+  deserialize(json: any): InterviewQuestionData {
     return {
       scenario: json.scenario || '',
       rubric: json.rubric || [],
@@ -347,9 +410,11 @@ export const InterviewHandler: QuestionTypeHandler<InterviewQuestionData> = {
       expectedDurationMinutes: Number(json.expectedDurationMinutes || 15),
       systemInstructions: json.systemInstructions,
       openingQuestion: json.openingQuestion,
+      knowledgeDataset: json.knowledgeDataset,
+      behavioralPrompt: json.behavioralPrompt,
     };
-  },
-};
+  }
+}
 
 // ============================================================================
 // PLUGGABLE QUESTION TYPE REGISTRY ENGINE
@@ -367,7 +432,7 @@ export class QuestionTypeRegistry {
     this.registerType(NumericalHandler);
     this.registerType(MatchingHandler);
     this.registerType(SubjectiveHandler);
-    this.registerType(InterviewHandler);
+    this.registerType(new InterviewHandler());
   }
 
   public registerType(handler: QuestionTypeHandler): void {
