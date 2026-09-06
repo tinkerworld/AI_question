@@ -315,4 +315,42 @@ router.delete(
   }
 );
 
+/**
+ * GET /api/v1/interview/voice-profile
+ * Retrieves candidate's persisted acoustic VoiceProfile (Sprint 3)
+ */
+router.get(
+  '/voice-profile',
+  requirePermission(PERMISSIONS.INTERVIEW_ATTEMPT),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const result = await InterviewService.getVoiceProfile((req as any).user.userId);
+      res.json({ success: true, data: result });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+/**
+ * POST /api/v1/interview/voice-profile
+ * Persists candidate's measured acoustic VoiceProfile to user record (Sprint 3)
+ */
+router.post(
+  '/voice-profile',
+  requirePermission(PERMISSIONS.INTERVIEW_ATTEMPT),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const profile = req.body?.profile !== undefined ? req.body.profile : req.body;
+      if (!profile || typeof profile !== 'object' || Object.keys(profile).length === 0) {
+        throw new AppError(400, 'INVALID_VOICE_PROFILE', 'Invalid voice profile payload');
+      }
+      const result = await InterviewService.saveVoiceProfile((req as any).user.userId, profile);
+      res.status(200).json({ success: true, data: result });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 export default router;
