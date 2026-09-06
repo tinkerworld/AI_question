@@ -4449,6 +4449,25 @@ export async function runSeed() {
     [JSON.stringify([{ name: 'Premium Scholar Subscription (Monthly)', amount: 29.99, quantity: 1, type: 'SUBSCRIPTION' }])]
   );
 
+  // Seed baseline weakness & topic progress for Student 1 (used by Phase 8/9 Mastery & Personalized Practice)
+  await pgDb.query(
+    `INSERT INTO "student_topic_progress" ("id", "userId", "syllabusNodeId", "proficiencyScore", "attemptsCount", "correctCount", "status", "statusChangedAt", "lastEvaluatedAt", "createdAt", "updatedAt")
+     VALUES ('stp_seed_student_1', 'usr_student_test', 'top_mech', 25.0, 4, 1, 'WEAK', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+     ON CONFLICT ("userId", "syllabusNodeId") DO UPDATE SET "status" = 'WEAK', "proficiencyScore" = 25.0`
+  );
+
+  await pgDb.query(
+    `INSERT INTO "student_weaknesses" ("id", "userId", "syllabusNodeId", "errorRate", "severity", "isActive", "firstWeakAt", "createdAt", "updatedAt")
+     VALUES ('weak_seed_student_1', 'usr_student_test', 'top_mech', 0.75, 'CRITICAL', true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+     ON CONFLICT ("userId", "syllabusNodeId") DO UPDATE SET "isActive" = true, "errorRate" = 0.75`
+  );
+
+  await pgDb.query(
+    `INSERT INTO "mastery_tracking" ("id", "userId", "syllabusNodeId", "consecutiveCorrect", "masteryThreshold", "isMastered", "createdAt", "updatedAt")
+     VALUES ('mt_seed_student_1', 'usr_student_test', 'top_mech', 0, 3, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+     ON CONFLICT ("userId", "syllabusNodeId") DO UPDATE SET "consecutiveCorrect" = 0, "isMastered" = false`
+  );
+
   console.log('================================================================');
   console.log(`✅ DATABASE SEED COMPLETE:`);
   console.log(`   - Courses: ${SEED_COURSES.length} (Engineering Entrance [JEE], Medical Entrance [NEET], IELTS Academic)`);
@@ -4466,11 +4485,15 @@ export async function runSeed() {
 
 if (require.main === module) {
   runSeed()
-    .then(() => {
+    .then(async () => {
+      await pgDb.close();
       process.exit(0);
     })
-    .catch((e) => {
+    .catch(async (e) => {
       console.error(e);
+      try {
+        await pgDb.close();
+      } catch {}
       process.exit(1);
     });
 }

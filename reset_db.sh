@@ -30,6 +30,9 @@ fi
 
 # --- 1. Migrate Database Schema ---
 echo "[1/2] Initializing embedded PostgreSQL 16 database and running migrations..."
+if [ -d "$REPO_ROOT/postgres-data" ]; then
+    rm -rf "$REPO_ROOT/postgres-data"
+fi
 (
     cd Exam
     node packages/database/prisma/migrate-postgres.js

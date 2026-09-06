@@ -1,3 +1,4 @@
+// Runner: npx ts-node -r tsconfig-paths/register --project apps/api/tsconfig.json --transpile-only tests/phase-01-master.test.js
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');

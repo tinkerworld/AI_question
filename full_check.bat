@@ -6,8 +6,9 @@ REM
 REM  Enforced Pipeline Order:
 REM    1. Verify stack readiness (launches start_all.bat if not running)
 REM    2. Execute full Playwright E2E test suite (run_ui_tests.bat)
-REM    3. Execute Python Persona Security Auditor (run_audits.bat)
-REM    4. Generate Review Package (Reviewzip.bat)
+REM    3. Execute Canonical Backend Test Runner (run_backend_tests.bat)
+REM    4. Execute Python Persona Security Auditor (run_audits.bat)
+REM    5. Generate Review Package (Reviewzip.bat)
 REM
 REM  Guarantees review-package.zip contains fresh run artifacts
 REM  and logs regardless of individual pass/fail statuses.
@@ -21,11 +22,12 @@ echo ==============================================================
 echo.
 
 set E2E_STATUS=NOT RUN
+set BACKEND_STATUS=NOT RUN
 set AUDIT_STATUS=NOT RUN
 set ZIP_STATUS=NOT RUN
 
 REM --- 1. Check Stack Readiness ---
-echo [1/4] Checking if ExamOS full stack is running...
+echo [1/5] Checking if ExamOS full stack is running...
 
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
   "$web = Test-NetConnection -ComputerName localhost -Port 3000 -WarningAction SilentlyContinue; " ^
@@ -57,7 +59,7 @@ echo       ExamOS stack is ready (Port 3000 and Port 4043 responding).
 
 echo.
 REM --- 2. Execute Playwright E2E Suite ---
-echo [2/4] Executing Playwright E2E Test Suite...
+echo [2/5] Executing Playwright E2E Test Suite...
 echo --------------------------------------------------------------
 call run_ui_tests.bat --automated
 set E2E_EXIT=%ERRORLEVEL%
@@ -68,8 +70,20 @@ if %E2E_EXIT% equ 0 (
 )
 
 echo.
-REM --- 3. Execute Python Profile Auditor ---
-echo [3/4] Executing Python Persona Profile Security Auditor...
+REM --- 3. Execute Canonical Backend Test Suites ---
+echo [3/5] Executing Canonical Backend Test Runner...
+echo --------------------------------------------------------------
+call run_backend_tests.bat
+set BACKEND_EXIT=%ERRORLEVEL%
+if %BACKEND_EXIT% equ 0 (
+    set BACKEND_STATUS=PASSED
+) else (
+    set BACKEND_STATUS=FAILED (Exit Code: %BACKEND_EXIT%)
+)
+
+echo.
+REM --- 4. Execute Python Profile Auditor ---
+echo [4/5] Executing Python Persona Profile Security Auditor...
 echo --------------------------------------------------------------
 call run_audits.bat --automated
 set AUDIT_EXIT=%ERRORLEVEL%
@@ -80,8 +94,8 @@ if %AUDIT_EXIT% equ 0 (
 )
 
 echo.
-REM --- 4. Package for Review ---
-echo [4/4] Generating Fresh Review Package (Reviewzip.bat)...
+REM --- 5. Package for Review ---
+echo [5/5] Generating Fresh Review Package (Reviewzip.bat)...
 echo --------------------------------------------------------------
 call Reviewzip.bat --automated
 set ZIP_EXIT=%ERRORLEVEL%
@@ -97,8 +111,9 @@ echo   Full Verification Pipeline Summary
 echo ==============================================================
 echo   1. Stack Health:              ACTIVE
 echo   2. Playwright E2E Suite:      %E2E_STATUS%
-echo   3. Persona Profile Auditor:   %AUDIT_STATUS%
-echo   4. Review Archive:            %ZIP_STATUS%
+echo   3. Backend Test Suites:       %BACKEND_STATUS%
+echo   4. Persona Profile Auditor:   %AUDIT_STATUS%
+echo   5. Review Archive:            %ZIP_STATUS%
 echo ==============================================================
 echo   All test logs, traces, and fresh history entries from THIS
 echo   run have been bundled into review-package.zip.
@@ -106,7 +121,8 @@ echo ==============================================================
 echo.
 
 if "%~1"=="" pause
-if %E2E_EXIT% neq 0 exit /b %E2E_EXIT%
-if %AUDIT_EXIT% neq 0 exit /b %AUDIT_EXIT%
-if %ZIP_EXIT% neq 0 exit /b %ZIP_EXIT%
+if %E2E_EXIT% neq 0 exit /b 1
+if %BACKEND_EXIT% neq 0 exit /b 1
+if %AUDIT_EXIT% neq 0 exit /b 1
+if %ZIP_EXIT% neq 0 exit /b 1
 exit /b 0

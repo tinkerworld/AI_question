@@ -28,6 +28,7 @@ if %ERRORLEVEL% equ 1 (
 
 REM --- 1. Migrate Database Schema ---
 echo [1/2] Initializing embedded PostgreSQL 16 database and running migrations...
+if exist "%~dp0postgres-data" rmdir /s /q "%~dp0postgres-data" >nul 2>&1
 pushd Exam
 call node packages/database/prisma/migrate-postgres.js
 if %ERRORLEVEL% neq 0 (

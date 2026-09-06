@@ -144,6 +144,22 @@ export class EntitlementService {
     const planTier = await this.getEffectiveUserPlan(userId, authContext);
     const customRules = await this.getCustomEntitlementRules();
 
+    // Check active promotional window
+    const activePromos = await this.getActivePromotions();
+    const matchingPromo = (activePromos as any[]).find((p: any) => p.featureKey === key);
+    if (matchingPromo) {
+      return {
+        allowed: true,
+        key,
+        planTier,
+        limit: null,
+        value: true,
+        currentUsage: 0,
+        remaining: null,
+        reason: `Unlocked via active promotional window: ${matchingPromo.description || 'Promotional trial'}`,
+      };
+    }
+
     const currentUsage =
       currentUsageOverride !== undefined
         ? currentUsageOverride
@@ -279,5 +295,193 @@ export class EntitlementService {
       customRules
     );
     return Number(resolved.value) || 5;
+  }
+
+  // ==========================================================================
+  // Phase 15: Feature Registry, Dynamic Matrix & Promotional Entitlements
+  // ==========================================================================
+
+  /**
+   * List all registered features from feature_registry.
+   */
+  static async listRegisteredFeatures(): Promise<any[]> {
+    const res = await pgDb.query(
+      `SELECT * FROM "feature_registry" ORDER BY "category" ASC, "name" ASC`
+    );
+    return res.rows;
+  }
+
+  /**
+   * Register a new feature in the feature_registry.
+   */
+  static async createFeatureRegistryItem(data: {
+    key: string;
+    name: string;
+    type?: 'BOOLEAN' | 'NUMBER';
+    defaultValue?: string;
+    category?: string;
+    description: string;
+  }): Promise<any> {
+    const id = `feat_${data.key.trim()}`;
+    const res = await pgDb.query(
+      `INSERT INTO "feature_registry" ("id", "key", "name", "type", "defaultValue", "category", "description")
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       ON CONFLICT ("key") DO UPDATE SET
+         "name" = EXCLUDED."name",
+         "type" = EXCLUDED."type",
+         "defaultValue" = EXCLUDED."defaultValue",
+         "category" = EXCLUDED."category",
+         "description" = EXCLUDED."description"
+       RETURNING *`,
+      [
+        id,
+        data.key.trim(),
+        data.name.trim(),
+        data.type || 'BOOLEAN',
+        data.defaultValue || 'false',
+        data.category || 'general',
+        data.description.trim(),
+      ]
+    );
+    return res.rows[0];
+  }
+
+  /**
+   * List all active and historical promotional rules.
+   */
+  static async listPromotions(): Promise<any[]> {
+    const res = await pgDb.query(
+      `SELECT * FROM "promotional_entitlement_rules" ORDER BY "startsAt" DESC`
+    );
+    return res.rows.map((r: any) => ({
+      id: r.id,
+      featureKey: r.featureKey,
+      courseId: r.courseId,
+      startsAt: r.startsAt ? new Date(r.startsAt).toISOString() : '',
+      expiresAt: r.expiresAt ? new Date(r.expiresAt).toISOString() : '',
+      isActive: Boolean(r.isActive),
+      description: r.description,
+      createdAt: r.createdAt ? new Date(r.createdAt).toISOString() : '',
+    }));
+  }
+
+  /**
+   * Fetch currently active promotional rules (now >= startsAt and now <= expiresAt).
+   */
+  static async getActivePromotions(): Promise<any[]> {
+    const res = await pgDb.query(
+      `SELECT * FROM "promotional_entitlement_rules"
+       WHERE "isActive" = true
+         AND "startsAt" <= CURRENT_TIMESTAMP
+         AND "expiresAt" >= CURRENT_TIMESTAMP`
+    );
+    return res.rows;
+  }
+
+  /**
+   * Create a date-based promotional access window.
+   */
+  static async createPromotion(data: {
+    featureKey: string;
+    courseId?: string;
+    startsAt?: string;
+    expiresAt: string;
+    description?: string;
+  }): Promise<any> {
+    const id = `promo_${crypto.randomBytes(6).toString('hex')}`;
+    const startsAt = data.startsAt ? new Date(data.startsAt) : new Date();
+    const expiresAt = new Date(data.expiresAt);
+
+    const res = await pgDb.query(
+      `INSERT INTO "promotional_entitlement_rules" ("id", "featureKey", "courseId", "startsAt", "expiresAt", "isActive", "description")
+       VALUES ($1, $2, $3, $4, $5, true, $6)
+       RETURNING *`,
+      [id, data.featureKey.trim(), data.courseId || null, startsAt, expiresAt, data.description || 'Promotional Free Window']
+    );
+    return res.rows[0];
+  }
+
+  /**
+   * Get dynamic plan matrix comparing features across FREE, PREMIUM, PREMIUM_PLUS.
+   */
+  static async getDynamicMatrix(): Promise<any> {
+    const features = await this.listRegisteredFeatures();
+    const rules = await this.listAllEntitlements();
+    const promotions = await this.listPromotions();
+
+    const plans: Record<string, Record<string, any>> = {
+      FREE: {},
+      PREMIUM: {},
+      PREMIUM_PLUS: {},
+    };
+
+    const tiers = ['FREE', 'PREMIUM', 'PREMIUM_PLUS'] as const;
+    for (const tier of tiers) {
+      for (const f of features) {
+        // Find override rule or fall back to default
+        const rule = rules.find((r) => r.planCode === tier && r.entitlementKey === f.key);
+        if (rule) {
+          plans[tier][f.key] = f.type === 'NUMBER' ? Number(rule.entitlementValue) : rule.entitlementValue === 'true';
+        } else {
+          // Check baseline config
+          const baseline = BASELINE_PLAN_CONFIGS[tier]?.entitlements?.[f.key];
+          plans[tier][f.key] = baseline !== undefined ? baseline : (f.type === 'NUMBER' ? Number(f.defaultValue) : f.defaultValue === 'true');
+        }
+      }
+    }
+
+    return {
+      features,
+      plans,
+      promotions,
+    };
+  }
+
+  /**
+   * Consolidated evaluated feature status for caller.
+   */
+  static async getMyStatus(
+    userId: string,
+    authContext?: any
+  ): Promise<any> {
+    const planTier = await this.getEffectiveUserPlan(userId, authContext);
+    const registered = await this.listRegisteredFeatures();
+    const activePromos = await this.getActivePromotions();
+    const customRules = await this.getCustomEntitlementRules();
+    const features: Record<string, any> = {};
+
+    for (const feat of registered) {
+      const promo = activePromos.find((p) => p.featureKey === feat.key);
+      if (promo) {
+        features[feat.key] = {
+          allowed: true,
+          key: feat.key,
+          planTier,
+          limit: null,
+          value: true,
+          isPromotional: true,
+          reason: promo.description || 'Promotional Free Access Window',
+        };
+        continue;
+      }
+
+      const evalRes = EntitlementEngine.evaluateEntitlement(
+        planTier,
+        feat.key as any,
+        0,
+        customRules
+      );
+      features[feat.key] = {
+        allowed: evalRes.allowed,
+        key: feat.key,
+        planTier,
+        limit: evalRes.limit,
+        value: evalRes.value,
+        isPromotional: false,
+        reason: evalRes.reason,
+      };
+    }
+
+    return { planTier, features, activePromotions: activePromos };
   }
 }

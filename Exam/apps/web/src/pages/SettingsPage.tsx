@@ -3,6 +3,8 @@ import { getAuthHeaders } from '../utils/api';
 import { useTheme } from '../context/ThemeContext';
 import { ThemeMode } from '@repo/types';
 import { API_BASE } from '../config/api';
+import { MaintenanceControlPanel } from '../components/maintenance/MaintenanceControlPanel';
+import { FeatureMatrixEditor } from '../components/entitlements/FeatureMatrixEditor';
 
 interface AIProvider {
   id: string;
@@ -20,7 +22,7 @@ interface AIProvider {
 
 export const SettingsPage: React.FC = () => {
   const { theme, setTheme } = useTheme();
-  const [activeSubtab, setActiveSubtab] = useState<'AI' | 'APPEARANCE' | 'EXAM_THEMES'>('AI');
+  const [activeSubtab, setActiveSubtab] = useState<'AI' | 'APPEARANCE' | 'EXAM_THEMES' | 'MAINTENANCE' | 'ENTITLEMENTS'>('AI');
   type ScopeFilterType =
     | 'ALL'
     | 'question_generation'
@@ -385,6 +387,9 @@ export const SettingsPage: React.FC = () => {
                   fontSize: '12px',
                 }}
               />
+              <span style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px', display: 'block' }}>
+                🔒 AES-256 encrypted at rest in server database
+              </span>
             </div>
           )}
         </div>
@@ -569,6 +574,50 @@ export const SettingsPage: React.FC = () => {
         >
           <span>📝</span>
           <span>Exam Paper Themes</span>
+        </button>
+
+        <button
+          id="settings-subtab-maintenance"
+          data-testid="settings-subtab-maintenance"
+          onClick={() => setActiveSubtab('MAINTENANCE')}
+          style={{
+            padding: '8px 16px',
+            borderRadius: '6px',
+            border: activeSubtab === 'MAINTENANCE' ? '1px solid #f59e0b' : '1px solid transparent',
+            background: activeSubtab === 'MAINTENANCE' ? 'rgba(245, 158, 11, 0.15)' : 'transparent',
+            color: activeSubtab === 'MAINTENANCE' ? '#f59e0b' : 'var(--text-main)',
+            fontWeight: activeSubtab === 'MAINTENANCE' ? 'bold' : 'normal',
+            fontSize: '13px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+          }}
+        >
+          <span>🛠️</span>
+          <span>System Maintenance</span>
+        </button>
+
+        <button
+          id="settings-subtab-entitlements"
+          data-testid="settings-subtab-entitlements"
+          onClick={() => setActiveSubtab('ENTITLEMENTS')}
+          style={{
+            padding: '8px 16px',
+            borderRadius: '6px',
+            border: activeSubtab === 'ENTITLEMENTS' ? '1px solid #8b5cf6' : '1px solid transparent',
+            background: activeSubtab === 'ENTITLEMENTS' ? 'rgba(139, 92, 246, 0.15)' : 'transparent',
+            color: activeSubtab === 'ENTITLEMENTS' ? '#8b5cf6' : 'var(--text-main)',
+            fontWeight: activeSubtab === 'ENTITLEMENTS' ? 'bold' : 'normal',
+            fontSize: '13px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+          }}
+        >
+          <span>💎</span>
+          <span>Feature Matrix & Entitlements</span>
         </button>
       </div>
 
@@ -992,6 +1041,16 @@ export const SettingsPage: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* SUBTAB 4: SYSTEM MAINTENANCE */}
+      {activeSubtab === 'MAINTENANCE' && (
+        <MaintenanceControlPanel />
+      )}
+
+      {/* SUBTAB 5: FEATURE ENTITLEMENTS MATRIX */}
+      {activeSubtab === 'ENTITLEMENTS' && (
+        <FeatureMatrixEditor />
       )}
     </div>
   );

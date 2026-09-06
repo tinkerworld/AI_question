@@ -98,10 +98,12 @@ async function applyMigration() {
   `);
 
   console.log('Phase 5 tables created successfully in PostgreSQL!');
+  await pgDb.close();
   process.exit(0);
 }
 
-applyMigration().catch((e) => {
+applyMigration().catch(async (e) => {
   console.error(e);
+  try { await pgDb.close(); } catch {}
   process.exit(1);
 });

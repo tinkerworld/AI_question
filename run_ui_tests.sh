@@ -9,6 +9,11 @@ set -e
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TOOLDIR="$REPO_ROOT/tools/e2e-tester"
 
+if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" || "$(uname -s)" =~ MINGW|MSYS ]]; then
+    MSYS_NO_PATHCONV=1 cmd.exe /c run_ui_tests.bat "$@"
+    exit $?
+fi
+
 if [ ! -d "$TOOLDIR/node_modules" ]; then
     echo ""
     echo "ERROR: e2e tester dependencies not installed yet."

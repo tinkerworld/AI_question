@@ -7,7 +7,9 @@ export type BuiltInQuestionType =
   | 'NUMERICAL'
   | 'MATCHING'
   | 'SUBJECTIVE'
-  | 'INTERVIEW';
+  | 'INTERVIEW'
+  | 'LISTENING'
+  | 'WRITING';
 
 export interface InterviewEvidenceQuote {
   turnNumber: number;
@@ -417,6 +419,206 @@ export class InterviewHandler implements QuestionTypeHandler<InterviewQuestionDa
 }
 
 // ============================================================================
+// 10. LISTENING HANDLER (Phase 15 - LISTENING-01)
+// ============================================================================
+export interface ListeningSubQuestion {
+  id: string;
+  type: 'MCQ' | 'FILL_IN_BLANK' | 'MATCHING' | 'SHORT_ANSWER';
+  prompt: string;
+  marks: number;
+  options?: { id: string; text: string }[];
+  correctOptionId?: string;
+  blankKey?: string;
+  pairs?: { left: string; right: string }[];
+}
+
+export interface ListeningQuestionData {
+  audioSource: 'SYNTHESIZED' | 'UPLOADED';
+  audioUrl?: string;
+  audioScript?: string;
+  voiceProfileId?: string;
+  playbackLimit?: number;
+  allowPause?: boolean;
+  subQuestions: ListeningSubQuestion[];
+}
+
+export class ListeningHandler implements QuestionTypeHandler<ListeningQuestionData, Record<string, any>> {
+  type = 'LISTENING';
+
+  validate(data: ListeningQuestionData): boolean {
+    if (!data) return false;
+    const hasAudio = Boolean(data.audioUrl || data.audioScript);
+    if (!hasAudio) return false;
+    if (!Array.isArray(data.subQuestions) || data.subQuestions.length === 0) return false;
+    for (const sq of data.subQuestions) {
+      if (!sq.id || !sq.prompt || typeof sq.marks !== 'number') return false;
+    }
+    return true;
+  }
+
+  evaluate(data: ListeningQuestionData, userAnswer: Record<string, any>): EvaluationResult {
+    if (!userAnswer || typeof userAnswer !== 'object') {
+      return { isCorrect: false, score: 0, feedback: 'No answers provided for listening sub-questions' };
+    }
+
+    let totalMarks = 0;
+    let earnedMarks = 0;
+    const details: string[] = [];
+
+    for (const sq of data.subQuestions) {
+      totalMarks += sq.marks;
+      const ans = userAnswer[sq.id];
+      if (ans === undefined || ans === null) {
+        details.push(`${sq.id}: Unanswered`);
+        continue;
+      }
+
+      if (sq.type === 'MCQ') {
+        const correct = String(ans) === sq.correctOptionId;
+        if (correct) {
+          earnedMarks += sq.marks;
+          details.push(`${sq.id}: Correct`);
+        } else {
+          details.push(`${sq.id}: Incorrect`);
+        }
+      } else if (sq.type === 'FILL_IN_BLANK') {
+        const correct = String(ans).trim().toLowerCase() === String(sq.blankKey || '').trim().toLowerCase();
+        if (correct) {
+          earnedMarks += sq.marks;
+          details.push(`${sq.id}: Correct`);
+        } else {
+          details.push(`${sq.id}: Incorrect`);
+        }
+      } else {
+        const correct = String(ans).trim().toLowerCase() === String(sq.blankKey || sq.correctOptionId || '').trim().toLowerCase();
+        if (correct) {
+          earnedMarks += sq.marks;
+          details.push(`${sq.id}: Correct`);
+        } else {
+          details.push(`${sq.id}: Incorrect`);
+        }
+      }
+    }
+
+    const normalized = totalMarks > 0 ? earnedMarks / totalMarks : 0;
+    return {
+      isCorrect: normalized === 1,
+      score: Number(normalized.toFixed(3)),
+      feedback: `Listening score: ${earnedMarks}/${totalMarks} (${details.join(', ')})`,
+    };
+  }
+
+  serialize(data: ListeningQuestionData): Record<string, any> {
+    return {
+      audioSource: data.audioSource,
+      audioUrl: data.audioUrl,
+      audioScript: data.audioScript,
+      voiceProfileId: data.voiceProfileId,
+      playbackLimit: data.playbackLimit ?? 2,
+      allowPause: data.allowPause ?? true,
+      subQuestions: data.subQuestions,
+    };
+  }
+
+  deserialize(json: any): ListeningQuestionData {
+    return {
+      audioSource: json.audioSource || 'SYNTHESIZED',
+      audioUrl: json.audioUrl,
+      audioScript: json.audioScript,
+      voiceProfileId: json.voiceProfileId,
+      playbackLimit: Number(json.playbackLimit || 2),
+      allowPause: json.allowPause !== false,
+      subQuestions: json.subQuestions || [],
+    };
+  }
+}
+
+// ============================================================================
+// 11. WRITING HANDLER (Phase 15 - WRITING-01)
+// ============================================================================
+export interface WritingRubricCriterion {
+  id: string;
+  name: string;
+  maxScore: number;
+  weight: number;
+  description?: string;
+}
+
+export interface WritingQuestionData {
+  promptText: string;
+  promptImageUrl?: string;
+  minWordCount: number;
+  maxWordCount: number;
+  timeLimitMinutes?: number;
+  rubric: WritingRubricCriterion[];
+  preset?: 'IELTS_TASK_1' | 'IELTS_TASK_2' | 'TOEFL_INDEPENDENT' | 'ACADEMIC_ESSAY' | 'CUSTOM' | string;
+}
+
+export class WritingHandler implements QuestionTypeHandler<WritingQuestionData, string> {
+  type = 'WRITING';
+
+  validate(data: WritingQuestionData): boolean {
+    if (!data) return false;
+    if (!data.promptText || typeof data.promptText !== 'string') return false;
+    if (typeof data.minWordCount !== 'number' || data.minWordCount < 0) return false;
+    if (typeof data.maxWordCount !== 'number' || data.maxWordCount < data.minWordCount) return false;
+    if (!Array.isArray(data.rubric) || data.rubric.length === 0) return false;
+    return true;
+  }
+
+  evaluate(data: WritingQuestionData, userAnswer: string): EvaluationResult {
+    const text = String(userAnswer || '').trim();
+    if (!text) {
+      return {
+        isCorrect: false,
+        score: 0,
+        feedback: 'Submission was blank (0 words). Minimum required: ' + data.minWordCount,
+      };
+    }
+
+    const words = text.split(/\s+/).filter(Boolean);
+    const wordCount = words.length;
+
+    let lengthPenalty = 0;
+    if (wordCount < data.minWordCount) {
+      const deficit = data.minWordCount - wordCount;
+      lengthPenalty = Math.min(0.5, deficit / data.minWordCount);
+    }
+
+    const baselineScore = Math.max(0.1, 1 - lengthPenalty);
+    return {
+      isCorrect: wordCount >= data.minWordCount,
+      score: Number(baselineScore.toFixed(3)),
+      feedback: `Written submission recorded: ${wordCount} words (Requirement: ${data.minWordCount}-${data.maxWordCount} words). AI diagnostic evaluation queued.`,
+    };
+  }
+
+  serialize(data: WritingQuestionData): Record<string, any> {
+    return {
+      promptText: data.promptText,
+      promptImageUrl: data.promptImageUrl,
+      minWordCount: data.minWordCount,
+      maxWordCount: data.maxWordCount,
+      timeLimitMinutes: data.timeLimitMinutes,
+      rubric: data.rubric,
+      preset: data.preset,
+    };
+  }
+
+  deserialize(json: any): WritingQuestionData {
+    return {
+      promptText: json.promptText || '',
+      promptImageUrl: json.promptImageUrl,
+      minWordCount: Number(json.minWordCount || 150),
+      maxWordCount: Number(json.maxWordCount || 300),
+      timeLimitMinutes: json.timeLimitMinutes ? Number(json.timeLimitMinutes) : undefined,
+      rubric: json.rubric || [],
+      preset: json.preset,
+    };
+  }
+}
+
+// ============================================================================
 // PLUGGABLE QUESTION TYPE REGISTRY ENGINE
 // ============================================================================
 export class QuestionTypeRegistry {
@@ -433,6 +635,8 @@ export class QuestionTypeRegistry {
     this.registerType(MatchingHandler);
     this.registerType(SubjectiveHandler);
     this.registerType(new InterviewHandler());
+    this.registerType(new ListeningHandler());
+    this.registerType(new WritingHandler());
   }
 
   public registerType(handler: QuestionTypeHandler): void {

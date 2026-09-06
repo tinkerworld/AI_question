@@ -86,9 +86,12 @@ async function migratePhase12() {
   `);
 
   console.log('Phase 12 Schema Migration Completed Successfully!');
+  await db.close();
+  process.exit(0);
 }
 
-migratePhase12().catch((e) => {
+migratePhase12().catch(async (e) => {
   console.error('Phase 12 Migration failed:', e);
+  try { await db.close(); } catch {}
   process.exit(1);
 });

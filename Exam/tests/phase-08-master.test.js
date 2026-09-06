@@ -1,3 +1,4 @@
+// Runner: node tests/phase-08-master.test.js
 const http = require('http');
 
 const API_BASE = process.env.API_BASE || 'http://localhost:4043/api/v1';
