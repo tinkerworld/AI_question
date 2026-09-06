@@ -1663,4 +1663,139 @@ export interface ProcessRefundRequestDTO {
   clawbackCredits?: boolean;
 }
 
+// ============================================================================
+// Phase 15 V2 Types: Maintenance, Entitlements, Vocab, Audio & Writing
+// ============================================================================
+
+export interface MaintenanceConfigDTO {
+  id: string;
+  scope: 'GLOBAL' | 'FEATURE';
+  featureKey?: string | null;
+  isActive: boolean;
+  message: string;
+  scheduledStart?: string | null;
+  scheduledEnd?: string | null;
+  allowedRoles: string[];
+  updatedBy?: string | null;
+  updatedAt: string;
+}
+
+export interface MaintenanceStatusDTO {
+  isGlobalMaintenance: boolean;
+  globalMessage?: string;
+  features: Record<
+    string,
+    {
+      isUnderMaintenance: boolean;
+      message: string;
+      estimatedEnd?: string | null;
+    }
+  >;
+}
+
+export interface FeatureRegistryItemDTO {
+  id: string;
+  key: string;
+  name: string;
+  type: 'BOOLEAN' | 'NUMBER';
+  defaultValue: string;
+  category: string;
+  description: string;
+  createdAt: string;
+}
+
+export interface PromotionalEntitlementRuleDTO {
+  id: string;
+  featureKey: string;
+  courseId?: string | null;
+  startsAt: string;
+  expiresAt: string;
+  isActive: boolean;
+  description?: string | null;
+  createdAt: string;
+}
+
+export interface DynamicPlanMatrixDTO {
+  features: FeatureRegistryItemDTO[];
+  plans: Record<string, Record<string, string | number | boolean>>;
+  promotions: PromotionalEntitlementRuleDTO[];
+}
+
+export interface VocabularyWordDTO {
+  id: string;
+  word: string;
+  phonetic?: string;
+  partOfSpeech?: string;
+  definition: string;
+  exampleSentence?: string;
+  synonyms: string[];
+  antonyms: string[];
+  difficulty: string;
+  audioUrl?: string;
+  courseId?: string;
+  syllabusNodeId?: string;
+  createdAt: string;
+}
+
+export interface StudentVocabularyProgressDTO {
+  id: string;
+  userId: string;
+  wordId: string;
+  masteryLevel: 'LEARNING' | 'WEAK' | 'FAMILIAR' | 'MASTERED';
+  repetitionCount: number;
+  easinessFactor: number;
+  intervalDays: number;
+  nextReviewDue: string;
+  lastPracticedAt?: string;
+  word?: VocabularyWordDTO;
+}
+
+export interface AudioVoiceProfileDTO {
+  id: string;
+  name: string;
+  provider: string;
+  voiceId: string;
+  accent: string;
+  gender: string;
+  sampleAudioUrl?: string;
+  isDefault: boolean;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface WritingRubricCriterionDTO {
+  id: string;
+  name: string;
+  maxScore: number;
+  weight: number;
+  description?: string;
+}
+
+export interface WritingEvaluationResultDTO {
+  overallScore: number;
+  maxScore: number;
+  band: string;
+  wordCount: number;
+  wordCountCompliant: boolean;
+  criteriaScores: Array<{
+    id: string;
+    name: string;
+    score: number;
+    maxScore: number;
+    feedback: string;
+  }>;
+  grammarFeedback: Array<{
+    quote: string;
+    issue: string;
+    suggestion: string;
+  }>;
+  vocabularySuggestions: Array<{
+    word: string;
+    betterAlternative: string;
+    context: string;
+  }>;
+  overallFeedback: string;
+}
+
+
 

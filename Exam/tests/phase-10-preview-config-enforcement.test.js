@@ -1,3 +1,4 @@
+// Runner: node tests/phase-10-preview-config-enforcement.test.js
 const assert = require('assert');
 
 const API_BASE = process.env.API_BASE || 'http://localhost:4043/api/v1';
@@ -29,8 +30,9 @@ async function runTests() {
   });
   const allCoursesData = await allCoursesRes.json();
   assert.ok(allCoursesData.data.length >= 2, 'Need at least 2 courses for testing courseAccess filtering');
-  const courseA = allCoursesData.data[0];
-  const courseB = allCoursesData.data[1];
+  const publishedCourses = allCoursesData.data.filter((c) => c.status === 'PUBLISHED');
+  const courseA = publishedCourses[0] || allCoursesData.data[0];
+  const courseB = publishedCourses[1] || allCoursesData.data[1];
   console.log(`   ✓ Course A: ${courseA.name} (${courseA.id})`);
   console.log(`   ✓ Course B: ${courseB.name} (${courseB.id})\n`);
 

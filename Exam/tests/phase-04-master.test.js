@@ -1,3 +1,4 @@
+// Runner: node tests/phase-04-master.test.js
 const http = require('http');
 const jwt = require('jsonwebtoken');
 const path = require('path');

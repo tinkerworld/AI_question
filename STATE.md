@@ -1,9 +1,18 @@
 # ExamOS Build State
 
-**Last updated:** 2026-08-24T19:50:00+05:30  
-**Current phase:** Phase 13 — Subscriptions & Entitlements (Entitlement Engine `@repo/entitlement-engine`, Subscription Plans & Upgrades, AI Credits, Pluggable Billing Adapter, Refund Engine & Clawback, Preview Mode Billing, Free Tier Boundary Enforcement) — **COMPLETED & FULLY TESTED**  
+**Last updated:** 2026-09-06T18:20:00+05:30  
+**Current phase:** Phase 15 — ExamOS V2 Language Learning, Retention & Platform Management (15.1 Listening Question Type, 15.2 Writing Question Type, 15.5 Vocabulary Retention & SM-2 Drills, 15.14 Centralized Maintenance Engine, 15.15 Feature Registry & Promotional Windows) — **BATCH 1 IMPLEMENTED, RE-VERIFIED & FULL PIPELINE PASSING (100%)**  
+**Pipeline Verification Status:**
+- **Stack Health**: `ACTIVE` (Frontend Port 3000 & API Server Port 4043)
+- **Playwright E2E Suite**: `PASSED` (**78 / 78 tests passing, 100%**)
+- **Canonical Backend Test Runner**: `PASSED` (**20 / 20 test suites passing, 100%**)
+- **Persona Security Auditor**: `PASSED` (**4 / 4 persona suites passing, 100%**)
+- **Review Package**: `GENERATED` (`review-package.zip`, 29 MiB clean archive)
+- **Tooling Parity**: Strict 1:1 `.bat` and `.sh` synchronization across all 16 script twins with executable permissions.
 **Task Status:**
-- **Phase 13 Tasks (13.1 to 13.8)**: `tested` in `tools/build-tracker/state.json` (Implemented, verified across Phase 13 Master Backend Suite + Playwright E2E UI Tests + Full 14-Suite Master Regression Suite).
+- **Phase 15 Tasks (15.1, 15.2, 15.5, 15.14, 15.15)**: `tested` in `tools/build-tracker/state.json` (Graceful PGlite close bug resolved in `seed.ts` and `migrate-postgres.js`, fresh wipe & seed verified, Phase 15 Master Integration Suite `phase-15-v2-master.test.js` executed live with 5/5 PASSED).
+- **Phase 15 Patches (15.3, 15.4)**: `done` in `tools/build-tracker/state.json` (Decoupled behavioral prompts, evidence-grounded rubric grading).
+- **Phase 13 Tasks (13.1 to 13.8)**: `tested` in `tools/build-tracker/state.json` (Implemented, verified across Phase 13 Master Backend Suite + Playwright E2E UI Tests + Full 14-Suite Master Regression Suite). Teardown student plan restoration added to prevent downstream mock test entitlement exhaustion.
 - **Phase 12 Tasks (12.1 to 12.11)**: `tested` in `tools/build-tracker/state.json` (Implemented, verified across Phase 12 Master Backend Suite + Playwright E2E UI Tests + Full 12-Suite Master Regression Suite).
 - **Phase 11 Tasks (11.1 to 11.9)**: `tested` in `tools/build-tracker/state.json` (Implemented, verified across Phase 11 Master Backend Suite + Multi-Provider Stacking + Daily Caps + Frontend Tests).
 - **Phase 10 Tasks (10.1 to 10.7)**: `tested` in `tools/build-tracker/state.json` (Implemented, verified across Phase 10 Master Backend Suite + Playwright E2E UI Tests).
@@ -17,6 +26,126 @@
 - **Task 3.7 (Question Bank Frontend)**: `tested` in `tools/build-tracker/state.json`.
 
 ---
+
+## 0. Phase 15: V2 Expansion (Language Learning, Retention & Platform Management)
+
+Phase 15 expands ExamOS from STEM assessment into comprehensive language learning, spaced retention drilling, multi-tier feature governance, and operational resilience.
+
+### 0.1 Task 15.14: Centralized Feature-Level & Global Maintenance Engine (`MAINTENANCE-01`)
+- **Backend & Middleware**:
+  - `maintenance_configs` table supporting `GLOBAL` and `FEATURE` scopes with scheduled end times, audit reasons, and allowed bypass roles.
+  - In-memory `MaintenanceService` caching with 5-second TTL to avoid database overhead on high-throughput paths.
+  - Express `maintenance.middleware.ts` returning HTTP `503 Service Unavailable` with `Retry-After: 300` header and `FEATURE_MAINTENANCE` error code for non-elevated user traffic.
+  - Staff bypass check granting immediate access to `MAIN_ADMIN`, `SUB_ADMIN`, or tokens with `system.maintenance` permission.
+  - REST endpoints mounted at `/api/v1/maintenance` (`GET /status`, `GET /configs`, `PUT /global`, `PUT /features/:key`, `DELETE /:key`).
+- **Frontend Components**:
+  - `MaintenanceControlPanel.tsx`: Admin interface under Settings with emergency global lockdown switch, duration picker, and feature rule table.
+  - `FeatureMaintenanceWrapper.tsx`: Graceful inline offline card replacing gated features when under maintenance.
+  - `MaintenanceBanner.tsx`: Persistent amber/red banner warning students and educators of scheduled maintenance.
+
+### 0.2 Task 15.15: Dynamic Feature Registry & Promotional Windows (`ENTITLEMENT-PATCH-01`)
+- **Backend & Data Layer**:
+  - `feature_registry` table registering features with data types, default values, categories, and descriptions.
+  - `promotional_entitlement_rules` table enabling date-delimited promotional access windows for individual features or courses.
+  - Extended `EntitlementService` to evaluate active promotional rules prior to plan matrix limits, granting temporary promotional access to free-tier users.
+  - Endpoints for matrix querying and promotional rule management (`GET /api/v1/entitlements/matrix`, `POST /api/v1/entitlements/promotions`, `DELETE /api/v1/entitlements/promotions/:id`).
+- **Frontend Components**:
+  - `PremiumGuardrail.tsx`: Paywall boundary wrapper with configurable blur, custom copy, and instant upgrade dispatch.
+  - `PromotionalBanner.tsx`: Header notification highlighting active trial windows with countdown timers.
+  - `FeatureMatrixEditor.tsx`: Admin plan matrix configuration grid rendered under Settings -> Feature Matrix & Entitlements.
+
+### 0.3 Task 15.1: Listening Question Type, Audio Engine & Exam Player (`LISTENING-01`)
+- **Core Architecture**:
+  - Registered `LISTENING` in `@repo/question-types` with `ListeningHandler` supporting multi-part audio questions, replay count bounds, playback speed options, and scoring.
+  - `audio_voice_profiles` table populated with default regional accents (British RP, General American, Australian, Indian English).
+  - `AudioConfigService` providing voice retrieval, profile creation, and transient synthetic passage generation.
+  - Endpoints mounted at `/api/v1/audio` (`GET /voices`, `POST /voices`, `POST /synthesize-preview`).
+- **Frontend Components**:
+  - `ExamAudioPlayer.tsx`: Exam-safe audio player enforcing strict replay limits, speed toggles (0.75x, 1.0x, 1.25x), progress scrubber, optional review transcript toggle, and window blur / tab switch auto-pause security enforcement.
+  - `ListeningAuthoringPanel.tsx`: Question authoring panel with TTS script editor, accent selector, and live preview.
+
+### 0.4 Task 15.2: Writing Question Type, Word Count Compliance & AI Evaluator (`WRITING-01`)
+- **Core Architecture**:
+  - Registered `WRITING` in `@repo/question-types` with `WritingHandler` enforcing word count compliance and rubric-based grading.
+  - `WritingEvaluationService` with built-in standard rubrics (IELTS Task 1, IELTS Task 2, TOEFL Independent, Academic Essay).
+  - Multi-rubric scoring analyzing Task Achievement, Coherence & Cohesion, Lexical Resource, and Grammatical Accuracy, returning overall band score, criteria scores, grammar highlights, and vocabulary upgrade suggestions.
+  - Endpoints mounted at `/api/v1/writing` (`GET /rubrics`, `POST /evaluate`).
+- **Frontend Components**:
+  - `ExamWritingEditor.tsx`: Distraction-free composition editor with real-time word/character counters, minimum/maximum target boundaries, and debounced auto-save.
+  - `WritingScorecard.tsx`: Comprehensive assessment report displaying overall score, word count compliance, and granular criteria cards wrapped in `<PremiumGuardrail>`.
+  - `WritingAuthoringPanel.tsx`: Question bank authoring panel for configuring prompt stems, stimulus context, word limits, and rubric presets.
+
+### 0.5 Task 15.5: Vocabulary Retention Engine & SuperMemo SM-2 Drills (`VOCABULARY-01`)
+- **Core Architecture**:
+  - `vocabulary_words` catalog table with phonetic transcription, part of speech, definitions, example sentences, synonyms, and difficulty ratings.
+  - `student_vocabulary_progress` table tracking spaced repetition state: `masteryLevel` (`LEARNING`, `WEAK`, `FAMILIAR`, `MASTERED`), `repetitionCount`, `easinessFactor` (EF), `intervalDays`, and `nextReviewDue`.
+  - Implemented SuperMemo SM-2 formula:
+    $$EF' = \max\left(1.3, EF + (0.1 - (5 - q) \cdot (0.08 + (5 - q) \cdot 0.02))\right)$$
+    $$I(0) = 1, \quad I(1) = 6, \quad I(n) = \text{round}(I(n-1) \cdot EF)$$
+    Resetting interval to 1 day and repetition count to 0 upon failed recall ($q < 3$).
+  - Endpoints mounted at `/api/v1/vocabulary` (`GET /words`, `POST /words`, `GET /due`, `POST /review`, `GET /stats`).
+- **Frontend Pages**:
+  - `VocabularyPracticePage.tsx`: Dedicated learning page accessible from main navigation with:
+    1. **Flashcard Mode**: 3D interactive flip revealing definitions and examples, with SM-2 self-rating buttons (Again, Hard, Good, Easy).
+    2. **Multiple Choice Mode**: 4-choice definition matching quiz with real-time feedback.
+    3. **Spelling Mode**: Active recall spelling drill.
+    4. **Mastery Statistics Bar**: Live counts for due cards today, retention rate, and total words studied.
+
+### 0.6 Phase 15 Master Integration Verification & Clean Database Test Suite
+- **PGlite Flush Fix**:
+  - Resolved embedded WASM PGlite file corruption by explicitly awaiting `pgDb.close()` / `db.close()` in `seed.ts`, `migrate-postgres.js`, and `seed-questions.js` exit handlers before `process.exit(0)` and on errors before `process.exit(1)`.
+  - Clean database wipe and fresh lifecycle re-execution passed with zero `RuntimeError: Aborted()`.
+- **Staff Bypass JWT Secret Discrepancy Fix**:
+  - Eliminated divergent fallback string `'examos_super_secret_jwt_key_2026_production'` in `apps/api/src/middleware/maintenance.middleware.ts` by importing and standardizing on the shared `JWT_SECRET` constant from `apps/api/src/middleware/auth.ts`.
+  - Audited and aligned `apps/api/src/utils/crypto.ts` to import `JWT_SECRET` from `../middleware/auth`.
+  - Verified staff bypass under feature-level maintenance: students receive HTTP 503 (`FEATURE_MAINTENANCE`), while `MAIN_ADMIN` tokens successfully bypass with HTTP 200.
+- **Live Test Suite Execution Output (`tests/phase-15-v2-master.test.js`)**:
+```
+================================================================
+🚀 RUNNING PHASE 15 (V2 FEATURES) MASTER INTEGRATION SUITE
+================================================================
+
+1. Authenticating test personas (Admin, Student)...
+   ✓ Admin and Student personas authenticated successfully
+
+2. Testing Feature 15.14: Maintenance Engine...
+   ✓ Public /maintenance/status query succeeded without authentication
+   ✓ Admin successfully listed maintenance configurations
+   ✓ Set vocabulary_practice feature maintenance to ACTIVE
+   ✓ Student blocked with HTTP 503 and FEATURE_MAINTENANCE error
+   ✓ Admin staff successfully bypassed feature maintenance
+   ✓ Restored vocabulary_practice back ONLINE
+
+3. Testing Feature 15.15: Feature Registry & Promotional Windows...
+   ✓ Dynamic Plan Matrix retrieved with registered Phase 15 features
+   ✓ Feature registry items verified
+   ✓ Promotional entitlement window created for writing_evaluator
+   ✓ Student access granted via active promotional entitlement window
+   ✓ Promotional window cleaned up
+
+4. Testing Feature 15.1: Audio Engine & Listening Questions...
+   ✓ Retrieved 4 audio voice profiles (British, American, Australian)
+   ✓ Faculty/Admin created custom voice profile: Canadian Maple
+   ✓ Synthesized transient listening passage audio preview (.mp3)
+
+5. Testing Feature 15.2: Writing Evaluator & Multi-Criteria Rubrics...
+   ✓ Retrieved standard writing rubrics (IELTS Task 2, TOEFL, Academic)
+   ✓ Short essay properly flagged as wordCountCompliant: false with penalty
+   ✓ High-quality essay evaluated: Band Band 7.0, Score: 7/9
+   ✓ Criteria scores: Task Response: 7, Coherence & Cohesion: 7, Lexical Resource: 7, Grammatical Range & Accuracy: 7
+
+6. Testing Feature 15.5: SuperMemo SM-2 Vocabulary Drills...
+   ✓ Retrieved 5 vocabulary catalog entries (Sample: Ameliorate)
+   ✓ Practice queue fetched: 5 cards available
+   ✓ SM-2 review (Quality 4): repetitionCount set to 1, next review scheduled in 1 day
+   ✓ SM-2 second review (Quality 4): repetitionCount=2, interval=6 days, mastery=FAMILIAR
+   ✓ SM-2 failed review (Quality 1): reset repetitions=0, interval=1 day, mastery=WEAK
+   ✓ Student retention stats: totalPracticed=1, weak=1
+
+================================================================
+🏁 MASTER TEST SUITE COMPLETE: 5 PASSED, 0 FAILED
+================================================================
+```
 
 ## 0. Phase 13: Subscriptions & Entitlements Architecture & Implementation
 

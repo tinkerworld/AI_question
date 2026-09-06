@@ -80,6 +80,9 @@ export const PERMISSIONS = {
   ENTITLEMENTS_MANAGE: 'entitlements.manage',
   BILLING_READ_OWN: 'billing.read_own',
   BILLING_MANAGE: 'billing.manage',
+
+  // Phase 15: V2 Core & Maintenance
+  SYSTEM_MAINTENANCE: 'system.maintenance',
 } as const;
 
 export type PermissionString = typeof PERMISSIONS[keyof typeof PERMISSIONS];
@@ -139,6 +142,7 @@ export const ROLE_PERMISSIONS_MAP: Record<string, string[]> = {
     PERMISSIONS.ENTITLEMENTS_MANAGE,
     PERMISSIONS.BILLING_READ_OWN,
     PERMISSIONS.BILLING_MANAGE,
+    PERMISSIONS.SYSTEM_MAINTENANCE,
   ],
   [SYSTEM_ROLES.TEACHER]: [
     PERMISSIONS.COURSES_READ,

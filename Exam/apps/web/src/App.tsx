@@ -17,8 +17,11 @@ import { AnalyticsPage } from './pages/AnalyticsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { InterviewPage } from './pages/InterviewPage';
 import { SubscriptionPage } from './pages/SubscriptionPage';
+import { VocabularyPracticePage } from './pages/VocabularyPracticePage';
 import { PreviewBanner } from './components/PreviewBanner';
 import { PreviewConfigurationModal } from './components/PreviewConfigurationModal';
+import { MaintenanceBanner } from './components/maintenance/MaintenanceBanner';
+import { PromotionalBanner } from './components/entitlements/PromotionalBanner';
 import { API_BASE } from './config/api';
 import './styles/theme.css';
 
@@ -32,6 +35,7 @@ const NAV_ITEMS: NavTabConfig[] = [
   { id: 'dashboard' },
   { id: 'student_exams', label: 'My Assessments & Tests', requiredPermission: 'exams.attempt' },
   { id: 'interview', label: 'AI Interview & Viva', requiredPermission: 'interview.attempt' },
+  { id: 'vocabulary', label: 'Spaced Repetition Vocab' },
   { id: 'subscription', label: 'Subscription & Credits', requiredPermission: 'subscriptions.read' },
   { id: 'analytics', label: 'Student Analytics & Mastery', requiredPermission: 'analytics.read_own' },
   { id: 'exams', label: 'Exam Generator & Papers', requiredPermission: 'exams.create' },
@@ -135,6 +139,10 @@ const MainLayout: React.FC = () => {
     <div id="app-root" style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       {/* Phase 10: Global Persistent Preview & Impersonation Banner */}
       <PreviewBanner onOpenConfig={() => setShowPreviewConfig(true)} />
+
+      {/* Phase 15: Global Maintenance Banner & Promotional Window Banner */}
+      <MaintenanceBanner />
+      <PromotionalBanner />
 
       {/* Header Bar */}
       <header
@@ -351,6 +359,7 @@ const MainLayout: React.FC = () => {
             padding:
               activeTab === 'student_exams' ||
               activeTab === 'interview' ||
+              activeTab === 'vocabulary' ||
               activeTab === 'subscription' ||
               activeTab === 'analytics' ||
               activeTab === 'exams' ||
@@ -372,6 +381,8 @@ const MainLayout: React.FC = () => {
             <StudentExamsPage />
           ) : activeTab === 'interview' ? (
             <InterviewPage />
+          ) : activeTab === 'vocabulary' ? (
+            <VocabularyPracticePage />
           ) : activeTab === 'subscription' ? (
             <SubscriptionPage />
           ) : activeTab === 'analytics' ? (

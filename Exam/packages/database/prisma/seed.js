@@ -261,11 +261,15 @@ async function runSeed() {
 }
 if (require.main === module) {
     runSeed()
-        .catch((e) => {
-        console.error(e);
-        process.exit(1);
-    })
-        .finally(async () => {
-        await prisma.$disconnect();
-    });
+        .then(async () => {
+            try { await index_1.pgDb.close(); } catch {}
+            await prisma.$disconnect();
+            process.exit(0);
+        })
+        .catch(async (e) => {
+            console.error(e);
+            try { await index_1.pgDb.close(); } catch {}
+            await prisma.$disconnect();
+            process.exit(1);
+        });
 }

@@ -1,3 +1,4 @@
+// Runner: node tests/phase-11-stacking-and-caps.test.js
 const assert = require('assert');
 
 const API_BASE = process.env.API_BASE || 'http://localhost:4043/api/v1';
@@ -105,7 +106,10 @@ async function runTests() {
   // Call route on question_generation scope: it attempts Groq (P1) -> fails -> falls back to Deterministic Mock (P999)
   const fallbackRes = await fetch(`${API_BASE}/ai/gateway/route`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      Authorization: `Bearer ${adminToken}`,
+      'Content-Type': 'application/json',
+    },
     body: JSON.stringify({
       featureKey: 'question_generation',
       scope: 'question_generation',
@@ -160,7 +164,10 @@ async function runTests() {
   // Call interview_grading scoped route: cascades through P1 (fails) -> falls back to P999 mock
   const gradingRes = await fetch(`${API_BASE}/ai/gateway/route`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      Authorization: `Bearer ${adminToken}`,
+      'Content-Type': 'application/json',
+    },
     body: JSON.stringify({
       featureKey: 'interview_evaluation',
       scope: 'interview_grading',
@@ -185,7 +192,10 @@ async function runTests() {
   // Test writing_analysis scope
   const writingRes = await fetch(`${API_BASE}/ai/gateway/route`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      Authorization: `Bearer ${adminToken}`,
+      'Content-Type': 'application/json',
+    },
     body: JSON.stringify({
       featureKey: 'writing_evaluation',
       scope: 'writing_analysis',
@@ -225,13 +235,20 @@ async function runTests() {
     headers: { Authorization: `Bearer ${teacherToken}` },
   });
   const coursesData = await coursesRes.json();
-  const targetCourse = coursesData.data[0];
-
-  const subjectsRes = await fetch(`${API_BASE}/courses/${targetCourse.id}/subjects`, {
-    headers: { Authorization: `Bearer ${teacherToken}` },
-  });
-  const subjectsData = await subjectsRes.json();
-  const realSubjectId = subjectsData.data[0].id;
+  let targetCourse;
+  let realSubjectId;
+  for (const c of (coursesData.data || [])) {
+    const subjectsRes = await fetch(`${API_BASE}/courses/${c.id}/subjects`, {
+      headers: { Authorization: `Bearer ${teacherToken}` },
+    });
+    const subjectsData = await subjectsRes.json();
+    if (subjectsData.data && subjectsData.data.length > 0) {
+      targetCourse = c;
+      realSubjectId = subjectsData.data[0].id;
+      break;
+    }
+  }
+  assert.ok(realSubjectId, 'Must find a valid subject for question generation test');
 
   // 5a. Direct generation check as teacher
   const genPayload = {

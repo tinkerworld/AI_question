@@ -82,10 +82,12 @@ async function migratePhase06() {
   `);
 
   console.log('Phase 6 Migration Completed Successfully!');
+  await db.close();
   process.exit(0);
 }
 
-migratePhase06().catch((err) => {
+migratePhase06().catch(async (err) => {
   console.error('Phase 6 Migration Failed:', err);
+  try { await db.close(); } catch {}
   process.exit(1);
 });

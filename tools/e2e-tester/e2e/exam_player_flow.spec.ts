@@ -35,13 +35,12 @@ test('Simulates a student taking an exam and submitting', async ({ page }) => {
   }
 
   // 7. Submit exam
-  const submitModalBtn = page.locator('#btn-open-submit-modal');
-  if (await submitModalBtn.isVisible().catch(() => false)) {
-    await submitModalBtn.click();
-    const confirmBtn = page.locator('#btn-confirm-submit-exam');
-    await expect(confirmBtn).toBeVisible({ timeout: 5000 });
-    await confirmBtn.click();
-  }
+  const submitModalBtn = page.locator('#btn-open-submit-modal, button:has-text("Submit Test")').first();
+  await expect(submitModalBtn).toBeVisible({ timeout: 10_000 });
+  await submitModalBtn.click();
+  const confirmBtn = page.locator('#btn-confirm-submit-exam');
+  await expect(confirmBtn).toBeVisible({ timeout: 10_000 });
+  await confirmBtn.click();
 
   // 8. Verify landing on Scorecard & Solution Analysis
   await expect(page.locator('body')).toContainText(/Scorecard|TOTAL SCORE|Assessment Scorecard/i, { timeout: 30_000 });

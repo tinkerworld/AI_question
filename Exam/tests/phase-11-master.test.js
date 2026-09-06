@@ -1,3 +1,4 @@
+// Runner: node tests/phase-11-master.test.js
 const assert = require('assert');
 
 const API_BASE = process.env.API_BASE || 'http://localhost:4043/api/v1';
@@ -48,7 +49,10 @@ async function runTests() {
   // 3a. Generate Physics Question
   const physRes = await fetch(`${API_BASE}/ai/gateway/route`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${adminToken}`,
+    },
     body: JSON.stringify({
       featureKey: 'question_generation',
       scope: 'question_authoring',
@@ -72,7 +76,10 @@ async function runTests() {
   // 3b. Generate Mathematics Question
   const mathRes = await fetch(`${API_BASE}/ai/gateway/route`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${adminToken}`,
+    },
     body: JSON.stringify({
       featureKey: 'question_generation',
       scope: 'question_authoring',
@@ -96,7 +103,10 @@ async function runTests() {
   // 3c. Generate Chemistry Question
   const chemRes = await fetch(`${API_BASE}/ai/gateway/route`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${adminToken}`,
+    },
     body: JSON.stringify({
       featureKey: 'question_generation',
       scope: 'question_authoring',
@@ -148,7 +158,7 @@ async function runTests() {
     body: JSON.stringify({
       apiKey: 'sk-proj-demo-secret-key-12345678',
       priority: 1,
-      isActive: false, // Keep inactive for CI/offline safety
+      isActive: true,
     }),
   });
   const updateProvData = await updateProvRes.json();
@@ -157,7 +167,8 @@ async function runTests() {
   console.log(`   ✓ Provider ${cloudProv.id} updated with AES-256-GCM encrypted API key (Masked: ${updateProvData.data.apiKey})`);
 
   // 4c. Test Provider Connection endpoint
-  const testConnRes = await fetch(`${API_BASE}/ai/gateway/providers/prov_mock_01/test`, {
+  const mockProv = provListData.data.find((p) => p.type === 'MOCK') || { id: 'prov_qgen_mock_01' };
+  const testConnRes = await fetch(`${API_BASE}/ai/gateway/providers/${mockProv.id}/test`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -235,13 +246,20 @@ async function runTests() {
     headers: { Authorization: `Bearer ${teacherToken}` },
   });
   const coursesData = await coursesRes.json();
-  const targetCourse = coursesData.data[0];
-
-  const subjectsRes = await fetch(`${API_BASE}/courses/${targetCourse.id}/subjects`, {
-    headers: { Authorization: `Bearer ${teacherToken}` },
-  });
-  const subjectsData = await subjectsRes.json();
-  const targetSubject = subjectsData.data[0];
+  let targetCourse;
+  let targetSubject;
+  for (const c of (coursesData.data || [])) {
+    const subjectsRes = await fetch(`${API_BASE}/courses/${c.id}/subjects`, {
+      headers: { Authorization: `Bearer ${teacherToken}` },
+    });
+    const subjectsData = await subjectsRes.json();
+    if (subjectsData.data && subjectsData.data.length > 0) {
+      targetCourse = c;
+      targetSubject = subjectsData.data[0];
+      break;
+    }
+  }
+  assert.ok(targetSubject, 'Must find a valid subject for question generation test');
   const realSubjectId = targetSubject.id;
 
   const genRes = await fetch(`${API_BASE}/ai/questions/generate`, {
