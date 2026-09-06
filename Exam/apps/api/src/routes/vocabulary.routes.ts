@@ -49,6 +49,38 @@ vocabularyRouter.post(
 );
 
 /**
+ * POST /api/v1/vocabulary/words/bulk-import
+ * Bulk import vocabulary words (Staff).
+ */
+vocabularyRouter.post(
+  '/words/bulk-import',
+  authenticate,
+  requirePermission(PERMISSIONS.QUESTIONS_CREATE),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { words, courseId } = req.body;
+      if (!Array.isArray(words) || words.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'words must be a non-empty array',
+        });
+      }
+      if (words.length > 200) {
+        return res.status(400).json({
+          success: false,
+          message: 'Maximum 200 words allowed per batch import',
+        });
+      }
+
+      const data = await VocabularyService.bulkCreateWords({ words, courseId });
+      res.json({ success: true, data });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+/**
  * GET /api/v1/vocabulary/practice-deck
  * Retrieve practice deck due for review for active user.
  */

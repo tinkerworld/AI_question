@@ -4468,6 +4468,220 @@ export async function runSeed() {
      ON CONFLICT ("userId", "syllabusNodeId") DO UPDATE SET "consecutiveCorrect" = 0, "isMastered" = false`
   );
 
+  console.log('Seeding 10 regional voice profiles (British, American, Australian, Indian, Canadian in both genders)...');
+  const seededVoices = [
+    { id: 'voice_en_gb_f_01', name: 'Emma (Received Pronunciation)', provider: 'MOCK', voiceId: 'en-GB-Neural2-A', accent: 'British', gender: 'FEMALE', isDefault: true },
+    { id: 'voice_en_gb_m_01', name: 'Arthur (Received Pronunciation)', provider: 'MOCK', voiceId: 'en-GB-Neural2-B', accent: 'British', gender: 'MALE', isDefault: false },
+    { id: 'voice_en_us_f_01', name: 'Sarah (Standard American)', provider: 'MOCK', voiceId: 'en-US-Neural2-F', accent: 'American', gender: 'FEMALE', isDefault: false },
+    { id: 'voice_en_us_m_01', name: 'James (Standard American)', provider: 'MOCK', voiceId: 'en-US-Neural2-D', accent: 'American', gender: 'MALE', isDefault: false },
+    { id: 'voice_en_au_f_01', name: 'Charlotte (Australian Native)', provider: 'MOCK', voiceId: 'en-AU-Neural2-C', accent: 'Australian', gender: 'FEMALE', isDefault: false },
+    { id: 'voice_en_au_m_01', name: 'Liam (Australian Native)', provider: 'MOCK', voiceId: 'en-AU-Neural2-B', accent: 'Australian', gender: 'MALE', isDefault: false },
+    { id: 'voice_en_in_f_01', name: 'Pooja (Indian English)', provider: 'MOCK', voiceId: 'en-IN-Neural2-D', accent: 'Indian', gender: 'FEMALE', isDefault: false },
+    { id: 'voice_en_in_m_01', name: 'Rohan (Indian English)', provider: 'MOCK', voiceId: 'en-IN-Neural2-B', accent: 'Indian', gender: 'MALE', isDefault: false },
+    { id: 'voice_en_ca_f_01', name: 'Chloe (Canadian English)', provider: 'MOCK', voiceId: 'en-CA-Neural2-A', accent: 'Canadian', gender: 'FEMALE', isDefault: false },
+    { id: 'voice_en_ca_m_01', name: 'David (Canadian English)', provider: 'MOCK', voiceId: 'en-CA-Neural2-B', accent: 'Canadian', gender: 'MALE', isDefault: false },
+  ];
+
+  for (const v of seededVoices) {
+    await pgDb.query(
+      `INSERT INTO "audio_voice_profiles" ("id", "name", "provider", "voiceId", "accent", "gender", "isDefault", "isActive")
+       VALUES ($1, $2, $3, $4, $5, $6, $7, true)
+       ON CONFLICT ("id") DO UPDATE SET "name" = EXCLUDED."name", "accent" = EXCLUDED."accent", "gender" = EXCLUDED."gender"`,
+      [v.id, v.name, v.provider, v.voiceId, v.accent, v.gender, v.isDefault]
+    );
+  }
+
+  console.log('Seeding 3 authentic IELTS Listening questions with multi-part audio passages...');
+  const listeningPassageQuestions = [
+    {
+      id: 'q_ielts_listen_01',
+      courseId: 'c3',
+      subjectId: 'sub_ielts_listening',
+      syllabusNodeId: 'top_ielts_listening',
+      type: 'LISTENING',
+      difficulty: 'EASY',
+      marks: 10.0,
+      content: 'IELTS Listening Section 1: International Student Campus Accommodation Registration Dialogue',
+      data: {
+        audioSource: 'SYNTHESIZED',
+        voiceProfileId: 'voice_en_gb_f_01',
+        playbackLimit: 2,
+        allowPause: true,
+        audioScript: 'Good morning and welcome to the Central University Housing and Accommodation Office. My name is Director Henderson. Today, I would like to outline the essential accommodation procedures for all incoming international scholars. First, all lease agreements must be countersigned prior to October 15th to secure on-campus housing. Second, utility fees including fiber internet, heating, and water are bundled at sixty-five pounds monthly. Finally, emergency maintenance requests should be dispatched via the online student portal, which operates around the clock.',
+        subQuestions: [
+          {
+            id: 'l1_sq_01',
+            type: 'FILL_IN_BLANK',
+            prompt: 'Complete the note: All lease agreements must be countersigned before ______.',
+            marks: 3.0,
+            blankKey: 'october 15th',
+          },
+          {
+            id: 'l1_sq_02',
+            type: 'MCQ',
+            prompt: 'What is the bundled monthly fee for all utilities (internet, heating, water)?',
+            marks: 3.0,
+            options: [
+              { id: 'opt_l1_a', text: '£65 per month' },
+              { id: 'opt_l1_b', text: '£45 per month' },
+              { id: 'opt_l1_c', text: '£85 per month' },
+              { id: 'opt_l1_d', text: '£100 per month' },
+            ],
+            correctOptionId: 'opt_l1_a',
+          },
+          {
+            id: 'l1_sq_03',
+            type: 'MCQ',
+            prompt: 'How should emergency maintenance requests be submitted by residents?',
+            marks: 4.0,
+            options: [
+              { id: 'opt_l1_3a', text: 'Via the 24/7 online student portal' },
+              { id: 'opt_l1_3b', text: 'By visiting the reception desk in person' },
+              { id: 'opt_l1_3c', text: 'Through weekly postal mail' },
+              { id: 'opt_l1_3d', text: 'By contacting the city municipality directly' },
+            ],
+            correctOptionId: 'opt_l1_3a',
+          },
+        ],
+      },
+    },
+    {
+      id: 'q_ielts_listen_02',
+      courseId: 'c3',
+      subjectId: 'sub_ielts_listening',
+      syllabusNodeId: 'top_ielts_listening',
+      type: 'LISTENING',
+      difficulty: 'MEDIUM',
+      marks: 10.0,
+      content: 'IELTS Listening Section 4: Marine Biology Field Research Seminar on Coral Thermal Tolerance',
+      data: {
+        audioSource: 'SYNTHESIZED',
+        voiceProfileId: 'voice_en_au_m_01',
+        playbackLimit: 2,
+        allowPause: true,
+        audioScript: 'Good afternoon, scholars. Today we examine thermal tolerance mechanisms in Indo-Pacific scleractinian corals. During prolonged marine heatwaves, elevated sea-surface temperatures disrupt the delicate symbiosis between coral hosts and photosynthetic dinoflagellates known as zooxanthellae. When cellular stress exceeds physiological thresholds, zooxanthellae are expelled, resulting in widespread bleaching. However, recent genomic assays reveal that colonies hosting clade D Symbiodiniaceae display elevated heat resistance, withstanding temperatures two degrees Celsius above baseline averages.',
+        subQuestions: [
+          {
+            id: 'l2_sq_01',
+            type: 'MCQ',
+            prompt: 'What primary consequence occurs when elevated ocean temperatures break down the coral-algal symbiosis?',
+            marks: 3.0,
+            options: [
+              { id: 'opt_l2_1a', text: 'Zooxanthellae are expelled, triggering coral bleaching' },
+              { id: 'opt_l2_1b', text: 'Coral calcification rates double instantly' },
+              { id: 'opt_l2_1c', text: 'Benthic salinity increases dramatically' },
+              { id: 'opt_l2_1d', text: 'The reef produces excess aragonite minerals' },
+            ],
+            correctOptionId: 'opt_l2_1a',
+          },
+          {
+            id: 'l2_sq_02',
+            type: 'FILL_IN_BLANK',
+            prompt: 'Fill in the blank: Coral colonies harboring ______ Symbiodiniaceae exhibit higher thermal tolerance.',
+            marks: 3.0,
+            blankKey: 'clade d',
+          },
+          {
+            id: 'l2_sq_03',
+            type: 'MCQ',
+            prompt: 'How much higher temperature can the resilient coral colonies tolerate above baseline averages?',
+            marks: 4.0,
+            options: [
+              { id: 'opt_l2_3a', text: '2 degrees Celsius' },
+              { id: 'opt_l2_3b', text: '5 degrees Celsius' },
+              { id: 'opt_l2_3c', text: '0.5 degrees Celsius' },
+              { id: 'opt_l2_3d', text: '10 degrees Celsius' },
+            ],
+            correctOptionId: 'opt_l2_3a',
+          },
+        ],
+      },
+    },
+    {
+      id: 'q_ielts_listen_03',
+      courseId: 'c3',
+      subjectId: 'sub_ielts_listening',
+      syllabusNodeId: 'top_ielts_listening',
+      type: 'LISTENING',
+      difficulty: 'HARD',
+      marks: 10.0,
+      content: 'IELTS Listening Section 3: Urban Metabolism & Decentralized Renewable Microgrid Integration',
+      data: {
+        audioSource: 'SYNTHESIZED',
+        voiceProfileId: 'voice_en_ca_f_01',
+        playbackLimit: 2,
+        allowPause: true,
+        audioScript: 'In our final session on metropolitan energy architecture, Dr. Vance and I assess decentralized renewable microgrids in high-density districts. Traditional centralized grids experience transmission dissipation exceeding eight percent over long distances. In contrast, local microgrids integrating rooftop photovoltaic arrays, bidirectional vanadium redox flow batteries, and algorithmic load balancing can operate autonomously in island mode during grid disruptions. The primary barrier remains regulatory inertia and legacy net-metering tariffs that disincentivize peer-to-peer trading between adjacent commercial properties.',
+        subQuestions: [
+          {
+            id: 'l3_sq_01',
+            type: 'MCQ',
+            prompt: 'What transmission dissipation rate is typically observed across long-distance centralized electric grids?',
+            marks: 3.0,
+            options: [
+              { id: 'opt_l3_1a', text: 'Exceeding 8 percent' },
+              { id: 'opt_l3_1b', text: 'Under 1 percent' },
+              { id: 'opt_l3_1c', text: 'Between 15 and 20 percent' },
+              { id: 'opt_l3_1d', text: 'Exactly 50 percent' },
+            ],
+            correctOptionId: 'opt_l3_1a',
+          },
+          {
+            id: 'l3_sq_02',
+            type: 'FILL_IN_BLANK',
+            prompt: 'Complete the sentence: Decentralized microgrids maintain operational autonomy during wide-area power outages by entering ______ mode.',
+            marks: 3.0,
+            blankKey: 'island',
+          },
+          {
+            id: 'l3_sq_03',
+            type: 'MCQ',
+            prompt: 'What primary institutional obstacle inhibits widespread peer-to-peer power trading between commercial buildings?',
+            marks: 4.0,
+            options: [
+              { id: 'opt_l3_3a', text: 'Regulatory inertia and legacy net-metering tariff structures' },
+              { id: 'opt_l3_3b', text: 'Lack of copper cabling in modern metropolitan centers' },
+              { id: 'opt_l3_3c', text: 'Excess solar irradiance damaging photovoltaic cells' },
+              { id: 'opt_l3_3d', text: 'Complete absence of bidirectional battery technology' },
+            ],
+            correctOptionId: 'opt_l3_3a',
+          },
+        ],
+      },
+    },
+  ];
+
+  for (const lq of listeningPassageQuestions) {
+    await pgDb.query(
+      `INSERT INTO "questions" (
+        "id", "type", "content", "data", "difficulty", "marks", "status", "version",
+        "courseId", "subjectId", "syllabusNodeId", "createdById", "createdAt", "updatedAt"
+      ) VALUES ($1, $2, $3, $4, $5, $6, 'PUBLISHED', 1, $7, $8, $9, 'usr_admin_test', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      ON CONFLICT ("id") DO UPDATE SET
+        "type" = EXCLUDED."type",
+        "content" = EXCLUDED."content",
+        "data" = EXCLUDED."data",
+        "difficulty" = EXCLUDED."difficulty",
+        "marks" = EXCLUDED."marks",
+        "status" = 'PUBLISHED',
+        "courseId" = EXCLUDED."courseId",
+        "subjectId" = EXCLUDED."subjectId",
+        "syllabusNodeId" = EXCLUDED."syllabusNodeId"`,
+      [
+        lq.id,
+        lq.type,
+        lq.content,
+        JSON.stringify(lq.data),
+        lq.difficulty,
+        lq.marks,
+        lq.courseId,
+        lq.subjectId,
+        lq.syllabusNodeId,
+      ]
+    );
+    questionCount++;
+  }
+
   console.log('================================================================');
   console.log(`✅ DATABASE SEED COMPLETE:`);
   console.log(`   - Courses: ${SEED_COURSES.length} (Engineering Entrance [JEE], Medical Entrance [NEET], IELTS Academic)`);

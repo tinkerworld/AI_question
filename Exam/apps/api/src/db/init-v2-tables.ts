@@ -1,4 +1,4 @@
-﻿import { pgDb } from '@repo/database';
+import { pgDb } from '@repo/database';
 
 export async function initV2Tables(): Promise<void> {
   try {
@@ -110,96 +110,8 @@ export async function initV2Tables(): Promise<void> {
         );
       }
     }
-
-    // Seed default voices if empty
-    const voiceCount = await pgDb.query(`SELECT COUNT(*) as count FROM "audio_voice_profiles"`);
-    if (parseInt(voiceCount.rows[0].count, 10) === 0) {
-      const defaultVoices = [
-        { id: 'voice_en_gb_01', name: 'Emma (Received Pronunciation)', provider: 'MOCK', voiceId: 'en-GB-Neural2-A', accent: 'British', gender: 'FEMALE', isDefault: true },
-        { id: 'voice_en_us_01', name: 'James (Standard General American)', provider: 'MOCK', voiceId: 'en-US-Neural2-D', accent: 'American', gender: 'MALE', isDefault: false },
-        { id: 'voice_en_au_01', name: 'Charlotte (Australian Native)', provider: 'MOCK', voiceId: 'en-AU-Neural2-C', accent: 'Australian', gender: 'FEMALE', isDefault: false },
-        { id: 'voice_en_in_01', name: 'Pooja (Indian English)', provider: 'MOCK', voiceId: 'en-IN-Neural2-D', accent: 'Indian', gender: 'FEMALE', isDefault: false },
-      ];
-
-      for (const v of defaultVoices) {
-        await pgDb.query(
-          `INSERT INTO "audio_voice_profiles" ("id", "name", "provider", "voiceId", "accent", "gender", "isDefault", "isActive")
-           VALUES ($1, $2, $3, $4, $5, $6, $7, true) ON CONFLICT ("id") DO NOTHING`,
-          [v.id, v.name, v.provider, v.voiceId, v.accent, v.gender, v.isDefault]
-        );
-      }
-    }
-
-    // Seed sample vocabulary words if empty
-    const wordCount = await pgDb.query(`SELECT COUNT(*) as count FROM "vocabulary_words"`);
-    if (parseInt(wordCount.rows[0].count, 10) === 0) {
-      const sampleWords = [
-        {
-          id: 'vocab_01',
-          word: 'Ubiquitous',
-          phonetic: '/juːˈbɪk.wɪ.təs/',
-          partOfSpeech: 'Adjective',
-          definition: 'Present, appearing, or found everywhere simultaneously.',
-          exampleSentence: 'Smartphones have become ubiquitous in modern metropolitan life.',
-          synonyms: ['omnipresent', 'pervasive', 'universal'],
-          antonyms: ['rare', 'scarce', 'seldom'],
-          difficulty: 'C1',
-        },
-        {
-          id: 'vocab_02',
-          word: 'Ameliorate',
-          phonetic: '/əˈmiː.li.ə.reɪt/',
-          partOfSpeech: 'Verb',
-          definition: 'To make something bad or unsatisfactory better or more tolerable.',
-          exampleSentence: 'Targeted policy reforms helped ameliorate socioeconomic hardships.',
-          synonyms: ['improve', 'mitigate', 'alleviate'],
-          antonyms: ['worsen', 'exacerbate', 'aggravate'],
-          difficulty: 'C1',
-        },
-        {
-          id: 'vocab_03',
-          word: 'Ephemeral',
-          phonetic: '/ɪˈfem.ər.əl/',
-          partOfSpeech: 'Adjective',
-          definition: 'Lasting for a very brief period of time; fleeting.',
-          exampleSentence: 'The ephemeral morning mist vanished as soon as sunlight crested the horizon.',
-          synonyms: ['transient', 'fleeting', 'momentary'],
-          antonyms: ['enduring', 'permanent', 'perpetual'],
-          difficulty: 'B2',
-        },
-        {
-          id: 'vocab_04',
-          word: 'Equilibrium',
-          phonetic: '/ˌiː.kwəˈlɪb.ri.əm/',
-          partOfSpeech: 'Noun',
-          definition: 'A state in which opposing forces or influences are balanced.',
-          exampleSentence: 'The chemical reaction achieved dynamic equilibrium at constant pressure.',
-          synonyms: ['balance', 'symmetry', 'poise'],
-          antonyms: ['imbalance', 'disequilibrium'],
-          difficulty: 'B2',
-        },
-        {
-          id: 'vocab_05',
-          word: 'Pragmatic',
-          phonetic: '/præɡˈmæt.ɪk/',
-          partOfSpeech: 'Adjective',
-          definition: 'Dealing with things sensibly and realistically based on practical considerations.',
-          exampleSentence: 'Engineers adopted a pragmatic approach to meet the tight deadline.',
-          synonyms: ['practical', 'realistic', 'sensible'],
-          antonyms: ['idealistic', 'impractical'],
-          difficulty: 'B2',
-        },
-      ];
-
-      for (const w of sampleWords) {
-        await pgDb.query(
-          `INSERT INTO "vocabulary_words" ("id", "word", "phonetic", "partOfSpeech", "definition", "exampleSentence", "synonyms", "antonyms", "difficulty")
-           VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8::jsonb, $9) ON CONFLICT ("id") DO NOTHING`,
-          [w.id, w.word, w.phonetic, w.partOfSpeech, w.definition, w.exampleSentence, JSON.stringify(w.synonyms), JSON.stringify(w.antonyms), w.difficulty]
-        );
-      }
-    }
   } catch (err) {
     console.error('[initV2Tables] Warning: Failed to auto-initialize V2 tables:', err);
   }
 }
+

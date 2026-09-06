@@ -29,7 +29,7 @@ if [ "$WAS_RUNNING" -eq 1 ]; then
 fi
 
 # --- 1. Migrate Database Schema ---
-echo "[1/2] Initializing embedded PostgreSQL 16 database and running migrations..."
+echo "[1/3] Initializing embedded PostgreSQL 16 database and running migrations..."
 if [ -d "$REPO_ROOT/postgres-data" ]; then
     rm -rf "$REPO_ROOT/postgres-data"
 fi
@@ -40,10 +40,18 @@ fi
 
 # --- 2. Seed Baseline Data ---
 echo ""
-echo "[2/2] Seeding baseline data (Courses, Question Bank, Exams, AI Models, Personas)..."
+echo "[2/3] Seeding baseline data (Courses, Question Bank, Exams, AI Models, Personas)..."
 (
     cd Exam
     npx ts-node -r tsconfig-paths/register --project apps/api/tsconfig.json packages/database/prisma/seed.ts
+)
+
+# --- 3. Seed Vocabulary Bank ---
+echo ""
+echo "[3/3] Seeding Phase 15 vocabulary bank (CEFR B1-C2 Academic Word Bank)..."
+(
+    cd Exam
+    npx ts-node -r tsconfig-paths/register --project apps/api/tsconfig.json packages/database/prisma/seed-vocabulary.ts
 )
 
 if [ "$WAS_RUNNING" -eq 1 ]; then

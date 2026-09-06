@@ -27,7 +27,7 @@ if %ERRORLEVEL% equ 1 (
 )
 
 REM --- 1. Migrate Database Schema ---
-echo [1/2] Initializing embedded PostgreSQL 16 database and running migrations...
+echo [1/3] Initializing embedded PostgreSQL 16 database and running migrations...
 if exist "%~dp0postgres-data" rmdir /s /q "%~dp0postgres-data" >nul 2>&1
 pushd Exam
 call node packages/database/prisma/migrate-postgres.js
@@ -41,11 +41,23 @@ if %ERRORLEVEL% neq 0 (
 
 REM --- 2. Seed Baseline Data ---
 echo.
-echo [2/2] Seeding baseline data (Courses, Question Bank, Exams, AI Models, Personas)...
+echo [2/3] Seeding baseline data (Courses, Question Bank, Exams, AI Models, Personas)...
 call npx ts-node -r tsconfig-paths/register --project apps/api/tsconfig.json packages/database/prisma/seed.ts
 if %ERRORLEVEL% neq 0 (
     echo.
     echo [ERROR] Database seeding failed.
+    popd
+    if "%~1"=="" pause
+    exit /b 1
+)
+
+REM --- 3. Seed Vocabulary Bank ---
+echo.
+echo [3/3] Seeding Phase 15 vocabulary bank (CEFR B1-C2 Academic Word Bank)...
+call npx ts-node -r tsconfig-paths/register --project apps/api/tsconfig.json packages/database/prisma/seed-vocabulary.ts
+if %ERRORLEVEL% neq 0 (
+    echo.
+    echo [ERROR] Vocabulary bank seeding failed.
     popd
     if "%~1"=="" pause
     exit /b 1

@@ -120,6 +120,112 @@ export class VocabularyService {
   }
 
   /**
+   * Bulk create or import vocabulary words.
+   * Handles duplicate detection gracefully (skips duplicate words in the course).
+   * Validates each entry and reports per-item success or errors without failing the batch.
+   */
+  static async bulkCreateWords(params: {
+    courseId?: string;
+    words: Array<{
+      word: string;
+      phonetic?: string;
+      partOfSpeech?: string;
+      definition: string;
+      exampleSentence?: string;
+      synonyms?: string[];
+      antonyms?: string[];
+      difficulty?: string;
+      syllabusNodeId?: string;
+    }>;
+  }): Promise<{
+    total: number;
+    inserted: number;
+    skipped: number;
+    errors: Array<{ word: string; error: string }>;
+  }> {
+    const total = params.words.length;
+    let inserted = 0;
+    let skipped = 0;
+    const errors: Array<{ word: string; error: string }> = [];
+
+    for (const item of params.words) {
+      const rawWord = item.word?.trim();
+      const rawDef = item.definition?.trim();
+
+      if (!rawWord || !rawDef) {
+        errors.push({
+          word: rawWord || 'unknown',
+          error: 'Both word and definition are required',
+        });
+        continue;
+      }
+
+      try {
+        const wordClean = rawWord.toLowerCase();
+        const courseId = params.courseId || (item as any).courseId || null;
+
+        // Check if word already exists in this course or globally
+        const existing = await pgDb.query(
+          `SELECT "id" FROM "vocabulary_words" WHERE LOWER("word") = $1 ${
+            courseId ? 'AND ("courseId" = $2 OR "courseId" IS NULL)' : ''
+          } LIMIT 1`,
+          courseId ? [wordClean, courseId] : [wordClean]
+        );
+
+        if (existing.rows.length > 0) {
+          skipped++;
+          continue;
+        }
+
+        const cleanIdSuffix = wordClean.replace(/[^a-z0-9]/g, '_');
+        const id = `vocab_${cleanIdSuffix || crypto.randomBytes(6).toString('hex')}`;
+
+        await pgDb.query(
+          `INSERT INTO "vocabulary_words" (
+            "id", "word", "phonetic", "partOfSpeech", "definition", "exampleSentence",
+            "synonyms", "antonyms", "difficulty", "courseId", "syllabusNodeId", "createdAt"
+          ) VALUES (
+            $1, $2, $3, $4, $5, $6, $7::jsonb, $8::jsonb, $9, $10, $11, CURRENT_TIMESTAMP
+          )
+          ON CONFLICT ("id") DO UPDATE SET
+            "word" = EXCLUDED."word",
+            "phonetic" = EXCLUDED."phonetic",
+            "partOfSpeech" = EXCLUDED."partOfSpeech",
+            "definition" = EXCLUDED."definition",
+            "exampleSentence" = EXCLUDED."exampleSentence",
+            "synonyms" = EXCLUDED."synonyms",
+            "antonyms" = EXCLUDED."antonyms",
+            "difficulty" = EXCLUDED."difficulty",
+            "courseId" = EXCLUDED."courseId",
+            "syllabusNodeId" = EXCLUDED."syllabusNodeId"`,
+          [
+            id,
+            rawWord,
+            item.phonetic?.trim() || null,
+            item.partOfSpeech?.trim() || null,
+            rawDef,
+            item.exampleSentence?.trim() || null,
+            JSON.stringify(item.synonyms || []),
+            JSON.stringify(item.antonyms || []),
+            item.difficulty || 'B2',
+            courseId,
+            item.syllabusNodeId || null,
+          ]
+        );
+
+        inserted++;
+      } catch (err: any) {
+        errors.push({
+          word: rawWord,
+          error: err?.message || 'Database insertion error',
+        });
+      }
+    }
+
+    return { total, inserted, skipped, errors };
+  }
+
+  /**
    * Fetch words due for review for the student.
    * If student has fewer due words than limit, supplements with unpracticed words.
    */
