@@ -10,6 +10,15 @@ import {
 } from '@repo/types';
 import { getAuthHeaders } from '../utils/api';
 import { API_BASE } from '../config/api';
+import { VoiceCalibrationPanel } from '../components/VoiceCalibrationPanel';
+import {
+  VoiceProfile,
+  calculateTurnAcousticParameters,
+  getUsePersonalizedVoiceCalibration,
+  setUsePersonalizedVoiceCalibration,
+  computeRms,
+  rmsToDbfs,
+} from '../utils/audioMeasurement';
 
 // Helper to safely extract rubric criteria regardless of backend structure (Array, Object map, or undefined)
 const getSafeRubricScores = (rubricScores: any, defaultRubric: any[] = []): any[] => {
@@ -118,249 +127,166 @@ export const InterviewPage: React.FC = () => {
   const [selectedQuestionForInstructions, setSelectedQuestionForInstructions] = useState<any | null>(null);
   const [agreedToInterviewTerms, setAgreedToInterviewTerms] = useState<boolean>(false);
 
-  // Mandatory Microphone Calibration States
+  // Mandatory Microphone Acoustic Calibration States (Sprint 2 & 3)
   const [calibrationStatus, setCalibrationStatus] = useState<
     'IDLE' | 'REQUESTING' | 'LISTENING' | 'CALIBRATED' | 'FAILED_NO_DEVICE' | 'FAILED_PERMISSION' | 'FAILED_SILENCE'
   >('IDLE');
-  const [calibrationAudioLevel, setCalibrationAudioLevel] = useState<number>(0);
-  const [calibrationErrorMessage, setCalibrationErrorMessage] = useState<string>('');
+  const [voiceCalibrationProfile, setVoiceCalibrationProfile] = useState<VoiceProfile | null>(null);
 
-  const calibrationAudioCtxRef = useRef<AudioContext | null>(null);
-  const calibrationAnalyserRef = useRef<AnalyserNode | null>(null);
-  const calibrationAnimFrameRef = useRef<number | null>(null);
-  const calibrationSilenceTimerRef = useRef<any>(null);
-  const calibrationStreamRef = useRef<MediaStream | null>(null);
+  // Feature Flag: USE_PERSONALIZED_VOICE_CALIBRATION (Sprint 4)
+  const [usePersonalizedCalibration, setUsePersonalizedCalibrationState] = useState<boolean>(() =>
+    getUsePersonalizedVoiceCalibration()
+  );
 
-  // Cleanup audio analysis nodes and silence timer
-  const cleanupCalibration = () => {
-    if (calibrationAnimFrameRef.current) {
-      cancelAnimationFrame(calibrationAnimFrameRef.current);
-      calibrationAnimFrameRef.current = null;
-    }
-    if (calibrationSilenceTimerRef.current) {
-      clearTimeout(calibrationSilenceTimerRef.current);
-      calibrationSilenceTimerRef.current = null;
-    }
-    if (calibrationAudioCtxRef.current) {
-      try {
-        if (calibrationAudioCtxRef.current.state !== 'closed') {
-          calibrationAudioCtxRef.current.close();
-        }
-      } catch {}
-      calibrationAudioCtxRef.current = null;
-    }
-    calibrationAnalyserRef.current = null;
-    setCalibrationAudioLevel(0);
+  const toggleFeatureFlag = (val: boolean) => {
+    setUsePersonalizedVoiceCalibration(val);
+    setUsePersonalizedCalibrationState(val);
   };
 
-  // Full teardown when closing modal
-  const fullStopCalibration = () => {
-    cleanupCalibration();
-    if (calibrationStreamRef.current) {
-      try {
-        calibrationStreamRef.current.getTracks().forEach((track) => track.stop());
-      } catch {}
-      calibrationStreamRef.current = null;
+  // Derive active turn acoustic parameters (Pause timeout & silence threshold)
+  const activeAcoustics = calculateTurnAcousticParameters(
+    voiceCalibrationProfile,
+    usePersonalizedCalibration
+  );
+  const activeAcousticsRef = useRef(activeAcoustics);
+  useEffect(() => {
+    activeAcousticsRef.current = activeAcoustics;
+  }, [activeAcoustics]);
+
+  // Live audio analyser refs for active turn silence detection (Sprint 4)
+  const liveAudioCtxRef = useRef<AudioContext | null>(null);
+  const liveStreamRef = useRef<MediaStream | null>(null);
+  const liveAnimFrameRef = useRef<number | null>(null);
+
+  const stopLiveAudioMonitoring = () => {
+    if (liveAnimFrameRef.current) {
+      cancelAnimationFrame(liveAnimFrameRef.current);
+      liveAnimFrameRef.current = null;
     }
-    setCalibrationStatus('IDLE');
-    setCalibrationErrorMessage('');
+    if (liveAudioCtxRef.current) {
+      try {
+        if (liveAudioCtxRef.current.state !== 'closed') {
+          liveAudioCtxRef.current.close();
+        }
+      } catch {}
+      liveAudioCtxRef.current = null;
+    }
+    if (liveStreamRef.current) {
+      try {
+        liveStreamRef.current.getTracks().forEach((t) => t.stop());
+      } catch {}
+      liveStreamRef.current = null;
+    }
   };
 
-  // Start real-time microphone calibration
-  const startMicCalibration = async () => {
-    cleanupCalibration();
-    setCalibrationStatus('REQUESTING');
-    setCalibrationErrorMessage('');
-    setCalibrationAudioLevel(0);
-
-    // 1. Check browser mediaDevices support
-    if (
-      typeof navigator === 'undefined' ||
-      !navigator.mediaDevices ||
-      !navigator.mediaDevices.getUserMedia
-    ) {
-      setCalibrationStatus('FAILED_NO_DEVICE');
-      setCalibrationErrorMessage(
-        'Your browser does not support audio recording or media devices. Please use a modern browser (such as Google Chrome, Microsoft Edge, or Mozilla Firefox) and reload.'
-      );
-      return;
-    }
-
-    // 2. Hardware existence check via enumerateDevices if available
+  const startLiveAudioMonitoring = async () => {
+    stopLiveAudioMonitoring();
+    if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) return;
     try {
-      if (navigator.mediaDevices.enumerateDevices) {
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const audioInputs = devices.filter((d) => d.kind === 'audioinput');
-        if (devices.length > 0 && audioInputs.length === 0) {
-          setCalibrationStatus('FAILED_NO_DEVICE');
-          setCalibrationErrorMessage(
-            'No microphone device detected on your system. Please connect a microphone, headset, or enable your device audio input in your operating system settings, then click Retry.'
-          );
-          return;
-        }
-      }
-    } catch {
-      // Continue to getUserMedia if enumerateDevices throws before permissions
-    }
-
-    // 3. Request user microphone stream
-    let stream: MediaStream;
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: false },
       });
-      calibrationStreamRef.current = stream;
-    } catch (err: any) {
-      const errorName = err?.name || '';
-      if (
-        errorName === 'NotFoundError' ||
-        errorName === 'DevicesNotFoundError' ||
-        errorName === 'OverconstrainedError'
-      ) {
-        setCalibrationStatus('FAILED_NO_DEVICE');
-        setCalibrationErrorMessage(
-          'No microphone device found. Please connect a working microphone or headset to your machine, ensure it is enabled in your OS sound settings, and click Retry.'
-        );
-        return;
-      }
-
-      if (
-        errorName === 'NotAllowedError' ||
-        errorName === 'PermissionDeniedError' ||
-        errorName === 'SecurityError'
-      ) {
-        setCalibrationStatus('FAILED_PERMISSION');
-        setCalibrationErrorMessage(
-          'Microphone access was blocked by your browser. To participate in this oral viva voce, open your browser site settings (click the lock or camera icon in the URL address bar), set Microphone to "Allow", and click Retry.'
-        );
-        return;
-      }
-
-      // Check device count if error is generic
-      try {
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const audioInputs = devices.filter((d) => d.kind === 'audioinput');
-        if (audioInputs.length === 0) {
-          setCalibrationStatus('FAILED_NO_DEVICE');
-          setCalibrationErrorMessage(
-            'No microphone device detected on your system. Please connect a microphone and click Retry.'
-          );
-          return;
-        }
-      } catch {}
-
-      setCalibrationStatus('FAILED_PERMISSION');
-      setCalibrationErrorMessage(
-        `Unable to access microphone: ${err?.message || 'Permission denied or device unavailable'}. Please verify browser permissions and click Retry.`
-      );
-      return;
-    }
-
-    // 4. Setup Web Audio API AnalyserNode for real-time volume energy analysis
-    try {
+      liveStreamRef.current = stream;
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioContextClass) {
-        setCalibrationStatus('CALIBRATED');
-        return;
-      }
-
+      if (!AudioContextClass) return;
       const audioCtx = new AudioContextClass();
-      calibrationAudioCtxRef.current = audioCtx;
-      if (audioCtx.state === 'suspended') {
-        await audioCtx.resume();
-      }
-
-      const analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 256;
-      analyser.smoothingTimeConstant = 0.25;
-      calibrationAnalyserRef.current = analyser;
-
+      liveAudioCtxRef.current = audioCtx;
       const source = audioCtx.createMediaStreamSource(stream);
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 1024;
       source.connect(analyser);
 
-      setCalibrationStatus('LISTENING');
+      const pcmBuffer = new Float32Array(analyser.fftSize);
+      let lastResetTime = Date.now();
 
-      // 5. Silence detection timer: fails if no voice detected within 6 seconds
-      const silenceDurationMs = 6000;
-      let voiceDetected = false;
-      let speechHits = 0;
+      const monitorLoop = () => {
+        if (!liveAudioCtxRef.current) return;
+        analyser.getFloatTimeDomainData(pcmBuffer);
+        const rms = computeRms(pcmBuffer);
+        const dbfs = rmsToDbfs(rms);
 
-      calibrationSilenceTimerRef.current = setTimeout(() => {
-        if (!voiceDetected) {
-          cleanupCalibration();
-          setCalibrationStatus('FAILED_SILENCE');
-          setCalibrationErrorMessage(
-            'Microphone is connected and permitted, but no audio was detected after 6 seconds of silence. Please check that your microphone is not muted (check physical switches & software volume) and ensure the correct input device is selected as default in your OS sound settings.'
-          );
-        }
-      }, silenceDurationMs);
-
-      // 6. Real-time audio energy sampling loop
-      const bufferLength = analyser.frequencyBinCount;
-      const dataArray = new Uint8Array(bufferLength);
-
-      const sampleAudio = () => {
-        if (!calibrationAnalyserRef.current) return;
-
-        calibrationAnalyserRef.current.getByteFrequencyData(dataArray);
-
-        let sum = 0;
-        for (let i = 0; i < bufferLength; i++) {
-          sum += dataArray[i];
-        }
-        const avg = sum / bufferLength;
-
-        // Map 0..60 average amplitude to 0..100% display level
-        const level = Math.min(100, Math.round((avg / 40) * 100));
-        setCalibrationAudioLevel(level);
-
-        // Human speech energy threshold: 12%
-        if (level >= 12) {
-          speechHits++;
-          if (speechHits >= 3) {
-            voiceDetected = true;
-            if (calibrationSilenceTimerRef.current) {
-              clearTimeout(calibrationSilenceTimerRef.current);
-              calibrationSilenceTimerRef.current = null;
+        // If audio energy exceeds candidate's personalized silence threshold: candidate is actively speaking
+        if (dbfs > activeAcousticsRef.current.silenceThresholdDbfs) {
+          const now = Date.now();
+          if (now - lastResetTime > 200) {
+            lastResetTime = now;
+            if (recordingTimeoutRef.current) {
+              clearTimeout(recordingTimeoutRef.current);
             }
-            setCalibrationStatus('CALIBRATED');
+            recordingTimeoutRef.current = setTimeout(() => {
+              if (recognitionRef.current) {
+                try {
+                  recognitionRef.current.stop();
+                } catch {}
+                setIsRecording(false);
+                stopLiveAudioMonitoring();
+              }
+            }, activeAcousticsRef.current.pauseTimeoutMs);
           }
-        } else {
-          speechHits = Math.max(0, speechHits - 1);
         }
-
-        calibrationAnimFrameRef.current = requestAnimationFrame(sampleAudio);
+        liveAnimFrameRef.current = requestAnimationFrame(monitorLoop);
       };
+      liveAnimFrameRef.current = requestAnimationFrame(monitorLoop);
+    } catch {
+      // Audio monitoring is an acoustic enhancement; speech recognition handles fallback
+    }
+  };
 
-      calibrationAnimFrameRef.current = requestAnimationFrame(sampleAudio);
-    } catch (err) {
-      console.error('Web Audio API setup error:', err);
-      setCalibrationStatus('CALIBRATED');
+  // Safe teardown helpers for modal transitions
+  const cleanupCalibration = () => {};
+
+  const fullStopCalibration = () => {
+    if (calibrationStatus !== 'CALIBRATED') {
+      setCalibrationStatus('IDLE');
     }
   };
 
   const handleOpenInstructions = (q: any) => {
     setSelectedQuestionForInstructions(q);
     setAgreedToInterviewTerms(false);
-    startMicCalibration();
+    if (voiceCalibrationProfile) {
+      setCalibrationStatus('CALIBRATED');
+    }
   };
 
-  // Teardown calibration when modal closes or unmounts
-  useEffect(() => {
-    if (!selectedQuestionForInstructions) {
-      fullStopCalibration();
+  // Fetch Saved Voice Profile from API (Sprint 3)
+  const fetchVoiceProfile = async () => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_BASE}/interview/voice-profile`, {
+        headers: getAuthHeaders(token),
+      });
+      const data = await res.json();
+      if (data.success && data.data?.profile) {
+        setVoiceCalibrationProfile(data.data.profile);
+        setCalibrationStatus('CALIBRATED');
+      }
+    } catch (err) {
+      console.error('Failed to load saved voice profile', err);
     }
-  }, [selectedQuestionForInstructions]);
+  };
 
-  useEffect(() => {
-    return () => {
-      fullStopCalibration();
-    };
-  }, []);
+  // Handle successful calibration completion and persist to database (Sprint 3)
+  const handleCalibrationComplete = async (calibratedProfile: VoiceProfile) => {
+    setVoiceCalibrationProfile(calibratedProfile);
+    setCalibrationStatus('CALIBRATED');
+    try {
+      await fetch(`${API_BASE}/interview/voice-profile`, {
+        method: 'POST',
+        headers: getAuthHeaders(token),
+        body: JSON.stringify({ profile: calibratedProfile }),
+      });
+    } catch (err) {
+      console.error('Failed to persist voice profile to student account', err);
+    }
+  };
+
+  // Handle recalibrate reset (Sprint 3)
+  const handleCalibrationReset = () => {
+    setVoiceCalibrationProfile(null);
+    setCalibrationStatus('IDLE');
+    setAgreedToInterviewTerms(false);
+  };
 
   // Speech-to-Text (STT) & Text-to-Speech (TTS) States
   const [isRecording, setIsRecording] = useState<boolean>(false);
@@ -373,7 +299,7 @@ export const InterviewPage: React.FC = () => {
   // History State
   const [pastSessions, setPastSessions] = useState<InterviewSessionDTO[]>([]);
 
-  // Helper to bind continuous onresult handler safely
+  // Helper to bind continuous onresult handler safely with personalized pause tolerance
   const bindRecognitionHandlers = (recog: any) => {
     recog.onresult = (event: any) => {
       // Guard against late async results delivered during/after submission
@@ -385,10 +311,25 @@ export const InterviewPage: React.FC = () => {
       if (!isSubmittingRef.current) {
         setCandidateInput(fullTranscript);
       }
+
+      // Reset pause timeout on active speech input (Sprint 4)
+      if (recordingTimeoutRef.current) {
+        clearTimeout(recordingTimeoutRef.current);
+      }
+      recordingTimeoutRef.current = setTimeout(() => {
+        if (recog) {
+          try {
+            recog.stop();
+          } catch {}
+          setIsRecording(false);
+          stopLiveAudioMonitoring();
+        }
+      }, activeAcousticsRef.current.pauseTimeoutMs);
     };
 
     recog.onend = () => {
       setIsRecording(false);
+      stopLiveAudioMonitoring();
       if (recordingTimeoutRef.current) {
         clearTimeout(recordingTimeoutRef.current);
         recordingTimeoutRef.current = null;
@@ -397,6 +338,7 @@ export const InterviewPage: React.FC = () => {
 
     recog.onerror = () => {
       setIsRecording(false);
+      stopLiveAudioMonitoring();
       if (recordingTimeoutRef.current) {
         clearTimeout(recordingTimeoutRef.current);
         recordingTimeoutRef.current = null;
@@ -463,6 +405,7 @@ export const InterviewPage: React.FC = () => {
     fetchEligibility();
     fetchPastSessions();
     fetchLongitudinalProgress();
+    fetchVoiceProfile();
 
     // Check Speech Recognition support in browser
     if (typeof window !== 'undefined') {
@@ -481,6 +424,7 @@ export const InterviewPage: React.FC = () => {
     }
 
     return () => {
+      stopLiveAudioMonitoring();
       if (recognitionRef.current) {
         try {
           recognitionRef.current.onresult = null;
@@ -525,6 +469,7 @@ export const InterviewPage: React.FC = () => {
         recognitionRef.current.stop();
       } catch {}
       setIsRecording(false);
+      stopLiveAudioMonitoring();
       if (recordingTimeoutRef.current) {
         clearTimeout(recordingTimeoutRef.current);
         recordingTimeoutRef.current = null;
@@ -535,18 +480,21 @@ export const InterviewPage: React.FC = () => {
         bindRecognitionHandlers(recognitionRef.current);
         recognitionRef.current.start();
         setIsRecording(true);
+        startLiveAudioMonitoring();
         if (recordingTimeoutRef.current) clearTimeout(recordingTimeoutRef.current);
-        // 5-minute safety ceiling to prevent runaway recording if tab is unattended
+        // Candidate personalized pause tolerance duration (Sprint 4)
         recordingTimeoutRef.current = setTimeout(() => {
           if (recognitionRef.current) {
             try {
               recognitionRef.current.stop();
             } catch {}
             setIsRecording(false);
+            stopLiveAudioMonitoring();
           }
-        }, 300000);
+        }, activeAcousticsRef.current.pauseTimeoutMs);
       } catch {
         setIsRecording(false);
+        stopLiveAudioMonitoring();
       }
     }
   };
@@ -628,6 +576,7 @@ export const InterviewPage: React.FC = () => {
       } catch {}
     }
     setIsRecording(false);
+    stopLiveAudioMonitoring();
     if (recordingTimeoutRef.current) {
       clearTimeout(recordingTimeoutRef.current);
       recordingTimeoutRef.current = null;
@@ -1034,280 +983,12 @@ export const InterviewPage: React.FC = () => {
               <li><strong>AI Voice (TTS):</strong> The examiner's questions are read aloud automatically. You can toggle speech ON/OFF anytime using the <strong>🔊 Voice ON / 🔇 Muted</strong> button in the top bar.</li>
             </ul>
 
-            {/* 3. Mandatory Microphone Calibration Section */}
-            <div
-              id="mic-calibration-panel"
-              style={{
-                padding: '16px',
-                borderRadius: '10px',
-                background:
-                  calibrationStatus === 'CALIBRATED'
-                    ? 'rgba(16, 185, 129, 0.08)'
-                    : calibrationStatus.startsWith('FAILED')
-                    ? 'rgba(239, 68, 68, 0.08)'
-                    : 'rgba(6, 182, 212, 0.08)',
-                border: `1px solid ${
-                  calibrationStatus === 'CALIBRATED'
-                    ? 'rgba(16, 185, 129, 0.3)'
-                    : calibrationStatus.startsWith('FAILED')
-                    ? 'rgba(239, 68, 68, 0.3)'
-                    : 'rgba(6, 182, 212, 0.3)'
-                }`,
-                marginBottom: '18px',
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '18px' }}>
-                    {calibrationStatus === 'CALIBRATED'
-                      ? '✅'
-                      : calibrationStatus.startsWith('FAILED')
-                      ? '⚠️'
-                      : '🎙️'}
-                  </span>
-                  <strong style={{ fontSize: '13px', color: 'var(--text-main, #e6edf3)' }}>
-                    Mandatory Microphone Calibration
-                  </strong>
-                </div>
-                <span
-                  id="calibration-status-badge"
-                  style={{
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    padding: '3px 10px',
-                    borderRadius: '12px',
-                    background:
-                      calibrationStatus === 'CALIBRATED'
-                        ? 'rgba(16, 185, 129, 0.2)'
-                        : calibrationStatus.startsWith('FAILED')
-                        ? 'rgba(239, 68, 68, 0.2)'
-                        : 'rgba(6, 182, 212, 0.2)',
-                    color:
-                      calibrationStatus === 'CALIBRATED'
-                        ? '#10b981'
-                        : calibrationStatus.startsWith('FAILED')
-                        ? '#ef4444'
-                        : '#06b6d4',
-                    border: `1px solid ${
-                      calibrationStatus === 'CALIBRATED'
-                        ? 'rgba(16, 185, 129, 0.4)'
-                        : calibrationStatus.startsWith('FAILED')
-                        ? 'rgba(239, 68, 68, 0.4)'
-                        : 'rgba(6, 182, 212, 0.4)'
-                    }`,
-                  }}
-                >
-                  {calibrationStatus === 'REQUESTING' && '⏳ Requesting Permission...'}
-                  {calibrationStatus === 'LISTENING' && '🔊 Speak Now (Listening...)'}
-                  {calibrationStatus === 'CALIBRATED' && '✓ Calibrated & Verified'}
-                  {calibrationStatus === 'FAILED_NO_DEVICE' && '✕ No Mic Detected'}
-                  {calibrationStatus === 'FAILED_PERMISSION' && '✕ Permission Denied'}
-                  {calibrationStatus === 'FAILED_SILENCE' && '✕ No Audio (Silence)'}
-                  {calibrationStatus === 'IDLE' && 'Ready'}
-                </span>
-              </div>
-
-              {/* Real-time Input Energy Level Meter */}
-              <div style={{ marginBottom: '10px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-muted, #8b949e)', marginBottom: '4px' }}>
-                  <span>Real-time Mic Input Energy:</span>
-                  <span style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 600 }}>
-                    {calibrationAudioLevel}% {calibrationAudioLevel >= 12 ? '(Voice Signal Active)' : '(Quiet)'}
-                  </span>
-                </div>
-                <div
-                  style={{
-                    width: '100%',
-                    height: '14px',
-                    background: 'rgba(0, 0, 0, 0.4)',
-                    borderRadius: '7px',
-                    overflow: 'hidden',
-                    border: '1px solid var(--border-color, #2d333b)',
-                    position: 'relative',
-                  }}
-                >
-                  {/* 12% speech threshold marker */}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      left: '12%',
-                      top: 0,
-                      bottom: 0,
-                      width: '2px',
-                      background: 'rgba(255, 255, 255, 0.35)',
-                      zIndex: 2,
-                    }}
-                    title="Minimum speech detection threshold (12%)"
-                  />
-                  {/* Animated Level Bar */}
-                  <div
-                    id="mic-volume-level-meter"
-                    style={{
-                      width: `${calibrationAudioLevel}%`,
-                      height: '100%',
-                      background:
-                        calibrationStatus === 'CALIBRATED'
-                          ? 'linear-gradient(90deg, #10b981, #06b6d4)'
-                          : 'linear-gradient(90deg, #06b6d4, #3b82f6, #10b981)',
-                      transition: 'width 60ms ease-out',
-                      borderRadius: '7px',
-                    }}
-                  />
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: 'var(--text-muted, #8b949e)', marginTop: '2px' }}>
-                  <span>0% (Silence)</span>
-                  <span style={{ color: '#06b6d4' }}>| 12% Speech Threshold</span>
-                  <span>100% (Peak)</span>
-                </div>
-              </div>
-
-              {/* Status Instructional Guidance */}
-              {calibrationStatus === 'REQUESTING' && (
-                <p style={{ margin: '0 0 6px 0', fontSize: '12px', color: '#06b6d4', lineHeight: '1.4' }}>
-                  ⏳ <strong>Checking permissions:</strong> Please click <strong>Allow</strong> if your browser prompts for microphone access.
-                </p>
-              )}
-
-              {calibrationStatus === 'LISTENING' && (
-                <p style={{ margin: '0 0 6px 0', fontSize: '12px', color: '#06b6d4', lineHeight: '1.4' }}>
-                  🎙️ <strong>Speak now:</strong> Say a few words (e.g., <em>"Testing my microphone"</em>) into your mic to verify sound pickup.
-                </p>
-              )}
-
-              {calibrationStatus === 'CALIBRATED' && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
-                  <p style={{ margin: 0, fontSize: '12px', color: '#10b981', lineHeight: '1.4' }}>
-                    ✅ <strong>Calibration Successful:</strong> Voice signal verified above the minimum energy threshold. Your microphone is active and ready.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={startMicCalibration}
-                    style={{
-                      background: 'transparent',
-                      border: '1px solid rgba(16, 185, 129, 0.4)',
-                      borderRadius: '4px',
-                      padding: '3px 8px',
-                      color: '#10b981',
-                      fontSize: '11px',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Re-test Mic
-                  </button>
-                </div>
-              )}
-
-              {/* Failure State 1: No Microphone Device Found */}
-              {calibrationStatus === 'FAILED_NO_DEVICE' && (
-                <div style={{ background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '6px', padding: '10px 12px', marginTop: '6px' }}>
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                    <span style={{ fontSize: '16px' }}>🚫</span>
-                    <div style={{ flex: 1 }}>
-                      <strong style={{ fontSize: '12px', color: '#ef4444', display: 'block', marginBottom: '3px' }}>
-                        No Microphone Device Found
-                      </strong>
-                      <p style={{ margin: '0 0 8px 0', fontSize: '11px', color: 'var(--text-main, #e6edf3)', lineHeight: '1.5' }}>
-                        {calibrationErrorMessage || 'No microphone device was detected on your system. Please connect a microphone or headset, verify that your audio input device is enabled in your operating system sound settings, and reload or retry.'}
-                      </p>
-                      <button
-                        type="button"
-                        id="btn-retry-calibration"
-                        onClick={startMicCalibration}
-                        style={{
-                          padding: '5px 12px',
-                          background: '#ef4444',
-                          border: 'none',
-                          borderRadius: '4px',
-                          color: '#fff',
-                          fontSize: '11px',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                        }}
-                      >
-                        🔄 Retry Calibration
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Failure State 2: Permission Denied */}
-              {calibrationStatus === 'FAILED_PERMISSION' && (
-                <div style={{ background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '6px', padding: '10px 12px', marginTop: '6px' }}>
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                    <span style={{ fontSize: '16px' }}>🔒</span>
-                    <div style={{ flex: 1 }}>
-                      <strong style={{ fontSize: '12px', color: '#ef4444', display: 'block', marginBottom: '3px' }}>
-                        Browser Microphone Permission Denied
-                      </strong>
-                      <p style={{ margin: '0 0 8px 0', fontSize: '11px', color: 'var(--text-main, #e6edf3)', lineHeight: '1.5' }}>
-                        {calibrationErrorMessage || 'Microphone access was blocked by your browser. To participate in this oral interview, click the lock or camera icon in your browser address bar, set Microphone permissions to "Allow", and click Retry.'}
-                      </p>
-                      <button
-                        type="button"
-                        id="btn-retry-calibration"
-                        onClick={startMicCalibration}
-                        style={{
-                          padding: '5px 12px',
-                          background: '#ef4444',
-                          border: 'none',
-                          borderRadius: '4px',
-                          color: '#fff',
-                          fontSize: '11px',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                        }}
-                      >
-                        🔄 Retry Calibration
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Failure State 3: Silence / No Audio Registered */}
-              {calibrationStatus === 'FAILED_SILENCE' && (
-                <div style={{ background: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.3)', borderRadius: '6px', padding: '10px 12px', marginTop: '6px' }}>
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                    <span style={{ fontSize: '16px' }}>🔇</span>
-                    <div style={{ flex: 1 }}>
-                      <strong style={{ fontSize: '12px', color: '#f59e0b', display: 'block', marginBottom: '3px' }}>
-                        No Audio Detected (Silence)
-                      </strong>
-                      <p style={{ margin: '0 0 8px 0', fontSize: '11px', color: 'var(--text-main, #e6edf3)', lineHeight: '1.5' }}>
-                        {calibrationErrorMessage || 'Microphone is connected and permitted, but no audio was detected after 6 seconds of silence. Please check that your microphone is not hardware-muted or software-muted, and ensure the correct input device is selected as your default microphone in your OS settings.'}
-                      </p>
-                      <button
-                        type="button"
-                        id="btn-retry-calibration"
-                        onClick={startMicCalibration}
-                        style={{
-                          padding: '5px 12px',
-                          background: '#f59e0b',
-                          border: 'none',
-                          borderRadius: '4px',
-                          color: '#000',
-                          fontSize: '11px',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                        }}
-                      >
-                        🔄 Retry Calibration
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+            {/* 3. Mandatory Microphone Acoustic Calibration Section (Sprint 2 & 3) */}
+            <VoiceCalibrationPanel
+              initialProfile={voiceCalibrationProfile}
+              onCalibrationComplete={handleCalibrationComplete}
+              onCalibrationReset={handleCalibrationReset}
+            />
 
             {/* 4. Evaluation & Rubrics */}
             <h4 style={{ margin: '14px 0 8px', color: 'var(--text-main, #e6edf3)', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -1486,6 +1167,62 @@ export const InterviewPage: React.FC = () => {
                     ? 'Mock (fallback)'
                     : `${activeSession.activeProviderType === 'LOCAL' ? 'Local' : 'Cloud'}: ${activeSession.activeModelUsed || 'gemma4:e2b'}`}
                 </span>
+              </div>
+
+              {/* Feature Flag & Voice Calibration Indicator (Sprint 4) */}
+              <div
+                id="voice-calibration-badge"
+                data-testid="voice-calibration-badge"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  fontSize: '11px',
+                  padding: '3px 10px',
+                  borderRadius: '6px',
+                  background: activeAcoustics.isPersonalized
+                    ? 'rgba(16, 185, 129, 0.12)'
+                    : 'rgba(148, 163, 184, 0.12)',
+                  border: `1px solid ${
+                    activeAcoustics.isPersonalized
+                      ? 'rgba(16, 185, 129, 0.35)'
+                      : 'rgba(148, 163, 184, 0.3)'
+                  }`,
+                  color: activeAcoustics.isPersonalized ? '#10b981' : '#94a3b8',
+                  fontWeight: 600,
+                }}
+                title={
+                  activeAcoustics.isPersonalized
+                    ? `Personalized Voice Calibration Active: Pause Tolerance = ${activeAcoustics.pauseTimeoutMs}ms (WPM: ${voiceCalibrationProfile?.speechRateWpm}, P75 Pause: ${voiceCalibrationProfile?.p75PauseMs}ms), Silence Threshold = ${activeAcoustics.silenceThresholdDbfs} dBFS`
+                    : `Fixed Baseline Acoustic Timing Active: Pause Tolerance = 4000ms, Silence Threshold = -35.0 dBFS`
+                }
+              >
+                <span>{activeAcoustics.isPersonalized ? '🎯' : '⏱️'}</span>
+                <span>
+                  {activeAcoustics.isPersonalized
+                    ? `Personalized (${activeAcoustics.pauseTimeoutMs}ms / ${activeAcoustics.silenceThresholdDbfs} dBFS)`
+                    : `Fixed Baseline (4000ms / -35 dBFS)`}
+                </span>
+                <button
+                  type="button"
+                  id="btn-toggle-voice-personalization"
+                  data-testid="btn-toggle-voice-personalization"
+                  onClick={() => toggleFeatureFlag(!usePersonalizedCalibration)}
+                  style={{
+                    marginLeft: '4px',
+                    padding: '2px 6px',
+                    fontSize: '10px',
+                    fontWeight: 700,
+                    borderRadius: '4px',
+                    border: '1px solid currentColor',
+                    background: 'transparent',
+                    color: 'inherit',
+                    cursor: 'pointer',
+                  }}
+                  title="Toggle USE_PERSONALIZED_VOICE_CALIBRATION feature flag"
+                >
+                  {usePersonalizedCalibration ? 'Rollback to Fixed' : 'Use Calibrated'}
+                </button>
               </div>
 
               {/* Hierarchical Main Question & Follow-up Counter */}

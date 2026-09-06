@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-09-05T20:26:54.658Z",
+  "lastUpdated": "2026-09-06T08:27:35.380Z",
   "activePhase": 7,
   "phases": [
     {
@@ -1239,7 +1239,7 @@
           "phase": 15,
           "title": "VOCABULARY-01 — Vocabulary Retention Engine & Spaced Repetition Drills (docs/v2/features/vocabulary-practice.md)",
           "source": "plan",
-          "state": "pending",
+          "state": "approved",
           "addedAt": "2026-08-31T00:00:00.000Z"
         },
         {
