@@ -1,3 +1,4 @@
+// Runner: node tests/phase-13-subscriptions-master.test.js
 const assert = require('assert');
 const path = require('path');
 const dotenv = require('dotenv');
@@ -430,6 +431,18 @@ async function runPhase13MasterTests() {
   } catch (e) {
     failed++;
     console.error('❌ FAIL: 13.7-U1:', e.message);
+  } finally {
+    // Teardown: restore student1 back to PREMIUM plan so subsequent test suites have full quota
+    try {
+      await fetchJson('/subscriptions', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${student1.token}` },
+        body: JSON.stringify({ planCode: 'PREMIUM' }),
+      });
+      console.log('   ✓ Student 1 restored to PREMIUM tier in suite teardown');
+    } catch (err) {
+      console.error('Failed to restore student1 to PREMIUM plan:', err);
+    }
   }
 
   console.log('\n================================================================');

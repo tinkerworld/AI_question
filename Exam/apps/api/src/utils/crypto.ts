@@ -1,7 +1,8 @@
 import crypto from 'crypto';
+import { JWT_SECRET } from '../middleware/auth';
 
 const ALGORITHM = 'aes-256-gcm';
-const SECRET_KEY_RAW = process.env.ENCRYPTION_SECRET || process.env.JWT_SECRET || 'examos-ai-secure-master-encryption-key-2026';
+const SECRET_KEY_RAW = process.env.ENCRYPTION_SECRET || JWT_SECRET;
 // Derive 32-byte key using SHA-256
 const MASTER_KEY = crypto.createHash('sha256').update(SECRET_KEY_RAW).digest();
 

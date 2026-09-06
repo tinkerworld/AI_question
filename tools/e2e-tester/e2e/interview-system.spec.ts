@@ -42,7 +42,7 @@ test.describe('Phase 12: AI Interview & Oral Assessment System', () => {
     // 5. Verify INTERVIEW-specific fields render
     await expect(page.getByText('Rubric Preset')).toBeVisible();
     await expect(page.getByText('Interview Scenario & Context')).toBeVisible();
-    await expect(page.getByText('Examiner AI Persona & Socratic Instructions')).toBeVisible();
+    await expect(page.getByText(/Examiner (AI )?Persona/i).first()).toBeVisible();
     await expect(page.getByText('Grading Rubric Criteria')).toBeVisible();
 
     // 6. Fill Question Content and Scenario

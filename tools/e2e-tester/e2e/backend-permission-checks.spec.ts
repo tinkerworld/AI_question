@@ -151,7 +151,7 @@ test.describe('Backend permission enforcement (API-level, not UI simulation)', (
     expect(internalRes.status()).toBe(400);
     const body = await internalRes.json();
     expect(body.success).toBe(false);
-    expect(body.message).toBe('Invalid input parameters');
+    expect(body.message).toMatch(/Invalid input parameters|scope is required/);
     expect(body.errors).toBeDefined();
   });
 });

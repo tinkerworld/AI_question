@@ -1,3 +1,4 @@
+// Runner: node tests/phase-05-master.test.js
 const http = require('http');
 const assert = require('assert');
 const path = require('path');

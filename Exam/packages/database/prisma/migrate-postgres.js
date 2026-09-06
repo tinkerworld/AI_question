@@ -41,6 +41,12 @@ async function migrate() {
 
   await db.exec(`
     -- Drop existing tables if present
+    DROP TABLE IF EXISTS "student_vocabulary_progress" CASCADE;
+    DROP TABLE IF EXISTS "vocabulary_words" CASCADE;
+    DROP TABLE IF EXISTS "promotional_entitlement_rules" CASCADE;
+    DROP TABLE IF EXISTS "feature_registry" CASCADE;
+    DROP TABLE IF EXISTS "maintenance_configs" CASCADE;
+    DROP TABLE IF EXISTS "audio_voice_profiles" CASCADE;
     DROP TABLE IF EXISTS "refund_transactions" CASCADE;
     DROP TABLE IF EXISTS "invoices" CASCADE;
     DROP TABLE IF EXISTS "ai_credit_packages" CASCADE;
@@ -1010,13 +1016,102 @@ async function migrate() {
     CREATE INDEX "idx_invoices_user" ON "invoices"("userId");
     CREATE INDEX "idx_refund_transactions_user" ON "refund_transactions"("userId");
     CREATE INDEX "idx_refund_transactions_gateway_payment" ON "refund_transactions"("gatewayPaymentId");
+
+    -- Phase 15 Tables
+    CREATE TABLE IF NOT EXISTS "maintenance_configs" (
+      "id" TEXT PRIMARY KEY,
+      "scope" TEXT NOT NULL DEFAULT 'FEATURE',
+      "featureKey" TEXT,
+      "isActive" BOOLEAN NOT NULL DEFAULT false,
+      "message" TEXT NOT NULL DEFAULT 'System undergoing scheduled maintenance',
+      "scheduledStart" TIMESTAMP,
+      "scheduledEnd" TIMESTAMP,
+      "allowedRoles" JSONB NOT NULL DEFAULT '["MAIN_ADMIN","SUB_ADMIN"]'::jsonb,
+      "updatedBy" TEXT,
+      "updatedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS "feature_registry" (
+      "id" TEXT PRIMARY KEY,
+      "key" TEXT NOT NULL UNIQUE,
+      "name" TEXT NOT NULL,
+      "type" TEXT NOT NULL DEFAULT 'BOOLEAN',
+      "defaultValue" TEXT NOT NULL DEFAULT 'false',
+      "category" TEXT NOT NULL DEFAULT 'general',
+      "description" TEXT NOT NULL,
+      "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS "promotional_entitlement_rules" (
+      "id" TEXT PRIMARY KEY,
+      "featureKey" TEXT NOT NULL,
+      "courseId" TEXT,
+      "startsAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "expiresAt" TIMESTAMP NOT NULL,
+      "isActive" BOOLEAN NOT NULL DEFAULT true,
+      "description" TEXT,
+      "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS "vocabulary_words" (
+      "id" TEXT PRIMARY KEY,
+      "word" TEXT NOT NULL,
+      "phonetic" TEXT,
+      "partOfSpeech" TEXT,
+      "definition" TEXT NOT NULL,
+      "exampleSentence" TEXT,
+      "synonyms" JSONB NOT NULL DEFAULT '[]'::jsonb,
+      "antonyms" JSONB NOT NULL DEFAULT '[]'::jsonb,
+      "difficulty" TEXT NOT NULL DEFAULT 'B2',
+      "audioUrl" TEXT,
+      "courseId" TEXT,
+      "syllabusNodeId" TEXT,
+      "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS "student_vocabulary_progress" (
+      "id" TEXT PRIMARY KEY,
+      "userId" TEXT NOT NULL REFERENCES "users"("id") ON DELETE CASCADE,
+      "wordId" TEXT NOT NULL REFERENCES "vocabulary_words"("id") ON DELETE CASCADE,
+      "masteryLevel" TEXT NOT NULL DEFAULT 'LEARNING',
+      "repetitionCount" INT NOT NULL DEFAULT 0,
+      "easinessFactor" DOUBLE PRECISION NOT NULL DEFAULT 2.5,
+      "intervalDays" INT NOT NULL DEFAULT 0,
+      "nextReviewDue" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "lastPracticedAt" TIMESTAMP,
+      "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE("userId", "wordId")
+    );
+
+    CREATE TABLE IF NOT EXISTS "audio_voice_profiles" (
+      "id" TEXT PRIMARY KEY,
+      "name" TEXT NOT NULL,
+      "provider" TEXT NOT NULL DEFAULT 'MOCK',
+      "voiceId" TEXT NOT NULL,
+      "accent" TEXT NOT NULL DEFAULT 'British',
+      "gender" TEXT NOT NULL DEFAULT 'FEMALE',
+      "sampleAudioUrl" TEXT,
+      "isDefault" BOOLEAN NOT NULL DEFAULT false,
+      "isActive" BOOLEAN NOT NULL DEFAULT true,
+      "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE INDEX IF NOT EXISTS "idx_vocab_words_course" ON "vocabulary_words"("courseId");
+    CREATE INDEX IF NOT EXISTS "idx_student_vocab_due" ON "student_vocabulary_progress"("userId", "nextReviewDue");
+    CREATE INDEX IF NOT EXISTS "idx_promotional_rules_key" ON "promotional_entitlement_rules"("featureKey");
   `);
 
   console.log('PostgreSQL 16 Schema Migration Completed Successfully!');
+  await db.close();
   process.exit(0);
 }
 
-migrate().catch((e) => {
+migrate().catch(async (e) => {
   console.error('Migration failed:', e);
+  try {
+    await db.close();
+  } catch {}
   process.exit(1);
 });

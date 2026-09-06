@@ -1,3 +1,4 @@
+// Runner: npx ts-node -r tsconfig-paths/register --project apps/api/tsconfig.json --transpile-only tests/phase-12-interview-master.test.js
 const http = require('http');
 const assert = require('assert');
 const path = require('path');

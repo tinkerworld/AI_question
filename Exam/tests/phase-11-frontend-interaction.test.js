@@ -1,3 +1,4 @@
+// Runner: node tests/phase-11-frontend-interaction.test.js
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');

@@ -6,8 +6,9 @@
 #  Enforced Pipeline Order:
 #    1. Verify stack readiness (launches start_all.sh if not running)
 #    2. Execute full Playwright E2E test suite (run_ui_tests.sh)
-#    3. Execute Python Persona Security Auditor (run_audits.sh)
-#    4. Generate Review Package (Reviewzip.sh)
+#    3. Execute Canonical Backend Test Runner (run_backend_tests.sh)
+#    4. Execute Python Persona Security Auditor (run_audits.sh)
+#    5. Generate Review Package (Reviewzip.sh)
 # ==============================================================
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -19,11 +20,12 @@ echo "=============================================================="
 echo ""
 
 E2E_STATUS="NOT RUN"
+BACKEND_STATUS="NOT RUN"
 AUDIT_STATUS="NOT RUN"
 ZIP_STATUS="NOT RUN"
 
 # --- 1. Check Stack Readiness ---
-echo "[1/4] Checking if ExamOS full stack is running..."
+echo "[1/5] Checking if ExamOS full stack is running..."
 WEB_OK=0
 API_OK=0
 
@@ -68,10 +70,10 @@ fi
 
 echo ""
 # --- 2. Execute Playwright E2E Suite ---
-echo "[2/4] Executing Playwright E2E Test Suite..."
+echo "[2/5] Executing Playwright E2E Test Suite..."
 echo "--------------------------------------------------------------"
 set +e
-bash run_ui_tests.sh
+bash run_ui_tests.sh --automated
 E2E_EXIT=$?
 set -e
 
@@ -82,11 +84,26 @@ else
 fi
 
 echo ""
-# --- 3. Execute Python Profile Auditor ---
-echo "[3/4] Executing Python Persona Profile Security Auditor..."
+# --- 3. Execute Canonical Backend Test Suites ---
+echo "[3/5] Executing Canonical Backend Test Runner..."
 echo "--------------------------------------------------------------"
 set +e
-bash run_audits.sh
+bash run_backend_tests.sh --automated
+BACKEND_EXIT=$?
+set -e
+
+if [ "$BACKEND_EXIT" -eq 0 ]; then
+    BACKEND_STATUS="PASSED"
+else
+    BACKEND_STATUS="FAILED (Exit Code: $BACKEND_EXIT)"
+fi
+
+echo ""
+# --- 4. Execute Python Profile Auditor ---
+echo "[4/5] Executing Python Persona Profile Security Auditor..."
+echo "--------------------------------------------------------------"
+set +e
+bash run_audits.sh --automated
 AUDIT_EXIT=$?
 set -e
 
@@ -97,11 +114,11 @@ else
 fi
 
 echo ""
-# --- 4. Package for Review ---
-echo "[4/4] Generating Fresh Review Package (Reviewzip.sh)..."
+# --- 5. Package for Review ---
+echo "[5/5] Generating Fresh Review Package (Reviewzip.sh)..."
 echo "--------------------------------------------------------------"
 set +e
-bash Reviewzip.sh
+bash Reviewzip.sh --automated
 ZIP_EXIT=$?
 set -e
 
@@ -117,8 +134,9 @@ echo "  Full Verification Pipeline Summary"
 echo "=============================================================="
 echo "  1. Stack Health:              ACTIVE"
 echo "  2. Playwright E2E Suite:      $E2E_STATUS"
-echo "  3. Persona Profile Auditor:   $AUDIT_STATUS"
-echo "  4. Review Archive:            $ZIP_STATUS"
+echo "  3. Backend Test Suites:       $BACKEND_STATUS"
+echo "  4. Persona Profile Auditor:   $AUDIT_STATUS"
+echo "  5. Review Archive:            $ZIP_STATUS"
 echo "=============================================================="
 echo "  All test logs, traces, and fresh history entries from THIS"
 echo "  run have been bundled into review-package.zip."
@@ -126,12 +144,15 @@ echo "=============================================================="
 echo ""
 
 if [ "$E2E_EXIT" -ne 0 ]; then
-    exit "$E2E_EXIT"
+    exit 1
+fi
+if [ "$BACKEND_EXIT" -ne 0 ]; then
+    exit 1
 fi
 if [ "$AUDIT_EXIT" -ne 0 ]; then
-    exit "$AUDIT_EXIT"
+    exit 1
 fi
 if [ "$ZIP_EXIT" -ne 0 ]; then
-    exit "$ZIP_EXIT"
+    exit 1
 fi
 exit 0

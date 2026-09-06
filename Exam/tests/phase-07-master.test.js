@@ -1,3 +1,4 @@
+// Runner: node tests/phase-07-master.test.js
 const http = require('http');
 
 const API_BASE = process.env.API_BASE || 'http://localhost:4043/api/v1';
@@ -140,6 +141,7 @@ function request(method, path, body = null, token = null) {
 
     // Bank Isolation Test: Modify question in Question Bank and verify snapshot is isolated
     const sampleQId = snapDetails.body.data.sections[0].questions[0].originalQuestionId;
+    const originalContent = snapDetails.body.data.sections[0].questions[0].questionContent.content;
     await request('PATCH', `/questions/${sampleQId}`, { content: 'MODIFIED QUESTION BANK CONTENT THAT MUST NOT LEAK TO SNAPSHOT' }, adminToken);
     const snapCheckAfterBankEdit = await request('GET', `/archive/exams/${snapshotId}/snapshot`, null, adminToken);
     const snapQContent = snapCheckAfterBankEdit.body.data.sections[0].questions[0].questionContent.content;
@@ -147,6 +149,8 @@ function request(method, path, body = null, token = null) {
       !snapQContent.includes('MODIFIED QUESTION BANK CONTENT'),
       'Question Bank edits do NOT mutate published exam snapshot (ADR-007 Bank Isolation guarantee)'
     );
+    // Restore original content to keep question bank clean for subsequent test runs
+    await request('PATCH', `/questions/${sampleQId}`, { content: originalContent }, adminToken);
 
     // 5. Feature 7.3: Answer Key Preservation & Role Gating
     console.log('\n--- 5. Feature 7.3: Preserved Answer Key & Permission Gating ---');

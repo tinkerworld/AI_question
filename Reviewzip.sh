@@ -9,8 +9,13 @@ set -e
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$REPO_ROOT"
 
+if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" || "$(uname -s)" =~ MINGW|MSYS ]]; then
+    MSYS_NO_PATHCONV=1 cmd.exe /c Reviewzip.bat "$@"
+    exit $?
+fi
+
 OUTFILE="review-package.zip"
-rm -f "$OUTFILE"
+rm -f "$OUTFILE" 2>/dev/null || powershell -NoProfile -ExecutionPolicy Bypass -Command "Remove-Item -Force '$OUTFILE' -ErrorAction SilentlyContinue" || true
 
 echo "Generating lock file integrity check..."
 if [ -f "Exam/pnpm-lock.yaml" ]; then

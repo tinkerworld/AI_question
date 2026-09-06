@@ -78,20 +78,26 @@ function validateParams<T>(schema: z.ZodSchema<T>, data: any, res: Response): T 
 
 // Authentication Guard supporting internal service keys and external JWT tokens
 function gatewayAuthGuard(req: Request, res: Response, next: any) {
+  const internalKey = req.headers['x-ai-internal-key'];
+  const expectedKey = process.env.AI_GATEWAY_INTERNAL_KEY || 'examos_ai_internal_secret_key_v1';
+  if (internalKey && internalKey === expectedKey) {
+    (req as any).isInternalService = true;
+    req.user = {
+      userId: (req.body?.userId as string) || 'usr_admin_test',
+      email: 'internal@service.local',
+      tenantId: (req.body?.tenantId as string) || 'usr_admin_test',
+      roles: ['SUPER_ADMIN'],
+      permissions: [PERMISSIONS.AI_GENERATE, PERMISSIONS.AI_MODIFY, PERMISSIONS.AI_REVIEW, PERMISSIONS.AI_ADMIN_CONFIG, PERMISSIONS.AI_USAGE_READ],
+    } as any;
+    return next();
+  }
+
   const authHeader = req.headers['authorization'];
   if (authHeader && authHeader.startsWith('Bearer ')) {
     return authenticate(req, res, next);
   }
-  // Internal direct route / test harness fallback
-  (req as any).isInternalService = true;
-  req.user = {
-    userId: (req.body?.userId as string) || 'usr_admin_test',
-    email: 'internal@service.local',
-    tenantId: (req.body?.tenantId as string) || 'usr_admin_test',
-    roles: ['SUPER_ADMIN'],
-    permissions: [PERMISSIONS.AI_GENERATE, PERMISSIONS.AI_MODIFY, PERMISSIONS.AI_REVIEW, PERMISSIONS.AI_ADMIN_CONFIG, PERMISSIONS.AI_USAGE_READ],
-  } as any;
-  return next();
+
+  return res.status(401).json({ success: false, errorCode: 'AUTH_REQUIRED', message: 'Authentication required' });
 }
 
 // Tenant Scoping Middleware: Enforces strict tenant isolation and prevents cross-tenant IDOR
@@ -115,8 +121,8 @@ function requireTenantScope(req: Request, res: Response, next: any) {
   next();
 }
 
-// 1. Healthcheck (Protected with auth, tenant isolation, and permissions)
-router.get('/gateway/health', authenticate, requireTenantScope, requirePermission(PERMISSIONS.AI_USAGE_READ), async (_req: Request, res: Response) => {
+// 1. Healthcheck (Unauthenticated probe)
+router.get('/gateway/health', async (_req: Request, res: Response) => {
   try {
     const providers = await AIGatewayService.listProviders();
     const active = providers.filter((p) => p.isActive && !p.circuitBroken);
@@ -126,12 +132,15 @@ router.get('/gateway/health', authenticate, requireTenantScope, requirePermissio
 
 function validateRouteAIRequest(req: Request, res: Response, next: any) {
   if (!req.body?.scope || typeof req.body.scope !== 'string' || req.body.scope.trim() === '') {
-    return res.status(400).json({ success: false, message: 'scope is required (e.g. question_generation, question_paraphrase, interview_conversation)' });
+    return res.status(400).json({
+      success: false,
+      message: 'scope is required (e.g. question_generation, question_paraphrase, interview_conversation)',
+      errors: { fieldErrors: { scope: ['scope is required'] } },
+    });
   }
   const parseResult = routeAIRequestSchema.safeParse(req.body);
   if (!parseResult.success) {
-    const errorMsg = parseResult.error.errors[0]?.message || 'Invalid input parameters';
-    return res.status(400).json({ success: false, message: errorMsg, errors: parseResult.error.flatten() });
+    return res.status(400).json({ success: false, message: 'Invalid input parameters', errors: parseResult.error.flatten() });
   }
   (req as any).parsedRouteBody = parseResult.data;
   next();

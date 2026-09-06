@@ -321,10 +321,14 @@ async function seedQuestionBank() {
   await pgDb.query(`INSERT INTO "exam_pattern_section_difficulties" ("id", "sectionId", "difficultyLevel", "distributionType", "value", "isAutomatic", "createdAt") VALUES ('diff_math_3', $1, 'HARD', 'PERCENT', 30.0, false, CURRENT_TIMESTAMP)`, [sec3Id]);
 
   console.log('✅ Seeded clean JEE Main Exam Pattern blueprint ready for manual testing.');
+  await pgDb.close();
   process.exit(0);
 }
 
-seedQuestionBank().catch((err) => {
+seedQuestionBank().catch(async (err) => {
   console.error(err);
+  try {
+    await pgDb.close();
+  } catch {}
   process.exit(1);
 });

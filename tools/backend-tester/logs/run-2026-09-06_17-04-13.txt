@@ -1,0 +1,47 @@
+ExamOS Backend Test Run - 2026-09-06T11:34:13.261Z
+Total Suites: 1
+
+----------------------------------------------------------------
+Suite: phase-09-master.test.js | Runner: node | Result: PASSED | Duration: 0.67s | Exit: 0
+Output:
+====================================================
+  STARTING PHASE 9 MASTER INTEGRATION TEST SUITE
+====================================================
+
+1. Authenticating test personas (student, student2, admin)...
+   ✓ Personas authenticated and Student 1 subscribed to PREMIUM tier.
+
+2. Feature 9.1: Testing Weakness Pool retrieval...
+   ✓ Found 1 weak topics for Student 1. Top weakness: "Mechanics & Dynamics" (Error Rate: 75%)
+   ✓ RBAC verified: Student rejected with 403 from viewing other student weakness pool.
+   ✓ Admin authorized to inspect student weakness pool.
+
+3. Feature 9.2: Testing Personalized Practice Paper generation...
+   ✓ Generated Practice Paper: "Targeted Practice: Mechanics & Dynamics" with 6 questions. Attempt ID: prac_att_d8b13f9d85730ae3
+   ✓ Question difficulty sequence: [EASY, MEDIUM, MEDIUM, HARD, HARD, HARD]
+4. Testing Practice Paper fetch by ID...
+   ✓ Successfully fetched practice paper details.
+
+   ✓ Q1 Answered correctly. Streak: 7 / 3
+   ✓ Q2 Answered correctly. Streak: 8 / 3
+   ✓ Q3 Answered correctly. Streak: 9 / 3, Mastered: true
+
+6. Feature 9.4: Testing Practice Attempt Submission & Scorecard...
+   ✓ Practice Attempt finalized. Accuracy: 100%, Correct: 3/3
+
+7. Feature 9.4: Testing Practice History pagination...
+   ✓ Practice history returned 1 items (Total: 1)
+
+8. Testing Practice Paper DELETE endpoint with ownership checks...
+   ✓ Cross-student practice paper deletion rejected with 403.
+   ✓ Owner successfully deleted practice paper.
+   ✓ Deleted practice paper verified absent (404).
+
+====================================================
+✅ ALL PHASE 9 MASTER TESTS PASSED SUCCESSFULLY!
+====================================================
+
+
+
+================================================================
+Final Status: PASSED | Passed: 1/1 | Duration: 0.7s

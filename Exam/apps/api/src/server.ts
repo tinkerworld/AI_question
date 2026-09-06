@@ -25,6 +25,11 @@ import { entitlementRouter } from './routes/entitlement.routes';
 import { subscriptionRouter } from './routes/subscription.routes';
 import { aiCreditsRouter } from './routes/ai-credits.routes';
 import { billingRouter } from './routes/billing.routes';
+import { maintenanceRouter } from './routes/maintenance.routes';
+import { audioRouter } from './routes/audio.routes';
+import { writingRouter } from './routes/writing.routes';
+import { vocabularyRouter } from './routes/vocabulary.routes';
+import { initV2Tables } from './db/init-v2-tables';
 import { errorHandler } from './middleware/error';
 
 dotenv.config();
@@ -37,6 +42,9 @@ app.use(cors());
 // app.use(express.json())
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ limit: '100mb', extended: true }));
+
+// Initialize Phase 15 V2 Tables on Boot
+initV2Tables().catch((e) => console.error('Failed to init V2 tables:', e));
 
 // Healthcheck & Root Landing
 app.get('/', (req, res) => {
@@ -54,6 +62,16 @@ app.use('/api/v1/users', preferenceRoutes); // /me/preferences
 app.use('/api/v1/roles', roleRoutes);
 app.use('/api/v1/audit', auditRoutes);
 app.use('/api/v1/i18n', i18nRoutes);
+
+// Phase 15 Routes (V2: Maintenance, Audio, Writing & Vocabulary)
+app.use('/api/v1/maintenance', maintenanceRouter);
+app.use('/api/maintenance', maintenanceRouter);
+app.use('/api/v1/audio', audioRouter);
+app.use('/api/audio', audioRouter);
+app.use('/api/v1/writing', writingRouter);
+app.use('/api/writing', writingRouter);
+app.use('/api/v1/vocabulary', vocabularyRouter);
+app.use('/api/vocabulary', vocabularyRouter);
 
 // Phase 11 Routes (AI Question System & Gateway)
 app.use('/api/v1/ai', aiRouter);

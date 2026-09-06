@@ -1,0 +1,47 @@
+ExamOS Backend Test Run - 2026-09-06T11:56:55.195Z
+Total Suites: 1
+
+----------------------------------------------------------------
+Suite: phase-04-master.test.js | Runner: node | Result: PASSED | Duration: 0.59s | Exit: 0
+Output:
+◇ injected env (4) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+====================================================
+ EXAMOS PHASE 4 (EXAM PATTERN) — MASTER TEST SUITE
+ Testing Features 4.1 to 4.10
+====================================================
+
+[PASS] 4.1-U1 — Create single subject exam pattern (Status: DRAFT)
+[PASS] 4.1-U2 — List exam patterns with pagination & filters
+[PASS] 4.1-U3 — Get pattern details by ID
+[PASS] 4.1-U4 — Transition pattern DRAFT -> PUBLISHED
+[PASS] 4.1-U5 — Block deleting PUBLISHED exam pattern (409 Conflict)
+[PASS] 4.2-U1 — Add Section A with auto-calculated section total marks (20 × 4 = 80)
+[PASS] 4.2-U2 — Add Section B (10 × 4 = 40)
+[PASS] 4.2-U3 — Pattern total marks auto-recomputed across sections (80 + 40 = 120)
+[PASS] 4.2-U4 — Reorder sections sequence order via API
+[PASS] 4.3-U1 — Set Section Question Rules (MCQ, RANDOM, tags)
+[PASS] 4.3-U2 — Fetch persisted Section Question Rules
+[PASS] 4.4-U1 — Set valid COUNT topic distribution (10 + 10 = 20 total questions)
+[PASS] 4.4-U2 — Reject topic count sum discrepancy (5+5 != 20) with 400 Bad Request
+[PASS] 4.5-U1 — Set valid PERCENT difficulty distribution (30% + 50% + 20% = 100%)
+[PASS] 4.5-U2 — Accept 3-way floating-point percentage split (33.33 + 33.33 + 33.34 = 100%)
+[PASS] 4.5-U3 — Reject invalid difficulty percent sum (!= 100%) with 400 Bad Request
+[PASS] 4.6-U1 — Configure negative marking scheme (+4 / -1 / 0)
+[PASS] 4.6-U2 — Reject marksCorrect mismatch with section marksPerQuestion (5.0 != 4.0)
+[PASS] 4.7-U1 — Multi-Subject allocation and section mapping
+[PASS] 4.8-U1 — Execute Validation Engine against Question Bank
+[PASS] 4.9-U1 — Editing PUBLISHED pattern auto-increments version and saves snapshot
+[PASS] 4.9-U2 — Fetch pattern entity version history snapshot
+[PASS] 4.10-U1 — State Check: showCreateModal is declared
+[PASS] 4.10-U2 — Trigger Check: "+ Create Exam Pattern" button toggles showCreateModal(true)
+[PASS] 4.10-U3 — DOM Render Check: {showCreateModal && (...)} conditional block exists in JSX
+[PASS] 4.10-U4 — Form Handler Check: Create Pattern form connected to handleCreatePattern submit handler
+
+====================================================
+ Phase 4 Master Test Results: 26/26 Passed
+====================================================
+
+
+
+================================================================
+Final Status: PASSED | Passed: 1/1 | Duration: 0.6s

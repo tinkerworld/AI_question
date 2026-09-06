@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-09-06T08:27:35.380Z",
+  "lastUpdated": "2026-09-06T10:04:36.115Z",
   "activePhase": 7,
   "phases": [
     {
@@ -1207,16 +1207,20 @@
           "phase": 15,
           "title": "LISTENING-01 — Listening Interaction Engine (docs/v2/features/listening-question-type.md)",
           "source": "plan",
-          "state": "pending",
-          "addedAt": "2026-08-31T00:00:00.000Z"
+          "state": "tested",
+          "addedAt": "2026-08-31T00:00:00.000Z",
+          "testedAt": "2026-09-06T10:34:55.585Z",
+          "testSuite": "Exam/tests/phase-15-v2-master.test.js"
         },
         {
           "id": "15.2",
           "phase": 15,
           "title": "WRITING-01 — Writing Question Type & Multi-Rubric AI Evaluator (docs/v2/features/writing-question-type.md)",
           "source": "plan",
-          "state": "pending",
-          "addedAt": "2026-08-31T00:00:00.000Z"
+          "state": "tested",
+          "addedAt": "2026-08-31T00:00:00.000Z",
+          "testedAt": "2026-09-06T10:34:55.585Z",
+          "testSuite": "Exam/tests/phase-15-v2-master.test.js"
         },
         {
           "id": "15.3",
@@ -1239,8 +1243,10 @@
           "phase": 15,
           "title": "VOCABULARY-01 — Vocabulary Retention Engine & Spaced Repetition Drills (docs/v2/features/vocabulary-practice.md)",
           "source": "plan",
-          "state": "approved",
-          "addedAt": "2026-08-31T00:00:00.000Z"
+          "state": "tested",
+          "addedAt": "2026-08-31T00:00:00.000Z",
+          "testedAt": "2026-09-06T10:34:55.585Z",
+          "testSuite": "Exam/tests/phase-15-v2-master.test.js"
         },
         {
           "id": "15.6",
@@ -1311,16 +1317,20 @@
           "phase": 15,
           "title": "MAINTENANCE-01 — Centralized Feature-Level & Global Maintenance Engine (docs/v2/features/feature-maintenance.md)",
           "source": "plan",
-          "state": "pending",
-          "addedAt": "2026-08-31T00:00:00.000Z"
+          "state": "tested",
+          "addedAt": "2026-08-31T00:00:00.000Z",
+          "testedAt": "2026-09-06T10:34:55.585Z",
+          "testSuite": "Exam/tests/phase-15-v2-master.test.js"
         },
         {
           "id": "15.15",
           "phase": 15,
           "title": "ENTITLEMENT-PATCH-01 — Dynamic Feature Registry, Promotional Windows & Premium Guardrails (docs/v2/features/premium-entitlements.md)",
           "source": "plan",
-          "state": "pending",
-          "addedAt": "2026-08-31T00:00:00.000Z"
+          "state": "tested",
+          "addedAt": "2026-08-31T00:00:00.000Z",
+          "testedAt": "2026-09-06T10:34:55.585Z",
+          "testSuite": "Exam/tests/phase-15-v2-master.test.js"
         },
         {
           "id": "15.16",
