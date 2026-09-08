@@ -18,6 +18,7 @@ import { SettingsPage } from './pages/SettingsPage';
 import { InterviewPage } from './pages/InterviewPage';
 import { SubscriptionPage } from './pages/SubscriptionPage';
 import { VocabularyPracticePage } from './pages/VocabularyPracticePage';
+import { StudentAnalyticsPage } from './pages/StudentAnalyticsPage';
 import { PreviewBanner } from './components/PreviewBanner';
 import { PreviewConfigurationModal } from './components/PreviewConfigurationModal';
 import { MaintenanceBanner } from './components/maintenance/MaintenanceBanner';
@@ -36,6 +37,7 @@ interface NavTabConfig {
 const NAV_ITEMS: NavTabConfig[] = [
   { id: 'dashboard' },
   { id: 'student_exams', label: 'My Assessments & Tests', requiredPermission: 'exams.attempt', featureKey: 'exams' },
+  { id: 'practice', label: 'Practice & Drills', requiredPermission: 'practice.attempt', featureKey: 'practice' },
   { id: 'interview', label: 'AI Interview & Viva', requiredPermission: 'interview.attempt', featureKey: 'interview' },
   { id: 'vocabulary', label: 'Spaced Repetition Vocab', featureKey: 'vocabulary' },
   { id: 'subscription', label: 'Subscription & Credits', requiredPermission: 'subscriptions.read', featureKey: 'subscriptions' },
@@ -69,6 +71,18 @@ const MainLayout: React.FC = () => {
     user?.roles?.includes('MAIN_ADMIN') ||
     user?.roles?.includes('SUB_ADMIN') ||
     user?.roles?.includes('TEACHER');
+
+  const hasMaintenanceAuthority =
+    userPermissions.includes('system.maintenance') || userPermissions.includes('*');
+
+  const isUserBypassedForFeature = (ctrl: any): boolean => {
+    if (hasMaintenanceAuthority) return true;
+    const isTeacher = user?.roles?.includes('TEACHER');
+    if (isTeacher && ctrl?.allowTeacher) return true;
+    const isStudent = user?.roles?.includes('STUDENT');
+    if (isStudent && ctrl?.allowStudent) return true;
+    return false;
+  };
 
   useEffect(() => {
     fetch(`${API_BASE}/maintenance/status`)
@@ -105,11 +119,13 @@ const MainLayout: React.FC = () => {
     if (!hasPermission(userPermissions, item.requiredPermission)) return false;
     if (item.id === 'interview' && !isInterviewEligible) return false;
 
-    // DisplayMode HIDDEN enforcement: removes entry point entirely for students
-    if (!isStaff && item.featureKey && maintenanceStatus?.featureControls) {
+    // DisplayMode HIDDEN enforcement: removes entry point entirely for blocked users
+    if (item.featureKey && maintenanceStatus?.featureControls) {
       const ctrl = maintenanceStatus.featureControls[item.featureKey];
       if (ctrl && ctrl.status !== 'ACTIVE' && ctrl.displayMode === 'HIDDEN') {
-        return false;
+        if (!isUserBypassedForFeature(ctrl)) {
+          return false;
+        }
       }
     }
 
@@ -341,12 +357,12 @@ const MainLayout: React.FC = () => {
             {visibleNavItems.map((item) => {
               const isCurrentActive = activeTab === item.id;
               const isLockedOut = isExamLocked && item.id !== 'student_exams';
+              const ctrl = item.featureKey && maintenanceStatus?.featureControls ? maintenanceStatus.featureControls[item.featureKey] : null;
               const isFeatureDisabledButton =
-                !isStaff &&
-                item.featureKey &&
-                maintenanceStatus?.featureControls &&
-                maintenanceStatus.featureControls[item.featureKey]?.status !== 'ACTIVE' &&
-                maintenanceStatus.featureControls[item.featureKey]?.displayMode === 'DISABLED_BUTTON';
+                Boolean(ctrl) &&
+                ctrl.status !== 'ACTIVE' &&
+                ctrl.displayMode === 'DISABLED_BUTTON' &&
+                !isUserBypassedForFeature(ctrl);
 
               const isClickDisabled = isLockedOut || isFeatureDisabledButton;
 
@@ -418,6 +434,7 @@ const MainLayout: React.FC = () => {
             minHeight: 0,
             padding:
               activeTab === 'student_exams' ||
+              activeTab === 'practice' ||
               activeTab === 'interview' ||
               activeTab === 'vocabulary' ||
               activeTab === 'subscription' ||
@@ -440,6 +457,10 @@ const MainLayout: React.FC = () => {
           {activeTab === 'student_exams' ? (
             <FeatureMaintenanceWrapper featureKey="exams" featureName="Exams & Assessments" onNavigateHome={() => setActiveTab('dashboard')}>
               <StudentExamsPage />
+            </FeatureMaintenanceWrapper>
+          ) : activeTab === 'practice' ? (
+            <FeatureMaintenanceWrapper featureKey="practice" featureName="Practice & Drills" onNavigateHome={() => setActiveTab('dashboard')}>
+              <StudentAnalyticsPage />
             </FeatureMaintenanceWrapper>
           ) : activeTab === 'interview' ? (
             <FeatureMaintenanceWrapper featureKey="interview" featureName="AI Interview & Viva" onNavigateHome={() => setActiveTab('dashboard')}>

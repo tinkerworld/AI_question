@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { API_BASE } from '../config/api';
 import { getAuthHeaders } from '../utils/api';
 import { VocabularyWordDTO, StudentVocabularyProgressDTO } from '@repo/types';
-import { FeatureMaintenanceWrapper } from '../components/maintenance/FeatureMaintenanceWrapper';
 import { PremiumGuardrail } from '../components/entitlements/PremiumGuardrail';
 
 type PracticeMode = 'FLASHCARDS' | 'MULTIPLE_CHOICE' | 'SPELLING';
@@ -447,8 +446,7 @@ export const VocabularyPracticePage: React.FC = () => {
   };
 
   return (
-    <FeatureMaintenanceWrapper featureKey="spaced_repetition_vocab">
-      <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '24px 16px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '24px 16px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
         {/* Top Header & Stats */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
           <div>
@@ -553,6 +551,5 @@ export const VocabularyPracticePage: React.FC = () => {
           </div>
         )}
       </div>
-    </FeatureMaintenanceWrapper>
   );
 };

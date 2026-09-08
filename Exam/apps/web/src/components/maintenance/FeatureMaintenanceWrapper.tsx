@@ -32,14 +32,13 @@ export const FeatureMaintenanceWrapper: React.FC<FeatureMaintenanceWrapperProps>
   const [endAt, setEndAt] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // Compute if current logged-in user is a genuine ADMIN (MAIN_ADMIN or ADMIN)
-  // Teachers, students, sub-admins are NOT real admins for this override button
-  const userRoles: string[] = Array.isArray(user?.roles)
-    ? user.roles
-    : (user as any)?.role
-    ? [(user as any).role]
-    : [];
-  const isRealAdmin = Boolean(userRoles.includes('MAIN_ADMIN') || userRoles.includes('ADMIN'));
+  // Compute if current logged-in user has admin maintenance authority
+  // Mirrors backend maintenance.service.ts permission check: system.maintenance or '*'
+  const userPermissions: string[] = Array.isArray(user?.permissions) ? user.permissions : [];
+  const isRealAdmin = Boolean(
+    userPermissions.includes('system.maintenance') ||
+    userPermissions.includes('*')
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -89,12 +88,110 @@ export const FeatureMaintenanceWrapper: React.FC<FeatureMaintenanceWrapperProps>
   const effectiveDisplayMode = overrideDisplayMode || displayMode;
   const displayName = featureName || featureKey.replace(/_/g, ' ').toUpperCase();
 
-  // 1. BLUR: In-place content blur with centered maintenance overlay card
-  // Untouched behavior: allowed users see children normally, blocked users see blur overlay
-  if (effectiveDisplayMode === 'BLUR') {
-    if (!isBlockedByBackend) {
+  // Sticky reminder banner displayed when an admin overrides a maintenance display mode
+  const renderAdminOverrideBanner = () => (
+    <div
+      id={`admin-override-banner-${featureKey}`}
+      data-testid={`admin-override-banner-${featureKey}`}
+      style={{
+        padding: '10px 16px',
+        background: 'rgba(245, 158, 11, 0.12)',
+        border: '1px solid #f59e0b',
+        borderRadius: '8px',
+        marginBottom: '16px',
+        color: '#f59e0b',
+        fontSize: '13px',
+        fontWeight: 600,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '10px',
+        width: '100%',
+        boxSizing: 'border-box',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <span style={{ fontSize: '16px' }}>⚠️</span>
+        <span>
+          <strong>Admin Override Active</strong> — this feature ({displayName}) is currently in maintenance for other users.
+        </span>
+      </div>
+      <button
+        onClick={() => setAdminOverrideAcknowledged(false)}
+        style={{
+          padding: '4px 10px',
+          background: 'rgba(245, 158, 11, 0.2)',
+          border: '1px solid #f59e0b',
+          borderRadius: '4px',
+          color: '#f59e0b',
+          fontSize: '11px',
+          fontWeight: 700,
+          cursor: 'pointer',
+        }}
+        title="Re-lock this view"
+      >
+        Re-lock
+      </button>
+    </div>
+  );
+
+  // 1. BANNER: Displays alert notice banner across top, children remain accessible
+  // Admins see banner notice first; exempt non-admin roles (allowTeacher/allowStudent) get direct access without notice
+  if (effectiveDisplayMode === 'BANNER') {
+    if (!isRealAdmin && !isBlockedByBackend) {
       return <>{children}</>;
     }
+
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
+        <div
+          id={`maintenance-banner-${featureKey}`}
+          data-testid={`maintenance-banner-${featureKey}`}
+          style={{
+            padding: '12px 18px',
+            background: 'rgba(245, 158, 11, 0.12)',
+            border: '1px solid #f59e0b',
+            borderRadius: '8px',
+            color: '#f59e0b',
+            fontSize: '13px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+          }}
+        >
+          <span style={{ fontSize: '18px' }}>⚠️</span>
+          <div>
+            <strong>Notice:</strong> {message || `${displayName} is undergoing background maintenance.`}
+            {endAt && (
+              <span style={{ marginLeft: '8px', fontSize: '11px', opacity: 0.85 }}>
+                (Expected completion: {new Date(endAt).toLocaleTimeString()})
+              </span>
+            )}
+          </div>
+        </div>
+        {children}
+      </div>
+    );
+  }
+
+  // 2. BLUR: In-place content blur with centered maintenance overlay card
+  if (effectiveDisplayMode === 'BLUR') {
+    // If real admin has clicked override, reveal unblurred content
+    if (isRealAdmin && adminOverrideAcknowledged) {
+      return (
+        <div style={{ width: '100%' }}>
+          {renderAdminOverrideBanner()}
+          {children}
+        </div>
+      );
+    }
+
+    // Non-admin exempt role (e.g. Teacher if allowTeacher: true) bypasses normally
+    if (!isRealAdmin && !isBlockedByBackend) {
+      return <>{children}</>;
+    }
+
+    // Blocked user OR Admin who hasn't acknowledged override yet:
     return (
       <div
         id={`maintenance-blur-${featureKey}`}
@@ -167,18 +264,58 @@ export const FeatureMaintenanceWrapper: React.FC<FeatureMaintenanceWrapperProps>
                 Estimated resumption: {new Date(endAt).toLocaleTimeString()}
               </div>
             )}
+
+            {/* Admin Override Action Button */}
+            {isRealAdmin && (
+              <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center' }}>
+                <button
+                  id={`admin-override-btn-${featureKey}`}
+                  data-testid={`admin-override-btn-${featureKey}`}
+                  onClick={() => setAdminOverrideAcknowledged(true)}
+                  style={{
+                    padding: '8px 18px',
+                    borderRadius: '8px',
+                    border: '1px solid #f59e0b',
+                    background: 'rgba(245, 158, 11, 0.15)',
+                    color: '#f59e0b',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    boxShadow: '0 4px 12px rgba(245, 158, 11, 0.15)',
+                  }}
+                >
+                  <span>👁</span>
+                  <span>View Anyway (Admin Override)</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
     );
   }
 
-  // 2. DISABLED_BUTTON: Degrades gracefully in place with disabled overlay and notice
-  // Untouched behavior: allowed users see children normally, blocked users see disabled overlay
+  // 3. DISABLED_BUTTON: Degrades gracefully in place with disabled overlay and notice
   if (effectiveDisplayMode === 'DISABLED_BUTTON') {
-    if (!isBlockedByBackend) {
+    // If real admin has clicked override, re-enable elements and show banner
+    if (isRealAdmin && adminOverrideAcknowledged) {
+      return (
+        <div style={{ width: '100%' }}>
+          {renderAdminOverrideBanner()}
+          {children}
+        </div>
+      );
+    }
+
+    // Non-admin exempt role bypasses normally
+    if (!isRealAdmin && !isBlockedByBackend) {
       return <>{children}</>;
     }
+
+    // Blocked user OR Admin who hasn't acknowledged override yet:
     return (
       <div
         id={`maintenance-disabled-${featureKey}`}
@@ -201,13 +338,42 @@ export const FeatureMaintenanceWrapper: React.FC<FeatureMaintenanceWrapperProps>
             color: '#ef4444',
             display: 'flex',
             alignItems: 'center',
+            justifyContent: 'space-between',
             gap: '8px',
           }}
         >
-          <span>⛔</span>
-          <span>
-            <strong>Feature Disabled:</strong> {message || `${displayName} actions are temporarily disabled.`}
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>⛔</span>
+            <span>
+              <strong>Feature Disabled:</strong> {message || `${displayName} actions are temporarily disabled.`}
+            </span>
+          </div>
+
+          {/* Admin Override Action Button */}
+          {isRealAdmin && (
+            <button
+              id={`admin-override-btn-${featureKey}`}
+              data-testid={`admin-override-btn-${featureKey}`}
+              onClick={() => setAdminOverrideAcknowledged(true)}
+              style={{
+                padding: '6px 14px',
+                borderRadius: '6px',
+                border: '1px solid #f59e0b',
+                background: 'rgba(245, 158, 11, 0.18)',
+                color: '#f59e0b',
+                fontSize: '11px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <span>⚡</span>
+              <span>Enable Controls (Admin Override)</span>
+            </button>
+          )}
         </div>
         <div
           style={{
@@ -223,52 +389,110 @@ export const FeatureMaintenanceWrapper: React.FC<FeatureMaintenanceWrapperProps>
     );
   }
 
-  // 3. BANNER: Displays alert notice banner across top, children remain accessible
-  // Untouched behavior: allowed users see children normally, blocked users see banner with children
-  if (effectiveDisplayMode === 'BANNER') {
-    if (!isBlockedByBackend) {
+  // 4. HIDDEN: Invisible to normal blocked users, minimal indicator + override for Admin
+  if (effectiveDisplayMode === 'HIDDEN') {
+    // If real admin has clicked override, reveal hidden feature
+    if (isRealAdmin && adminOverrideAcknowledged) {
+      return (
+        <div style={{ width: '100%' }}>
+          {renderAdminOverrideBanner()}
+          {children}
+        </div>
+      );
+    }
+
+    // Non-admin exempt role (if backend allowed) bypasses normally
+    if (!isRealAdmin && !isBlockedByBackend) {
       return <>{children}</>;
     }
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
+
+    // For real admin who hasn't acknowledged override yet:
+    // Show a clean, minimal admin-visible indicator with an override button
+    if (isRealAdmin) {
+      return (
         <div
-          data-testid={`maintenance-banner-${featureKey}`}
+          id={`maintenance-hidden-admin-${featureKey}`}
+          data-testid={`maintenance-hidden-admin-${featureKey}`}
           style={{
-            padding: '12px 18px',
-            background: 'rgba(245, 158, 11, 0.12)',
-            border: '1px solid #f59e0b',
-            borderRadius: '8px',
-            color: '#f59e0b',
-            fontSize: '13px',
+            padding: '36px 24px',
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
-            gap: '10px',
+            justifyContent: 'center',
+            textAlign: 'center',
+            background: 'rgba(255, 255, 255, 0.02)',
+            border: '1px dashed var(--border-color)',
+            borderRadius: '12px',
+            margin: '20px',
           }}
         >
-          <span style={{ fontSize: '18px' }}>⚠️</span>
-          <div>
-            <strong>Notice:</strong> {message || `${displayName} is undergoing background maintenance.`}
-            {endAt && (
-              <span style={{ marginLeft: '8px', fontSize: '11px', opacity: 0.85 }}>
-                (Expected completion: {new Date(endAt).toLocaleTimeString()})
-              </span>
-            )}
+          <div style={{ fontSize: '32px', marginBottom: '12px' }}>🙈</div>
+          <div
+            style={{
+              fontFamily: 'JetBrains Mono',
+              fontSize: '11px',
+              fontWeight: 700,
+              color: '#a855f7',
+              letterSpacing: '1.2px',
+              marginBottom: '6px',
+            }}
+          >
+            FEATURE HIDDEN // {status}
           </div>
+          <h3 style={{ margin: '0 0 8px', fontSize: '16px', fontWeight: 700, color: 'var(--text-main)' }}>
+            {displayName} (Hidden from normal users)
+          </h3>
+          <p style={{ margin: '0 0 18px', fontSize: '13px', color: 'var(--text-muted)', maxWidth: '480px' }}>
+            {message || `This module is set to HIDDEN mode. Normal users cannot see or access it.`}
+          </p>
+          <button
+            id={`admin-override-btn-${featureKey}`}
+            data-testid={`admin-override-btn-${featureKey}`}
+            onClick={() => setAdminOverrideAcknowledged(true)}
+            style={{
+              padding: '8px 20px',
+              borderRadius: '8px',
+              border: '1px solid #a855f7',
+              background: 'rgba(168, 85, 247, 0.15)',
+              color: '#d8b4fe',
+              fontSize: '12px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              boxShadow: '0 4px 12px rgba(168, 85, 247, 0.15)',
+            }}
+          >
+            <span>👁</span>
+            <span>Reveal Feature (Admin Override)</span>
+          </button>
         </div>
+      );
+    }
+
+    // For non-admin blocked user (e.g. Student):
+    // Invisibility is preserved: render fallback if provided, else null
+    return fallback ? <>{fallback}</> : null;
+  }
+
+  // 5. FULL_PAGE: Branded full maintenance screen
+  // If real admin has acknowledged the override, reveal children
+  if (isRealAdmin && adminOverrideAcknowledged) {
+    return (
+      <div style={{ width: '100%' }}>
+        {renderAdminOverrideBanner()}
         {children}
       </div>
     );
   }
 
-  // 4. FULL_PAGE & HIDDEN:
-  // If real admin has acknowledged the override, reveal children
-  if (isRealAdmin && adminOverrideAcknowledged) {
+  // Non-admin exempt role bypasses normally
+  if (!isRealAdmin && !isBlockedByBackend) {
     return <>{children}</>;
   }
 
-  // 5. FULL_PAGE and HIDDEN display modes (branded Under Maintenance screen)
-  // Admin sees screen FIRST with "Access Anyway (Admin Override)" button
-  // Every other role sees plain maintenance screen with NO override button
+  // Blocked user OR Admin who hasn't acknowledged override yet:
   return (
     <div
       id={`maintenance-screen-${featureKey}`}
