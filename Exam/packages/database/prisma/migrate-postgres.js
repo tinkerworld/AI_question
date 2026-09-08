@@ -1171,7 +1171,7 @@ async function migrate() {
   }
 
   // Ensure system.maintenance permission exists and is granted to MAIN_ADMIN and SUB_ADMIN
-  await db.query(`
+  await db.exec(`
     INSERT INTO "permissions" ("id", "key", "description", "module")
     VALUES ('p_system_maintenance', 'system.maintenance', 'Configure system and feature level maintenance modes', 'system')
     ON CONFLICT ("key") DO NOTHING;
