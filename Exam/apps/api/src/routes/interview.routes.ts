@@ -33,6 +33,40 @@ router.get(
 );
 
 /**
+ * GET /api/v1/interview/candidate-profile
+ * Retrieves persistent cross-session interview profile for the authenticated candidate.
+ */
+router.get(
+  '/candidate-profile',
+  requirePermission(PERMISSIONS.INTERVIEW_READ_OWN),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const profile = await InterviewService.getCandidateProfile((req as any).user.userId);
+      res.json({ success: true, data: profile });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+/**
+ * DELETE /api/v1/interview/candidate-profile
+ * Resets/clears persistent cross-session interview profile for the authenticated candidate.
+ */
+router.delete(
+  '/candidate-profile',
+  requirePermission(PERMISSIONS.INTERVIEW_READ_OWN),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      await InterviewService.clearCandidateProfile((req as any).user.userId);
+      res.json({ success: true, message: 'Candidate profile cleared successfully' });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+/**
  * POST /api/v1/interview/sessions/start
  * Starts a new interview session (Practice or Exam mode).
  */
@@ -307,6 +341,7 @@ router.delete(
         [userId]
       );
       await db.query(`DELETE FROM "interview_sessions" WHERE "userId" = $1`, [userId]);
+      await db.query(`DELETE FROM "candidate_interview_profiles" WHERE "userId" = $1`, [userId]);
       await db.query(`DELETE FROM "ai_usage_history" WHERE "userId" = $1 AND "feature" = 'interview'`, [userId]);
       res.json({ success: true, message: `Sessions for user ${userId} deleted` });
     } catch (err) {

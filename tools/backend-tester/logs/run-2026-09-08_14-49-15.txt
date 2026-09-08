@@ -1,0 +1,29 @@
+ExamOS Backend Test Run - 2026-09-08T09:19:12.654Z
+Total Suites: 1
+
+----------------------------------------------------------------
+Suite: phase-16-ielts-speaking-flow.test.js | Runner: node | Result: PASSED | Duration: 2.92s | Exit: 0
+Output:
+================================================================
+🚀 RUNNING PHASE 16: IELTS SPEAKING PHASE FLOW & PROFILE TESTS
+================================================================
+
+✅ PASS: INT-IELTS-001: Gating test — IELTS_SPEAKING triggers IELTS flow, standard viva unchanged
+✅ PASS: INT-IELTS-002: Introduction phase — candidate provides name, isScored: false, fixed script transition
+✅ PASS: INT-IELTS-003: Part 1 topic progression — brief response (<5 words) triggers CLARIFY_PROMPT
+✅ PASS: INT-IELTS-004: Part 1 completion triggers transition to PART_2_PREP and extracts candidateProfile
+✅ PASS: INT-IELTS-005: Persistent profile update — candidate_interview_profiles captures biographical data
+✅ PASS: INT-IELTS-006: Part 2 Prep presents cue card and handles transition to monologue
+✅ PASS: INT-IELTS-007: Part 2 Long Turn — candidate submits monologue, examiner transitions directly to Part 3
+✅ PASS: INT-IELTS-008: Part 3 discussion — questions are abstract and forbid retrospective references
+✅ PASS: INT-IELTS-009: Evaluation — 4 criteria, Pronunciation null on text-only, IELTS rounding, un-scored excluded
+✅ PASS: INT-IELTS-010: Cross-session persistence — subsequent session selects least-used topics
+✅ PASS: INT-IELTS-011: Candidate profile endpoints — GET returns user profile, DELETE clears it
+
+================================================================
+Phase 16 Test Suite Result: 11 passed, 0 failed
+================================================================
+
+
+================================================================
+Final Status: PASSED | Passed: 1/1 | Duration: 2.9s

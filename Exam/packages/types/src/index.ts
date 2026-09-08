@@ -1343,7 +1343,7 @@ export interface InterviewRubricItemDTO {
   description?: string;
   maxScore: number;
   weight?: number;
-  score?: number;
+  score?: number | null;
   feedback?: string;
   criteria?: string[];
   evidenceQuotes?: InterviewEvidenceQuote[];
@@ -1367,6 +1367,8 @@ export interface InterviewTurnDTO {
   providerType?: 'LOCAL' | 'CLOUD' | 'MOCK' | string | null;
   isFallback?: boolean;
   selectedTemplate?: 'FOLLOW_UP_PROMPT' | 'NEW_TOPIC_PROMPT' | 'CLARIFY_PROMPT' | string | null;
+  isScored?: boolean;
+  phase?: 'INTRODUCTION' | 'PART_1' | 'PART_2_PREP' | 'PART_2_LONG_TURN' | 'PART_3' | 'COMPLETE' | string | null;
   createdAt: string;
 }
 
@@ -1395,6 +1397,12 @@ export interface InterviewSessionDTO {
   followUpCountForCurrentMain?: number;
   totalMainQuestions?: number;
   lastSelectedTemplate?: 'FOLLOW_UP_PROMPT' | 'NEW_TOPIC_PROMPT' | 'CLARIFY_PROMPT' | string | null;
+  interviewPhase?: 'INTRODUCTION' | 'PART_1' | 'PART_2_PREP' | 'PART_2_LONG_TURN' | 'PART_3' | 'COMPLETE' | string | null;
+  part1Topics?: string[] | null;
+  candidateProfile?: any | null;
+  speculativeBank?: any | null;
+  treePath?: string[] | null;
+  offScriptRedirectCount?: number;
   debugInfo?: {
     lastSelectedTemplate?: string;
     lastWordCount?: number;
@@ -1445,6 +1453,22 @@ export interface InterviewSessionDTO {
   };
   createdAt: string;
   updatedAt: string;
+}
+
+export interface CandidateInterviewProfileDTO {
+  userId: string;
+  name?: string | null;
+  hometown?: string | null;
+  profession?: string | null;
+  studyField?: string | null;
+  hobbies?: string[];
+  notableDetails?: string[];
+  topicsAsked?: string[];
+  weakAreas?: Record<string, number[]>;
+  strugglePatterns?: Record<string, number>;
+  lastSessionAt?: string;
+  sessionCount?: number;
+  updatedAt?: string;
 }
 
 export interface StartInterviewDTO {

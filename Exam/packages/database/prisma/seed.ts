@@ -3349,6 +3349,34 @@ export async function runSeed() {
 
   const ieltsSpeakingQuestions = [
     {
+      id: 'q_interview_ielts_flow_01',
+      type: 'INTERVIEW',
+      content: 'Describe a significant technological innovation that has reshaped modern education in your country. Discuss both its transformative advantages and potential risks.',
+      difficulty: 'MEDIUM',
+      marks: 9.0,
+      status: 'PUBLISHED',
+      courseId: 'c3',
+      subjectId: 'sub_ielts_speaking',
+      syllabusNodeId: 'top_ielts_spk_p2',
+      data: {
+        examStyle: 'IELTS_SPEAKING',
+        preset: 'IELTS_SPEAKING',
+        scenario: 'Official IELTS Speaking Examination: Full 3-Part oral interview consisting of Introduction, Part 1 familiar topic discussion, Part 2 cue card monologue, and Part 3 two-way abstract discussion.',
+        maxTurns: 10,
+        expectedDurationMinutes: 14,
+        cueCard: {
+          topic: 'A significant technological innovation in education',
+          bulletPoints: [
+            'What the technology is and how it functions',
+            'When and why it was introduced to classrooms',
+            'What advantages and challenges students experience',
+            'Explain why you consider this innovation significant for the future of learning',
+          ],
+        },
+        rubric: ieltsSpeakingRubric,
+      },
+    },
+    {
       id: 'q_interview_ielts_01',
       type: 'INTERVIEW',
       content: 'Describe a significant technological innovation that has reshaped modern education in your country. Discuss both its transformative advantages and potential risks.',

@@ -1,0 +1,35 @@
+ExamOS Backend Test Run - 2026-09-08T09:24:58.251Z
+Total Suites: 1
+
+----------------------------------------------------------------
+Suite: phase-16-ielts-speaking-flow.test.js | Runner: ts-node | Result: PASSED | Duration: 6.61s | Exit: 0
+Output:
+◇ injected env (4) from .env // tip: ⌘ override existing { override: true }
+================================================================
+🚀 RUNNING PHASE 16: IELTS SPEAKING PHASE FLOW & PROFILE TESTS
+================================================================
+
+✅ PASS: INT-IELTS-001: Gating test — IELTS_SPEAKING triggers IELTS flow, standard viva unchanged
+✅ PASS: INT-IELTS-002: Introduction phase — candidate provides name, isScored: false, fixed script transition
+✅ PASS: INT-IELTS-003: Part 1 topic progression — brief response (<5 words) triggers CLARIFY_PROMPT
+✅ PASS: INT-IELTS-004: Part 1 completion triggers transition to PART_2_PREP and extracts candidateProfile
+✅ PASS: INT-IELTS-005: Persistent profile update — candidate_interview_profiles captures biographical data
+✅ PASS: INT-IELTS-006: Part 2 Prep presents cue card and handles transition to monologue
+✅ PASS: INT-IELTS-007: Part 2 Long Turn — candidate submits monologue, examiner transitions directly to Part 3
+✅ PASS: INT-IELTS-008: Part 3 discussion — questions are abstract and forbid retrospective references
+✅ PASS: INT-IELTS-009: Evaluation — 4 criteria, Pronunciation null on text-only, IELTS rounding, un-scored excluded
+✅ PASS: INT-IELTS-010: Cross-session persistence — subsequent session selects least-used topics
+✅ PASS: INT-IELTS-011: Candidate profile endpoints — GET returns user profile, DELETE clears it
+✅ PASS: INT-IELTS-012: Static script libraries pass avoid-list check and exclude retrospective phrases
+✅ PASS: INT-IELTS-013: Adversarial input triggers ADVERSARIAL_OR_OFF_SCRIPT pattern and scripted redirect
+✅ PASS: INT-IELTS-014: Prompt injection input is treated strictly as data and neutralized
+✅ PASS: INT-IELTS-015: Part 3 question tree traversal, depth-2 lazy fill, and redirect tree preservation
+✅ PASS: INT-IELTS-016: Multiple adversarial inputs set highOffScriptRate flag in debugInfo
+
+================================================================
+Phase 16 Test Suite Result: 16 passed, 0 failed
+================================================================
+
+
+================================================================
+Final Status: PASSED | Passed: 1/1 | Duration: 6.6s

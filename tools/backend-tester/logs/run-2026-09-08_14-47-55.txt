@@ -1,0 +1,29 @@
+ExamOS Backend Test Run - 2026-09-08T09:17:50.242Z
+Total Suites: 1
+
+----------------------------------------------------------------
+Suite: phase-15-interview-conversation-flow.test.js | Runner: ts-node | Result: PASSED | Duration: 5.70s | Exit: 0
+Output:
+================================================================
+🚀 RUNNING INTERVIEW CONVERSATION FLOW & TEMPLATE AUDIT TESTS
+================================================================
+
+◇ injected env (4) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+✅ PASS: INT-FLOW-001: evaluateTurnTemplateSelection selects templates via plain code heuristics
+✅ PASS: INT-FLOW-002: Prompt audit confirms prior history, verbatim answer, uncovered areas, and active template
+✅ PASS: INT-FLOW-003: Live session tracks code-selected templates and debugInfo history
+✅ PASS: INT-FLOW-004: Mid-interview failover reconstructs prompt context directly from DB interview_turns
+✅ PASS: INT-FLOW-005: PREP PHASE creates and caches 5-facet x 4-variant follow-up bank in DB
+✅ PASS: INT-FLOW-006: classifyAnswerPattern accurately classifies all 4 candidate response patterns
+✅ PASS: INT-FLOW-007: Live phase uses bank entry, logs answerPattern & bankQuestionUsed, and falls back cleanly
+✅ PASS: INT-FLOW-008: Timeout split constants defined and Groq provider is active in DB
+✅ PASS: INT-FLOW-009: Live interview session enforces avoidList and knowledge-boundary constraints across conversation turns
+
+================================================================
+🏁 FLOW & TEMPLATE AUDIT TEST RESULTS: 9 passed, 0 failed
+================================================================
+
+
+
+================================================================
+Final Status: PASSED | Passed: 1/1 | Duration: 5.7s

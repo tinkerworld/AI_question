@@ -896,6 +896,13 @@ async function migrate() {
       "followUpCountForCurrentMain" INT NOT NULL DEFAULT 0,
       "totalMainQuestions" INT NOT NULL DEFAULT 5,
       "lastSelectedTemplate" TEXT,
+      "interviewPhase" TEXT,
+      "part1Topics" JSONB,
+      "candidateProfile" JSONB,
+      "speculativeBank" JSONB,
+      "facetFollowUpBank" JSONB,
+      "treePath" JSONB,
+      "offScriptRedirectCount" INT NOT NULL DEFAULT 0,
       "debugInfo" JSONB DEFAULT '{}'::jsonb,
       "startedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       "completedAt" TIMESTAMP,
@@ -922,12 +929,30 @@ async function migrate() {
       "mainQuestionIndex" INT NOT NULL DEFAULT 1,
       "followUpIndex" INT NOT NULL DEFAULT 0,
       "isMainQuestion" BOOLEAN NOT NULL DEFAULT false,
+      "isScored" BOOLEAN NOT NULL DEFAULT true,
+      "phase" TEXT,
       "providerId" TEXT,
       "modelUsed" TEXT,
       "providerType" TEXT,
       "isFallback" BOOLEAN NOT NULL DEFAULT false,
       "selectedTemplate" TEXT,
       "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS "candidate_interview_profiles" (
+      "userId" TEXT PRIMARY KEY REFERENCES "users"("id") ON DELETE CASCADE,
+      "name" TEXT,
+      "hometown" TEXT,
+      "profession" TEXT,
+      "studyField" TEXT,
+      "hobbies" JSONB DEFAULT '[]'::jsonb,
+      "notableDetails" JSONB DEFAULT '[]'::jsonb,
+      "topicsAsked" JSONB DEFAULT '[]'::jsonb,
+      "weakAreas" JSONB DEFAULT '{}'::jsonb,
+      "strugglePatterns" JSONB DEFAULT '{}'::jsonb,
+      "lastSessionAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      "sessionCount" INT DEFAULT 0,
+      "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     );
 
     CREATE INDEX "idx_interview_sessions_user" ON "interview_sessions"("userId");
