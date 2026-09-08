@@ -16,8 +16,10 @@ import { AIQuestionService } from '../services/ai-question.service';
 import { AIUsageService } from '../services/ai-usage.service';
 import { AIQueueService } from '../services/ai-queue.service';
 import { InterviewService } from '../services/interview.service';
+import { requireFeatureActive } from '../middleware/maintenance.middleware';
 
 const router = Router();
+router.use(requireFeatureActive('ai_gateway'));
 
 // Rate limiter: Enforces strict per-tenant/per-user rate limits preventing cross-tenant exhaustion
 const tenantRateMap = new Map<string, { count: number; resetAt: number }>();

@@ -5,10 +5,13 @@ import { authenticate } from '../middleware/auth';
 import { PERMISSIONS, hasPermission } from '@repo/permissions';
 import { z } from '@repo/validation';
 
+import { requireFeatureActive } from '../middleware/maintenance.middleware';
+
 export const analyticsRouter = Router();
 
 // All analytics routes require authentication
 analyticsRouter.use(authenticate);
+analyticsRouter.use(requireFeatureActive('analytics'));
 
 function isElevatedUser(user: any): boolean {
   if (!user) return false;

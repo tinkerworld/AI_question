@@ -1,8 +1,10 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { WritingEvaluationService, BUILTIN_WRITING_RUBRICS } from '../services/writing-evaluation.service';
 import { authenticate } from '../middleware/auth';
+import { requireFeatureActive } from '../middleware/maintenance.middleware';
 
 export const writingRouter = Router();
+writingRouter.use(requireFeatureActive('writing'));
 
 /**
  * GET /api/v1/writing/rubrics

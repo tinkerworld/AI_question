@@ -45,6 +45,7 @@ async function migrate() {
     DROP TABLE IF EXISTS "vocabulary_words" CASCADE;
     DROP TABLE IF EXISTS "promotional_entitlement_rules" CASCADE;
     DROP TABLE IF EXISTS "feature_registry" CASCADE;
+    DROP TABLE IF EXISTS "feature_controls" CASCADE;
     DROP TABLE IF EXISTS "maintenance_configs" CASCADE;
     DROP TABLE IF EXISTS "audio_voice_profiles" CASCADE;
     DROP TABLE IF EXISTS "refund_transactions" CASCADE;
@@ -1043,6 +1044,25 @@ async function migrate() {
     CREATE INDEX "idx_refund_transactions_gateway_payment" ON "refund_transactions"("gatewayPaymentId");
 
     -- Phase 15 Tables
+    CREATE TABLE IF NOT EXISTS "feature_controls" (
+      "id" TEXT PRIMARY KEY,
+      "featureKey" TEXT UNIQUE NOT NULL,
+      "name" TEXT NOT NULL,
+      "description" TEXT,
+      "status" TEXT NOT NULL DEFAULT 'ACTIVE',
+      "message" TEXT NOT NULL DEFAULT 'This feature is currently under maintenance.',
+      "reason" TEXT,
+      "startAt" TIMESTAMP WITH TIME ZONE,
+      "endAt" TIMESTAMP WITH TIME ZONE,
+      "allowAdmin" BOOLEAN NOT NULL DEFAULT true,
+      "allowTeacher" BOOLEAN NOT NULL DEFAULT false,
+      "allowStudent" BOOLEAN NOT NULL DEFAULT false,
+      "displayMode" TEXT NOT NULL DEFAULT 'FULL_PAGE',
+      "updatedBy" TEXT,
+      "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+
     CREATE TABLE IF NOT EXISTS "maintenance_configs" (
       "id" TEXT PRIMARY KEY,
       "scope" TEXT NOT NULL DEFAULT 'FEATURE',
@@ -1126,6 +1146,42 @@ async function migrate() {
     CREATE INDEX IF NOT EXISTS "idx_vocab_words_course" ON "vocabulary_words"("courseId");
     CREATE INDEX IF NOT EXISTS "idx_student_vocab_due" ON "student_vocabulary_progress"("userId", "nextReviewDue");
     CREATE INDEX IF NOT EXISTS "idx_promotional_rules_key" ON "promotional_entitlement_rules"("featureKey");
+  `);
+
+  const defaultFeatureControls = [
+    { key: 'interview', name: 'AI Oral Interview & Viva', desc: 'Interactive conversational AI viva and oral test engine' },
+    { key: 'practice', name: 'Practice & Drills', desc: 'Adaptive practice questions and weak-area drills' },
+    { key: 'question_bank', name: 'Question Bank', desc: 'Authoring, browsing, and managing question banks' },
+    { key: 'exams', name: 'Exams & Mock Tests', desc: 'Timed examinations, mock test taking, and paper generation' },
+    { key: 'analytics', name: 'Analytics & Mastery', desc: 'Student performance, progress metrics, and mastery analytics' },
+    { key: 'subscriptions', name: 'Subscriptions & Billing', desc: 'Plan subscriptions, invoices, and AI credits' },
+    { key: 'ai_gateway', name: 'AI Gateway & Generation', desc: 'LLM integrations, prompt engineering, and automated grading' },
+    { key: 'audio', name: 'Audio & Speech Processing', desc: 'Voice synthesis, audio listening questions, and speech evaluation' },
+    { key: 'writing', name: 'Writing Assessment', desc: 'Essay grading, multi-criteria rubrics, and automated feedback' },
+    { key: 'vocabulary', name: 'Vocabulary Practice', desc: 'Flashcard drills and SuperMemo SM-2 retention engine' }
+  ];
+
+  for (const f of defaultFeatureControls) {
+    await db.query(
+      `INSERT INTO "feature_controls" ("id", "featureKey", "name", "description", "status", "message", "allowAdmin", "allowTeacher", "allowStudent", "displayMode")
+       VALUES ($1, $2, $3, $4, 'ACTIVE', $5, true, false, false, 'FULL_PAGE')
+       ON CONFLICT ("featureKey") DO NOTHING`,
+      [`feat_ctrl_${f.key}`, f.key, f.name, f.desc, `${f.name} is temporarily under maintenance.`]
+    );
+  }
+
+  // Ensure system.maintenance permission exists and is granted to MAIN_ADMIN and SUB_ADMIN
+  await db.query(`
+    INSERT INTO "permissions" ("id", "key", "description", "module")
+    VALUES ('p_system_maintenance', 'system.maintenance', 'Configure system and feature level maintenance modes', 'system')
+    ON CONFLICT ("key") DO NOTHING;
+
+    INSERT INTO "role_permissions" ("roleId", "permissionId")
+    SELECT r.id, p.id
+    FROM "roles" r
+    CROSS JOIN "permissions" p
+    WHERE r.name IN ('MAIN_ADMIN', 'SUB_ADMIN') AND p.key = 'system.maintenance'
+    ON CONFLICT ("roleId", "permissionId") DO NOTHING;
   `);
 
   console.log('PostgreSQL 16 Schema Migration Completed Successfully!');

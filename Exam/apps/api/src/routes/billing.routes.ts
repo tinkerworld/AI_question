@@ -4,8 +4,10 @@ import { requirePermission } from '../middleware/permission';
 import { PERMISSIONS } from '@repo/permissions';
 import { BillingService } from '../services/billing.service';
 import { checkoutSchema, processRefundSchema } from '@repo/validation';
+import { requireFeatureActive } from '../middleware/maintenance.middleware';
 
 export const billingRouter = Router();
+billingRouter.use(requireFeatureActive('subscriptions'));
 
 /**
  * POST /api/v1/billing/checkout

@@ -8,9 +8,12 @@ import {
   submitPracticeAnswerSchema,
 } from '@repo/validation';
 
+import { requireFeatureActive } from '../middleware/maintenance.middleware';
+
 export const practiceRouter = Router();
 
 practiceRouter.use(authenticate);
+practiceRouter.use(requireFeatureActive('practice'));
 
 function isElevatedUser(user: any): boolean {
   if (!user) return false;

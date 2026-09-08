@@ -18,7 +18,10 @@ import {
   initiateExamCorrectionSchema,
 } from '@repo/validation';
 
+import { requireFeatureActive } from '../middleware/maintenance.middleware';
+
 export const examRouter = Router();
+examRouter.use(requireFeatureActive('exams'));
 
 /**
  * Feature 5.1: Generate exam from pattern blueprint

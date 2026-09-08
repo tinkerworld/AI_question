@@ -21,6 +21,7 @@ import { VocabularyPracticePage } from './pages/VocabularyPracticePage';
 import { PreviewBanner } from './components/PreviewBanner';
 import { PreviewConfigurationModal } from './components/PreviewConfigurationModal';
 import { MaintenanceBanner } from './components/maintenance/MaintenanceBanner';
+import { FeatureMaintenanceWrapper } from './components/maintenance/FeatureMaintenanceWrapper';
 import { PromotionalBanner } from './components/entitlements/PromotionalBanner';
 import { API_BASE } from './config/api';
 import './styles/theme.css';
@@ -29,19 +30,20 @@ interface NavTabConfig {
   id: string;
   label?: string;
   requiredPermission?: string;
+  featureKey?: string;
 }
 
 const NAV_ITEMS: NavTabConfig[] = [
   { id: 'dashboard' },
-  { id: 'student_exams', label: 'My Assessments & Tests', requiredPermission: 'exams.attempt' },
-  { id: 'interview', label: 'AI Interview & Viva', requiredPermission: 'interview.attempt' },
-  { id: 'vocabulary', label: 'Spaced Repetition Vocab' },
-  { id: 'subscription', label: 'Subscription & Credits', requiredPermission: 'subscriptions.read' },
-  { id: 'analytics', label: 'Student Analytics & Mastery', requiredPermission: 'analytics.read_own' },
-  { id: 'exams', label: 'Exam Generator & Papers', requiredPermission: 'exams.create' },
+  { id: 'student_exams', label: 'My Assessments & Tests', requiredPermission: 'exams.attempt', featureKey: 'exams' },
+  { id: 'interview', label: 'AI Interview & Viva', requiredPermission: 'interview.attempt', featureKey: 'interview' },
+  { id: 'vocabulary', label: 'Spaced Repetition Vocab', featureKey: 'vocabulary' },
+  { id: 'subscription', label: 'Subscription & Credits', requiredPermission: 'subscriptions.read', featureKey: 'subscriptions' },
+  { id: 'analytics', label: 'Student Analytics & Mastery', requiredPermission: 'analytics.read_own', featureKey: 'analytics' },
+  { id: 'exams', label: 'Exam Generator & Papers', requiredPermission: 'exams.create', featureKey: 'exams' },
   { id: 'archive', label: 'Published Archive', requiredPermission: 'archive.read' },
   { id: 'exam_patterns', requiredPermission: 'exams.create' },
-  { id: 'question_bank', label: 'Question Bank', requiredPermission: 'questions.read' },
+  { id: 'question_bank', label: 'Question Bank', requiredPermission: 'questions.read', featureKey: 'question_bank' },
   { id: 'courses', label: 'Academic Structure', requiredPermission: 'courses.create' },
   { id: 'users', label: 'User Management', requiredPermission: 'users.read' },
   { id: 'settings', label: 'Settings', requiredPermission: 'ai.admin_config' },
@@ -60,14 +62,27 @@ const MainLayout: React.FC = () => {
   const [showPreviewConfig, setShowPreviewConfig] = useState<boolean>(false);
   const [isInterviewEligible, setIsInterviewEligible] = useState<boolean>(true);
 
+  const [maintenanceStatus, setMaintenanceStatus] = useState<any>(null);
+
   const userPermissions = user?.permissions || [];
+  const isStaff =
+    user?.roles?.includes('MAIN_ADMIN') ||
+    user?.roles?.includes('SUB_ADMIN') ||
+    user?.roles?.includes('TEACHER');
+
+  useEffect(() => {
+    fetch(`${API_BASE}/maintenance/status`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success && d.data) {
+          setMaintenanceStatus(d.data);
+        }
+      })
+      .catch(() => {});
+  }, [activeTab]);
 
   useEffect(() => {
     if (!token) return;
-    const isStaff =
-      user?.roles?.includes('MAIN_ADMIN') ||
-      user?.roles?.includes('SUB_ADMIN') ||
-      user?.roles?.includes('TEACHER');
 
     if (isStaff) {
       setIsInterviewEligible(true);
@@ -89,6 +104,15 @@ const MainLayout: React.FC = () => {
   const visibleNavItems = NAV_ITEMS.filter((item) => {
     if (!hasPermission(userPermissions, item.requiredPermission)) return false;
     if (item.id === 'interview' && !isInterviewEligible) return false;
+
+    // DisplayMode HIDDEN enforcement: removes entry point entirely for students
+    if (!isStaff && item.featureKey && maintenanceStatus?.featureControls) {
+      const ctrl = maintenanceStatus.featureControls[item.featureKey];
+      if (ctrl && ctrl.status !== 'ACTIVE' && ctrl.displayMode === 'HIDDEN') {
+        return false;
+      }
+    }
+
     return true;
   });
 
@@ -317,6 +341,14 @@ const MainLayout: React.FC = () => {
             {visibleNavItems.map((item) => {
               const isCurrentActive = activeTab === item.id;
               const isLockedOut = isExamLocked && item.id !== 'student_exams';
+              const isFeatureDisabledButton =
+                !isStaff &&
+                item.featureKey &&
+                maintenanceStatus?.featureControls &&
+                maintenanceStatus.featureControls[item.featureKey]?.status !== 'ACTIVE' &&
+                maintenanceStatus.featureControls[item.featureKey]?.displayMode === 'DISABLED_BUTTON';
+
+              const isClickDisabled = isLockedOut || isFeatureDisabledButton;
 
               return (
                 <div
@@ -325,7 +357,7 @@ const MainLayout: React.FC = () => {
                   onClick={() => {
                     if (isLockedOut) {
                       triggerExitWarning();
-                    } else {
+                    } else if (!isFeatureDisabledButton) {
                       setActiveTab(item.id);
                     }
                   }}
@@ -334,16 +366,44 @@ const MainLayout: React.FC = () => {
                     borderRadius: '6px',
                     background: isCurrentActive ? 'rgba(6, 182, 212, 0.15)' : 'transparent',
                     border: isCurrentActive ? '1px solid var(--accent-color)' : '1px solid transparent',
-                    color: isCurrentActive ? 'var(--accent-color)' : isLockedOut ? 'var(--text-muted)' : 'var(--text-main)',
+                    color: isCurrentActive
+                      ? 'var(--accent-color)'
+                      : isClickDisabled
+                      ? 'var(--text-muted)'
+                      : 'var(--text-main)',
                     fontWeight: isCurrentActive ? 'bold' : 'normal',
                     fontSize: '13px',
-                    cursor: isLockedOut ? 'not-allowed' : 'pointer',
-                    opacity: isLockedOut ? 0.35 : 1,
+                    cursor: isClickDisabled ? 'not-allowed' : 'pointer',
+                    opacity: isClickDisabled ? 0.4 : 1,
                     transition: 'all 0.15s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
                   }}
-                  title={isLockedOut ? 'Navigation locked during active examination' : undefined}
+                  title={
+                    isLockedOut
+                      ? 'Navigation locked during active examination'
+                      : isFeatureDisabledButton
+                      ? 'Feature is currently disabled for maintenance'
+                      : undefined
+                  }
                 >
-                  {item.label || t(item.id)}
+                  <span>{item.label || t(item.id)}</span>
+                  {isFeatureDisabledButton && (
+                    <span
+                      style={{
+                        fontSize: '9px',
+                        padding: '2px 5px',
+                        borderRadius: '3px',
+                        background: 'rgba(239, 68, 68, 0.2)',
+                        color: '#ef4444',
+                        fontFamily: 'JetBrains Mono',
+                        fontWeight: 700,
+                      }}
+                    >
+                      OFFLINE
+                    </span>
+                  )}
                 </div>
               );
             })}
@@ -378,23 +438,37 @@ const MainLayout: React.FC = () => {
           }}
         >
           {activeTab === 'student_exams' ? (
-            <StudentExamsPage />
+            <FeatureMaintenanceWrapper featureKey="exams" featureName="Exams & Assessments" onNavigateHome={() => setActiveTab('dashboard')}>
+              <StudentExamsPage />
+            </FeatureMaintenanceWrapper>
           ) : activeTab === 'interview' ? (
-            <InterviewPage />
+            <FeatureMaintenanceWrapper featureKey="interview" featureName="AI Interview & Viva" onNavigateHome={() => setActiveTab('dashboard')}>
+              <InterviewPage />
+            </FeatureMaintenanceWrapper>
           ) : activeTab === 'vocabulary' ? (
-            <VocabularyPracticePage />
+            <FeatureMaintenanceWrapper featureKey="vocabulary" featureName="Vocabulary Practice" onNavigateHome={() => setActiveTab('dashboard')}>
+              <VocabularyPracticePage />
+            </FeatureMaintenanceWrapper>
           ) : activeTab === 'subscription' ? (
-            <SubscriptionPage />
+            <FeatureMaintenanceWrapper featureKey="subscriptions" featureName="Subscriptions & Billing" onNavigateHome={() => setActiveTab('dashboard')}>
+              <SubscriptionPage />
+            </FeatureMaintenanceWrapper>
           ) : activeTab === 'analytics' ? (
-            <AnalyticsPage />
+            <FeatureMaintenanceWrapper featureKey="analytics" featureName="Student Analytics & Mastery" onNavigateHome={() => setActiveTab('dashboard')}>
+              <AnalyticsPage />
+            </FeatureMaintenanceWrapper>
           ) : activeTab === 'exams' ? (
-            <ExamsPage />
+            <FeatureMaintenanceWrapper featureKey="exams" featureName="Exam Generator & Papers" onNavigateHome={() => setActiveTab('dashboard')}>
+              <ExamsPage />
+            </FeatureMaintenanceWrapper>
           ) : activeTab === 'archive' ? (
             <ExamArchivePage />
           ) : activeTab === 'exam_patterns' ? (
             <ExamPatternsPage />
           ) : activeTab === 'question_bank' ? (
-            <QuestionBankPage />
+            <FeatureMaintenanceWrapper featureKey="question_bank" featureName="Question Bank" onNavigateHome={() => setActiveTab('dashboard')}>
+              <QuestionBankPage />
+            </FeatureMaintenanceWrapper>
           ) : activeTab === 'courses' ? (
             <CoursesPage />
           ) : activeTab === 'users' ? (

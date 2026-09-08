@@ -16,10 +16,12 @@ import { validate } from '../middleware/validate';
 import { auditLog } from '../middleware/audit';
 import { AppError } from '../middleware/error';
 import crypto from 'crypto';
+import { requireFeatureActive } from '../middleware/maintenance.middleware';
 
 const router = Router();
 
 router.use(authenticate);
+router.use(requireFeatureActive('question_bank'));
 
 // Strict validation & sanitization schemas against SQL injection and invalid payloads
 const identifierRegex = /^[a-zA-Z0-9_\-]+$/;

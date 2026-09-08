@@ -10,10 +10,13 @@ import { authenticate } from '../middleware/auth';
 import { requirePermission } from '../middleware/permission';
 import { validate } from '../middleware/validate';
 
+import { requireFeatureActive } from '../middleware/maintenance.middleware';
+
 export const attemptRouter = Router();
 
 // All attempt routes require authentication
 attemptRouter.use(authenticate);
+attemptRouter.use(requireFeatureActive('exams'));
 
 function isElevatedUser(user: any): boolean {
   if (!user) return false;

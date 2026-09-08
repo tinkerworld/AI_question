@@ -3,8 +3,10 @@ import { AudioConfigService } from '../services/audio/audio-config.service';
 import { authenticate } from '../middleware/auth';
 import { requirePermission } from '../middleware/permission';
 import { PERMISSIONS } from '@repo/permissions';
+import { requireFeatureActive } from '../middleware/maintenance.middleware';
 
 export const audioRouter = Router();
+audioRouter.use(requireFeatureActive('audio'));
 
 /**
  * GET /api/v1/audio/voices

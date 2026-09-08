@@ -58,6 +58,7 @@ export const PERMISSIONS = [
   { id: 'p50', key: 'entitlements.manage', description: 'Configure dynamic entitlement rules and limits per plan', module: 'entitlements' },
   { id: 'p51', key: 'billing.read_own', description: 'View own payment receipts and invoices', module: 'billing' },
   { id: 'p52', key: 'billing.manage', description: 'Process refunds, inspect financial transactions and manage billing', module: 'billing' },
+  { id: 'p53', key: 'system.maintenance', description: 'Configure system and feature level maintenance modes', module: 'system' },
 ];
 
 export const ROLES = [
@@ -86,6 +87,7 @@ export const ROLES = [
       'ai.modify', 'ai.generate', 'ai.batch', 'ai.review', 'ai.usage_read', 'ai.admin_config',
       'interview.attempt', 'interview.read_own', 'interview.manage', 'interview.evaluate',
       'subscriptions.read', 'subscriptions.manage', 'entitlements.read', 'entitlements.manage', 'billing.read_own', 'billing.manage',
+      'system.maintenance',
     ],
   },
   {

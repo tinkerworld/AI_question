@@ -7,10 +7,13 @@ import { InterviewService } from '../services/interview.service';
 import { AppError } from '../middleware/error';
 import { pgDb } from '@repo/database';
 
+import { requireFeatureActive } from '../middleware/maintenance.middleware';
+
 const router = Router();
 
 // All routes require authentication
 router.use(authenticate);
+router.use(requireFeatureActive('interview'));
 
 /**
  * GET /api/v1/interview/eligibility

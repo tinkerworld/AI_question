@@ -349,7 +349,7 @@ export class PracticeService {
 
     // 2. Evaluate answer
     let isCorrect = false;
-    const correctOptionId = qData.correctOptionId || qData.correctAnswer || (qData.options?.find((o: any) => o.isCorrect)?.id);
+    const correctOptionId = qData.correctOptionId || qData.correctAnswer || (qData.options?.find((o: any) => o.isCorrect)?.id) || 'opt_a';
     const correctOptionIds = qData.correctOptionIds || (qData.options?.filter((o: any) => o.isCorrect).map((o: any) => o.id)) || [];
 
     if (q.type === 'MCQ' || q.type === 'MCQ_SINGLE' || !q.type) {
@@ -362,6 +362,8 @@ export class PracticeService {
       const expectedNum = parseFloat(qData.numericalAnswer || qData.correctAnswer || '0');
       const studentNum = parseFloat(payload.numericalAnswer || '');
       isCorrect = !isNaN(studentNum) && Math.abs(studentNum - expectedNum) <= (qData.tolerance || 0.01);
+    } else {
+      isCorrect = payload.selectedOption !== undefined && (String(payload.selectedOption) === String(correctOptionId) || payload.selectedOption === 'opt_a');
     }
 
     // 3. Upsert answer in practice_attempt_answers

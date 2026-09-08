@@ -10,7 +10,10 @@ import {
   updateSubscriptionStatusSchema,
 } from '@repo/validation';
 
+import { requireFeatureActive } from '../middleware/maintenance.middleware';
+
 export const subscriptionRouter = Router();
+subscriptionRouter.use(requireFeatureActive('subscriptions'));
 
 /**
  * GET /api/v1/subscriptions/plans
