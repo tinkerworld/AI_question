@@ -1,0 +1,801 @@
+ExamOS Backend Test Run - 2026-09-08T10:45:05.282Z
+Total Suites: 21
+
+----------------------------------------------------------------
+Suite: phase-01-master.test.js | Runner: ts-node | Result: PASSED | Duration: 2.91s | Exit: 0
+Output:
+====================================================
+ EXAMOS PHASE 1 (FOUNDATION) — MASTER TEST SUITE
+ Testing Features 1.1 to 1.12 & Section 7 Security Gate
+====================================================
+
+[PASS] 1.1-U1 — Monorepo pnpm workspace & turbo config
+[PASS] 1.1-U2 — TypeScript base config has strict: true
+[PASS] 1.2-U1 — Prisma Schema definitions for core entities
+[PASS] 1.2-U2 — Database client singleton export
+[PASS] 1.3-U1 — @repo/types exports AuthContext and DTOs
+[PASS] 1.4-U1 — @repo/validation Zod schemas
+[PASS] 1.5-U1 — @repo/permissions atomic permissions & helper
+[PASS] 1.6-U1 — Authentication endpoints (login, refresh, logout, me)
+[PASS] 1.7-U1 — User CRUD endpoints with IDOR ownership checks
+[PASS] 1.8-U1 — Role & Permission management endpoints
+[PASS] 1.9-U1 — Audit logging endpoints & middleware
+[PASS] 1.10-U1 — API Middleware Stack assembly
+[PASS] 1.11-U1 — Frontend Foundation App & Vite setup
+[PASS] 1.12-U1 — 3-Theme Switcher (LIGHT, GRAY slate, DARK)
+[PASS] 1.12-U2 — 23-Language Database-Driven Multilingual Engine (ADR-013)
+[PASS] SEC-01 — Security Gate: Ownership vs. Permission IDOR Separation
+[PASS] SEC-02 — Security Gate: JWT Revocation & Refresh Rotation
+[PASS] SEC-03 — Security Gate: 100% Request Validation Pipeline
+
+====================================================
+ Master Test Results: 18/18 Passed
+====================================================
+
+----------------------------------------------------------------
+Suite: phase-02-master.test.js | Runner: ts-node | Result: PASSED | Duration: 2.83s | Exit: 0
+Output:
+====================================================
+ EXAMOS PHASE 2 (ACADEMIC STRUCTURE) — MASTER TEST SUITE
+ Testing Features 2.1 to 2.6
+====================================================
+
+[PASS] 2.1-U1 — Course Schema & DTO definitions
+[PASS] 2.1-U2 — Course CRUD API Endpoints & State Machine Validation
+[PASS] 2.2-U1 — Subject Schema & Unique Constraints
+[PASS] 2.2-U2 — Subject CRUD API Endpoints
+[PASS] 2.3-U1 — SyllabusNode Adjacency List & Depth Constraints
+[PASS] 2.3-U2 — Syllabus Tree API, Max Depth & Cyclic Check
+[PASS] 2.4-U1 — Syllabus Node Metadata & Student Visibility Filter
+[PASS] 2.5-U1 — Frontend Admin Layout & Academic Component Integration
+[PASS] 2.6-U1 — Enrollment Schema & Unique Constraint
+[PASS] 2.6-U2 — Enrollment API Endpoints & Duplicate Prevention
+
+====================================================
+ Phase 2 Master Test Results: 10/10 Passed
+====================================================
+
+----------------------------------------------------------------
+Suite: phase-03-master.test.js | Runner: ts-node | Result: PASSED | Duration: 3.27s | Exit: 0
+Output:
+====================================================
+ EXAMOS PHASE 3 (QUESTION BANK) — MASTER TEST SUITE
+ Testing Features 3.1 to 3.8
+====================================================
+
+[PASS] 3.1-U1 — Question Type System & Built-in Handlers
+[PASS] 3.2-U1 — Question Schema & DTO definitions
+[PASS] 3.2-U2 — Question CRUD API Endpoints & Filter Queries
+[PASS] 3.3-U1 — Question Versioning & Rollback Logic
+[PASS] 3.4-U1 — Question Tag System & Autocomplete Endpoint
+[PASS] 3.5-U1 — Question Lifecycle State Machine Validation
+[PASS] 3.6-U1 — Previous Exam Usage History Tracking
+[PASS] 3.7-U1 — Frontend Question Bank Integration
+[PASS] 3.8-U1 — Question Bank Analytics & Syllabus Coverage Calculation
+
+====================================================
+ Phase 3 Master Test Results: 9/9 Passed
+====================================================
+
+----------------------------------------------------------------
+Suite: phase-04-master.test.js | Runner: node | Result: PASSED | Duration: 0.62s | Exit: 0
+Output:
+◇ injected env (4) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+====================================================
+ EXAMOS PHASE 4 (EXAM PATTERN) — MASTER TEST SUITE
+ Testing Features 4.1 to 4.10
+====================================================
+
+[PASS] 4.1-U1 — Create single subject exam pattern (Status: DRAFT)
+[PASS] 4.1-U2 — List exam patterns with pagination & filters
+[PASS] 4.1-U3 — Get pattern details by ID
+[PASS] 4.1-U4 — Transition pattern DRAFT -> PUBLISHED
+[PASS] 4.1-U5 — Block deleting PUBLISHED exam pattern (409 Conflict)
+[PASS] 4.2-U1 — Add Section A with auto-calculated section total marks (20 × 4 = 80)
+[PASS] 4.2-U2 — Add Section B (10 × 4 = 40)
+[PASS] 4.2-U3 — Pattern total marks auto-recomputed across sections (80 + 40 = 120)
+[PASS] 4.2-U4 — Reorder sections sequence order via API
+[PASS] 4.3-U1 — Set Section Question Rules (MCQ, RANDOM, tags)
+[PASS] 4.3-U2 — Fetch persisted Section Question Rules
+[PASS] 4.4-U1 — Set valid COUNT topic distribution (10 + 10 = 20 total questions)
+[PASS] 4.4-U2 — Reject topic count sum discrepancy (5+5 != 20) with 400 Bad Request
+[PASS] 4.5-U1 — Set valid PERCENT difficulty distribution (30% + 50% + 20% = 100%)
+[PASS] 4.5-U2 — Accept 3-way floating-point percentage split (33.33 + 33.33 + 33.34 = 100%)
+[PASS] 4.5-U3 — Reject invalid difficulty percent sum (!= 100%) with 400 Bad Request
+[PASS] 4.6-U1 — Configure negative marking scheme (+4 / -1 / 0)
+[PASS] 4.6-U2 — Reject marksCorrect mismatch with section marksPerQuestion (5.0 != 4.0)
+[PASS] 4.7-U1 — Multi-Subject allocation and section mapping
+[PASS] 4.8-U1 — Execute Validation Engine against Question Bank
+[PASS] 4.9-U1 — Editing PUBLISHED pattern auto-increments version and saves snapshot
+[PASS] 4.9-U2 — Fetch pattern entity version history snapshot
+[PASS] 4.10-U1 — State Check: showCreateModal is declared
+[PASS] 4.10-U2 — Trigger Check: "+ Create Exam Pattern" button toggles showCreateModal(true)
+[PASS] 4.10-U3 — DOM Render Check: {showCreateModal && (...)} conditional block exists in JSX
+[PASS] 4.10-U4 — Form Handler Check: Create Pattern form connected to handleCreatePattern submit handler
+
+====================================================
+ Phase 4 Master Test Results: 26/26 Passed
+====================================================
+
+
+----------------------------------------------------------------
+Suite: phase-05-frontend-interaction.test.js | Runner: node | Result: PASSED | Duration: 0.15s | Exit: 0
+Output:
+====================================================
+ EXAMOS PHASE 5 FRONTEND INTERACTION TEST SUITE
+ Rigorous Component State, Trigger & DOM Verification
+====================================================
+
+1. Testing Feature 5.1 UI (Exam Generation Configurator)...
+   [PASS] Feature 5.1 UI: Trigger, modal DOM render, and API call fully wired
+
+2. Testing Feature 5.2 UI (Draft Inspector, Question Swap & Reorder)...
+   [PASS] Feature 5.2 UI: Draft Inspector, swap modal, regenerate, and reordering fully wired
+
+3. Testing Feature 5.3 UI (Settings Modal & Publishing)...
+   [PASS] Feature 5.3 UI: Settings modal, schedule inputs, and publish CTA fully wired
+
+4. Testing Feature 5.4 UI (Manual Exam Builder, Add Section & Question Picker)...
+   [PASS] Feature 5.4 UI: Manual builder, add section modal, and question picker modal fully wired
+
+5. Testing Navigation Integration in App.tsx...
+   [PASS] Navigation Integration: ExamsPage mounted and rendered in App.tsx
+
+====================================================
+ Phase 5 Frontend Interaction Test Results: 5/5 Passed
+====================================================
+
+
+----------------------------------------------------------------
+Suite: phase-05-master.test.js | Runner: node | Result: PASSED | Duration: 1.15s | Exit: 0
+Output:
+◇ injected env (4) from .env // tip: ⌘ enable debugging { debug: true }
+====================================================
+ EXAMOS PHASE 5 (EXAM GENERATOR) — MASTER TEST SUITE
+ Testing Features 5.1 to 5.4
+====================================================
+
+--- Setting up Test Exam Pattern Blueprint ---
+Blueprint setup complete! Pattern ID: pat_1788864315501_mzqqo
+
+--- Feature 5.1: Exam Generation Engine ---
+ [PASS] 5.1-U1: Generate basic exam from blueprint (Status: DRAFT)
+ [PASS] 5.1-U2: Questions accurately balanced and allocated across sections
+ [PASS] 5.1-U3: Duplicate prevention verified (100% unique question IDs across paper)
+ [PASS] 5.1-U4: Insufficient questions handled gracefully with 422 INSUFFICIENT_QUESTIONS error
+ [PASS] 5.1-U5: SubAdmin role authorized to execute exam generation
+
+--- Feature 5.2: Draft Exam Inspection & Editing ---
+ [PASS] 5.2-U1: Retrieve draft exam inspection details and distribution statistics
+ [PASS] 5.2-U2: Question swap replaces item and updates section structure
+ [PASS] 5.2-U3: Duplicate question rejected on swap attempt (409 Conflict)
+ [PASS] 5.2-U4: Regenerate section replaces all section questions according to rules
+ [PASS] 5.2-U5: Manual question reordering updates sequenceOrder indices
+
+--- Feature 5.3: Exam Metadata & Publishing ---
+ [PASS] 5.3-U1: Update operational metadata (name, duration, instructions, schedule)
+ [PASS] 5.3-U2: Scheduling validator rejects end time earlier than start time
+ [PASS] 5.3-U3: Finalize exam transitions DRAFT -> PUBLISHED and saves snapshot
+ [PASS] 5.3-U4: Modifications blocked on PUBLISHED exam to guarantee academic integrity
+
+--- Feature 5.4: Manual Exam Creation ---
+ [PASS] 5.4-U1: Create blank manual exam without pattern blueprint
+ [PASS] 5.4-U2: Add manual section with custom scoring scheme
+ [PASS] 5.4-U3: Add specific questions from bank directly and auto-recalculate totals
+ [PASS] 5.4-U4: Reject duplicate question in manual exam (409 Conflict)
+
+====================================================
+ Phase 5 Master Test Results: 18/18 Passed
+====================================================
+
+
+--- TEARDOWN: Cleaning up test fixtures ---
+ [TEARDOWN] Deleted test exam: exam_1788864315578_gbwaz (Status: 400)
+ [TEARDOWN] Deleted test exam: exam_1788864315773_a7s2u (Status: 200)
+ [TEARDOWN] Deleted test exam: exam_1788864316073_fso90 (Status: 200)
+ [TEARDOWN] Deleted test pattern: pat_1788864315501_mzqqo (Status: 204)
+
+----------------------------------------------------------------
+Suite: phase-06-master.test.js | Runner: node | Result: PASSED | Duration: 1.74s | Exit: 0
+Output:
+◇ injected env (4) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+====================================================
+ EXAMOS PHASE 6 (EXAM SYSTEM) — MASTER TEST SUITE
+ Testing Features 6.1 to 6.8 & Section 7 Security
+====================================================
+
+  ✅ PASS: 6.1-U1: Student lists available active/published exams
+  ✅ PASS: 6.1-U2: Student reads exam instructions and section metadata
+  ✅ PASS: 6.2-U1: Student starts an exam attempt session
+  ✅ PASS: 6.2-U2: Verify answer keys and explanations are masked in attempt session
+  ✅ PASS: 6.2-U3: Session resume: starting again for in-progress attempt resumes same session
+  ✅ PASS: 6.2-U4: Student retrieves current attempt state
+  ✅ PASS: 6.3-U1: Student auto-syncs single MCQ answer and mark-for-review
+  ✅ PASS: 6.3-U2: Student bulk syncs multiple answers across sections
+  ✅ PASS: 6.4-U1: Student submits exam attempt and triggers auto-evaluation
+  ✅ PASS: 6.4-U2: Double submission prevention
+  ✅ PASS: 6.4-U3: Immutability check: answers cannot be synced to submitted attempt
+  ✅ PASS: 6.7-U1: Student retrieves comprehensive results scorecard and review
+  ✅ PASS: 6.7-U2: Student flags attempt result for teacher review
+  ✅ PASS: 6.7-U3: Re-flagging an already flagged attempt returns 409 Conflict
+
+--- Running Mandatory Section 7 IDOR Security Checks (Student 2 accessing Student 1 attempt) ---
+  ✅ PASS: Sec-7.1: Student 2 GET /attempts/:id/state of Student 1 attempt is REJECTED with 403
+  ✅ PASS: Sec-7.2: Student 2 PUT /attempts/:id/sync of Student 1 attempt is REJECTED with 403
+  ✅ PASS: Sec-7.3: Student 2 POST /attempts/:id/submit of Student 1 attempt is REJECTED with 403
+  ✅ PASS: Sec-7.4: Student 2 GET /attempts/:id/results of Student 1 attempt is REJECTED with 403
+  ✅ PASS: Sec-7.5: Student 2 POST /attempts/:id/flag of Student 1 attempt is REJECTED with 403
+
+====================================================
+ PHASE 6 MASTER TEST RESULTS: 19 PASSED, 0 FAILED
+====================================================
+
+
+----------------------------------------------------------------
+Suite: phase-07-master.test.js | Runner: node | Result: PASSED | Duration: 1.10s | Exit: 0
+Output:
+====================================================
+  PHASE 7 MASTER BACKEND TEST SUITE
+  (Published Exam Archive & Immutability Engine)
+====================================================
+
+--- 1. Authenticating Personas ---
+✓ [PASS] All 4 personas authenticated successfully
+
+--- 2. Setting Up Blueprint & Generating Target Exam Paper ---
+✓ [PASS] Generated draft exam for publication workflow testing
+
+--- 3. Feature 7.1: Exam Publication Workflow State Machine ---
+✓ [PASS] State Machine blocks direct transition DRAFT -> PUBLISHED (400)
+✓ [PASS] State Machine transitions DRAFT -> PREVIEW
+✓ [PASS] Admin can assign reviewer to exam
+✓ [PASS] Teacher transitions exam to REVIEW state
+✓ [PASS] Workflow history logs all transitions and reviewer assignments
+✓ [PASS] Admin approves exam for publication
+
+--- 4. Feature 7.2: Published Exam Snapshot Creation ---
+✓ [PASS] Publishing creates immutable exam snapshot
+✓ [PASS] GET /archive/exams/:id/snapshot retrieves full deep copy snapshot with sections and questions
+✓ [PASS] Question Bank edits do NOT mutate published exam snapshot (ADR-007 Bank Isolation guarantee)
+
+--- 5. Feature 7.3: Preserved Answer Key & Permission Gating ---
+✓ [PASS] Teacher with archive.answer_key can retrieve preserved answer keys and explanations
+✓ [PASS] Student without archive.answer_key is rejected from accessing answer keys (403 Forbidden)
+
+--- 6. Feature 7.4: Exam Archive Search & Filtering ---
+✓ [PASS] GET /archive/exams successfully searches published exams by query and academic year
+
+--- 7. Feature 7.5: Historical Exam Integrity & Strict API Immutability ---
+✓ [PASS] Direct PATCH to published exam is rejected with 400 EXAM_IMMUTABLE
+✓ [PASS] Direct DELETE to published exam is rejected with 400 EXAM_IMMUTABLE
+✓ [PASS] Question swap on published exam is rejected with 400 EXAM_IMMUTABLE
+✓ [PASS] Post-Publish Correction creates Version 2 snapshot (V2)
+✓ [PASS] GET /archive/exams/:id/history shows full audit chain with both V1 and V2 snapshots intact
+
+--- 8. Feature 7.6: Exam File Storage & Assets ---
+✓ [PASS] File upload blocks disallowed MIME types (400)
+✓ [PASS] File upload accepts valid PDF and generates storage path
+✓ [PASS] GET /exams/:id/files lists associated exam assets
+✓ [PASS] GET /archive/exams/:id/pdf retrieves question paper PDF asset
+
+====================================================
+  PHASE 7 MASTER TEST SUMMARY: 23 PASSED, 0 FAILED
+====================================================
+
+----------------------------------------------------------------
+Suite: phase-08-master.test.js | Runner: node | Result: PASSED | Duration: 1.49s | Exit: 0
+Output:
+====================================================
+  PHASE 8 MASTER BACKEND TEST SUITE
+  (Student Analytics, Mastery Engine & Dashboards)
+====================================================
+
+--- 1. Authenticating Personas ---
+✓ [PASS] P08.AUTH: All 4 personas authenticated successfully
+
+--- 2. Setting Up Exam & Attempt Data with Linked Topics ---
+✓ [PASS] Exam generation from blueprint succeeded
+✓ [PASS] Publishing exam paper succeeded
+✓ [PASS] P08.ATTEMPT: Student successfully initiated exam attempt session
+✓ [PASS] P08.AUTO_EVAL: Exam submitted and auto-evaluated successfully
+
+--- 3. Feature 8.1: Mastery Engine Profile & Scoring ---
+✓ [PASS] P08.F01.I002: GET /api/v1/students/:id/mastery returns 200 OK
+✓ [PASS] P08.F01.U001: Overall proficiency is a valid numerical score (0-100)
+✓ [PASS] P08.F01.U003: Mastery status mapped to valid threshold label
+✓ [PASS] P08.F01.U004: Mastery color mapped to valid indicator
+✓ [PASS] P08.F01.I001: POST /api/v1/students/:id/recalculate successfully updates mastery
+
+--- 4. Feature 8.2: Strengths Identification ---
+✓ [PASS] P08.F02.I001: GET /api/v1/students/:id/strengths returns valid strengths array
+✓ [PASS] P08.F02.I002: GET /api/v1/mastery/strengths returns current user strengths
+
+--- 5. Feature 8.3: Weakness Identification ---
+✓ [PASS] P08.F03.I001: GET /api/v1/students/:id/weaknesses returns valid weaknesses array
+✓ [PASS] P08.F03.I002: GET /api/v1/mastery/weaknesses returns current user weaknesses
+✓ [PASS] P08.F03.U001: Weakness includes severity classification
+✓ [PASS] P08.F03.U002: Weakness includes persistence duration tracking
+
+--- 6. Feature 8.4: Syllabus Proficiency Map ---
+✓ [PASS] P08.F04.I001: GET /api/v1/students/:id/syllabus-proficiency/:courseId returns tree hierarchy
+✓ [PASS] P08.F04.I002: GET /api/v1/mastery/map returns current user tree
+✓ [PASS] P08.F04.U001: Node includes computed proficiency score
+✓ [PASS] P08.F04.U002: Node includes completion percentage
+✓ [PASS] P08.F04.U003: Node includes color status indicator
+
+--- 7. Feature 8.5: Progress Tracking & Historical Trends ---
+✓ [PASS] P08.F05.I001: GET /api/v1/students/:id/progress returns timeseries trend data
+✓ [PASS] P08.F05.U001: Progress includes valid trend indicator (IMPROVING/DEGRADING/PLATEAU)
+✓ [PASS] P08.F05.U003: Timeseries array returned with historical datapoints
+
+--- 8. Feature 8.7: Class & Topic Analytics ---
+✓ [PASS] P08.F07.I001: Teacher GET /api/v1/analytics/class/:courseId returns class aggregate
+✓ [PASS] P08.F07.U001: Class aggregate includes average mastery
+✓ [PASS] P08.F07.U002: Class aggregate identifies cohort common weaknesses
+✓ [PASS] P08.F07.U003: Class aggregate includes individual student performance roster
+✓ [PASS] P08.F07.I002: Admin GET /api/v1/analytics/topics/:courseId returns topic performance matrix
+
+--- 9. Section 7 IDOR Security & Permission Enforcement ---
+✓ [PASS] P08.SEC.001: Student requesting class analytics is rejected with 403 Forbidden
+✓ [PASS] P08.SEC.002: Student attempting IDOR access on another student profile receives 403 Forbidden
+✓ [PASS] P08.SEC.003: Teacher authorized to inspect student mastery profile
+
+====================================================
+  PHASE 8 MASTER TEST RESULTS: 32 PASSED / 0 FAILED
+====================================================
+
+
+----------------------------------------------------------------
+Suite: phase-09-master.test.js | Runner: node | Result: PASSED | Duration: 0.73s | Exit: 0
+Output:
+====================================================
+  STARTING PHASE 9 MASTER INTEGRATION TEST SUITE
+====================================================
+
+1. Authenticating test personas (student, student2, admin)...
+   ✓ Personas authenticated and Student 1 subscribed to PREMIUM tier.
+
+2. Feature 9.1: Testing Weakness Pool retrieval...
+   ✓ Found 1 weak topics for Student 1. Top weakness: "Mechanics & Dynamics" (Error Rate: 75%)
+   ✓ RBAC verified: Student rejected with 403 from viewing other student weakness pool.
+   ✓ Admin authorized to inspect student weakness pool.
+
+3. Feature 9.2: Testing Personalized Practice Paper generation...
+   ✓ Generated Practice Paper: "Targeted Practice: Mechanics & Dynamics" with 6 questions. Attempt ID: prac_att_e5a5f46d10508dc0
+   ✓ Question difficulty sequence: [EASY, MEDIUM, MEDIUM, HARD, HARD, HARD]
+4. Testing Practice Paper fetch by ID...
+   ✓ Successfully fetched practice paper details.
+
+   ✓ Q1 Answered correctly. Streak: 13 / 3
+   ✓ Q2 Answered correctly. Streak: 14 / 3
+   ✓ Q3 Answered correctly. Streak: 15 / 3, Mastered: true
+
+6. Feature 9.4: Testing Practice Attempt Submission & Scorecard...
+   ✓ Practice Attempt finalized. Accuracy: 100%, Correct: 3/3
+
+7. Feature 9.4: Testing Practice History pagination...
+   ✓ Practice history returned 1 items (Total: 1)
+
+8. Testing Practice Paper DELETE endpoint with ownership checks...
+   ✓ Cross-student practice paper deletion rejected with 403.
+   ✓ Owner successfully deleted practice paper.
+   ✓ Deleted practice paper verified absent (404).
+
+====================================================
+✅ ALL PHASE 9 MASTER TESTS PASSED SUCCESSFULLY!
+====================================================
+
+
+----------------------------------------------------------------
+Suite: phase-10-master.test.js | Runner: node | Result: PASSED | Duration: 0.96s | Exit: 0
+Output:
+================================================================
+  RUNNING PHASE 10 MASTER INTEGRATION TEST SUITE
+================================================================
+
+1. Authenticating test personas...
+   ✓ Admin, Sub-Admin, Teacher, and Student authenticated
+
+2. Testing Feature 10.1: Preview Student Profile CRUD...
+   ✓ Student is rejected with 403 on profile creation
+   ✓ Admin created preview profile: prev_prof_b899fa49f14ceba6
+   ✓ Teacher can read preview profile configuration
+   ✓ Profile successfully updated with new attributes
+
+3. Testing Feature 10.3 & 10.4: Preview Session Lifecycle & Entitlements...
+   ✓ Teacher started Free student preview session with dual-identity JWT
+   ✓ Admin started Preview session using Profile (Session ID: prev_sess_298624290da0ac1b)
+   ✓ Preview token operates seamlessly as student on student endpoints
+   ✓ Session status verified active
+   ✓ Preview session ended and marked inactive
+
+4. Testing Feature 10.3: Real Student Impersonation & Role Enforcement...
+   ✓ Teacher is strictly forbidden from impersonating real students (403)
+   ✓ Impersonation without sufficient justification is rejected with 400
+   ✓ Impersonation of staff/admin is strictly forbidden (403)
+   ✓ Admin successfully initiated impersonation of real student (Session: imp_sess_1778c775ed1040a3)
+   ✓ Sub-Admin successfully initiated support impersonation session
+   ✓ Impersonation session terminated cleanly
+
+5. Testing Feature 10.5: Preview & Impersonation Audit Trail...
+   ✓ Student is forbidden from accessing preview audit logs (403)
+   ✓ Found 50 audit entries with accurate actor, effective user, and justification
+   ✓ Latest audit entry: [IMPERSONATE_REAL_STUDENT] IMPERSONATION_SESSION_START by Actor: usr_subadmin_test -> Target: usr_student_2_test
+
+6. Testing Server-Side Session Revocation (Exploit Replay Test)...
+   ✓ Captured active impersonation token successfully authenticated request (200)
+   ✓ Impersonation session imp_sess_bcb487d0c5e57aeb stopped and marked inactive in database
+   ✓ Exploit blocked: Replayed request with revoked token was strictly rejected with 401 (IMPERSONATION_SESSION_REVOKED)
+   ✓ Exploit blocked: Replayed preview session token was strictly rejected with 401 (IMPERSONATION_SESSION_REVOKED)
+
+================================================================
+  ✅ ALL PHASE 10 MASTER INTEGRATION TESTS PASSED (100%)
+================================================================
+
+
+----------------------------------------------------------------
+Suite: phase-10-preview-config-enforcement.test.js | Runner: node | Result: PASSED | Duration: 0.86s | Exit: 0
+Output:
+========================================================================
+ Starting Phase 10: Preview Mode Configuration Enforcement Test Suite
+========================================================================
+
+1. Authenticating Admin and Student personas...
+   ✓ Admin & Student authenticated
+
+   ✓ Course A: International English Language Testing System (IELTS) (c3)
+   ✓ Course B: Medical Entrance Course (NEET) (c2)
+
+2. Preparing Draft and Published Exam fixtures in Course A and B...
+   ✓ Created DRAFT exam fixture: exam_1788864322747_7t4f8 (Course: c3, Status: DRAFT)
+
+3. Baseline Check: Normal Student Session...
+   ✓ Normal student session correctly excludes DRAFT exams
+
+4. Testing Preview Session with contentVersion: "DRAFT"...
+   ✓ Preview session with contentVersion: DRAFT successfully sees draft exam exam_1788864322747_7t4f8
+   ✓ Preview session can inspect DRAFT exam instructions
+
+5. Testing Preview Session with restricted courseAccess: ["c3"]...
+   ✓ GET /courses restricted to only Course A (1 course returned)
+   ✓ Direct lookup of Course B detail is blocked with 403 COURSE_ACCESS_RESTRICTED
+   ✓ GET /student/exams restricted to only Course A exams
+
+========================================================================
+ All Phase 10 Preview Configuration Enforcement Tests Passed (100%)!
+========================================================================
+
+
+----------------------------------------------------------------
+Suite: phase-11-frontend-interaction.test.js | Runner: node | Result: PASSED | Duration: 0.15s | Exit: 0
+Output:
+====================================================
+ EXAMOS PHASE 11 FRONTEND INTERACTION TEST SUITE
+ AI Question System UI, Modals, Queue & Action Tests
+====================================================
+
+1. Testing AI Header Actions & Subtab Switcher (Feature 11.9)...
+   ✓ Header buttons and subtab switcher correctly declared and wired
+
+2. Testing AI Question Generator Modal (Feature 11.4 & 11.6 UI)...
+   ✓ AIGeneratorModal has all inputs, progress tracking, and batch polling
+
+3. Testing AI Question Variation Modifier Modal (Feature 11.3 UI)...
+   ✓ AIQuestionModifierModal wired with variance levels and prompt instructions
+
+4. Testing AI Draft Review Queue & Approval Actions (Feature 11.9 UI)...
+   ✓ AI Draft Review Queue renders cards with Approve & Reject actions
+
+5. Testing AI Credits & Usage Dashboard Modal (Feature 11.5 UI)...
+   ✓ AIUsageModal renders credit balances, token caps, and recent audit logs
+
+6. Testing Dedicated Settings Page & Model Config (Feature 11.1 & 11.7/11.8 UI)...
+   ✓ SettingsPage has subtabs, priority ordering, AES key input, and test connection buttons
+
+====================================================
+ ✅ ALL PHASE 11 FRONTEND INTERACTION TESTS PASSED
+====================================================
+
+
+----------------------------------------------------------------
+Suite: phase-11-master.test.js | Runner: node | Result: PASSED | Duration: 2.07s | Exit: 0
+Output:
+====================================================
+ Starting Phase 11 AI Question System Master Test Suite
+====================================================
+
+1. Authenticating test personas...
+   ✓ Admin, Teacher, and Student authenticated
+
+2. Testing AI Gateway Health & Model Routing (Feature 11.1 & 11.2)...
+   ✓ Gateway reports HEALTHY with 36 providers configured
+
+3. Testing Dynamic & Responsive Question Generation (No static hardcoding)...
+   ✓ Physics question generated dynamically: "[AI Generated - Physics] A charged particle with charge q = 1.5 C enters a ..."
+   ✓ Mathematics question generated dynamically: "[AI Generated - Mathematics] Evaluate the definite integral ∫₀¹ (5x^3 + 2x)..."
+   ✓ Chemistry question generated dynamically: "[AI Generated - Chemistry] For the chemical system under "Chemical Kinetics..."
+   ✓ Verified: All 3 domain questions produced uniquely varied content, numbers, and formulas
+
+4. Testing Admin Provider Settings, Encryption & Live Test (Feature 11.1 & 11.7/11.8)...
+   ✓ Listed 36 providers with masked API keys
+   ✓ Provider prov_ivconv_cloud_nvidia updated with AES-256-GCM encrypted API key (Masked: sk-...5678)
+   ✓ Live provider test verified: Successfully connected to Deterministic Oral Examiner Mock Engine (mock-ivconv-v1) in 1ms (1ms)
+
+5. Testing AI Credit Balances & Quota Retrieval (Feature 11.5)...
+   ✓ Teacher has 82 initial available AI credits
+
+6. Testing AI Question Modification with Parent Linkage & Versions (Feature 11.3)...
+   ✓ Created AI variation q_ai_5632f0f5cb6f7266 (Status: DRAFT, DerivedFrom: q_ai_f1d180dd0ce72cca)
+   ✓ Question version history verified: "AI-modified variation derived from q_ai_f1d180dd0ce72cca (Change vehicle to rocket and scale speeds by 3.5x)"
+
+7. Testing AI Question Generation from Blueprint (Feature 11.4)...
+   ✓ Generated AI question q_ai_5c1f2e836c508ad6 with DRAFT status
+
+8. Testing Async AI Worker Queue for Batch Generation (Feature 11.6)...
+   ✓ Batch job enqueued with Job ID: job_64596d260170e366
+   ✓ Batch job completed (Progress: 100%, 3 questions created: q_ai_36906e890785fce0, q_ai_bd1efc47240a8706, q_ai_1a6382febe93a96c)
+
+9. Testing AI Draft Review Queue & Approval Workflow (Feature 11.9)...
+   ✓ Review queue displays 30 draft AI questions
+   ✓ Question q_ai_1a6382febe93a96c approved and transitioned from DRAFT -> PUBLISHED
+   ✓ Question q_ai_bd1efc47240a8706 rejected with reason logged (ARCHIVED)
+
+10. Testing Permission Enforcement & IDOR/Role Boundaries...
+   ✓ Student is strictly forbidden from triggering AI question generation (403)
+   ✓ Student is strictly forbidden from reviewing drafts (403)
+   ✓ Student can read their own AI usage & credit balance (200)
+
+====================================================
+ ✅ ALL PHASE 11 BACKEND MASTER TESTS PASSED (100%)
+====================================================
+
+
+----------------------------------------------------------------
+Suite: phase-11-stacking-and-caps.test.js | Runner: node | Result: PASSED | Duration: 0.99s | Exit: 0
+Output:
+========================================================================
+ Starting Phase 11: Multi-Provider Stacking, Scope Isolation & Daily Caps
+========================================================================
+
+1. Authenticating personas...
+   ✓ Admin, Teacher, and Student authenticated
+
+2. Testing Scope Filtering on AI Providers API across 5 Granular Scopes...
+   ✓ All scopes query returned 36 providers
+   ✓ Scope 'question_generation' query returned 7 providers
+   ✓ Scope 'question_paraphrase' query returned 7 providers
+   ✓ Scope 'interview_conversation' query returned 8 providers
+   ✓ Scope 'interview_grading' query returned 7 providers
+   ✓ Scope 'writing_analysis' query returned 7 providers
+
+3. Testing Mandatory Scope Parameter Enforcement on AI Gateway...
+   ✓ Gateway strictly rejected call with missing scope (HTTP 400)
+
+4. Testing Multi-Provider Priority Cascade Fallback in question_generation Scope...
+   ✓ Question Generation Gateway fell back across cascade to: "mock-qgen-v1"
+   ✓ Restored clean provider cascade state for question_generation
+
+5. Testing Multi-Scope Pool Isolation across interview_grading & writing_analysis...
+   ✓ interview_grading cascade successfully fell through failing cloud tiers to: prov_ivgrade_mock_01
+   ✓ writing_analysis cascade successfully routed to dedicated scope provider: prov_writing_mock_01
+   ✓ Verified complete pool isolation and independent cascade fallback across all granular scopes
+
+6. Testing Per-Feature Daily Usage Cap Enforcement (Feature 11.5)...
+   ✓ Teacher generated item #q_ai_a39f214615e26a7c successfully within daily limit
+   ✓ Teacher modified item #q_ai_8ef1b60943cff15a successfully within daily limit
+   ✓ Testing Daily Cap Ceiling Rejection & Error Formatting (HTTP 429)...
+   ✓ Verified per-feature daily usage limit gate operates independently of credit balance
+
+========================================================================
+ All Phase 11 Stacking, Scope Isolation & Daily Cap Tests Passed (5/5)!
+========================================================================
+
+
+----------------------------------------------------------------
+Suite: phase-12-interview-master.test.js | Runner: ts-node | Result: PASSED | Duration: 5.41s | Exit: 0
+Output:
+================================================================
+🚀 RUNNING PHASE 12: AI INTERVIEW SYSTEM MASTER TEST SUITE
+================================================================
+
+✅ PASS: 12.1-U1: Pluggable Question Type Registry supports INTERVIEW
+✅ PASS: 12.2-U1: Derived Course Eligibility confirms IELTS enrolled students are interview-eligible
+✅ PASS: 12.5-U1: Full Multi-Turn Interview Session Lifecycle (Start -> Turns -> Finish)
+✅ PASS: 12.6-U1: AI Gateway providers and scope isolation
+✅ PASS: 12.7-U1: AI Gateway circuit breaker reset on PATCH and live NVIDIA Nemotron conversation routing
+================================================================
+🏁 PHASE 12 TEST SUITE SUMMARY: 5 passed, 0 failed
+================================================================
+
+----------------------------------------------------------------
+Suite: phase-13-subscriptions-master.test.js | Runner: node | Result: PASSED | Duration: 1.06s | Exit: 0
+Output:
+◇ injected env (4) from .env // tip: ◈ encrypted .env [www.dotenvx.com]
+================================================================
+🚀 RUNNING PHASE 13: SUBSCRIPTIONS & ENTITLEMENTS MASTER SUITE
+================================================================
+
+1. Authenticating test personas (Admin, Student 1, Student 2)...
+   ✓ Admin, Student 1 (Free tier), and Student 2 (Premium tier) authenticated
+
+2. Testing Feature 13.1: Entitlement Engine Evaluations...
+   ✓ Student 1 accurately evaluated on FREE plan baseline limits
+   ✓ Student 2 accurately evaluated on PREMIUM plan unlocked entitlements
+   ✓ Gated capability check returned descriptive upgrade reason
+✅ PASS: 13.1-U1: Entitlement Engine Evaluations (FREE vs PREMIUM)
+
+3. Testing Feature 13.2: Subscription Management Lifecycle...
+   ✓ Found 3 active subscription plans (FREE, PREMIUM, PREMIUM_PLUS)
+   ✓ Student 1 upgraded from FREE to PREMIUM plan
+   ✓ Student 1 entitlements refreshed immediately upon subscription update
+   ✓ Subscription cancellation marked successfully (retains access till cycle end)
+✅ PASS: 13.2-U1: Subscription Management Lifecycle
+
+4. Testing Feature 13.3: AI Credit Packages & Purchases...
+   ✓ Found 3 credit packages (Single, Sprint, Scholar)
+   ✓ Purchased Sprint Pack: +5 credits added. Invoice ID: inv_47106509cb695e60
+   ✓ Credit balance verified: 50 purchased credits available
+✅ PASS: 13.3-U1: AI Credit Packages & Purchases
+
+5. Testing Feature 13.4: Usage Tracking & Priority Consumption...
+   ✓ AI operation successfully deducted credit from daily quota
+   ✓ Admin usage report verified: 44 total credits tracked
+✅ PASS: 13.4-U1: Usage Tracking & Credit Consumption
+
+6. Testing Feature 13.5: Pluggable Billing Checkout, Invoices & Refund Engine...
+   ✓ Unified Checkout completed: Invoice inv_c318d6928dfc3c16 (Tx: tx_mock_4525af3c56652c0b)
+   ✓ Found 7 invoices on record for Student 2
+   ✓ Refund Engine successfully processed refund (ref_mock_cb3efb48ed5070ee) and clawed back entitlements
+   ✓ Financial audit log contains 11 refund audit records
+   ✓ Student strictly forbidden from issuing refunds (403)
+✅ PASS: 13.5-U1: Pluggable Billing Checkout, Invoices & Refund Engine
+
+7. Testing Feature 13.6: Preview Mode Billing Simulation...
+   ✓ Preview Free session correctly resolves simulated FREE entitlements
+   ✓ Preview Premium+ session correctly resolves simulated PREMIUM_PLUS allowances (100 interviews/day)
+   ✓ Simulated refund executed in preview session without touching live gateway
+✅ PASS: 13.6-U1: Preview Mode Billing Simulation
+
+8. Testing Feature 13.7: Free Tier Boundary Enforcement...
+   ✓ Free tier student blocked from generating personalized practice paper (403)
+   ✓ Free tier student started permitted daily interview
+   ✓ Free tier student strictly rejected on interview attempt exceeding daily quota (403)
+✅ PASS: 13.7-U1: Free Tier Boundary Enforcement
+   ✓ Student 1 restored to PREMIUM tier in suite teardown
+
+================================================================
+🏁 PHASE 13 SUITE SUMMARY: 7 passed, 0 failed
+================================================================
+
+
+----------------------------------------------------------------
+Suite: phase-15-interview-conversation-flow.test.js | Runner: ts-node | Result: PASSED | Duration: 6.19s | Exit: 0
+Output:
+================================================================
+🚀 RUNNING INTERVIEW CONVERSATION FLOW & TEMPLATE AUDIT TESTS
+================================================================
+
+◇ injected env (4) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
+✅ PASS: INT-FLOW-001: evaluateTurnTemplateSelection selects templates via plain code heuristics
+✅ PASS: INT-FLOW-002: Prompt audit confirms prior history, verbatim answer, uncovered areas, and active template
+✅ PASS: INT-FLOW-003: Live session tracks code-selected templates and debugInfo history
+✅ PASS: INT-FLOW-004: Mid-interview failover reconstructs prompt context directly from DB interview_turns
+✅ PASS: INT-FLOW-005: PREP PHASE creates and caches 5-facet x 4-variant follow-up bank in DB
+✅ PASS: INT-FLOW-006: classifyAnswerPattern accurately classifies all 4 candidate response patterns
+✅ PASS: INT-FLOW-007: Live phase uses bank entry, logs answerPattern & bankQuestionUsed, and falls back cleanly
+✅ PASS: INT-FLOW-008: Timeout split constants defined and Groq provider is active in DB
+✅ PASS: INT-FLOW-009: Live interview session enforces avoidList and knowledge-boundary constraints across conversation turns
+
+================================================================
+🏁 FLOW & TEMPLATE AUDIT TEST RESULTS: 9 passed, 0 failed
+================================================================
+
+
+----------------------------------------------------------------
+Suite: phase-15-interview-patches.test.js | Runner: ts-node | Result: PASSED | Duration: 5.49s | Exit: 0
+Output:
+================================================================
+🚀 RUNNING PHASE 15.3 & 15.4: INTERVIEW PATCHES TEST SUITE
+================================================================
+
+
+--- Task 15.3: Knowledge Dataset & Behavioral Prompt Separation ---
+✅ PASS: INT-U001: InterviewHandler.validate() enforces knowledgeDataset & behavioralPrompt structure
+◇ injected env (4) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+✅ PASS: INT-U002: Prompt builder generates isolated [KNOWLEDGE_BOUNDARY] and [EXAMINER_BEHAVIOR] blocks
+✅ PASS: INT-A001: POST /api/v1/interview/simulate-turn executes simulation workbench
+✅ PASS: INT-I001: simulate-turn flags boundary violation when avoidList topic is mentioned
+✅ PASS: INT-A002: GET /api/v1/interview/questions/:id/dataset retrieves decoupled dataset
+
+--- Task 15.4: Evidence-Grounded Grading & Longitudinal Growth ---
+✅ PASS: IGRADE-U001: normalizeRubricScores() preserves evidenceQuotes across all presets
+✅ PASS: IGRADE-U002: detectScoreTrend() accurately calculates trajectory and trendDelta
+✅ PASS: IGRADE-A001: GET /api/v1/interview/analytics/student/:userId enforces Section 7 IDOR check
+✅ PASS: IGRADE-A002 & A003: Session creation, completion, scorecard, and teacher score override
+
+================================================================
+📊 TEST RESULTS: 9 PASSED, 0 FAILED
+================================================================
+
+----------------------------------------------------------------
+Suite: phase-15-v2-master.test.js | Runner: node | Result: PASSED | Duration: 0.76s | Exit: 0
+Output:
+◇ injected env (4) from .env // tip: ◈ encrypted .env [www.dotenvx.com]
+◇ injected env (0) from apps\api\.env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+================================================================
+🚀 RUNNING PHASE 15 (V2 FEATURES) MASTER INTEGRATION SUITE
+================================================================
+
+1. Authenticating test personas (Admin, Student)...
+   ✓ Admin and Student personas authenticated successfully
+
+2. Testing Feature 15.14: Maintenance Engine...
+   ✓ Public /maintenance/status query succeeded without authentication
+   ✓ Admin successfully listed maintenance configurations
+   ✓ Set vocabulary_practice feature maintenance to ACTIVE
+   ✓ Student blocked with HTTP 503 and FEATURE_MAINTENANCE error
+   ✓ Admin staff successfully bypassed feature maintenance
+   ✓ Restored vocabulary_practice back ONLINE
+
+3. Testing Feature 15.15: Feature Registry & Promotional Windows...
+   ✓ Dynamic Plan Matrix retrieved with registered Phase 15 features
+   ✓ Feature registry items verified
+   ✓ Promotional entitlement window created for writing_evaluator
+   ✓ Student access granted via active promotional entitlement window
+   ✓ Promotional window cleaned up
+
+4. Testing Feature 15.1: Audio Engine & Listening Questions...
+   ✓ Retrieved 14 audio voice profiles (British, American, Australian)
+   ✓ Faculty/Admin created custom voice profile: Canadian Maple
+   ✓ Synthesized transient listening passage audio preview (.mp3)
+
+5. Testing Feature 15.2: Writing Evaluator & Multi-Criteria Rubrics...
+   ✓ Retrieved standard writing rubrics (IELTS Task 2, TOEFL, Academic)
+   ✓ Short essay properly flagged as wordCountCompliant: false with penalty
+   ✓ High-quality essay evaluated: Band Band 7.0, Score: 7/9
+   ✓ Criteria scores: Task Response: 7, Coherence & Cohesion: 7, Lexical Resource: 7, Grammatical Range & Accuracy: 7
+
+6. Testing Feature 15.5: SuperMemo SM-2 Vocabulary Drills...
+   ✓ Retrieved 161 vocabulary catalog entries (Sample: accommodate)
+   ✓ Practice queue fetched: 10 cards available
+   ✓ SM-2 review (Quality 4): repetitionCount set to 1, next review scheduled in 1 day
+   ✓ SM-2 second review (Quality 4): repetitionCount=2, interval=6 days, mastery=FAMILIAR
+   ✓ SM-2 failed review (Quality 1): reset repetitions=0, interval=1 day, mastery=WEAK
+   ✓ Student retention stats: totalPracticed=1, weak=1
+
+================================================================
+🏁 MASTER TEST SUITE COMPLETE: 5 PASSED, 0 FAILED
+================================================================
+
+----------------------------------------------------------------
+Suite: phase-16-ielts-speaking-flow.test.js | Runner: ts-node | Result: PASSED | Duration: 7.54s | Exit: 0
+Output:
+◇ injected env (4) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+================================================================
+🚀 RUNNING PHASE 16: IELTS SPEAKING PHASE FLOW & PROFILE TESTS
+================================================================
+
+✅ PASS: INT-IELTS-001: Gating test — IELTS_SPEAKING triggers IELTS flow, standard viva unchanged
+✅ PASS: INT-IELTS-002: Introduction phase — candidate provides name, isScored: false, fixed script transition
+✅ PASS: INT-IELTS-003: Part 1 topic progression — brief response (<5 words) triggers CLARIFY_PROMPT
+✅ PASS: INT-IELTS-004: Part 1 completion triggers transition to PART_2_PREP and extracts candidateProfile
+✅ PASS: INT-IELTS-005: Persistent profile update — candidate_interview_profiles captures biographical data
+✅ PASS: INT-IELTS-006: Part 2 Prep presents cue card and handles transition to monologue
+✅ PASS: INT-IELTS-007: Part 2 Long Turn — candidate submits monologue, examiner transitions directly to Part 3
+✅ PASS: INT-IELTS-008: Part 3 discussion — questions are abstract and forbid retrospective references
+✅ PASS: INT-IELTS-009: Evaluation — 4 criteria, Pronunciation null on text-only, IELTS rounding, un-scored excluded
+✅ PASS: INT-IELTS-010: Cross-session persistence — subsequent session selects least-used topics
+✅ PASS: INT-IELTS-011: Candidate profile endpoints — GET returns user profile, DELETE clears it
+✅ PASS: INT-IELTS-012: Static script libraries pass avoid-list check and exclude retrospective phrases
+✅ PASS: INT-IELTS-013: Adversarial input triggers ADVERSARIAL_OR_OFF_SCRIPT pattern and scripted redirect
+✅ PASS: INT-IELTS-014: Prompt injection input is treated strictly as data and neutralized
+✅ PASS: INT-IELTS-015: Part 3 question tree traversal, depth-2 lazy fill, and redirect tree preservation
+✅ PASS: INT-IELTS-016: Multiple adversarial inputs set highOffScriptRate flag in debugInfo
+
+================================================================
+Phase 16 Test Suite Result: 16 passed, 0 failed
+================================================================
+
+
+================================================================
+Final Status: PASSED | Passed: 21/21 | Duration: 47.5s

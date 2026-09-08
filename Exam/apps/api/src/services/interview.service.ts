@@ -2876,10 +2876,8 @@ Output JSON only.`;
       if (depth2Node?.question) {
         nextPart3Q = depth2Node.question;
       } else {
-        // Graceful fallback to DEFAULT_FACET_FOLLOW_UP_BANK or default tree (Requirement 23 & 29)
-        const facetKey = 'Fluency';
+        // Graceful fallback to default tree branch or generic probing question (Requirement 23 & 29)
         nextPart3Q =
-          (DEFAULT_FACET_FOLLOW_UP_BANK as any)[facetKey]?.[branchPattern] ||
           DEFAULT_IELTS_DISCUSSION_TREE[rootKey]?.branches?.[branchPattern]?.question ||
           'Could you give a concrete real-world instance demonstrating how this directly impacts everyday citizens?';
       }
