@@ -743,31 +743,43 @@ export const LanguageManagementPanel: React.FC = () => {
           }}
         >
           {/* Section Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <div style={{ fontWeight: 'bold', fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span>🌐</span>
-                <span>System Languages</span>
-                <span
-                  style={{
-                    padding: '2px 8px',
-                    borderRadius: '12px',
-                    fontSize: '11px',
-                    background: 'rgba(6, 182, 212, 0.15)',
-                    color: '#06b6d4',
-                    fontFamily: 'JetBrains Mono',
-                  }}
-                >
-                  {languages.length}
-                </span>
-              </div>
-              <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                All registered UI locale packs
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
+            {/* Row 1: Title, Count Badge, Subtitle (Alone, Full Width) */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+              <div>
+                <div style={{ fontWeight: 'bold', fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>🌐</span>
+                  <span>System Languages</span>
+                  <span
+                    style={{
+                      padding: '2px 8px',
+                      borderRadius: '12px',
+                      fontSize: '11px',
+                      background: 'rgba(6, 182, 212, 0.15)',
+                      color: '#06b6d4',
+                      fontFamily: 'JetBrains Mono',
+                      fontWeight: 600,
+                    }}
+                  >
+                    {languages.length}
+                  </span>
+                </div>
+                <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                  All registered UI locale packs
+                </div>
               </div>
             </div>
 
-            {/* Add Language Button */}
-            <div style={{ display: 'flex', gap: '6px' }}>
+            {/* Row 2: Action Buttons (Equal-Width, flexWrap) */}
+            <div
+              style={{
+                display: 'flex',
+                gap: '6px',
+                flexWrap: 'wrap',
+                width: '100%',
+                alignItems: 'center',
+              }}
+            >
               <button
                 id="btn-export-all-backup"
                 data-testid="btn-export-all-backup"
@@ -775,21 +787,27 @@ export const LanguageManagementPanel: React.FC = () => {
                 onClick={handleExportAll}
                 disabled={exporting}
                 style={{
-                  padding: '6px 10px',
+                  flex: '1 1 0',
+                  minWidth: '85px',
+                  padding: '6px 8px',
                   borderRadius: '6px',
                   background: 'rgba(255,255,255,0.06)',
                   border: '1px solid var(--border-color)',
                   color: 'var(--text-main)',
                   fontSize: '11px',
+                  fontWeight: 500,
                   cursor: exporting ? 'not-allowed' : 'pointer',
                   display: 'flex',
                   alignItems: 'center',
+                  justifyContent: 'center',
                   gap: '4px',
+                  whiteSpace: 'nowrap',
                 }}
-                title="Export All Languages Backup (JSON)"
+                title="Backup All Languages Backup (JSON)"
+                aria-label="Backup All"
               >
                 <span>💾</span>
-                <span>Backup All</span>
+                <span>Backup</span>
               </button>
               <button
                 id="btn-import-all"
@@ -798,7 +816,9 @@ export const LanguageManagementPanel: React.FC = () => {
                 onClick={handleTriggerImportAll}
                 disabled={bulkImporting}
                 style={{
-                  padding: '6px 10px',
+                  flex: '1 1 0',
+                  minWidth: '95px',
+                  padding: '6px 8px',
                   borderRadius: '6px',
                   background: 'rgba(16, 185, 129, 0.12)',
                   border: '1px solid #10b981',
@@ -808,9 +828,12 @@ export const LanguageManagementPanel: React.FC = () => {
                   cursor: bulkImporting ? 'not-allowed' : 'pointer',
                   display: 'flex',
                   alignItems: 'center',
+                  justifyContent: 'center',
                   gap: '4px',
+                  whiteSpace: 'nowrap',
                 }}
                 title="Import All (Select multiple .csv or .json translation files)"
+                aria-label="Import All"
               >
                 <span>📥</span>
                 <span>Import All</span>
@@ -826,30 +849,36 @@ export const LanguageManagementPanel: React.FC = () => {
                 onChange={handleBulkFilesSelected}
               />
               <button
-              id="btn-add-language"
-              data-testid="btn-add-language"
-              onClick={() => {
-                setAddError(null);
-                setShowAddModal(true);
-              }}
-              style={{
-                padding: '6px 12px',
-                borderRadius: '6px',
-                background: '#06b6d4',
-                border: 'none',
-                color: '#000',
-                fontSize: '12px',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                transition: 'opacity 0.15s ease',
-              }}
-            >
-              <span>+</span>
-              <span>Add Language</span>
-            </button>
+                id="btn-add-language"
+                data-testid="btn-add-language"
+                onClick={() => {
+                  setAddError(null);
+                  setShowAddModal(true);
+                }}
+                style={{
+                  flex: '1 1 0',
+                  minWidth: '100px',
+                  padding: '6px 8px',
+                  borderRadius: '6px',
+                  background: '#06b6d4',
+                  border: 'none',
+                  color: '#000',
+                  fontSize: '11px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '4px',
+                  whiteSpace: 'nowrap',
+                  transition: 'opacity 0.15s ease',
+                }}
+                title="Add Language"
+                aria-label="Add Language"
+              >
+                <span>+</span>
+                <span>Add Language</span>
+              </button>
             </div>
           </div>
 
@@ -876,7 +905,7 @@ export const LanguageManagementPanel: React.FC = () => {
             />
 
             {/* Quick Status Filter Pills */}
-            <div style={{ display: 'flex', gap: '6px' }}>
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
               {(
                 [
                   { id: 'ALL', label: 'All' },
@@ -897,6 +926,7 @@ export const LanguageManagementPanel: React.FC = () => {
                     background: langStatusFilter === f.id ? 'rgba(6, 182, 212, 0.15)' : 'transparent',
                     color: langStatusFilter === f.id ? '#06b6d4' : 'var(--text-muted)',
                     cursor: 'pointer',
+                    whiteSpace: 'nowrap',
                   }}
                 >
                   {f.label}
@@ -953,8 +983,8 @@ export const LanguageManagementPanel: React.FC = () => {
                     }}
                   >
                     {/* Language Header Line */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                         <span style={{ fontWeight: 'bold', fontSize: '13px' }}>{lang.name}</span>
                         <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>({lang.nativeName})</span>
                         {lang.isDefault && (
@@ -989,7 +1019,7 @@ export const LanguageManagementPanel: React.FC = () => {
 
                     {/* Completeness Bar & Indicator */}
                     <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '4px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '4px', fontSize: '11px', marginBottom: '4px' }}>
                         <span
                           id={`completeness-text-${lang.code}`}
                           data-testid={`language-completeness-${lang.code}`}
@@ -1000,7 +1030,7 @@ export const LanguageManagementPanel: React.FC = () => {
                         >
                           {count} / {total} keys translated ({pct}%)
                         </span>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                           <span
                             style={{
                               color: isComplete ? '#10b981' : '#f59e0b',
@@ -1052,7 +1082,7 @@ export const LanguageManagementPanel: React.FC = () => {
                     </div>
 
                     {/* Manage Translations Button */}
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '2px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '2px', flexWrap: 'wrap' }}>
                       <button
                         type="button"
                         id={`btn-manage-${lang.code}`}
@@ -1296,7 +1326,7 @@ export const LanguageManagementPanel: React.FC = () => {
               {/* Translation Filter & Search Toolbar */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
                 {/* Filter Tabs */}
-                <div style={{ display: 'flex', gap: '6px' }}>
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                   <button
                     type="button"
                     id="filter-all-keys"
