@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { LanguageCode } from '@repo/types';
+import { LanguageCode, BASELINE_LANGUAGES } from '@repo/types';
 import { API_BASE } from '../config/api';
 
 export interface LanguageInfo {
@@ -56,11 +56,8 @@ export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } catch (e) {
       console.warn('API connection offline, using default fallback language list');
     }
-    // Fallback baseline
-    setAvailableLanguages([
-      { code: 'en', name: 'English', nativeName: 'English', isDefault: true },
-      { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी' },
-    ]);
+    // Fallback baseline: all 23 official baseline languages
+    setAvailableLanguages(BASELINE_LANGUAGES);
   };
 
   const fetchTranslations = async (langCode: string) => {
@@ -194,12 +191,5 @@ export const useI18n = (): I18nContextType => {
 
 export const useTranslation = useI18n;
 
-export const LANGUAGES: LanguageInfo[] = [
-  { code: 'en', name: 'English', nativeName: 'English', isDefault: true },
-  { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी' },
-  { code: 'bn', name: 'Bengali', nativeName: 'বাংলা' },
-  { code: 'te', name: 'Telugu', nativeName: 'తెలుగు' },
-  { code: 'mr', name: 'Marathi', nativeName: 'मराठी' },
-  { code: 'ta', name: 'Tamil', nativeName: 'தமிழ்' },
-];
+export { BASELINE_LANGUAGES };
 

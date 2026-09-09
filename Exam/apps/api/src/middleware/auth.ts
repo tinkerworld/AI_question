@@ -54,7 +54,8 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
         [sessionId]
       );
 
-      if (sessionRes.rows.length === 0 || !sessionRes.rows[0].isActive) {
+      const row = sessionRes.rows[0] as any;
+      if (sessionRes.rows.length === 0 || !row.isActive) {
         return next(
           new AppError(
             401,
@@ -64,7 +65,7 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
         );
       }
 
-      if (sessionRes.rows[0].isExpired) {
+      if (row.isExpired) {
         return next(
           new AppError(
             401,

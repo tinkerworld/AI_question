@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { API_BASE } from '../../config/api';
 import { getAuthHeaders } from '../../utils/api';
 import { useI18n, LanguageInfo } from '../../context/I18nContext';
@@ -9,6 +9,92 @@ interface TranslationKeyInfo {
   description?: string;
   module?: string;
   baseValue?: string;
+}
+
+export interface BulkImportItem {
+  filename: string;
+  status: 'queued' | 'importing' | 'done' | 'failed';
+  languageCode?: string;
+  languageName?: string;
+  updatedCount?: number;
+  skippedCount?: number;
+  unknownKeys?: string[];
+  error?: string;
+}
+
+export interface BulkImportSummary {
+  totalFiles: number;
+  successCount: number;
+  failedCount: number;
+  items: BulkImportItem[];
+}
+
+// Derive language code from filename (e.g. translations-hi.csv -> hi, translations_bn.json -> bn)
+export function extractLanguageCodeFromFilename(filename: string): string | null {
+  const base = filename.replace(/^.*[\\\/]/, '').trim();
+  const match = base.match(/^translations?[-_]([a-zA-Z0-9_-]+)\.(csv|json)$/i);
+  if (match && match[1]) {
+    return match[1].toLowerCase().trim();
+  }
+  const simple = base.match(/^([a-zA-Z]{2,5}(?:-[a-zA-Z0-9]+)?)\.(csv|json)$/i);
+  if (simple && simple[1]) {
+    return simple[1].toLowerCase().trim();
+  }
+  return null;
+}
+
+// Client-side CSV parser helper
+export function parseCsvRows(csvText: string): string[][] {
+  const cleanText = csvText.replace(/^﻿/, '');
+  const rows: string[][] = [];
+  let currentRow: string[] = [];
+  let currentCell = '';
+  let insideQuotes = false;
+
+  for (let i = 0; i < cleanText.length; i++) {
+    const char = cleanText[i];
+    const nextChar = cleanText[i + 1];
+
+    if (insideQuotes) {
+      if (char === '"') {
+        if (nextChar === '"') {
+          currentCell += '"';
+          i++;
+        } else {
+          insideQuotes = false;
+        }
+      } else {
+        currentCell += char;
+      }
+    } else {
+      if (char === '"') {
+        insideQuotes = true;
+      } else if (char === ',') {
+        currentRow.push(currentCell);
+        currentCell = '';
+      } else if (char === '\n') {
+        currentRow.push(currentCell);
+        if (currentRow.some((c) => c.trim().length > 0)) {
+          rows.push(currentRow);
+        }
+        currentRow = [];
+        currentCell = '';
+      } else if (char === '\r') {
+        // Skip CR
+      } else {
+        currentCell += char;
+      }
+    }
+  }
+
+  if (currentCell.length > 0 || currentRow.length > 0) {
+    currentRow.push(currentCell);
+    if (currentRow.some((c) => c.trim().length > 0)) {
+      rows.push(currentRow);
+    }
+  }
+
+  return rows;
 }
 
 export const LanguageManagementPanel: React.FC = () => {
@@ -41,6 +127,13 @@ export const LanguageManagementPanel: React.FC = () => {
   const [importSummary, setImportSummary] = useState<{ updatedCount: number; skippedCount: number; unknownKeys: string[]; languageCode?: string } | null>(null);
   const [exporting, setExporting] = useState<boolean>(false);
   const [batchTranslating, setBatchTranslating] = useState<boolean>(false);
+
+  // Bulk Import All State
+  const [showBulkImportModal, setShowBulkImportModal] = useState<boolean>(false);
+  const [bulkImporting, setBulkImporting] = useState<boolean>(false);
+  const [bulkProgress, setBulkProgress] = useState<BulkImportItem[]>([]);
+  const [bulkSummary, setBulkSummary] = useState<BulkImportSummary | null>(null);
+  const bulkFileInputRef = useRef<HTMLInputElement>(null);
 
   // Translation editing & filtering state
   const [keyFilterTab, setKeyFilterTab] = useState<'ALL' | 'MISSING' | 'TRANSLATED'>('ALL');
@@ -328,6 +421,139 @@ export const LanguageManagementPanel: React.FC = () => {
     }
   };
 
+  // Handle Trigger Import All (open file dialog with multiple files enabled)
+  const handleTriggerImportAll = () => {
+    if (bulkFileInputRef.current) {
+      bulkFileInputRef.current.value = '';
+      bulkFileInputRef.current.click();
+    }
+  };
+
+  // Handle Bulk Files Selected & Sequential Import
+  const handleBulkFilesSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files ? Array.from(e.target.files) : [];
+    if (files.length === 0) return;
+
+    setShowBulkImportModal(true);
+    setBulkImporting(true);
+    setBulkSummary(null);
+
+    const initialItems: BulkImportItem[] = files.map((f) => ({
+      filename: f.name,
+      status: 'queued',
+    }));
+    setBulkProgress(initialItems);
+
+    const items: BulkImportItem[] = [...initialItems];
+    let successCount = 0;
+    let failedCount = 0;
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      items[i] = { ...items[i], status: 'importing' };
+      setBulkProgress([...items]);
+
+      try {
+        const text = await file.text();
+        const cleanFilename = file.name.trim();
+        const derivedCode = extractLanguageCodeFromFilename(cleanFilename);
+
+        let payload: any = {
+          filename: cleanFilename,
+        };
+        if (derivedCode) {
+          payload.languageCode = derivedCode;
+        }
+
+        if (cleanFilename.toLowerCase().endsWith('.csv')) {
+          payload.csvContent = text;
+          payload.format = 'csv';
+          if (!payload.languageCode) {
+            const rows = parseCsvRows(text);
+            if (rows.length > 0) {
+              const header = rows[0].map((h) => h.toLowerCase().trim().replace(/^\uFEFF/, ''));
+              const langIdx = header.findIndex(
+                (h) => h === 'languagecode' || h === 'language_code' || h === 'lang' || h === 'langcode'
+              );
+              if (langIdx !== -1 && rows.length > 1 && rows[1][langIdx]) {
+                payload.languageCode = rows[1][langIdx].trim().toLowerCase();
+              } else {
+                const known = availableLanguages.find((l) => header.includes(l.code.toLowerCase()));
+                if (known) payload.languageCode = known.code;
+              }
+            }
+          }
+        } else {
+          payload.format = 'json';
+          try {
+            const parsed = JSON.parse(text);
+            payload.translations = parsed.translations || parsed;
+            if (!payload.languageCode) {
+              const code = parsed.languageCode || parsed.data?.languageCode || parsed.langCode || parsed.code;
+              if (code) payload.languageCode = String(code).toLowerCase().trim();
+            }
+          } catch {
+            throw new Error('Invalid JSON format');
+          }
+        }
+
+        const res = await fetch(`${API_BASE}/i18n/import`, {
+          method: 'POST',
+          headers: {
+            ...getAuthHeaders(),
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const body = await res.json();
+        if (!res.ok || !body.success) {
+          const errMsg = body.message || body.error?.message || body.error || `HTTP ${res.status} error`;
+          throw new Error(errMsg);
+        }
+
+        const d = body.data;
+        items[i] = {
+          ...items[i],
+          status: 'done',
+          languageCode: d.languageCode,
+          languageName: d.languageName,
+          updatedCount: d.updatedCount,
+          skippedCount: d.skippedCount,
+          unknownKeys: d.unknownKeys || [],
+        };
+        successCount++;
+      } catch (err: any) {
+        items[i] = {
+          ...items[i],
+          status: 'failed',
+          error: err.message || 'Import failed',
+        };
+        failedCount++;
+      }
+
+      setBulkProgress([...items]);
+    }
+
+    setBulkImporting(false);
+    setBulkSummary({
+      totalFiles: files.length,
+      successCount,
+      failedCount,
+      items,
+    });
+
+    // Refresh currently open language translation view & languages completeness list
+    if (selectedLanguage) {
+      await loadLanguageTranslations(selectedLanguage.code);
+    }
+    await loadLanguages();
+    await refreshLanguages();
+    if (selectedLanguage && selectedLanguage.code === currentLanguage) {
+      await refreshTranslations(currentLanguage);
+    }
+  };
+
   // Handle Import Submit
   const handleImportSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -565,6 +791,40 @@ export const LanguageManagementPanel: React.FC = () => {
                 <span>💾</span>
                 <span>Backup All</span>
               </button>
+              <button
+                id="btn-import-all"
+                data-testid="btn-import-all"
+                type="button"
+                onClick={handleTriggerImportAll}
+                disabled={bulkImporting}
+                style={{
+                  padding: '6px 10px',
+                  borderRadius: '6px',
+                  background: 'rgba(16, 185, 129, 0.12)',
+                  border: '1px solid #10b981',
+                  color: '#10b981',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  cursor: bulkImporting ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                }}
+                title="Import All (Select multiple .csv or .json translation files)"
+              >
+                <span>📥</span>
+                <span>Import All</span>
+              </button>
+              <input
+                type="file"
+                id="bulk-import-file-input"
+                data-testid="bulk-import-file-input"
+                ref={bulkFileInputRef}
+                multiple
+                accept=".csv,.json"
+                style={{ display: 'none' }}
+                onChange={handleBulkFilesSelected}
+              />
               <button
               id="btn-add-language"
               data-testid="btn-add-language"
@@ -1817,6 +2077,261 @@ export const LanguageManagementPanel: React.FC = () => {
                 </div>
               </form>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Import All Modal */}
+      {showBulkImportModal && (
+        <div
+          id="bulk-import-modal-overlay"
+          data-testid="bulk-import-modal-overlay"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.75)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+        >
+          <div
+            id="bulk-import-modal"
+            data-testid="bulk-import-modal"
+            style={{
+              background: 'var(--panel-bg)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '12px',
+              padding: '24px',
+              width: '680px',
+              maxWidth: '92vw',
+              maxHeight: '85vh',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3)',
+            }}
+          >
+            {/* Modal Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '20px' }}>📥</span>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold' }}>
+                    Bulk Import Translations
+                  </h3>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                    Sequential multi-file import ({bulkProgress.length} file{bulkProgress.length === 1 ? '' : 's'} selected)
+                  </div>
+                </div>
+              </div>
+              {!bulkImporting && (
+                <button
+                  type="button"
+                  id="btn-close-bulk-import-x"
+                  data-testid="btn-close-bulk-import-x"
+                  onClick={() => {
+                    setShowBulkImportModal(false);
+                    setBulkSummary(null);
+                  }}
+                  style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '18px', cursor: 'pointer' }}
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            {/* Progress Bar Header */}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '6px' }}>
+                <span style={{ color: 'var(--text-muted)' }}>
+                  {bulkImporting ? 'Processing files sequentially...' : 'Import process completed'}
+                </span>
+                <span style={{ fontWeight: 'bold', fontFamily: 'JetBrains Mono' }}>
+                  {bulkProgress.filter((p) => p.status === 'done' || p.status === 'failed').length} / {bulkProgress.length}
+                </span>
+              </div>
+              <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.08)', borderRadius: '3px', overflow: 'hidden' }}>
+                <div
+                  style={{
+                    height: '100%',
+                    width: `${bulkProgress.length > 0 ? ((bulkProgress.filter((p) => p.status === 'done' || p.status === 'failed').length) / bulkProgress.length) * 100 : 0}%`,
+                    background: bulkSummary && bulkSummary.failedCount > 0 ? '#f59e0b' : '#10b981',
+                    transition: 'width 0.2s ease',
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Live Progress List */}
+            <div
+              id="bulk-import-progress-list"
+              data-testid="bulk-import-progress-list"
+              style={{
+                background: 'rgba(0,0,0,0.25)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '8px',
+                padding: '12px',
+                maxHeight: '300px',
+                overflowY: 'auto',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+              }}
+            >
+              {bulkProgress.map((item, idx) => (
+                <div
+                  key={idx}
+                  id={`bulk-import-item-${idx}`}
+                  data-testid={`bulk-import-item-${idx}`}
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    background: item.status === 'importing' ? 'rgba(6, 182, 212, 0.08)' : 'rgba(255,255,255,0.02)',
+                    border: `1px solid ${
+                      item.status === 'done'
+                        ? 'rgba(16, 185, 129, 0.3)'
+                        : item.status === 'failed'
+                        ? 'rgba(239, 68, 68, 0.3)'
+                        : item.status === 'importing'
+                        ? 'rgba(6, 182, 212, 0.5)'
+                        : 'var(--border-color)'
+                    }`,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    gap: '12px',
+                    fontSize: '12px',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
+                    {item.status === 'queued' && (
+                      <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', background: 'rgba(255,255,255,0.1)', color: 'var(--text-muted)' }}>
+                        ⏳ Queued
+                      </span>
+                    )}
+                    {item.status === 'importing' && (
+                      <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', background: 'rgba(6, 182, 212, 0.15)', color: '#06b6d4', fontWeight: 'bold' }}>
+                        🔄 Importing...
+                      </span>
+                    )}
+                    {item.status === 'done' && (
+                      <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', fontWeight: 'bold' }}>
+                        ✓ Done
+                      </span>
+                    )}
+                    {item.status === 'failed' && (
+                      <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', fontWeight: 'bold' }}>
+                        ✗ Failed
+                      </span>
+                    )}
+
+                    <span style={{ fontFamily: 'JetBrains Mono', fontWeight: 'bold', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {item.filename}
+                    </span>
+                  </div>
+
+                  <div style={{ fontSize: '11px', textAlign: 'right' }}>
+                    {item.status === 'done' && (
+                      <span style={{ color: '#10b981' }}>
+                        {item.languageName ? `${item.languageName} (${item.languageCode}): ` : ''}
+                        <strong>{item.updatedCount}</strong> updated
+                        {item.skippedCount ? `, ${item.skippedCount} skipped` : ''}
+                      </span>
+                    )}
+                    {item.status === 'failed' && (
+                      <span style={{ color: '#ef4444' }} title={item.error}>
+                        {item.error || 'Failed'}
+                      </span>
+                    )}
+                    {item.status === 'queued' && <span style={{ color: 'var(--text-muted)' }}>Waiting...</span>}
+                    {item.status === 'importing' && <span style={{ color: '#06b6d4' }}>Reading & upserting...</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Summary Section at the End */}
+            {bulkSummary && (
+              <div
+                id="bulk-import-summary"
+                data-testid="bulk-import-summary"
+                style={{
+                  padding: '14px',
+                  borderRadius: '8px',
+                  background:
+                    bulkSummary.failedCount === 0
+                      ? 'rgba(16, 185, 129, 0.12)'
+                      : bulkSummary.successCount > 0
+                      ? 'rgba(245, 158, 11, 0.12)'
+                      : 'rgba(239, 68, 68, 0.12)',
+                  border: `1px solid ${
+                    bulkSummary.failedCount === 0
+                      ? '#10b981'
+                      : bulkSummary.successCount > 0
+                      ? '#f59e0b'
+                      : '#ef4444'
+                  }`,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px',
+                }}
+              >
+                <div style={{ fontSize: '13px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span>{bulkSummary.failedCount === 0 ? '🎉' : '⚠️'}</span>
+                  <span>
+                    Bulk Import Summary: {bulkSummary.successCount} language{bulkSummary.successCount === 1 ? '' : 's'} imported successfully
+                    {bulkSummary.failedCount > 0 && `, ${bulkSummary.failedCount} failed`}
+                  </span>
+                </div>
+
+                {bulkSummary.failedCount > 0 && (
+                  <div style={{ fontSize: '11px', color: '#ef4444', marginTop: '4px' }}>
+                    <strong>Failed files:</strong>
+                    <ul style={{ margin: '4px 0 0 0', paddingLeft: '18px' }}>
+                      {bulkSummary.items
+                        .filter((i) => i.status === 'failed')
+                        .map((i, idx) => (
+                          <li key={idx}>
+                            <code>{i.filename}</code>: {i.error}
+                          </li>
+                        ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Modal Footer / Actions */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '4px' }}>
+              <button
+                type="button"
+                id="btn-close-bulk-import"
+                data-testid="btn-close-bulk-import"
+                disabled={bulkImporting}
+                onClick={() => {
+                  setShowBulkImportModal(false);
+                  setBulkSummary(null);
+                }}
+                style={{
+                  padding: '8px 18px',
+                  borderRadius: '6px',
+                  background: bulkImporting ? 'rgba(255,255,255,0.05)' : '#06b6d4',
+                  color: bulkImporting ? 'var(--text-muted)' : '#000',
+                  fontWeight: 'bold',
+                  border: 'none',
+                  fontSize: '12px',
+                  cursor: bulkImporting ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {bulkImporting ? 'Importing in Progress...' : 'Done & Close'}
+              </button>
+            </div>
           </div>
         </div>
       )}

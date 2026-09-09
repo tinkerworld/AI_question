@@ -41,8 +41,8 @@ if %ERRORLEVEL% neq 0 (
 
 REM --- 2. Seed Baseline Data ---
 echo.
-echo [2/3] Seeding baseline data (Courses, Question Bank, Exams, AI Models, Personas)...
-call npx ts-node -r tsconfig-paths/register --project apps/api/tsconfig.json packages/database/prisma/seed.ts
+echo [2/4] Seeding baseline data (Courses, Question Bank, Exams, AI Models, Personas)...
+call npx ts-node --transpile-only -r tsconfig-paths/register --project apps/api/tsconfig.json packages/database/prisma/seed.ts
 if %ERRORLEVEL% neq 0 (
     echo.
     echo [ERROR] Database seeding failed.
@@ -53,11 +53,23 @@ if %ERRORLEVEL% neq 0 (
 
 REM --- 3. Seed Vocabulary Bank ---
 echo.
-echo [3/3] Seeding Phase 15 vocabulary bank (CEFR B1-C2 Academic Word Bank)...
-call npx ts-node -r tsconfig-paths/register --project apps/api/tsconfig.json packages/database/prisma/seed-vocabulary.ts
+echo [3/4] Seeding Phase 15 vocabulary bank (CEFR B1-C2 Academic Word Bank)...
+call npx ts-node --transpile-only -r tsconfig-paths/register --project apps/api/tsconfig.json packages/database/prisma/seed-vocabulary.ts
 if %ERRORLEVEL% neq 0 (
     echo.
     echo [ERROR] Vocabulary bank seeding failed.
+    popd
+    if "%~1"=="" pause
+    exit /b 1
+)
+
+REM --- 4. Seed Translation Keys & Multilingual i18n ---
+echo.
+echo [4/4] Seeding translation keys and multilingual translations...
+call npx ts-node --transpile-only -r tsconfig-paths/register --project apps/api/tsconfig.json packages/database/prisma/seed-translation-keys.ts
+if %ERRORLEVEL% neq 0 (
+    echo.
+    echo [ERROR] Translation keys seeding failed.
     popd
     if "%~1"=="" pause
     exit /b 1

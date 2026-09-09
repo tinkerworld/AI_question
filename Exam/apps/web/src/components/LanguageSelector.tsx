@@ -1,11 +1,11 @@
 import React from 'react';
-import { useTranslation, LANGUAGES } from '../context/I18nContext';
+import { useTranslation, BASELINE_LANGUAGES } from '../context/I18nContext';
 
 export const LanguageSelector: React.FC = () => {
   const { currentLanguage, language, setLanguage, availableLanguages } = useTranslation();
 
   const activeCode = currentLanguage || language || 'en';
-  const list = (availableLanguages && availableLanguages.length > 0) ? availableLanguages : LANGUAGES;
+  const list = (availableLanguages && availableLanguages.length > 0) ? availableLanguages : BASELINE_LANGUAGES;
 
   return (
     <select

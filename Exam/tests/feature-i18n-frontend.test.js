@@ -48,18 +48,30 @@ async function runI18nFrontendTests() {
   assert.ok(panelCode.includes('Export JSON'), 'Must have Export JSON action button');
   assert.ok(panelCode.includes('Export CSV'), 'Must have Export CSV action button');
   assert.ok(panelCode.includes('Backup All'), 'Must have Backup All action button');
-  console.log('   ✓ Export JSON, Export CSV, and Backup All buttons wired');
+  assert.ok(panelCode.includes('btn-import-all') && panelCode.includes('Import All'), 'Must have Import All action button');
+  assert.ok(panelCode.includes('handleTriggerImportAll'), 'Must have handleTriggerImportAll handler');
+  assert.ok(panelCode.includes('handleBulkFilesSelected'), 'Must have handleBulkFilesSelected handler');
+  assert.ok(panelCode.includes('extractLanguageCodeFromFilename'), 'Must have extractLanguageCodeFromFilename helper');
+  console.log('   ✓ Export JSON, Export CSV, Backup All, and Import All buttons wired');
 
   // --------------------------------------------------------------------------
-  // 3. Language Management Panel: Import Modal & Summary
+  // 3. Language Management Panel: Import Modal & Bulk Import Modal
   // --------------------------------------------------------------------------
-  console.log('\n3. Testing Import Modal, File Picker & Summary Reporting...');
+  console.log('\n3. Testing Import Modals, File Pickers & Summary Reporting...');
   assert.ok(panelCode.includes('showImportModal'), 'Must declare showImportModal state');
   assert.ok(panelCode.includes('handleImportSubmit'), 'Must have handleImportSubmit handler');
   assert.ok(panelCode.includes('importSummary') || panelCode.includes('updatedCount'), 'Must track import summary metrics');
   assert.ok(panelCode.includes('.json') && panelCode.includes('.csv'), 'File picker must accept both .json and .csv');
   assert.ok(panelCode.includes('/i18n/import'), 'Must call /api/v1/i18n/import endpoint');
-  console.log('   ✓ Import modal with JSON/CSV picker and summary report correctly wired');
+
+  // Bulk Import Modal assertions
+  assert.ok(panelCode.includes('showBulkImportModal'), 'Must declare showBulkImportModal state');
+  assert.ok(panelCode.includes('bulkProgress'), 'Must track bulkProgress list');
+  assert.ok(panelCode.includes('bulkSummary'), 'Must track bulkSummary metrics');
+  assert.ok(panelCode.includes('bulk-import-modal'), 'Must render bulk-import-modal');
+  assert.ok(panelCode.includes('bulk-import-summary'), 'Must render bulk-import-summary');
+  assert.ok(panelCode.includes('multiple'), 'Bulk file picker must have multiple enabled');
+  console.log('   ✓ Import modal and Bulk Import All modal with progress & summary correctly wired');
 
   // --------------------------------------------------------------------------
   // 4. Component Translation Wiring: LoginPage

@@ -1,4 +1,5 @@
 import { Router, Request, Response, NextFunction } from 'express';
+import path from 'path';
 import { pgDb } from '@repo/database';
 import { authenticate } from '../middleware/auth';
 import { requirePermission } from '../middleware/permission';
@@ -9,33 +10,10 @@ import { AITranslationService, KeyToTranslate } from '../services/ai-translation
 
 const router = Router();
 
-export const BASELINE_LANGUAGES = [
-  { id: 'l1', code: 'en', name: 'English', nativeName: 'English', isDefault: true },
-  { id: 'l2', code: 'hi', name: 'Hindi', nativeName: 'हिन्दी', isDefault: false },
-  { id: 'l3', code: 'bn', name: 'Bengali', nativeName: 'বাংলা', isDefault: false },
-  { id: 'l4', code: 'te', name: 'Telugu', nativeName: 'తెలుగు', isDefault: false },
-  { id: 'l5', code: 'mr', name: 'Marathi', nativeName: 'मराठी', isDefault: false },
-  { id: 'l6', code: 'ta', name: 'Tamil', nativeName: 'தமிழ்', isDefault: false },
-  { id: 'l7', code: 'ur', name: 'Urdu', nativeName: 'اردو', isDefault: false },
-  { id: 'l8', code: 'gu', name: 'Gujarati', nativeName: 'ગુજરાતી', isDefault: false },
-  { id: 'l9', code: 'kn', name: 'Kannada', nativeName: 'ಕನ್ನಡ', isDefault: false },
-  { id: 'l10', code: 'ml', name: 'Malayalam', nativeName: 'മലയാളം', isDefault: false },
-  { id: 'l11', code: 'or', name: 'Odia', nativeName: 'ଓଡ଼ିଆ', isDefault: false },
-  { id: 'l12', code: 'pa', name: 'Punjabi', nativeName: 'ਪੰਜਾਬੀ', isDefault: false },
-  { id: 'l13', code: 'as', name: 'Assamese', nativeName: 'অসমীয়া', isDefault: false },
-  { id: 'l14', code: 'ma', name: 'Maithili', nativeName: 'मैथिली', isDefault: false },
-  { id: 'l15', code: 'sa', name: 'Sanskrit', nativeName: 'संस्कृतम्', isDefault: false },
-  { id: 'l16', code: 'ks', name: 'Kashmiri', nativeName: 'कश्मीरी', isDefault: false },
-  { id: 'l17', code: 'ne', name: 'Nepali', nativeName: 'नेपाली', isDefault: false },
-  { id: 'l18', code: 'sd', name: 'Sindhi', nativeName: 'सिंधी', isDefault: false },
-  { id: 'l19', code: 'br', name: 'Bodo', nativeName: 'बोडो', isDefault: false },
-  { id: 'l20', code: 'doi', name: 'Dogri', nativeName: 'डोगरी', isDefault: false },
-  { id: 'l21', code: 'mni', name: 'Manipuri', nativeName: 'মৈতৈলোন্', isDefault: false },
-  { id: 'l22', code: 'sat', name: 'Santhali', nativeName: 'ᱥᱟᱱᱛᱟᱲᱤ', isDefault: false },
-  { id: 'l23', code: 'lus', name: 'Mizo', nativeName: 'Mizo', isDefault: false },
-];
+import { BASELINE_LANGUAGES } from '@repo/types';
+export { BASELINE_LANGUAGES };
 
-const SEED_TRANSLATIONS: Record<string, Record<string, string>> = {
+export const SEED_TRANSLATIONS: Record<string, Record<string, string>> = {
   en: { welcome: 'Welcome to ExamOS Platform', app_title: 'ExamOS // Adaptive Learning Platform', dashboard: 'Dashboard', users: 'User Management', courses: 'Academic Courses', question_bank: 'Question Bank', exam_patterns: 'Exam Patterns', analytics: 'Student Analytics' },
   hi: { welcome: 'ExamOS प्लेटफॉर्म में आपका स्वागत है', app_title: 'ExamOS // अनुकूलनीय शिक्षण मंच', dashboard: 'डैशबोर्ड', users: 'उपयोगकर्ता प्रबंधन', courses: 'अकादमिक पाठ्यक्रम', question_bank: 'प्रश्न बैंक', exam_patterns: 'परीक्षा पैटर्न', analytics: 'छात्र विश्लेषण' },
   bn: { welcome: 'ExamOS প্ল্যাটফর্মে আপনাকে স্বাগতম', app_title: 'ExamOS // অ্যাডাপ্টিভ লার্নিং প্ল্যাটফর্ম', dashboard: 'ড্যাশবোর্ড', users: 'ব্যবহারকারী ব্যবস্থাপনা', courses: 'একাডেমিক কোর্স', question_bank: 'প্রশ্ন ব্যাংক', exam_patterns: 'পরীক্ষার প্যাটার্ন', analytics: 'শিক্ষার্থী বিশ্লেষণ' },
@@ -503,7 +481,210 @@ router.get(
 
 
 // ----------------------------------------------------------------------------
-// POST /api/v1/i18n/import — Import translations from JSON or CSV
+// Core Translation Import Execution Logic (Single or Batch Item)
+// ----------------------------------------------------------------------------
+export interface TranslationImportInput {
+  languageCode?: string;
+  filename?: string;
+  csvContent?: string;
+  translations?: any;
+  format?: string;
+  content?: string;
+}
+
+export interface TranslationImportResult {
+  languageCode: string;
+  languageName: string;
+  updatedCount: number;
+  skippedCount: number;
+  unknownKeys: string[];
+  failedCount: number;
+}
+
+export async function executeTranslationImport(params: TranslationImportInput): Promise<TranslationImportResult> {
+  let { languageCode, filename, csvContent, translations, format, content } = params;
+  let targetCode = languageCode ? String(languageCode).toLowerCase().trim() : '';
+  let parsedJsonFromContent: any = null;
+
+  if (!csvContent && !translations && content) {
+    if (format === 'json') {
+      try {
+        translations = typeof content === 'string' ? JSON.parse(content) : content;
+        parsedJsonFromContent = translations;
+      } catch {
+        throw new AppError(400, 'VALIDATION_ERROR', 'Invalid JSON content provided');
+      }
+    } else if (format === 'csv') {
+      csvContent = content;
+    } else if (typeof content === 'string') {
+      const trimmed = content.trim();
+      if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+        try {
+          translations = JSON.parse(trimmed);
+          parsedJsonFromContent = translations;
+        } catch {
+          csvContent = content;
+        }
+      } else {
+        csvContent = content;
+      }
+    } else {
+      translations = content;
+      parsedJsonFromContent = content;
+    }
+  } else if (translations && typeof translations === 'object') {
+    parsedJsonFromContent = translations;
+  }
+
+  // 1. Derive language code from filename if not explicitly provided
+  if (!targetCode && filename) {
+    const baseName = path.basename(String(filename)).trim();
+    const patternMatch = baseName.match(/^translations?[-_]([a-zA-Z0-9_-]+)\.(csv|json)$/i);
+    if (patternMatch && patternMatch[1]) {
+      targetCode = patternMatch[1].toLowerCase().trim();
+    } else {
+      const simpleMatch = baseName.match(/^([a-zA-Z]{2,5}(?:-[a-zA-Z0-9]+)?)\.(csv|json)$/i);
+      if (simpleMatch && simpleMatch[1]) {
+        targetCode = simpleMatch[1].toLowerCase().trim();
+      }
+    }
+  }
+
+  // 2. Fallback to JSON body if not found
+  if (!targetCode && parsedJsonFromContent && typeof parsedJsonFromContent === 'object') {
+    const code =
+      parsedJsonFromContent.languageCode ||
+      parsedJsonFromContent.data?.languageCode ||
+      parsedJsonFromContent.langCode ||
+      parsedJsonFromContent.code ||
+      parsedJsonFromContent.language?.code;
+    if (code && typeof code === 'string' && code.trim()) {
+      targetCode = String(code).toLowerCase().trim();
+    }
+  }
+
+  // 3. Fallback to CSV header row if not found
+  let csvRows: string[][] = [];
+  if (csvContent) {
+    csvRows = parseCsv(String(csvContent));
+    if (csvRows.length < 2) {
+      throw new AppError(400, 'VALIDATION_ERROR', 'CSV must have a header row and at least one data row');
+    }
+    if (!targetCode) {
+      const header = csvRows[0].map((h) => h.toLowerCase().trim().replace(/^\uFEFF/, ''));
+      const langColIdx = header.findIndex(
+        (h) => h === 'languagecode' || h === 'language_code' || h === 'lang' || h === 'langcode'
+      );
+      if (langColIdx !== -1 && csvRows.length > 1) {
+        const val = csvRows[1][langColIdx]?.trim();
+        if (val) targetCode = val.toLowerCase();
+      } else {
+        const ignoredCols = new Set(['key', 'english', 'translation', 'value', 'isverified', 'description', 'module', 'comments', 'notes']);
+        const candidateCol = header.find((h) => !ignoredCols.has(h) && /^[a-z]{2,5}(-[a-z0-9]+)?$/.test(h));
+        if (candidateCol) {
+          targetCode = candidateCol.toLowerCase();
+        }
+      }
+    }
+  }
+
+  if (!targetCode) {
+    throw new AppError(400, 'VALIDATION_ERROR', 'languageCode is required and could not be determined from filename or file content');
+  }
+
+  // 4. Validate language exists in DB
+  const langRes = await pgDb.query(`SELECT "id", "code", "name" FROM "languages" WHERE "code" = $1`, [targetCode]);
+  if (!langRes.rows.length) {
+    throw new AppError(400, 'UNKNOWN_LANGUAGE', `Language code '${targetCode}' does not exist. Please register the language before importing.`);
+  }
+  const lang = langRes.rows[0];
+
+  // 5. Dictionary of key -> value extracted from payload
+  const pairsToImport: Record<string, string> = {};
+
+  if (csvContent) {
+    if (csvRows.length < 2) {
+      throw new AppError(400, 'VALIDATION_ERROR', 'CSV must have a header row and at least one data row');
+    }
+    const header = csvRows[0].map((h) => h.toLowerCase().trim().replace(/^\uFEFF/, ''));
+    const keyIdx = header.indexOf('key');
+    let transIdx = header.indexOf('translation');
+    if (transIdx === -1 && targetCode) transIdx = header.indexOf(targetCode);
+    if (transIdx === -1) transIdx = header.indexOf('value');
+    if (transIdx === -1 && header.length >= 2) {
+      transIdx = header.includes('english') ? header.findIndex((h, idx) => idx !== keyIdx && h !== 'english') : 1;
+    }
+
+    if (keyIdx === -1 || transIdx === -1) {
+      throw new AppError(400, 'VALIDATION_ERROR', 'CSV must contain "key" and translation columns');
+    }
+
+    for (let i = 1; i < csvRows.length; i++) {
+      const row = csvRows[i];
+      const k = row[keyIdx]?.trim();
+      const v = row[transIdx];
+      if (k) {
+        pairsToImport[k] = v !== undefined ? v : '';
+      }
+    }
+  } else if (translations && typeof translations === 'object') {
+    const transObj = translations.translations || translations;
+    if (Array.isArray(transObj)) {
+      transObj.forEach((item) => {
+        if (item && item.key) {
+          pairsToImport[String(item.key).trim()] = item.translation !== undefined ? String(item.translation) : String(item.value ?? '');
+        }
+      });
+    } else {
+      for (const [k, v] of Object.entries(transObj)) {
+        if (k && typeof v !== 'object') pairsToImport[k.trim()] = String(v ?? '');
+      }
+    }
+  } else {
+    throw new AppError(400, 'VALIDATION_ERROR', 'Either translations object or csvContent must be provided');
+  }
+
+  // 6. Fetch all registered translation keys
+  const allKeysRes = await pgDb.query(`SELECT "id", "key" FROM "translation_keys"`);
+  const keyMap = new Map<string, string>();
+  allKeysRes.rows.forEach((r: any) => keyMap.set(r.key, r.id));
+
+  const unknownKeys: string[] = [];
+  let updatedCount = 0;
+  let skippedCount = 0;
+
+  for (const [key, val] of Object.entries(pairsToImport)) {
+    if (!keyMap.has(key)) {
+      unknownKeys.push(key);
+      skippedCount++;
+      continue;
+    }
+
+    const keyId = keyMap.get(key)!;
+    const transId = `t_${targetCode}_${key}`;
+
+    await pgDb.query(
+      `INSERT INTO "translations" ("id", "languageId", "translationKeyId", "value", "isVerified")
+       VALUES ($1, $2, $3, $4, true)
+       ON CONFLICT ("languageId", "translationKeyId")
+       DO UPDATE SET "value" = EXCLUDED."value", "isVerified" = true`,
+      [transId, lang.id, keyId, val]
+    );
+    updatedCount++;
+  }
+
+  return {
+    languageCode: targetCode,
+    languageName: lang.name,
+    updatedCount,
+    skippedCount,
+    unknownKeys,
+    failedCount: 0,
+  };
+}
+
+// ----------------------------------------------------------------------------
+// POST /api/v1/i18n/import — Import translations from JSON or CSV (single file)
 // ----------------------------------------------------------------------------
 router.post(
   '/import',
@@ -512,130 +693,76 @@ router.post(
   auditLog('IMPORT', 'translations'),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      let { languageCode, csvContent, translations, format, content } = req.body;
-      let targetCode = languageCode ? String(languageCode).toLowerCase().trim() : '';
+      const data = await executeTranslationImport(req.body);
+      return res.json({
+        success: true,
+        data,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
 
-      if (!csvContent && !translations && content) {
-        if (format === 'json') {
-          try {
-            translations = typeof content === 'string' ? JSON.parse(content) : content;
-          } catch {
-            throw new AppError(400, 'VALIDATION_ERROR', 'Invalid JSON content provided');
-          }
-        } else if (format === 'csv') {
-          csvContent = content;
-        } else if (typeof content === 'string') {
-          const trimmed = content.trim();
-          if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
-            try {
-              translations = JSON.parse(trimmed);
-            } catch {
-              csvContent = content;
-            }
-          } else {
-            csvContent = content;
-          }
-        } else {
-          translations = content;
-        }
+// ----------------------------------------------------------------------------
+// POST /api/v1/i18n/import/batch — Import translations in bulk (multiple files)
+// ----------------------------------------------------------------------------
+router.post(
+  '/import/batch',
+  authenticate,
+  requirePermission(PERMISSIONS.I18N_MANAGE),
+  auditLog('IMPORT_BATCH', 'translations'),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { files } = req.body;
+      if (!Array.isArray(files) || files.length === 0) {
+        throw new AppError(400, 'VALIDATION_ERROR', 'files array is required and must not be empty');
       }
 
-      // Dictionary of key -> value extracted from payload
-      const pairsToImport: Record<string, string> = {};
+      const results = [];
+      let successCount = 0;
+      let failedCount = 0;
 
-      if (csvContent) {
-        const rows = parseCsv(String(csvContent));
-        if (rows.length < 2) {
-          throw new AppError(400, 'VALIDATION_ERROR', 'CSV must have a header row and at least one data row');
-        }
-        const header = rows[0].map((h) => h.toLowerCase().trim().replace(/^\uFEFF/, ''));
-        const keyIdx = header.indexOf('key');
-        let transIdx = header.indexOf('translation');
-        if (transIdx === -1 && targetCode) transIdx = header.indexOf(targetCode);
-        if (transIdx === -1) transIdx = header.indexOf('value');
-        if (transIdx === -1 && header.length >= 2) {
-          transIdx = header.includes('english') ? header.findIndex((h, idx) => idx !== keyIdx && h !== 'english') : 1;
-        }
-
-        if (keyIdx === -1 || transIdx === -1) {
-          throw new AppError(400, 'VALIDATION_ERROR', 'CSV must contain "key" and translation columns');
-        }
-
-        for (let i = 1; i < rows.length; i++) {
-          const row = rows[i];
-          const k = row[keyIdx]?.trim();
-          const v = row[transIdx];
-          if (k) {
-            pairsToImport[k] = v !== undefined ? v : '';
-          }
-        }
-      } else if (translations && typeof translations === 'object') {
-        if (Array.isArray(translations)) {
-          translations.forEach((item) => {
-            if (item && item.key) {
-              pairsToImport[String(item.key).trim()] = item.translation !== undefined ? String(item.translation) : String(item.value ?? '');
-            }
+      for (const item of files) {
+        const filename = item.filename || item.name || 'unknown';
+        try {
+          const importRes = await executeTranslationImport({
+            languageCode: item.languageCode,
+            filename,
+            csvContent: item.csvContent,
+            translations: item.translations,
+            format: item.format,
+            content: item.content,
           });
-        } else {
-          for (const [k, v] of Object.entries(translations)) {
-            if (k) pairsToImport[k.trim()] = String(v ?? '');
-          }
+
+          results.push({
+            filename,
+            status: 'done' as const,
+            languageCode: importRes.languageCode,
+            languageName: importRes.languageName,
+            updatedCount: importRes.updatedCount,
+            skippedCount: importRes.skippedCount,
+            unknownKeys: importRes.unknownKeys,
+          });
+          successCount++;
+        } catch (err: any) {
+          failedCount++;
+          results.push({
+            filename,
+            status: 'failed' as const,
+            error: err.message || 'Import failed',
+            languageCode: item.languageCode,
+          });
         }
-      } else {
-        throw new AppError(400, 'VALIDATION_ERROR', 'Either translations object or csvContent must be provided');
-      }
-
-      if (!targetCode) {
-        throw new AppError(400, 'VALIDATION_ERROR', 'languageCode is required');
-      }
-
-      // 1. Strictly validate that language exists in DB (do NOT auto-create on import)
-      const langRes = await pgDb.query(`SELECT "id", "code", "name" FROM "languages" WHERE "code" = $1`, [targetCode]);
-      if (!langRes.rows.length) {
-        throw new AppError(400, 'UNKNOWN_LANGUAGE', `Language code '${targetCode}' does not exist. Please register the language before importing.`);
-      }
-      const lang = langRes.rows[0];
-
-      // 2. Fetch all registered translation keys
-      const allKeysRes = await pgDb.query(`SELECT "id", "key" FROM "translation_keys"`);
-      const keyMap = new Map<string, string>();
-      allKeysRes.rows.forEach((r: any) => keyMap.set(r.key, r.id));
-
-      const unknownKeys: string[] = [];
-      let updatedCount = 0;
-      let skippedCount = 0;
-
-      for (const [key, val] of Object.entries(pairsToImport)) {
-        // If key doesn't exist in translation_keys, skip it without failing the whole batch
-        if (!keyMap.has(key)) {
-          unknownKeys.push(key);
-          skippedCount++;
-          continue;
-        }
-
-        const keyId = keyMap.get(key)!;
-        const transId = `t_${targetCode}_${key}`;
-
-        // Upsert into translations with isVerified = true (human supplied)
-        await pgDb.query(
-          `INSERT INTO "translations" ("id", "languageId", "translationKeyId", "value", "isVerified")
-           VALUES ($1, $2, $3, $4, true)
-           ON CONFLICT ("languageId", "translationKeyId")
-           DO UPDATE SET "value" = EXCLUDED."value", "isVerified" = true`,
-          [transId, lang.id, keyId, val]
-        );
-        updatedCount++;
       }
 
       return res.json({
         success: true,
         data: {
-          languageCode: targetCode,
-          languageName: lang.name,
-          updatedCount,
-          skippedCount,
-          unknownKeys,
-          failedCount: 0,
+          totalFiles: files.length,
+          successCount,
+          failedCount,
+          results,
         },
       });
     } catch (err) {

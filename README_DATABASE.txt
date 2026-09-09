@@ -1,4 +1,4 @@
-﻿========================================================================
+========================================================================
 ExamOS — Pre-configured Database Package
 ========================================================================
 
@@ -10,6 +10,11 @@ including:
   - AI Configuration & Multi-Provider Stacking (Groq, Gemini, Ollama, etc.)
   - Subscriptions, Plans & Entitlements Engine
   - Pre-seeded Personas & Roles
+  - AI Voice/Text Interview System (including official IELTS Speaking oral exam mode with cue card monologues and multi-criteria scoring)
+  - Audio Listening comprehension practice content & multi-part audio questions
+  - AI Writing & Essay Diagnostic evaluation content
+  - Spaced-repetition Vocabulary practice content & SuperMemo SM-2 tracking
+  - Multilingual i18n database (23 baseline languages, 172 verified keys, export/import tooling)
 
 ------------------------------------------------------------------------
 HOW TO INSTALL (Windows):

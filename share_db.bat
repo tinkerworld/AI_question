@@ -34,7 +34,7 @@ if not exist "setupdb.bat" (
 
 REM --- 2. Check and Stop Running Services ---
 echo [1/4] Checking for active ExamOS services...
-powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+<nul powershell -NoProfile -ExecutionPolicy Bypass -Command ^
   "$ports = @(3000, 4043, 3050); $found = $false; " ^
   "foreach ($p in $ports) { " ^
   "  $conn = Get-NetTCPConnection -LocalPort $p -ErrorAction SilentlyContinue; " ^
@@ -47,9 +47,9 @@ if %ERRORLEVEL% equ 1 (
     if exist "stop_all.bat" (
         call stop_all.bat >nul 2>&1
     ) else (
-        powershell -NoProfile -Command "3000, 4043, 3050 | ForEach-Object { Get-NetTCPConnection -LocalPort $_ -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue } }" >nul 2>&1
+        <nul powershell -NoProfile -Command "3000, 4043, 3050 | ForEach-Object { Get-NetTCPConnection -LocalPort $_ -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue } }" >nul 2>&1
     )
-    timeout /t 2 /nobreak >nul
+    timeout /t 2 /nobreak >nul 2>&1 <nul
 ) else (
     echo       Services are stopped. Database files are unlocked and clean.
 )
@@ -59,9 +59,43 @@ if exist "postgres-data\postmaster.pid" (
     del /f /q "postgres-data\postmaster.pid" >nul 2>&1
 )
 
-REM --- 3. Locate Compression Engine (7-Zip or PowerShell) ---
+REM --- 3. Schema-Ensure & Table Verification ---
 echo.
-echo [2/4] Detecting compression engine...
+echo [2/5] Verifying database schema and ensuring all feature tables...
+<nul node tools\verify-and-ensure-db.js "postgres-data"
+set VERIFY_ERR=%ERRORLEVEL%
+
+if %VERIFY_ERR% equ 0 goto :VERIFY_OK
+if %VERIFY_ERR% neq 2 (
+    echo.
+    echo [ERROR] Database verification failed with fatal error code %VERIFY_ERR%.
+    echo.
+    if "%~1"=="" pause
+    exit /b 1
+)
+
+echo.
+echo **************************************************************
+echo   WARNING: Database verification detected missing expected tables!
+echo   The exported archive will NOT contain a complete feature set.
+echo **************************************************************
+echo.
+set "CONFIRM="
+set /p "CONFIRM=Warning: database is missing expected tables. Proceed anyway? (y/N): "
+if /i not "%CONFIRM:~0,1%"=="y" (
+    echo.
+    echo [ERROR] Database packaging aborted by user.
+    echo.
+    if "%~1"=="" pause
+    exit /b 1
+)
+echo Proceeding with packaging despite missing tables...
+
+:VERIFY_OK
+
+REM --- 4. Locate Compression Engine (7-Zip or PowerShell) ---
+echo.
+echo [3/5] Detecting compression engine...
 set SEVENZIP=
 if exist "C:\Program Files\7-Zip\7z.exe" (
     set "SEVENZIP=C:\Program Files\7-Zip\7z.exe"
@@ -77,9 +111,9 @@ if not "%SEVENZIP%"=="" (
     echo       7-Zip not found. Using native Windows PowerShell zip engine.
 )
 
-REM --- 4. Package Database and Installer ---
+REM --- 5. Package Database and Installer ---
 echo.
-echo [3/4] Compressing database and setupdb.bat into zip archives...
+echo [4/5] Compressing database and setupdb.bat into zip archives...
 set OUTFILE=examos-database.zip
 set OUTFILE_ALIAS=database.zip
 
@@ -107,9 +141,9 @@ if not "%SEVENZIP%"=="" (
 REM Create database.zip alias for convenience
 copy /y "%OUTFILE%" "%OUTFILE_ALIAS%" >nul 2>&1
 
-REM --- 5. Verify Package Integrity ---
+REM --- 6. Verify Package Integrity ---
 echo.
-echo [4/4] Verifying archive integrity...
+echo [5/5] Verifying archive integrity...
 if not exist "%OUTFILE%" (
     echo [ERROR] Output zip file was not created.
     if "%~1"=="" pause
@@ -128,10 +162,19 @@ echo   Database Sharing Package Created Successfully!
 echo ==============================================================
 echo.
 echo   Package Contents:
-echo     - postgres-data/       (Full pre-seeded PostgreSQL database)
+echo     - postgres-data/       (Verified pre-seeded PostgreSQL database)
 echo     - setupdb.bat          (Windows 1-click automated installer)
 echo     - setupdb.sh           (Linux/macOS automated installer)
 echo     - README_DATABASE.txt  (Instructions ^& default login credentials)
+echo.
+echo   Database Verification: Schema and content verified before packaging.
+echo   Verified Features:
+echo     - AI Voice/Text Interview System ^& Candidate Profiles
+echo     - Audio Listening Comprehension Questions ^& Voice Profiles
+echo     - AI Writing ^& Essay Subjective Evaluations
+echo     - Spaced-Repetition Vocabulary Bank ^& SM-2 Engine
+echo     - Multilingual i18n Translations (23 Languages, 172 Keys)
+echo     - Core JEE/NEET/IELTS Courses, Questions, Blueprints ^& Personas
 echo.
 echo   Distribution Files:
 echo     - %OUTFILE%

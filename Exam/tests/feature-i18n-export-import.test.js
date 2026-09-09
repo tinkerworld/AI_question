@@ -327,6 +327,114 @@ async function runTests() {
     assert.strictEqual(singleVerMap[singleKey], true, 'Human edited key must be verified');
     console.log(`   ✓ Inline single edit verified: "${singleKey}" = "${singleVal}" (isVerified: true)`);
 
+    // ------------------------------------------------------------------------
+    // Step 8: Bulk / Batch Import (Part D)
+    // ------------------------------------------------------------------------
+    console.log('\n8. Testing Bulk "Import All" Batch Flow (Part D)...');
+
+    // 8A. Batch Import Endpoint with 3 files (2 valid with different language codes, 1 deliberately malformed)
+    console.log('   Testing POST /api/v1/i18n/import/batch with 2 valid and 1 deliberately malformed file...');
+    const file1Csv = 'key,translation\n"app_title","ExamOS // बल्क टेस्ट हिंदी (Batch 1)"\n"welcome","स्वागत हे // बल्क टेस्ट 1"';
+    const file2Json = JSON.stringify({
+      languageCode: 'bn',
+      translations: {
+        app_title: 'ExamOS // বাল্ক টেস্ট বাংলা (Batch 2)',
+        welcome: 'স্বাগতম // বাল্ক টেস্ট 2',
+      },
+    });
+    const file3Malformed = 'corrupted_header_without_key_column\nsome_random_content_here';
+
+    const batchRes = await fetch(`${API_BASE}/i18n/import/batch`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authToken}`,
+      },
+      body: JSON.stringify({
+        files: [
+          { filename: 'translations-hi.csv', format: 'csv', content: file1Csv },
+          { filename: 'translations-bn.json', format: 'json', content: file2Json },
+          { filename: 'translations-bad.csv', format: 'csv', content: file3Malformed },
+        ],
+      }),
+    });
+
+    assert.strictEqual(batchRes.status, 200, 'POST /import/batch must return 200 even with partial file failures');
+    const batchBody = await batchRes.json();
+    assert.ok(batchBody.success, 'Batch import response must indicate success: true');
+    const batchSummary = batchBody.data;
+
+    // Assert summary shape matches what panel expects to render
+    assert.strictEqual(batchSummary.totalFiles, 3, 'totalFiles must be 3');
+    assert.strictEqual(batchSummary.successCount, 2, 'Exactly 2 files must succeed');
+    assert.strictEqual(batchSummary.failedCount, 1, 'Exactly 1 file must fail');
+    assert.ok(Array.isArray(batchSummary.results) && batchSummary.results.length === 3, 'Must return results array of length 3');
+
+    // Check valid file 1 (Hindi)
+    const hiResult = batchSummary.results.find((r) => r.filename === 'translations-hi.csv');
+    assert.ok(hiResult, 'Must contain result for translations-hi.csv');
+    assert.strictEqual(hiResult.status, 'done', 'translations-hi.csv must be status: done');
+    assert.strictEqual(hiResult.languageCode, 'hi', 'Derived languageCode must be hi');
+    assert.ok(hiResult.updatedCount >= 2, 'Must update at least 2 keys');
+    assert.strictEqual(hiResult.skippedCount, 0, 'No keys skipped');
+
+    // Check valid file 2 (Bengali)
+    const bnResult = batchSummary.results.find((r) => r.filename === 'translations-bn.json');
+    assert.ok(bnResult, 'Must contain result for translations-bn.json');
+    assert.strictEqual(bnResult.status, 'done', 'translations-bn.json must be status: done');
+    assert.strictEqual(bnResult.languageCode, 'bn', 'Derived languageCode must be bn');
+    assert.ok(bnResult.updatedCount >= 2, 'Must update at least 2 keys');
+    assert.strictEqual(bnResult.skippedCount, 0, 'No keys skipped');
+
+    // Check malformed file (translations-bad.csv)
+    const badResult = batchSummary.results.find((r) => r.filename === 'translations-bad.csv');
+    assert.ok(badResult, 'Must contain result for translations-bad.csv');
+    assert.strictEqual(badResult.status, 'failed', 'translations-bad.csv must be status: failed');
+    assert.ok(typeof badResult.error === 'string' && badResult.error.length > 0, 'Must provide error message reason for failure');
+
+    console.log(`   ✓ Batch summary verified: ${batchSummary.successCount} succeeded, ${batchSummary.failedCount} failed without blocking remaining files.`);
+
+    // 8B. Assert persisted database values for the 2 valid languages
+    const hiCheckRes = await fetch(`${API_BASE}/i18n/translations/hi`);
+    const hiCheckData = await hiCheckRes.json();
+    const batchHiMap = hiCheckData.data?.translations || hiCheckData.translations;
+    const batchHiVer = hiCheckData.data?.verifiedMap || hiCheckData.verifiedMap;
+    assert.strictEqual(batchHiMap.app_title, 'ExamOS // बल्क टेस्ट हिंदी (Batch 1)', 'Hindi translation must be updated');
+    assert.strictEqual(batchHiVer.app_title, true, 'Hindi translation must have isVerified = true');
+
+    const bnCheckRes = await fetch(`${API_BASE}/i18n/translations/bn`);
+    const bnCheckData = await bnCheckRes.json();
+    const batchBnMap = bnCheckData.data?.translations || bnCheckData.translations;
+    const batchBnVer = bnCheckData.data?.verifiedMap || bnCheckData.verifiedMap;
+    assert.strictEqual(batchBnMap.app_title, 'ExamOS // বাল্ক টেস্ট বাংলা (Batch 2)', 'Bengali translation must be updated');
+    assert.strictEqual(batchBnVer.app_title, true, 'Bengali translation must have isVerified = true');
+    console.log('   ✓ Persisted translations & isVerified flags verified in DB for both valid batch items.');
+
+    // 8C. Single-file import endpoint deriving language code from filename
+    console.log('   Testing single POST /i18n/import with automatic languageCode derivation from filename...');
+    const singleFilenameRes = await fetch(`${API_BASE}/i18n/import`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authToken}`,
+      },
+      body: JSON.stringify({
+        filename: 'translations-te.csv',
+        format: 'csv',
+        content: 'key,translation\n"welcome","ExamOS స్వాగతం బల్క్ ఫైల్"',
+      }),
+    });
+    assert.strictEqual(singleFilenameRes.status, 200, 'POST /import with filename derivation must return 200');
+    const singleFilenameData = await singleFilenameRes.json();
+    assert.ok(singleFilenameData.success, 'Import with filename derivation must succeed');
+    assert.strictEqual(singleFilenameData.data?.languageCode, 'te', 'Derived languageCode must be te');
+
+    const teCheckRes = await fetch(`${API_BASE}/i18n/translations/te`);
+    const teCheckData = await teCheckRes.json();
+    const teMap = teCheckData.data?.translations || teCheckData.translations;
+    assert.strictEqual(teMap.welcome, 'ExamOS స్వాగతం బల్క్ ఫైల్', 'Telugu translation from filename derivation must match');
+    console.log('   ✓ Single-file import automatic filename derivation verified for "translations-te.csv" (te).');
+
     console.log('\n================================================================');
     console.log('✅ ALL I18N INTEGRATION & TOOLING TESTS PASSED PERFECTLY!');
     console.log('================================================================\n');

@@ -1,4 +1,6 @@
 import { pgDb } from '@repo/database';
+import { BASELINE_LANGUAGES } from '@repo/types';
+import { SEED_TRANSLATIONS } from '../routes/i18n.routes';
 
 export async function initV2Tables(): Promise<void> {
   try {
@@ -307,8 +309,128 @@ export async function initV2Tables(): Promise<void> {
     } catch (tErr) {
       console.error('[initV2Tables] Warning: Failed to ensure translations isVerified column:', tErr);
     }
+
+    // Ensure all 23 baseline languages and translations are seeded and self-healed
+    await ensureLanguagesSeeded(pgDb);
   } catch (err) {
     console.error('[initV2Tables] Warning: Failed to auto-initialize V2 tables:', err);
+  }
+}
+
+export async function ensureLanguagesSeeded(db?: any): Promise<void> {
+  const client = db || pgDb;
+  try {
+    // 1. Ensure essential i18n tables exist
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS "languages" (
+        "id" TEXT PRIMARY KEY,
+        "code" TEXT UNIQUE NOT NULL,
+        "name" TEXT NOT NULL,
+        "nativeName" TEXT NOT NULL,
+        "isRTL" BOOLEAN NOT NULL DEFAULT false,
+        "isActive" BOOLEAN NOT NULL DEFAULT true,
+        "isDefault" BOOLEAN NOT NULL DEFAULT false,
+        "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS "translation_keys" (
+        "id" TEXT PRIMARY KEY,
+        "key" TEXT UNIQUE NOT NULL,
+        "category" TEXT NOT NULL DEFAULT 'general',
+        "module" TEXT NOT NULL DEFAULT 'common',
+        "description" TEXT,
+        "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS "translations" (
+        "id" TEXT PRIMARY KEY,
+        "languageId" TEXT NOT NULL REFERENCES "languages"("id") ON DELETE CASCADE,
+        "translationKeyId" TEXT NOT NULL REFERENCES "translation_keys"("id") ON DELETE CASCADE,
+        "value" TEXT NOT NULL,
+        "isVerified" BOOLEAN NOT NULL DEFAULT false,
+        "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE("languageId", "translationKeyId")
+      )
+    `);
+
+    // 2. Query existing language rows count before seeding
+    const initialRes = await client.query(`SELECT COUNT(*)::int AS count FROM "languages"`);
+    const initialCount = Number(initialRes.rows[0]?.count || 0);
+    console.log(`[i18n-seed] Language database status: ${initialCount} language rows exist / ${BASELINE_LANGUAGES.length} expected`);
+
+    // 3. Ensure baseline translation keys exist
+    const defaultKeys = [
+      { key: 'welcome', description: 'Welcome banner heading', module: 'common' },
+      { key: 'app_title', description: 'Application header title', module: 'common' },
+      { key: 'dashboard', description: 'Navigation dashboard label', module: 'navigation' },
+      { key: 'users', description: 'Navigation user management label', module: 'navigation' },
+      { key: 'courses', description: 'Navigation academic courses label', module: 'navigation' },
+      { key: 'question_bank', description: 'Navigation question bank label', module: 'navigation' },
+      { key: 'exam_patterns', description: 'Navigation exam patterns label', module: 'navigation' },
+      { key: 'exams', description: 'Navigation exams generator label', module: 'navigation' },
+      { key: 'archive', description: 'Navigation published exam archive label', module: 'navigation' },
+      { key: 'analytics', description: 'Navigation student analytics label', module: 'navigation' },
+    ];
+
+    for (const k of defaultKeys) {
+      const keyId = `tk_${k.key}`;
+      await client.query(
+        `INSERT INTO "translation_keys" ("id", "key", "description", "module")
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT ("key") DO NOTHING`,
+        [keyId, k.key, k.description, k.module]
+      );
+    }
+
+    // 4. Upsert all 23 BASELINE_LANGUAGES into languages table
+    for (const lang of BASELINE_LANGUAGES) {
+      const langId = lang.id || `lang_${lang.code}`;
+      await client.query(
+        `INSERT INTO "languages" ("id", "code", "name", "nativeName", "isDefault")
+         VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT ("code") DO UPDATE SET
+           "name" = EXCLUDED."name",
+           "nativeName" = EXCLUDED."nativeName"`,
+        [langId, lang.code, lang.name, lang.nativeName, lang.isDefault ? true : false]
+      );
+    }
+
+    // 5. Seed baseline translations for all baseline languages
+    // NOTE: ON CONFLICT ("languageId", "translationKeyId") DO NOTHING ensures pre-existing translations are NEVER overwritten or corrupted
+    for (const [langCode, keyVals] of Object.entries(SEED_TRANSLATIONS)) {
+      const langRes = await client.query(`SELECT "id" FROM "languages" WHERE "code" = $1`, [langCode]);
+      if (langRes.rows.length === 0) continue;
+      const langId = langRes.rows[0].id;
+
+      for (const [key, value] of Object.entries(keyVals)) {
+        const keyRes = await client.query(`SELECT "id" FROM "translation_keys" WHERE "key" = $1`, [key]);
+        if (keyRes.rows.length === 0) continue;
+        const keyId = keyRes.rows[0].id;
+        const trId = `tr_${langCode}_${key}`;
+
+        await client.query(
+          `INSERT INTO "translations" ("id", "languageId", "translationKeyId", "value")
+           VALUES ($1, $2, $3, $4)
+           ON CONFLICT ("languageId", "translationKeyId") DO NOTHING`,
+          [trId, langId, keyId, value]
+        );
+      }
+    }
+
+    // 6. Log final count if healed
+    const finalRes = await client.query(`SELECT COUNT(*)::int AS count FROM "languages"`);
+    const finalCount = Number(finalRes.rows[0]?.count || 0);
+    if (finalCount !== initialCount) {
+      console.log(`[i18n-seed] Language database status: ${finalCount} language rows exist / ${BASELINE_LANGUAGES.length} expected (healed)`);
+    }
+  } catch (err) {
+    console.error('[i18n-seed] Error ensuring languages seeded:', err);
   }
 }
 
