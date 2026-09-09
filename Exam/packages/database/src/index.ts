@@ -5,12 +5,16 @@ import * as dotenv from 'dotenv';
 
 dotenv.config();
 
-function getDbPath(): string {
+export function getDbPath(): string {
   if (process.env.PG_DATA_DIR) {
     if (process.env.PG_DATA_DIR === 'memory://' || process.env.PG_DATA_DIR === ':memory:') {
       return process.env.PG_DATA_DIR;
     }
     return path.resolve(process.env.PG_DATA_DIR);
+  }
+  // Default to in-memory for unit and integration tests if no explicit PG_DATA_DIR is provided
+  if (process.env.NODE_ENV === 'test') {
+    return 'memory://';
   }
   let cur = typeof __dirname !== 'undefined' ? __dirname : process.cwd();
   for (let i = 0; i < 8; i++) {
@@ -33,27 +37,61 @@ function getDbPath(): string {
 }
 
 let _pgDbInstance: PGlite | null = null;
+let _initPromise: Promise<PGlite> | null = null;
 
 export function setTestDb(db: PGlite | null) {
   _pgDbInstance = db;
+  _initPromise = db ? Promise.resolve(db) : null;
 }
 
-function getOrInitDb(): PGlite {
-  if (!_pgDbInstance) {
-    const dbPath = getDbPath();
-    if (dbPath === 'memory://' || dbPath === ':memory:') {
-      _pgDbInstance = new PGlite();
-    } else {
-      const pidFile = path.join(dbPath, 'postmaster.pid');
-      if (fs.existsSync(pidFile)) {
-        try {
-          fs.unlinkSync(pidFile);
-        } catch {}
-      }
-      _pgDbInstance = new PGlite(dbPath);
+async function getOrInitReadyDb(): Promise<PGlite> {
+  if (_pgDbInstance) {
+    if (_pgDbInstance.waitReady) {
+      await _pgDbInstance.waitReady;
     }
+    return _pgDbInstance;
   }
-  return _pgDbInstance;
+
+  const dbPath = getDbPath();
+  if (dbPath === 'memory://' || dbPath === ':memory:') {
+    const memDb = new PGlite();
+    await memDb.waitReady;
+    _pgDbInstance = memDb;
+    return memDb;
+  }
+
+  const pidFile = path.join(dbPath, 'postmaster.pid');
+  if (fs.existsSync(pidFile)) {
+    try {
+      fs.unlinkSync(pidFile);
+    } catch {}
+  }
+
+  try {
+    const diskDb = new PGlite(dbPath);
+    // Attach noop catch to suppress raw unhandled rejection from Node.js
+    diskDb.waitReady.catch(() => {});
+    await diskDb.waitReady;
+    _pgDbInstance = diskDb;
+    return diskDb;
+  } catch (err: any) {
+    const isAbort = String(err?.message || err).includes('Aborted') || err?.name === 'RuntimeError';
+    if (isAbort) {
+      if (process.env.NODE_ENV === 'test' || process.env.PG_ALLOW_MEMORY_FALLBACK === 'true') {
+        console.warn(
+          `[ExamOS Database] Warning: Database directory at "${dbPath}" is locked by another running ExamOS process. Falling back to isolated in-memory database.`
+        );
+        const fallbackDb = new PGlite();
+        await fallbackDb.waitReady;
+        _pgDbInstance = fallbackDb;
+        return fallbackDb;
+      }
+      throw new Error(
+        `[ExamOS Database Lock Error] Could not open database directory "${dbPath}" because it is currently locked by another active ExamOS process (likely the API server on port 4043). Please stop existing processes using "stop_all.bat", or set PG_DATA_DIR=memory:// for an isolated instance.`
+      );
+    }
+    throw err;
+  }
 }
 
 // Primary in-process PostgreSQL 16 engine for all runtime services and routes
@@ -63,24 +101,30 @@ export const pgDb: PGlite = new Proxy({} as PGlite, {
     if (prop === 'close') {
       return async () => {
         if (_pgDbInstance) {
-          await _pgDbInstance.close();
+          try {
+            await _pgDbInstance.close();
+          } catch {}
           _pgDbInstance = null;
+          _initPromise = null;
         }
       };
     }
-    const db = getOrInitDb();
     if (prop === 'waitReady') {
-      return db.waitReady;
+      if (!_initPromise) {
+        _initPromise = getOrInitReadyDb();
+      }
+      return _initPromise.then((db) => db.waitReady);
     }
-    const val = (db as any)[prop];
-    if (typeof val === 'function') {
-      return async (...args: any[]) => {
-        if (db.waitReady) {
-          await db.waitReady;
-        }
+    return async (...args: any[]) => {
+      if (!_initPromise) {
+        _initPromise = getOrInitReadyDb();
+      }
+      const db = await _initPromise;
+      const val = (db as any)[prop];
+      if (typeof val === 'function') {
         return val.apply(db, args);
-      };
-    }
-    return val;
+      }
+      return val;
+    };
   },
 });

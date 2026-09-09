@@ -10,6 +10,7 @@ require('ts-node').register({
 });
 require('tsconfig-paths').register();
 
+const { setTestDb } = require('../packages/database/src/index.ts');
 const { BASELINE_LANGUAGES } = require('../packages/types/src/index.ts');
 const { ensureLanguagesSeeded } = require('../apps/api/src/db/init-v2-tables.ts');
 const i18nRoutes = require('../apps/api/src/routes/i18n.routes.ts').default;
@@ -33,6 +34,7 @@ async function runTests() {
   console.log('1. Setting up simulated stale database with only 2 languages...');
   total++;
   const memDb = new PGlite();
+  setTestDb(memDb);
 
   // Create schema
   await memDb.exec(`
@@ -213,13 +215,7 @@ async function runTests() {
   assert.strictEqual(codesSet.size, 23, 'All 23 codes in BASELINE_LANGUAGES must be unique');
   pass('Single source of truth confirmed: 23 unique baseline languages exported from @repo/types');
 
-  await memDb.close();
-  try {
-    const { pgDb } = require('@repo/database');
-    if (pgDb && typeof pgDb.close === 'function') {
-      await pgDb.close();
-    }
-  } catch {}
+  setTestDb(null);
 
   console.log('\n================================================================');
   console.log(` ALL ${passed}/${total} LANGUAGE CONSISTENCY & SELF-HEALING TESTS PASSED!`);
