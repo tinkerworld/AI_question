@@ -31,28 +31,28 @@ import './styles/theme.css';
 
 interface NavTabConfig {
   id: string;
-  label?: string;
+  labelKey: string;
   requiredPermission?: string;
   featureKey?: string;
 }
 
 const NAV_ITEMS: NavTabConfig[] = [
-  { id: 'dashboard' },
-  { id: 'student_exams', label: 'My Assessments & Tests', requiredPermission: 'exams.attempt', featureKey: 'exams' },
-  { id: 'practice', label: 'Practice & Drills', requiredPermission: 'practice.attempt', featureKey: 'practice' },
-  { id: 'interview', label: 'AI Interview & Viva', requiredPermission: 'interview.attempt', featureKey: 'interview' },
-  { id: 'listening_practice', label: 'Listening Practice', requiredPermission: 'exams.attempt', featureKey: 'audio' },
-  { id: 'writing_practice', label: 'Writing Practice', requiredPermission: 'exams.attempt', featureKey: 'writing' },
-  { id: 'vocabulary', label: 'Spaced Repetition Vocab', featureKey: 'vocabulary' },
-  { id: 'subscription', label: 'Subscription & Credits', requiredPermission: 'subscriptions.read', featureKey: 'subscriptions' },
-  { id: 'analytics', label: 'Student Analytics & Mastery', requiredPermission: 'analytics.read_own', featureKey: 'analytics' },
-  { id: 'exams', label: 'Exam Generator & Papers', requiredPermission: 'exams.create', featureKey: 'exams' },
-  { id: 'archive', label: 'Published Archive', requiredPermission: 'archive.read' },
-  { id: 'exam_patterns', requiredPermission: 'exams.create' },
-  { id: 'question_bank', label: 'Question Bank', requiredPermission: 'questions.read', featureKey: 'question_bank' },
-  { id: 'courses', label: 'Academic Structure', requiredPermission: 'courses.create' },
-  { id: 'users', label: 'User Management', requiredPermission: 'users.read' },
-  { id: 'settings', label: 'Settings', requiredPermission: 'ai.admin_config' },
+  { id: 'dashboard', labelKey: 'nav_dashboard' },
+  { id: 'student_exams', labelKey: 'nav_student_exams', requiredPermission: 'exams.attempt', featureKey: 'exams' },
+  { id: 'practice', labelKey: 'nav_practice', requiredPermission: 'practice.attempt', featureKey: 'practice' },
+  { id: 'interview', labelKey: 'nav_interview', requiredPermission: 'interview.attempt', featureKey: 'interview' },
+  { id: 'listening_practice', labelKey: 'nav_listening_practice', requiredPermission: 'exams.attempt', featureKey: 'audio' },
+  { id: 'writing_practice', labelKey: 'nav_writing_practice', requiredPermission: 'exams.attempt', featureKey: 'writing' },
+  { id: 'vocabulary', labelKey: 'nav_vocabulary', featureKey: 'vocabulary' },
+  { id: 'subscription', labelKey: 'nav_subscription', requiredPermission: 'subscriptions.read', featureKey: 'subscriptions' },
+  { id: 'analytics', labelKey: 'nav_analytics', requiredPermission: 'analytics.read_own', featureKey: 'analytics' },
+  { id: 'exams', labelKey: 'nav_exams', requiredPermission: 'exams.create', featureKey: 'exams' },
+  { id: 'archive', labelKey: 'nav_archive', requiredPermission: 'archive.read' },
+  { id: 'exam_patterns', labelKey: 'nav_exam_patterns', requiredPermission: 'exams.create' },
+  { id: 'question_bank', labelKey: 'nav_question_bank', requiredPermission: 'questions.read', featureKey: 'question_bank' },
+  { id: 'courses', labelKey: 'nav_courses', requiredPermission: 'courses.create' },
+  { id: 'users', labelKey: 'nav_users', requiredPermission: 'users.read' },
+  { id: 'settings', labelKey: 'nav_settings', requiredPermission: 'ai.admin_config' },
 ];
 
 const hasPermission = (userPermissions: string[] | undefined, requiredPermission?: string): boolean => {
@@ -80,6 +80,21 @@ const MainLayout: React.FC = () => {
 
   const hasMaintenanceAuthority =
     userPermissions.includes('system.maintenance') || userPermissions.includes('*');
+
+  const getRoleLabel = (role: string) => {
+    switch (role) {
+      case 'MAIN_ADMIN':
+        return t('role_main_admin');
+      case 'SUB_ADMIN':
+        return t('role_sub_admin');
+      case 'TEACHER':
+        return t('role_teacher');
+      case 'STUDENT':
+        return t('role_student');
+      default:
+        return role;
+    }
+  };
 
   const isUserBypassedForFeature = (ctrl: any): boolean => {
     if (hasMaintenanceAuthority) return true;
@@ -195,7 +210,7 @@ const MainLayout: React.FC = () => {
             animation: 'spin 1s linear infinite',
           }}
         />
-        <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Verifying ExamOS session...</div>
+        <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{t('verifying_session')}</div>
       </div>
     );
   }
@@ -246,11 +261,15 @@ const MainLayout: React.FC = () => {
             EX
           </div>
           <div>
-            <div style={{ fontWeight: 'bold', fontFamily: 'JetBrains Mono', fontSize: '15px' }}>
+            <div
+              id="app-title-text"
+              data-testid="app-title-text"
+              style={{ fontWeight: 'bold', fontFamily: 'JetBrains Mono', fontSize: '15px' }}
+            >
               {t('app_title')}
             </div>
             <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-              ExamOS // Adaptive Learning Platform
+              {t('app_subtitle')}
             </div>
           </div>
         </div>
@@ -279,7 +298,7 @@ const MainLayout: React.FC = () => {
               }}
             >
               <span>⚡</span>
-              <span>Preview as Student</span>
+              <span>{t('preview_as_student')}</span>
             </button>
           )}
 
@@ -319,7 +338,7 @@ const MainLayout: React.FC = () => {
                         : '#10b981',
                   }}
                 >
-                  {user.roles[0]}
+                  {getRoleLabel(user.roles[0])}
                 </span>
               )}
             </div>
@@ -351,9 +370,9 @@ const MainLayout: React.FC = () => {
               opacity: isExamLocked ? 0.4 : 1,
               transition: 'all 0.15s ease',
             }}
-            title={isExamLocked ? "Examination in progress - finish or exit exam first" : "Sign out of ExamOS"}
+            title={isExamLocked ? t('logout_locked_tooltip') : t('logout_tooltip')}
           >
-            Logout
+            {t('logout')}
           </button>
         </div>
       </header>
@@ -385,7 +404,7 @@ const MainLayout: React.FC = () => {
               paddingLeft: '6px',
             }}
           >
-            MODULES
+            {t('sidebar_modules')}
           </div>
           <nav style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             {visibleNavItems.map((item) => {
@@ -432,13 +451,13 @@ const MainLayout: React.FC = () => {
                   }}
                   title={
                     isLockedOut
-                      ? 'Navigation locked during active examination'
+                      ? t('nav_locked_tooltip')
                       : isFeatureDisabledButton
-                      ? 'Feature is currently disabled for maintenance'
+                      ? t('feature_maintenance_tooltip')
                       : undefined
                   }
                 >
-                  <span>{item.label || t(item.id)}</span>
+                  <span>{t(item.labelKey)}</span>
                   {isFeatureDisabledButton && (
                     <span
                       style={{
@@ -451,7 +470,7 @@ const MainLayout: React.FC = () => {
                         fontWeight: 700,
                       }}
                     >
-                      OFFLINE
+                      {t('offline_badge')}
                     </span>
                   )}
                 </div>
@@ -550,11 +569,15 @@ const MainLayout: React.FC = () => {
                 flex: 1,
               }}
             >
-              <h1 style={{ marginTop: 0, fontSize: '22px', fontFamily: 'JetBrains Mono' }}>
+              <h1
+                id="dashboard-welcome-heading"
+                data-testid="dashboard-welcome-heading"
+                style={{ marginTop: 0, fontSize: '22px', fontFamily: 'JetBrains Mono' }}
+              >
                 {t('welcome')}
               </h1>
               <p style={{ color: 'var(--text-muted)', lineHeight: '1.6', fontSize: '13px' }}>
-                Welcome to ExamOS. Use the sidebar to navigate to Exam Generator & Papers, Exam Patterns, Academic Structure, or Question Bank.
+                {t('dashboard_welcome_desc')}
               </p>
             </div>
           )}

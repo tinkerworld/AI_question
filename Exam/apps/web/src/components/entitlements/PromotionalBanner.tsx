@@ -1,8 +1,10 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { API_BASE } from '../../config/api';
 import { getAuthHeaders } from '../../utils/api';
+import { useTranslation } from '../../context/I18nContext';
 
 export const PromotionalBanner: React.FC = () => {
+  const { t } = useTranslation();
   const [promotions, setPromotions] = useState<any[]>([]);
 
   useEffect(() => {
@@ -39,7 +41,7 @@ export const PromotionalBanner: React.FC = () => {
     >
       <span>🎉</span>
       <span>
-        <strong>Promotional Window:</strong> {promo.description || 'Full premium access is active!'} (Valid until {expireDate})
+        <strong>{t('promotional_window')}:</strong> {promo.description || 'Full premium access is active!'} ({t('valid_until')} {expireDate})
       </span>
     </div>
   );

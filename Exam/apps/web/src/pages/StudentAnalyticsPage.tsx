@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from '../context/I18nContext';
 import { getAuthHeaders } from '../utils/api';
 import {
   StudentMasteryDTO,
@@ -157,6 +158,7 @@ const SyllabusTreeNode: React.FC<{
 
 export const StudentAnalyticsPage: React.FC<{ targetStudentId?: string }> = ({ targetStudentId }) => {
   const { user, token } = useAuth();
+  const { t } = useTranslation();
   const effectiveUserId = targetStudentId || user?.id;
 
   const [courses, setCourses] = useState<CourseDTO[]>([]);
@@ -296,10 +298,10 @@ export const StudentAnalyticsPage: React.FC<{ targetStudentId?: string }> = ({ t
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: 'var(--text-main)', fontFamily: 'JetBrains Mono' }}>
-            Student Mastery & Learning Analytics
+            {t('analytics_title')}
           </h1>
           <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>
-            Real-time proficiency scoring, syllabus mastery mapping, strengths & priority improvement areas.
+            {t('analytics_subtitle')}
           </p>
         </div>
 
@@ -343,14 +345,14 @@ export const StudentAnalyticsPage: React.FC<{ targetStudentId?: string }> = ({ t
               gap: '6px',
             }}
           >
-            {isRecalculating ? 'Updating...' : '↻ Recalculate Mastery'}
+            {isRecalculating ? t('recalculating') : `↻ ${t('recalculate_mastery')}`}
           </button>
         </div>
       </div>
 
       {isLoading ? (
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1, color: 'var(--text-muted)' }}>
-          Loading mastery engine data...
+          {t('loading_mastery_data')}
         </div>
       ) : (
         <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '20px', paddingRight: '4px' }}>
@@ -385,13 +387,13 @@ export const StudentAnalyticsPage: React.FC<{ targetStudentId?: string }> = ({ t
               </div>
               <div>
                 <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  Overall Mastery
+                  {t('overall_mastery')}
                 </div>
                 <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>
                   {mastery?.status || 'NOT_ATTEMPTED'}
                 </div>
                 <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                  Weighted historical score
+                  {t('weighted_historical_score')}
                 </div>
               </div>
             </div>
@@ -406,13 +408,13 @@ export const StudentAnalyticsPage: React.FC<{ targetStudentId?: string }> = ({ t
               }}
             >
               <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                Exams Completed
+                {t('exams_completed')}
               </div>
               <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--text-main)', marginTop: '4px' }}>
                 {mastery?.totalExamsTaken || 0}
               </div>
               <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                Evaluated test attempts
+                {t('evaluated_attempts')}
               </div>
             </div>
 
@@ -426,13 +428,13 @@ export const StudentAnalyticsPage: React.FC<{ targetStudentId?: string }> = ({ t
               }}
             >
               <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                Questions Attempted
+                {t('questions_attempted')}
               </div>
               <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--text-main)', marginTop: '4px' }}>
                 {mastery?.totalQuestionsAttempted || 0}
               </div>
               <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                Across all test papers
+                {t('across_all_tests')}
               </div>
             </div>
 
@@ -449,22 +451,22 @@ export const StudentAnalyticsPage: React.FC<{ targetStudentId?: string }> = ({ t
             >
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: '11px', color: '#22c55e', textTransform: 'uppercase', fontWeight: 600 }}>
-                  Strengths
+                  {t('strengths')}
                 </div>
                 <div style={{ fontSize: '24px', fontWeight: 700, color: '#22c55e', marginTop: '4px' }}>
                   {strengths.length}
                 </div>
-                <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Mastered / Strong</div>
+                <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{t('mastered_strong')}</div>
               </div>
               <div style={{ width: '1px', background: 'var(--border-color)' }} />
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: '11px', color: '#ef4444', textTransform: 'uppercase', fontWeight: 600 }}>
-                  Focus Areas
+                  {t('focus_areas')}
                 </div>
                 <div style={{ fontSize: '24px', fontWeight: 700, color: '#ef4444', marginTop: '4px' }}>
                   {weaknesses.length}
                 </div>
-                <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Needs Practice</div>
+                <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{t('needs_practice')}</div>
               </div>
             </div>
           </div>
@@ -485,9 +487,9 @@ export const StudentAnalyticsPage: React.FC<{ targetStudentId?: string }> = ({ t
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: '#22c55e', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span>★</span> Top Strengths (Mastered & Strong)
+                  <span>★</span> {t('top_strengths')}
                 </h3>
-                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{strengths.length} topics</span>
+                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{strengths.length} {t('topics')}</span>
               </div>
 
               {strengths.length === 0 ? (
@@ -549,7 +551,7 @@ export const StudentAnalyticsPage: React.FC<{ targetStudentId?: string }> = ({ t
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
                 <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: '#ef4444', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span>⚠</span> Priority Focus Areas (Weaknesses)
+                  <span>⚠</span> {t('priority_weaknesses')}
                 </h3>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <button
@@ -571,7 +573,7 @@ export const StudentAnalyticsPage: React.FC<{ targetStudentId?: string }> = ({ t
                   >
                     <span>⚡</span> {isGeneratingPractice ? 'Generating...' : 'Generate Practice Test'}
                   </button>
-                  <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{weaknesses.length} topics</span>
+                  <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{weaknesses.length} {t('topics')}</span>
                 </div>
               </div>
 
@@ -634,7 +636,7 @@ export const StudentAnalyticsPage: React.FC<{ targetStudentId?: string }> = ({ t
                             gap: '4px',
                           }}
                         >
-                          <span>⚡</span> Practice This Topic
+                          <span>⚡</span> {t('targeted_practice')}
                         </button>
                       </div>
                     </div>
@@ -755,7 +757,7 @@ export const StudentAnalyticsPage: React.FC<{ targetStudentId?: string }> = ({ t
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: 'var(--text-main)' }}>
-                  Syllabus Proficiency Map
+                  {t('syllabus_proficiency')}
                 </h3>
                 <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
                   Interactive hierarchical tree showing completion & proficiency badges across subjects & topics.

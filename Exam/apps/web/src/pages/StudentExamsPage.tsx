@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from '../context/I18nContext';
 import { ExamPlayerPage } from './ExamPlayerPage';
 import { ExamResultPage } from './ExamResultPage';
 import { API_BASE } from '../config/api';
@@ -48,6 +49,7 @@ interface ExamInstructions {
 
 export const StudentExamsPage: React.FC = () => {
   const { token, user, previewTargetExamId, setPreviewTargetExamId } = useAuth();
+  const { t } = useTranslation();
   const [exams, setExams] = useState<ExamItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -183,10 +185,10 @@ export const StudentExamsPage: React.FC = () => {
       >
         <div>
           <h1 style={{ margin: 0, fontSize: '24px', fontFamily: 'JetBrains Mono', color: 'var(--text-main)' }}>
-            My Assessments & Examination Hall
+            {t('student_exams_title')}
           </h1>
           <p style={{ margin: '6px 0 0', color: 'var(--text-muted)', fontSize: '13px' }}>
-            Enrolled assessments, timed grand tests, and authentic examination simulations.
+            {t('student_exams_subtitle')}
           </p>
         </div>
         <button
@@ -202,7 +204,7 @@ export const StudentExamsPage: React.FC = () => {
             fontFamily: 'JetBrains Mono',
           }}
         >
-          🔄 Refresh
+          🔄 {t('refresh')}
         </button>
       </div>
 
@@ -235,7 +237,7 @@ export const StudentExamsPage: React.FC = () => {
               margin: '0 auto 12px',
             }}
           />
-          Loading available assessments...
+          {t('loading_assessments')}
         </div>
       ) : exams.length === 0 ? (
         <div
@@ -249,10 +251,10 @@ export const StudentExamsPage: React.FC = () => {
         >
           <div style={{ fontSize: '40px', marginBottom: '12px' }}>📝</div>
           <h3 style={{ margin: '0 0 8px', color: 'var(--text-main)', fontFamily: 'JetBrains Mono' }}>
-            No Active Examinations Scheduled
+            {t('no_active_exams')}
           </h3>
           <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '13px' }}>
-            You do not have any active or pending published exams at this moment.
+            {t('no_active_exams_desc')}
           </p>
         </div>
       ) : (
@@ -300,7 +302,7 @@ export const StudentExamsPage: React.FC = () => {
                         fontWeight: 'bold',
                       }}
                     >
-                      {exam.timeStatus}
+                      {t(exam.timeStatus === 'OPEN' ? 'exam_open' : exam.timeStatus === 'UPCOMING' ? 'exam_upcoming' : 'exam_expired')}
                     </span>
 
                     {hasCompletedAttempt && (
@@ -315,7 +317,7 @@ export const StudentExamsPage: React.FC = () => {
                           fontWeight: 'bold',
                         }}
                       >
-                        Score: {exam.latestAttempt?.totalScore} ({exam.latestAttempt?.percentage}%)
+                        {t('score')}: {exam.latestAttempt?.totalScore} ({exam.latestAttempt?.percentage}%)
                       </span>
                     )}
                   </div>
@@ -325,10 +327,10 @@ export const StudentExamsPage: React.FC = () => {
                   </h3>
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', margin: '14px 0', fontSize: '12px', color: 'var(--text-muted)' }}>
-                    <div>⏱ Duration: <strong style={{ color: 'var(--text-main)' }}>{exam.durationMinutes} mins</strong></div>
-                    <div>🎯 Max Marks: <strong style={{ color: 'var(--text-main)' }}>{exam.totalMarks}</strong></div>
-                    <div>📑 Sections: <strong style={{ color: 'var(--text-main)' }}>{exam.sectionCount}</strong></div>
-                    <div>❓ Questions: <strong style={{ color: 'var(--text-main)' }}>{exam.totalQuestions}</strong></div>
+                    <div>⏱ {t('duration')}: <strong style={{ color: 'var(--text-main)' }}>{exam.durationMinutes} {t('mins')}</strong></div>
+                    <div>🎯 {t('max_marks')}: <strong style={{ color: 'var(--text-main)' }}>{exam.totalMarks}</strong></div>
+                    <div>📑 {t('sections')}: <strong style={{ color: 'var(--text-main)' }}>{exam.sectionCount}</strong></div>
+                    <div>❓ {t('questions')}: <strong style={{ color: 'var(--text-main)' }}>{exam.totalQuestions}</strong></div>
                   </div>
                 </div>
 
@@ -352,7 +354,7 @@ export const StudentExamsPage: React.FC = () => {
                         gap: '6px',
                       }}
                     >
-                      ▶ Resume In-Progress Exam
+                      ▶ {t('resume_exam')}
                     </button>
                   ) : hasCompletedAttempt ? (
                     <>
@@ -370,7 +372,7 @@ export const StudentExamsPage: React.FC = () => {
                           cursor: 'pointer',
                         }}
                       >
-                        📊 View Scorecard & Solutions
+                        📊 {t('view_scorecard')}
                       </button>
                       <button
                         onClick={() => handleOpenInstructions(exam)}
@@ -385,7 +387,7 @@ export const StudentExamsPage: React.FC = () => {
                         }}
                         title="Re-attempt Assessment"
                       >
-                        🔄 Retake
+                        🔄 {t('retake')}
                       </button>
                     </>
                   ) : (
@@ -403,7 +405,7 @@ export const StudentExamsPage: React.FC = () => {
                         cursor: 'pointer',
                       }}
                     >
-                      📖 Read Instructions & Start
+                      📖 {t('read_instructions_start')}
                     </button>
                   )}
                 </div>
@@ -442,7 +444,7 @@ export const StudentExamsPage: React.FC = () => {
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h2 style={{ margin: 0, fontSize: '20px', fontFamily: 'JetBrains Mono', color: 'var(--text-main)' }}>
-                Exam Hall Instructions
+                {t('exam_hall_instructions')}
               </h2>
               <button
                 onClick={() => setSelectedExamForInstructions(null)}
@@ -460,7 +462,7 @@ export const StudentExamsPage: React.FC = () => {
 
             {instructionsLoading ? (
               <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
-                Loading instructions...
+                {t('loading_instructions')}
               </div>
             ) : (
               <div>
@@ -475,30 +477,30 @@ export const StudentExamsPage: React.FC = () => {
                 >
                   <strong style={{ color: '#06b6d4' }}>{selectedExamForInstructions.name}</strong>
                   <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>
-                    Duration: {selectedExamForInstructions.durationMinutes} Minutes • Total Questions: {selectedExamForInstructions.totalQuestions} • Total Marks: {selectedExamForInstructions.totalMarks}
+                    {t('duration')}: {selectedExamForInstructions.durationMinutes} {t('mins')} • {t('total_questions')}: {selectedExamForInstructions.totalQuestions} • {t('max_marks')}: {selectedExamForInstructions.totalMarks}
                   </div>
                 </div>
 
-                <h4 style={{ margin: '14px 0 8px', color: 'var(--text-main)', fontSize: '14px' }}>General Guidelines:</h4>
+                <h4 style={{ margin: '14px 0 8px', color: 'var(--text-main)', fontSize: '14px' }}>{t('general_guidelines')}</h4>
                 <ul style={{ margin: '0 0 16px', paddingLeft: '20px', fontSize: '13px', color: 'var(--text-muted)', lineHeight: '1.6' }}>
-                  <li>The clock will be set at the server. A countdown timer in the top right will display remaining time.</li>
-                  <li>When the timer reaches zero, the examination will end automatically and your responses will be submitted.</li>
-                  <li>You can navigate between sections and questions at any time using the Question Palette.</li>
-                  <li>Clicking <strong>Save & Next</strong> saves your answer for evaluation.</li>
-                  <li>Clicking <strong>Mark for Review</strong> allows you to flag questions to revisit later.</li>
+                  <li>{t('guideline_timer')}</li>
+                  <li>{t('guideline_auto_submit')}</li>
+                  <li>{t('guideline_palette_nav')}</li>
+                  <li>{t('guideline_save_next')}</li>
+                  <li>{t('guideline_review')}</li>
                 </ul>
 
                 {instructionsData?.sections && (
                   <>
-                    <h4 style={{ margin: '14px 0 8px', color: 'var(--text-main)', fontSize: '14px' }}>Section Breakdown & Marking Scheme:</h4>
+                    <h4 style={{ margin: '14px 0 8px', color: 'var(--text-main)', fontSize: '14px' }}>{t('section_breakdown')}</h4>
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', marginBottom: '16px' }}>
                       <thead>
                         <tr style={{ background: 'rgba(255, 255, 255, 0.05)', textAlign: 'left', borderBottom: '1px solid var(--border-color)' }}>
-                          <th style={{ padding: '8px' }}>Section</th>
-                          <th style={{ padding: '8px' }}>Questions</th>
-                          <th style={{ padding: '8px' }}>Correct</th>
-                          <th style={{ padding: '8px' }}>Wrong</th>
-                          <th style={{ padding: '8px' }}>Section Marks</th>
+                          <th style={{ padding: '8px' }}>{t('section')}</th>
+                          <th style={{ padding: '8px' }}>{t('questions')}</th>
+                          <th style={{ padding: '8px' }}>{t('correct')}</th>
+                          <th style={{ padding: '8px' }}>{t('wrong')}</th>
+                          <th style={{ padding: '8px' }}>{t('section_marks')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -532,7 +534,7 @@ export const StudentExamsPage: React.FC = () => {
                       onChange={(e) => setAgreedToTerms(e.target.checked)}
                       style={{ width: '16px', height: '16px', cursor: 'pointer' }}
                     />
-                    I have read and understood all examination instructions and agree to abide by the rules.
+                    {t('agree_terms')}
                   </label>
                 </div>
 
@@ -549,7 +551,7 @@ export const StudentExamsPage: React.FC = () => {
                       fontSize: '13px',
                     }}
                   >
-                    Cancel
+                    {t('cancel')}
                   </button>
                   <button
                     disabled={!agreedToTerms}
@@ -565,7 +567,7 @@ export const StudentExamsPage: React.FC = () => {
                       fontSize: '13px',
                     }}
                   >
-                    🚀 Enter Exam Hall & Start
+                    🚀 {t('enter_exam_hall')}
                   </button>
                 </div>
               </div>

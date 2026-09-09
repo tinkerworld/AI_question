@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { API_BASE } from '../../config/api';
 import { getAuthHeaders } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
+import { useTranslation } from '../../context/I18nContext';
 import { FeatureDisplayMode, FeatureStatus } from '@repo/types';
 
 interface FeatureMaintenanceWrapperProps {
@@ -21,6 +22,7 @@ export const FeatureMaintenanceWrapper: React.FC<FeatureMaintenanceWrapperProps>
   overrideDisplayMode,
   onNavigateHome,
 }) => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [adminOverrideAcknowledged, setAdminOverrideAcknowledged] = useState<boolean>(false);
   const [inMaintenance, setInMaintenance] = useState<boolean>(false);
@@ -244,7 +246,7 @@ export const FeatureMaintenanceWrapper: React.FC<FeatureMaintenanceWrapperProps>
                 marginBottom: '6px',
               }}
             >
-              MODULE UNAVAILABLE // {status}
+              {t('module_unavailable')} // {status}
             </div>
             <h3 style={{ margin: '0 0 10px', fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>
               {displayName}
@@ -345,7 +347,7 @@ export const FeatureMaintenanceWrapper: React.FC<FeatureMaintenanceWrapperProps>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span>⛔</span>
             <span>
-              <strong>Feature Disabled:</strong> {message || `${displayName} actions are temporarily disabled.`}
+              <strong>{t('feature_disabled')}:</strong> {message || `${displayName} actions are temporarily disabled.`}
             </span>
           </div>
 
@@ -539,7 +541,7 @@ export const FeatureMaintenanceWrapper: React.FC<FeatureMaintenanceWrapperProps>
           marginBottom: '8px',
         }}
       >
-        UNDER SCHEDULED MAINTENANCE // {status}
+        {t('under_scheduled_maintenance')} // {status}
       </div>
 
       <h2
@@ -551,7 +553,7 @@ export const FeatureMaintenanceWrapper: React.FC<FeatureMaintenanceWrapperProps>
           fontFamily: 'JetBrains Mono',
         }}
       >
-        {displayName} Temporarily Offline
+        {displayName} {t('temporarily_offline')}
       </h2>
 
       <p
@@ -622,7 +624,7 @@ export const FeatureMaintenanceWrapper: React.FC<FeatureMaintenanceWrapperProps>
             }}
           >
             <span>⚡</span>
-            <span>Access Anyway (Admin Override)</span>
+            <span>{t('admin_override')}</span>
           </button>
         )}
 
@@ -644,7 +646,7 @@ export const FeatureMaintenanceWrapper: React.FC<FeatureMaintenanceWrapperProps>
             }}
           >
             <span>←</span>
-            <span>Return to Dashboard</span>
+            <span>{t('return_to_dashboard')}</span>
           </button>
         )}
       </div>

@@ -9,6 +9,8 @@ export const LanguageSelector: React.FC = () => {
 
   return (
     <select
+      id="language-selector"
+      data-testid="language-selector"
       value={activeCode}
       onChange={(e) => setLanguage(e.target.value)}
       style={{

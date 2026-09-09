@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from '../context/I18nContext';
 import { WritingScorecard } from '../components/writing/WritingScorecard';
 import { ExamAudioPlayer } from '../components/listening/ExamAudioPlayer';
 import { API_BASE } from '../config/api';
@@ -74,6 +75,7 @@ interface ExamResultPageProps {
 
 export const ExamResultPage: React.FC<ExamResultPageProps> = ({ attemptId, onBack }) => {
   const { token } = useAuth();
+  const { t } = useTranslation();
   const [result, setResult] = useState<AttemptResultData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -158,7 +160,7 @@ export const ExamResultPage: React.FC<ExamResultPageProps> = ({ attemptId, onBac
             margin: '0 auto 14px',
           }}
         />
-        Computing Comprehensive Scorecard & Solutions...
+        {t('computing_scorecard')}
       </div>
     );
   }
@@ -166,7 +168,7 @@ export const ExamResultPage: React.FC<ExamResultPageProps> = ({ attemptId, onBac
   if (error || !result) {
     return (
       <div style={{ padding: '40px', textAlign: 'center', maxWidth: '500px', margin: '0 auto' }}>
-        <h3 style={{ color: '#ef4444' }}>Result Not Available</h3>
+        <h3 style={{ color: '#ef4444' }}>{t('result_not_available')}</h3>
         <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>{error || 'Unable to load attempt results'}</p>
         <button
           onClick={onBack}
@@ -180,7 +182,7 @@ export const ExamResultPage: React.FC<ExamResultPageProps> = ({ attemptId, onBac
             cursor: 'pointer',
           }}
         >
-          Return to Assessments
+          {t('return_to_assessments')}
         </button>
       </div>
     );
@@ -228,13 +230,13 @@ export const ExamResultPage: React.FC<ExamResultPageProps> = ({ attemptId, onBac
               marginBottom: '8px',
             }}
           >
-            ◀ Back to My Exams
+            ◀ {t('back_to_my_exams')}
           </button>
           <h1 style={{ margin: 0, fontSize: '22px', fontFamily: 'JetBrains Mono', color: 'var(--text-main)' }}>
-            {result.examName} — Scorecard & Solution Analysis
+            {result.examName} — {t('scorecard_solution_analysis')}
           </h1>
           <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: '13px' }}>
-            Completed on {new Date(result.endTime).toLocaleString()} • Duration: {formatDuration(result.timeSpentSeconds)}
+            {t('completed_on')} {new Date(result.endTime).toLocaleString()} • {t('duration_label')}: {formatDuration(result.timeSpentSeconds)}
           </p>
         </div>
 
@@ -254,7 +256,7 @@ export const ExamResultPage: React.FC<ExamResultPageProps> = ({ attemptId, onBac
                 gap: '6px',
               }}
             >
-              🚩 Flagged for Review
+              🚩 {t('flagged_for_review')}
             </span>
           ) : (
             <button
@@ -269,7 +271,7 @@ export const ExamResultPage: React.FC<ExamResultPageProps> = ({ attemptId, onBac
                 cursor: 'pointer',
               }}
             >
-              🚩 Flag / Dispute Result
+              🚩 {t('flag_dispute_result')}
             </button>
           )}
         </div>
@@ -305,7 +307,7 @@ export const ExamResultPage: React.FC<ExamResultPageProps> = ({ attemptId, onBac
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '20px', textAlign: 'center' }}>
           <div style={{ borderRight: '1px solid var(--border-color)' }}>
             <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'JetBrains Mono', marginBottom: '4px' }}>
-              TOTAL SCORE
+              {t('total_score')}
             </div>
             <div style={{ fontSize: '32px', fontWeight: 'bold', color: 'var(--accent-color)', fontFamily: 'JetBrains Mono' }}>
               {result.totalScore}
@@ -318,7 +320,7 @@ export const ExamResultPage: React.FC<ExamResultPageProps> = ({ attemptId, onBac
 
           <div style={{ borderRight: '1px solid var(--border-color)' }}>
             <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'JetBrains Mono', marginBottom: '4px' }}>
-              ACCURACY
+              {t('accuracy')}
             </div>
             <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#10b981', fontFamily: 'JetBrains Mono' }}>
               {result.accuracy}%
@@ -330,25 +332,25 @@ export const ExamResultPage: React.FC<ExamResultPageProps> = ({ attemptId, onBac
 
           <div style={{ borderRight: '1px solid var(--border-color)' }}>
             <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'JetBrains Mono', marginBottom: '4px' }}>
-              CORRECT ANSWERS
+              {t('correct_answers')}
             </div>
             <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#10b981', fontFamily: 'JetBrains Mono' }}>
               {result.correctAnswers}
             </div>
             <div style={{ fontSize: '12px', color: '#10b981', marginTop: '4px' }}>
-              +{result.correctAnswers * 4} Marks gained
+              +{result.correctAnswers * 4} {t('marks_gained')}
             </div>
           </div>
 
           <div>
             <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'JetBrains Mono', marginBottom: '4px' }}>
-              INCORRECT / NEGATIVE
+              {t('incorrect_negative')}
             </div>
             <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#ef4444', fontFamily: 'JetBrains Mono' }}>
               {result.wrongAnswers}
             </div>
             <div style={{ fontSize: '12px', color: '#ef4444', marginTop: '4px' }}>
-              -{result.wrongAnswers * 1} Penalty marks
+              -{result.wrongAnswers * 1} {t('penalty_marks')}
             </div>
           </div>
         </div>
@@ -365,17 +367,17 @@ export const ExamResultPage: React.FC<ExamResultPageProps> = ({ attemptId, onBac
         }}
       >
         <h3 style={{ margin: '0 0 14px', fontSize: '15px', fontFamily: 'JetBrains Mono', color: 'var(--text-main)' }}>
-          Section-Wise Performance
+          {t('section_performance')}
         </h3>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
           <thead>
             <tr style={{ textAlign: 'left', borderBottom: '1px solid var(--border-color)', background: 'rgba(255, 255, 255, 0.02)' }}>
-              <th style={{ padding: '10px' }}>Section Name</th>
-              <th style={{ padding: '10px' }}>Total Questions</th>
-              <th style={{ padding: '10px' }}>Attempted</th>
-              <th style={{ padding: '10px' }}>Correct</th>
-              <th style={{ padding: '10px' }}>Wrong</th>
-              <th style={{ padding: '10px' }}>Score Obtained</th>
+              <th style={{ padding: '10px' }}>{t('section_name')}</th>
+              <th style={{ padding: '10px' }}>{t('total_questions')}</th>
+              <th style={{ padding: '10px' }}>{t('attempted')}</th>
+              <th style={{ padding: '10px' }}>{t('correct')}</th>
+              <th style={{ padding: '10px' }}>{t('wrong')}</th>
+              <th style={{ padding: '10px' }}>{t('score_obtained')}</th>
             </tr>
           </thead>
           <tbody>
@@ -399,7 +401,7 @@ export const ExamResultPage: React.FC<ExamResultPageProps> = ({ attemptId, onBac
       <div style={{ marginBottom: '20px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <h3 style={{ margin: 0, fontSize: '16px', fontFamily: 'JetBrains Mono', color: 'var(--text-main)' }}>
-            Question-by-Question Solution Review
+            {t('solution_review')}
           </h3>
 
           {/* Filter Pills */}
@@ -419,7 +421,7 @@ export const ExamResultPage: React.FC<ExamResultPageProps> = ({ attemptId, onBac
                   fontWeight: filter === mode ? 'bold' : 'normal',
                 }}
               >
-                {mode === 'ALL' ? `All (${result.questions.length})` : mode === 'CORRECT' ? `Correct (${result.correctAnswers})` : mode === 'WRONG' ? `Wrong (${result.wrongAnswers})` : `Unattempted (${result.unattempted})`}
+                {mode === 'ALL' ? `${t('all')} (${result.questions.length})` : mode === 'CORRECT' ? `${t('correct')} (${result.correctAnswers})` : mode === 'WRONG' ? `${t('wrong')} (${result.wrongAnswers})` : `${t('unattempted')} (${result.unattempted})`}
               </button>
             ))}
           </div>
@@ -444,7 +446,7 @@ export const ExamResultPage: React.FC<ExamResultPageProps> = ({ attemptId, onBac
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span style={{ fontWeight: 'bold', fontFamily: 'JetBrains Mono', color: 'var(--text-main)' }}>
-                      Question #{q.sequenceOrder}
+                      {t('question_num')} #{q.sequenceOrder}
                     </span>
                     <span style={{ fontSize: '11px', padding: '2px 6px', borderRadius: '4px', background: 'rgba(255, 255, 255, 0.05)', color: 'var(--text-muted)' }}>
                       {q.sectionName}
@@ -465,7 +467,7 @@ export const ExamResultPage: React.FC<ExamResultPageProps> = ({ attemptId, onBac
                       color: q.marksAwarded > 0 ? '#10b981' : q.marksAwarded < 0 ? '#ef4444' : 'var(--text-muted)',
                     }}
                   >
-                    Marks Awarded: {q.marksAwarded > 0 ? `+${q.marksAwarded}` : q.marksAwarded}
+                    {t('marks_awarded')}: {q.marksAwarded > 0 ? `+${q.marksAwarded}` : q.marksAwarded}
                   </span>
                 </div>
 
@@ -490,14 +492,14 @@ export const ExamResultPage: React.FC<ExamResultPageProps> = ({ attemptId, onBac
                       if (isCorrectChoice) {
                         border = '1px solid #10b981';
                         bg = 'rgba(16, 185, 129, 0.1)';
-                        icon = ' ✓ (Correct Answer)';
+                        icon = ` ✓ (${t('correct_choice_label')})`;
                       }
                       if (isStudentChoice && !isCorrectChoice) {
                         border = '1px solid #ef4444';
                         bg = 'rgba(239, 68, 68, 0.1)';
-                        icon = ' ✗ (Your Choice)';
+                        icon = ` ✗ (${t('your_choice_label')})`;
                       } else if (isStudentChoice && isCorrectChoice) {
-                        icon = ' ✓ (Your Choice - Correct)';
+                        icon = ` ✓ (${t('your_choice_label')} - ${t('correct')})`;
                       }
 
                       return (
@@ -523,8 +525,8 @@ export const ExamResultPage: React.FC<ExamResultPageProps> = ({ attemptId, onBac
                 {/* Non-MCQ Answer Summary */}
                 {!q.options && q.type !== 'WRITING' && q.type !== 'LISTENING' && (
                   <div style={{ padding: '10px 14px', borderRadius: '8px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--border-color)', marginBottom: '14px', fontSize: '13px' }}>
-                    <div>Your Response: <strong style={{ color: isUnanswered ? 'var(--text-muted)' : q.isCorrect ? '#10b981' : '#ef4444' }}>{isUnanswered ? 'Unattempted' : JSON.stringify(q.studentAnswer)}</strong></div>
-                    <div style={{ marginTop: '4px' }}>Correct Key: <strong style={{ color: '#10b981' }}>{JSON.stringify(q.correctAnswer)}</strong></div>
+                    <div>{t('your_choice_label')}: <strong style={{ color: isUnanswered ? 'var(--text-muted)' : q.isCorrect ? '#10b981' : '#ef4444' }}>{isUnanswered ? t('unattempted') : JSON.stringify(q.studentAnswer)}</strong></div>
+                    <div style={{ marginTop: '4px' }}>{t('correct_choice_label')}: <strong style={{ color: '#10b981' }}>{JSON.stringify(q.correctAnswer)}</strong></div>
                   </div>
                 )}
 
@@ -538,7 +540,7 @@ export const ExamResultPage: React.FC<ExamResultPageProps> = ({ attemptId, onBac
                     />
                     {Array.isArray(q.subQuestions) && q.subQuestions.length > 0 && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        <strong style={{ fontSize: '13px', color: 'var(--text-main)' }}>Comprehension Question Review:</strong>
+                        <strong style={{ fontSize: '13px', color: 'var(--text-main)' }}>{t('comprehension_questions')}:</strong>
                         {q.subQuestions.map((sq: any, sIdx: number) => {
                           const stuAns = q.studentAnswer ? q.studentAnswer[sq.id] : undefined;
                           let correctKey = sq.correctOptionId || sq.blankKey;
@@ -554,8 +556,8 @@ export const ExamResultPage: React.FC<ExamResultPageProps> = ({ attemptId, onBac
                                 {sIdx + 1}. {sq.prompt} ({sq.marks} marks)
                               </div>
                               <div style={{ display: 'flex', gap: '16px', marginTop: '4px' }}>
-                                <span>Your Response: <strong style={{ color: isSqCorrect ? '#10b981' : '#ef4444' }}>{stuAns ? String(stuAns) : 'Unattempted'}</strong></span>
-                                <span>Correct Key: <strong style={{ color: '#10b981' }}>{correctKey}</strong></span>
+                                <span>{t('your_choice_label')}: <strong style={{ color: isSqCorrect ? '#10b981' : '#ef4444' }}>{stuAns ? String(stuAns) : t('unattempted')}</strong></span>
+                                <span>{t('correct_choice_label')}: <strong style={{ color: '#10b981' }}>{correctKey}</strong></span>
                               </div>
                             </div>
                           );
@@ -583,7 +585,7 @@ export const ExamResultPage: React.FC<ExamResultPageProps> = ({ attemptId, onBac
                     lineHeight: '1.5',
                   }}
                 >
-                  <strong style={{ color: '#06b6d4' }}>Explanation & Working:</strong>
+                  <strong style={{ color: '#06b6d4' }}>{t('explanation')}:</strong>
                   <div style={{ color: 'var(--text-main)', marginTop: '4px' }}>
                     {q.explanation}
                   </div>
@@ -620,16 +622,16 @@ export const ExamResultPage: React.FC<ExamResultPageProps> = ({ attemptId, onBac
             }}
           >
             <h3 style={{ margin: '0 0 10px', fontSize: '18px', color: 'var(--text-main)', fontFamily: 'JetBrains Mono' }}>
-              Flag Examination Result for Review
+              {t('flag_dispute_result')}
             </h3>
             <p style={{ color: 'var(--text-muted)', fontSize: '13px', lineHeight: '1.5', margin: '0 0 16px' }}>
-              If you found ambiguity in question phrasing or have a grading query, submit your explanation below for faculty evaluation.
+              {t('flag_dispute_desc')}
             </p>
 
             <textarea
               value={flagReason}
               onChange={(e) => setFlagReason(e.target.value)}
-              placeholder="Describe the question number and rationale for review..."
+              placeholder={t('flag_dispute_placeholder')}
               rows={4}
               style={{
                 width: '100%',
@@ -659,7 +661,7 @@ export const ExamResultPage: React.FC<ExamResultPageProps> = ({ attemptId, onBac
                   fontSize: '13px',
                 }}
               >
-                Cancel
+                {t('cancel')}
               </button>
               <button
                 disabled={flagging || !flagReason.trim()}
@@ -675,7 +677,7 @@ export const ExamResultPage: React.FC<ExamResultPageProps> = ({ attemptId, onBac
                   fontSize: '13px',
                 }}
               >
-                {flagging ? 'Submitting Flag...' : 'Submit Flag'}
+                {flagging ? t('submitting_flag') : t('submit_flag')}
               </button>
             </div>
           </div>

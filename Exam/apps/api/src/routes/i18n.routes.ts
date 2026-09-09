@@ -65,14 +65,69 @@ const SEED_TRANSLATIONS: Record<string, Record<string, string>> = {
 // ----------------------------------------------------------------------------
 router.get('/languages', async (req: Request, res: Response) => {
   try {
-    const dbRes = await pgDb.query(`SELECT "id", "code", "name", "nativeName", "isDefault" FROM "languages" ORDER BY "name" ASC`);
+    const totalKeysRes = await pgDb.query(`SELECT COUNT(*)::int AS count FROM "translation_keys"`);
+    const totalKeys = totalKeysRes.rows[0]?.count || 10;
+
+    const dbRes = await pgDb.query(`
+      SELECT 
+        l."id", 
+        l."code", 
+        l."name", 
+        l."nativeName", 
+        l."isDefault",
+        COUNT(t."id")::int AS "translatedCount"
+      FROM "languages" l
+      LEFT JOIN "translations" t ON t."languageId" = l."id"
+      GROUP BY l."id", l."code", l."name", l."nativeName", l."isDefault"
+      ORDER BY l."name" ASC
+    `);
     if (dbRes && dbRes.rows && dbRes.rows.length > 0) {
-      return res.json({ success: true, data: dbRes.rows });
+      const data = dbRes.rows.map((row: any) => ({
+        ...row,
+        totalKeys,
+      }));
+      return res.json({ success: true, data });
     }
   } catch (err) {
     console.warn('Querying baseline languages fallback');
   }
-  return res.json({ success: true, data: BASELINE_LANGUAGES });
+  return res.json({
+    success: true,
+    data: BASELINE_LANGUAGES.map((l) => ({ ...l, translatedCount: 10, totalKeys: 10 })),
+  });
+});
+
+// ----------------------------------------------------------------------------
+// GET /api/v1/i18n/keys — List all registered translation keys with English base
+// ----------------------------------------------------------------------------
+router.get('/keys', async (req: Request, res: Response) => {
+  try {
+    const dbRes = await pgDb.query(`
+      SELECT 
+        tk."id", 
+        tk."key", 
+        tk."description", 
+        tk."module",
+        COALESCE(
+          (
+            SELECT t."value" 
+            FROM "translations" t 
+            JOIN "languages" l ON t."languageId" = l."id" 
+            WHERE l."code" = 'en' AND t."translationKeyId" = tk."id" 
+            LIMIT 1
+          ),
+          tk."key"
+        ) AS "baseValue"
+      FROM "translation_keys" tk
+      ORDER BY tk."key" ASC
+    `);
+    if (dbRes && dbRes.rows) {
+      return res.json({ success: true, data: dbRes.rows });
+    }
+  } catch (err) {
+    console.warn('Error fetching translation keys', err);
+  }
+  return res.json({ success: true, data: [] });
 });
 
 // ----------------------------------------------------------------------------
@@ -94,8 +149,11 @@ router.post(
       const id = `lang_${langCode}_${Date.now()}`;
 
       try {
+        if (isDefault) {
+          await pgDb.query(`UPDATE "languages" SET "isDefault" = false WHERE "code" != $1`, [langCode]);
+        }
         await pgDb.query(
-          `INSERT INTO "languages" ("id", "code", "name", "nativeName", "isDefault") VALUES ($1, $2, $3, $4, $5) ON CONFLICT ("code") DO UPDATE SET "name" = EXCLUDED."name"`,
+          `INSERT INTO "languages" ("id", "code", "name", "nativeName", "isDefault") VALUES ($1, $2, $3, $4, $5) ON CONFLICT ("code") DO UPDATE SET "name" = EXCLUDED."name", "nativeName" = EXCLUDED."nativeName", "isDefault" = EXCLUDED."isDefault"`,
           [id, langCode, String(name).trim(), String(nativeName).trim(), Boolean(isDefault)]
         );
       } catch (e) {
@@ -119,6 +177,7 @@ router.get('/translations/:langCode', async (req: Request, res: Response) => {
   const { langCode } = req.params;
   const targetCode = String(langCode).toLowerCase().trim();
   const dict: Record<string, string> = { ...SEED_TRANSLATIONS['en'] };
+  const dbDict: Record<string, string> = {};
 
   if (SEED_TRANSLATIONS[targetCode]) {
     Object.assign(dict, SEED_TRANSLATIONS[targetCode]);
@@ -137,13 +196,21 @@ router.get('/translations/:langCode', async (req: Request, res: Response) => {
     if (transRes && transRes.rows) {
       transRes.rows.forEach((row: any) => {
         dict[row.key] = row.value;
+        dbDict[row.key] = row.value;
       });
     }
   } catch (err) {
     console.warn('Using translation dictionary fallback for', targetCode);
   }
 
-  return res.json({ success: true, data: { languageCode: targetCode, translations: dict } });
+  return res.json({
+    success: true,
+    data: {
+      languageCode: targetCode,
+      translations: dict,
+      dbTranslations: dbDict,
+    },
+  });
 });
 
 // ----------------------------------------------------------------------------

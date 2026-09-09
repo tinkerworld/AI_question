@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from '../context/I18nContext';
 
 interface PreviewBannerProps {
   onOpenConfig?: () => void;
 }
 
 export const PreviewBanner: React.FC<PreviewBannerProps> = ({ onOpenConfig }) => {
+  const { t } = useTranslation();
   const { impersonationSession, isImpersonating, exitImpersonation } = useAuth();
   const [timeLeftMinutes, setTimeLeftMinutes] = useState<number>(60);
   const [isExiting, setIsExiting] = useState<boolean>(false);
@@ -75,27 +77,27 @@ export const PreviewBanner: React.FC<PreviewBannerProps> = ({ onOpenConfig }) =>
             textTransform: 'uppercase',
           }}
         >
-          {isPreview ? '⚡ PREVIEW MODE' : '⚠️ IMPERSONATION ACTIVE'}
+          {isPreview ? t('preview_mode_badge') : t('impersonation_active_badge')}
         </span>
 
         {isPreview ? (
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
             <span>
-              <strong>Simulated Plan:</strong> {plan}
+              <strong>{t('simulated_plan')}:</strong> {plan}
             </span>
             <span>•</span>
             <span>
-              <strong>Content:</strong> {contentVer}
+              <strong>{t('preview_content')}:</strong> {contentVer}
             </span>
             <span>•</span>
             <span>
-              <strong>Mode:</strong> {usageMode}
+              <strong>{t('preview_mode')}:</strong> {usageMode}
             </span>
           </div>
         ) : (
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <span>
-              <strong>Acting As:</strong> {impersonationSession.effectiveEmail || impersonationSession.effectiveUserId}
+              <strong>{t('acting_as')}:</strong> {impersonationSession.effectiveEmail || impersonationSession.effectiveUserId}
             </span>
             {impersonationSession.reason && (
               <span style={{ opacity: 0.9, fontSize: '11px' }}>
@@ -115,7 +117,7 @@ export const PreviewBanner: React.FC<PreviewBannerProps> = ({ onOpenConfig }) =>
             borderRadius: '3px',
           }}
         >
-          ⏱️ {timeLeftMinutes}m left
+          ⏱️ {timeLeftMinutes}m {t('time_left_suffix')}
         </span>
       </div>
 
@@ -139,7 +141,7 @@ export const PreviewBanner: React.FC<PreviewBannerProps> = ({ onOpenConfig }) =>
               gap: '4px',
             }}
           >
-            ⚙️ Quick Config
+            ⚙️ {t('quick_config')}
           </button>
         )}
 
@@ -160,7 +162,7 @@ export const PreviewBanner: React.FC<PreviewBannerProps> = ({ onOpenConfig }) =>
             transition: 'background 0.2s',
           }}
         >
-          {isExiting ? 'Exiting...' : isPreview ? '✕ Exit Preview' : '✕ Exit Impersonation'}
+          {isExiting ? t('exiting') : isPreview ? `✕ ${t('exit_preview')}` : `✕ ${t('exit_impersonation')}`}
         </button>
       </div>
     </div>

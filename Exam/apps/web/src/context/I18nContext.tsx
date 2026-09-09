@@ -3,10 +3,13 @@ import { LanguageCode } from '@repo/types';
 import { API_BASE } from '../config/api';
 
 export interface LanguageInfo {
+  id?: string;
   code: string;
   name: string;
   nativeName: string;
   isDefault?: boolean;
+  translatedCount?: number;
+  totalKeys?: number;
 }
 
 interface I18nContextType {
@@ -17,6 +20,8 @@ interface I18nContextType {
   availableLanguages: LanguageInfo[];
   registerLanguage: (lang: LanguageInfo, initialKeys?: Record<string, string>) => Promise<boolean>;
   isLoading: boolean;
+  refreshLanguages: () => Promise<void>;
+  refreshTranslations: (langCode?: string) => Promise<void>;
 }
 
 const I18nContext = createContext<I18nContextType | undefined>(undefined);
@@ -151,6 +156,14 @@ export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
   };
 
+  const refreshLanguages = async () => {
+    await fetchLanguages();
+  };
+
+  const refreshTranslations = async (langCode?: string) => {
+    await fetchTranslations(langCode || currentLanguage);
+  };
+
   return (
     <I18nContext.Provider
       value={{
@@ -161,6 +174,8 @@ export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         availableLanguages,
         registerLanguage,
         isLoading,
+        refreshLanguages,
+        refreshTranslations,
       }}
     >
       {children}

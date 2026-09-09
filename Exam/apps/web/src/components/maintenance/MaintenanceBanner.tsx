@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { API_BASE } from '../../config/api';
+import { useTranslation } from '../../context/I18nContext';
 import { MaintenanceStatusDTO } from '@repo/types';
 
 export const MaintenanceBanner: React.FC = () => {
+  const { t } = useTranslation();
   const [status, setStatus] = useState<MaintenanceStatusDTO | null>(null);
   const [dismissed, setDismissed] = useState(false);
 
@@ -41,7 +43,7 @@ export const MaintenanceBanner: React.FC = () => {
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontWeight: 500 }}>
         <span style={{ fontSize: '16px' }}>⚠️</span>
         <span>
-          <strong>Platform Maintenance Active:</strong> {status.globalMessage || 'Scheduled platform upgrades are currently in progress.'}
+          <strong>{t('platform_maintenance_active')}:</strong> {status.globalMessage || t('default_maintenance_message')}
         </span>
       </div>
       <button
@@ -55,7 +57,7 @@ export const MaintenanceBanner: React.FC = () => {
           padding: '0 4px',
           opacity: 0.8,
         }}
-        title="Dismiss notice"
+        title={t('dismiss_notice')}
       >
         ✕
       </button>

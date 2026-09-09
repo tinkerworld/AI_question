@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from '../context/I18nContext';
 import { API_BASE } from '../config/api';
 import { getAuthHeaders } from '../utils/api';
 import { ExamAudioPlayer } from '../components/listening/ExamAudioPlayer';
 
 export const ListeningPracticePage: React.FC = () => {
   const { token } = useAuth();
+  const { t } = useTranslation();
 
   const [activeView, setActiveView] = useState<'CATALOG' | 'ATTEMPT' | 'RESULTS' | 'HISTORY'>('CATALOG');
   const [selectedMode, setSelectedMode] = useState<'PRACTICE' | 'EXAM'>('PRACTICE');
@@ -166,10 +168,10 @@ export const ListeningPracticePage: React.FC = () => {
               gap: '8px',
             }}
           >
-            🎧 Standalone Listening Practice & Comprehension Lab
+            🎧 {t('listening_lab_title')}
           </h1>
           <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
-            Multi-accent audio passage drills, customizable playback limits, and real-time comprehension verification.
+            {t('listening_lab_subtitle')}
           </p>
         </div>
 
@@ -188,7 +190,7 @@ export const ListeningPracticePage: React.FC = () => {
               cursor: 'pointer',
             }}
           >
-            📋 Listening Catalog
+            📋 {t('listening_catalog')}
           </button>
           <button
             id="btn-listening-history"
@@ -207,7 +209,7 @@ export const ListeningPracticePage: React.FC = () => {
               cursor: 'pointer',
             }}
           >
-            📊 My Attempts ({pastSessions.length})
+            📊 {t('my_attempts')} ({pastSessions.length})
           </button>
         </div>
       </div>
@@ -246,7 +248,7 @@ export const ListeningPracticePage: React.FC = () => {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-              <span style={{ fontSize: '13px', fontWeight: 600 }}>Practice Mode:</span>
+              <span style={{ fontSize: '13px', fontWeight: 600 }}>{t('practice_mode')}:</span>
               <div
                 style={{
                   display: 'flex',
@@ -270,7 +272,7 @@ export const ListeningPracticePage: React.FC = () => {
                     cursor: 'pointer',
                   }}
                 >
-                  🌱 Practice Mode
+                  🌱 {t('practice_mode')}
                 </button>
                 <button
                   id="btn-mode-exam"
@@ -286,13 +288,13 @@ export const ListeningPracticePage: React.FC = () => {
                     cursor: 'pointer',
                   }}
                 >
-                  ⚡ Exam Mode
+                  ⚡ {t('exam_mode')}
                 </button>
               </div>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <label htmlFor="select-listening-course-filter" style={{ fontSize: '13px', fontWeight: 600 }}>Course Filter:</label>
+              <label htmlFor="select-listening-course-filter" style={{ fontSize: '13px', fontWeight: 600 }}>{t('filter_by_course')}</label>
               <select
                 id="select-listening-course-filter"
                 value={selectedCourseFilter}
@@ -306,7 +308,7 @@ export const ListeningPracticePage: React.FC = () => {
                   fontSize: '12px',
                 }}
               >
-                <option value="">All Eligible Courses ({eligibility?.eligibleCourses?.length || 0})</option>
+                <option value="">{t('all_courses_option')} ({eligibility?.eligibleCourses?.length || 0})</option>
                 {(eligibility?.eligibleCourses || []).map((c: any) => (
                   <option key={c.id} value={c.id}>
                     {c.name} ({c.questionCount} Questions)
@@ -417,7 +419,7 @@ export const ListeningPracticePage: React.FC = () => {
                       gap: '6px',
                     }}
                   >
-                    ▶️ Start Listening Practice
+                    ▶️ {t('start_listening_practice')}
                   </button>
                 </div>
               );
@@ -435,7 +437,7 @@ export const ListeningPracticePage: React.FC = () => {
                 color: 'var(--text-muted)',
               }}
             >
-              No listening questions available for your enrolled course(s).
+              {t('no_listening_drills')}
             </div>
           )}
         </div>
@@ -477,7 +479,7 @@ export const ListeningPracticePage: React.FC = () => {
                 cursor: 'pointer',
               }}
             >
-              ✕ Exit Attempt
+              ✕ {t('exit_attempt')}
             </button>
           </div>
 
@@ -495,7 +497,7 @@ export const ListeningPracticePage: React.FC = () => {
                 gap: '16px',
               }}
             >
-              <h3 style={{ fontSize: '15px', fontWeight: 600, margin: 0 }}>🎧 Audio Passage Player</h3>
+              <h3 style={{ fontSize: '15px', fontWeight: 600, margin: 0 }}>🎧 {t('audio_passage')}</h3>
               <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0 }}>
                 Listen carefully to the recorded conversation. In Exam mode, play limits are enforced.
               </p>
@@ -536,7 +538,7 @@ export const ListeningPracticePage: React.FC = () => {
                 gap: '24px',
               }}
             >
-              <h3 style={{ fontSize: '16px', fontWeight: 600, margin: 0 }}>Comprehension Questions</h3>
+              <h3 style={{ fontSize: '16px', fontWeight: 600, margin: 0 }}>{t('comprehension_questions')}</h3>
 
               {(activeQuestion.data?.subQuestions || []).map((sq: any, idx: number) => {
                 const currentAns = userAnswers[sq.id];
@@ -647,7 +649,7 @@ export const ListeningPracticePage: React.FC = () => {
                   gap: '8px',
                 }}
               >
-                {isSubmitting ? 'Evaluating Submission...' : '✓ Submit Listening Attempt'}
+                {isSubmitting ? t('submitting_evaluating') : `✓ ${t('submit_listening_drill')}`}
               </button>
             </div>
           </div>
@@ -673,7 +675,7 @@ export const ListeningPracticePage: React.FC = () => {
             <div>
               <span style={{ fontSize: '12px', fontWeight: 700, color: '#10b981' }}>PRACTICE COMPLETE</span>
               <h2 style={{ fontSize: '20px', fontWeight: 700, margin: '4px 0 0 0' }}>
-                Listening Assessment Scorecard
+                {t('scorecard')}
               </h2>
               <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
                 {activeQuestion?.content}
@@ -683,7 +685,7 @@ export const ListeningPracticePage: React.FC = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                  Total Score
+                  {t('total_score')}
                 </div>
                 <div style={{ fontSize: '26px', fontWeight: 800, color: '#10b981' }}>
                   {evaluationResult.score} / {evaluationResult.maxScore}
@@ -704,7 +706,7 @@ export const ListeningPracticePage: React.FC = () => {
                   cursor: 'pointer',
                 }}
               >
-                📋 Back to Catalog
+                📋 {t('back_to_catalog')}
               </button>
             </div>
           </div>
@@ -741,7 +743,7 @@ export const ListeningPracticePage: React.FC = () => {
               gap: '16px',
             }}
           >
-            <h3 style={{ fontSize: '16px', fontWeight: 600, margin: 0 }}>Question Review & Explanations</h3>
+            <h3 style={{ fontSize: '16px', fontWeight: 600, margin: 0 }}>{t('solution_review')}</h3>
 
             {(activeQuestion?.data?.subQuestions || []).map((sq: any, idx: number) => {
               const studentAnswer = userAnswers[sq.id];
@@ -780,7 +782,7 @@ export const ListeningPracticePage: React.FC = () => {
                           color: '#fff',
                         }}
                       >
-                        {isCorrect ? '✓ Correct' : '✗ Incorrect'}
+                        {isCorrect ? `✓ ${t('correct')}` : `✗ ${t('wrong')}`}
                       </span>
                       <span style={{ fontSize: '13px', fontWeight: 600 }}>Question {idx + 1}</span>
                     </div>
@@ -793,7 +795,7 @@ export const ListeningPracticePage: React.FC = () => {
 
                   <div style={{ fontSize: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     <div>
-                      <span style={{ color: 'var(--text-muted)' }}>Your Answer: </span>
+                      <span style={{ color: 'var(--text-muted)' }}>{t('your_choice_label')}: </span>
                       <span style={{ fontWeight: 600, color: isCorrect ? '#10b981' : '#ef4444' }}>
                         {sq.type === 'MCQ'
                           ? sq.options?.find((o: any) => o.id === studentAnswer)?.text || studentAnswer || 'No response'
@@ -802,7 +804,7 @@ export const ListeningPracticePage: React.FC = () => {
                     </div>
                     {!isCorrect && (
                       <div>
-                        <span style={{ color: 'var(--text-muted)' }}>Correct Answer: </span>
+                        <span style={{ color: 'var(--text-muted)' }}>{t('correct_choice_label')}: </span>
                         <span style={{ fontWeight: 600, color: '#10b981' }}>{correctAnswer}</span>
                       </div>
                     )}
@@ -818,7 +820,7 @@ export const ListeningPracticePage: React.FC = () => {
       {activeView === 'HISTORY' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <h2 style={{ fontSize: '18px', fontWeight: 700, margin: '0 0 8px 0' }}>
-            My Standalone Listening Attempts
+            {t('practice_history')}
           </h2>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -878,7 +880,7 @@ export const ListeningPracticePage: React.FC = () => {
                   color: 'var(--text-muted)',
                 }}
               >
-                No past listening attempts recorded yet. Start practicing from the catalog!
+                {t('no_listening_drills')}
               </div>
             )}
           </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useExamLock } from '../context/ExamLockContext';
+import { useTranslation } from '../context/I18nContext';
 import { ExamAudioPlayer } from '../components/listening/ExamAudioPlayer';
 import { ExamWritingEditor } from '../components/writing/ExamWritingEditor';
 import { API_BASE } from '../config/api';
@@ -80,6 +81,7 @@ export const ExamPlayerPage: React.FC<ExamPlayerPageProps> = ({
   onExit,
 }) => {
   const { token, user } = useAuth();
+  const { t } = useTranslation();
   const { setExamLocked, registerExitWarningHandler, unregisterExitWarningHandler } = useExamLock();
   const [attemptState, setAttemptState] = useState<AttemptState | null>(null);
   const attemptStateRef = useRef<AttemptState | null>(null);
@@ -440,7 +442,7 @@ export const ExamPlayerPage: React.FC<ExamPlayerPageProps> = ({
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#090d16', color: '#fff' }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{ width: '40px', height: '40px', border: '3px solid rgba(6, 182, 212, 0.2)', borderTopColor: '#06b6d4', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 12px' }} />
-          Loading Exam Environment...
+          {t('loading_exam_session')}
         </div>
       </div>
     );
@@ -450,10 +452,10 @@ export const ExamPlayerPage: React.FC<ExamPlayerPageProps> = ({
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#090d16', color: '#fff' }}>
         <div style={{ background: '#131826', padding: '32px', borderRadius: '12px', textAlign: 'center', maxWidth: '400px', border: '1px solid #ef4444' }}>
-          <h3 style={{ color: '#ef4444', margin: '0 0 12px' }}>Exam Error</h3>
+          <h3 style={{ color: '#ef4444', margin: '0 0 12px' }}>{t('exam_loading_error')}</h3>
           <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '20px' }}>{error || 'Unable to load attempt'}</p>
           <button onClick={onExit} style={{ padding: '8px 16px', background: 'var(--accent-color)', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
-            Return to Dashboard
+            {t('return_to_assessments')}
           </button>
         </div>
       </div>
@@ -500,7 +502,7 @@ export const ExamPlayerPage: React.FC<ExamPlayerPageProps> = ({
             {attemptState.examName}
           </span>
           <span style={{ fontSize: '12px', padding: '3px 8px', borderRadius: '4px', background: 'rgba(255, 255, 255, 0.05)', color: '#9ca3af' }}>
-            Candidate: {user?.firstName} {user?.lastName}
+            {t('candidate')}: {user?.firstName} {user?.lastName}
           </span>
         </div>
 
@@ -524,7 +526,7 @@ export const ExamPlayerPage: React.FC<ExamPlayerPageProps> = ({
                 background: syncStatus === 'SAVING' ? '#f59e0b' : syncStatus === 'SAVED' ? '#10b981' : '#ef4444',
               }}
             />
-            {syncStatus === 'SAVING' ? 'Saving Answer...' : syncStatus === 'SAVED' ? 'Auto-Saved' : 'Sync Error'}
+            {syncStatus === 'SAVING' ? t('saving') : syncStatus === 'SAVED' ? t('saved') : 'Sync Error'}
           </span>
 
           {/* Real-time Countdown Timer */}
@@ -575,7 +577,7 @@ export const ExamPlayerPage: React.FC<ExamPlayerPageProps> = ({
               boxShadow: '0 2px 4px rgba(16, 185, 129, 0.3)',
             }}
           >
-            ✓ Submit Test
+            ✓ {t('submit_test')}
           </button>
         </div>
       </header>
@@ -724,13 +726,13 @@ export const ExamPlayerPage: React.FC<ExamPlayerPageProps> = ({
                     }}
                   >
                     <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.5px', fontFamily: 'JetBrains Mono' }}>
-                      📖 Question Statement
+                      📖 {t('question_statement')}
                     </span>
 
                     {/* Zoom Controls */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <span style={{ fontSize: '10px', color: '#6b7280', marginRight: '4px', fontFamily: 'JetBrains Mono' }}>
-                        Ctrl+Scroll to zoom
+                        {t('zoom_ctrl_scroll')}
                       </span>
                       <button
                         type="button"
@@ -929,13 +931,13 @@ export const ExamPlayerPage: React.FC<ExamPlayerPageProps> = ({
                     }}
                   >
                     <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.5px', fontFamily: 'JetBrains Mono' }}>
-                      ✍️ Select Your Answer
+                      ✍️ {t('select_your_answer')}
                     </span>
 
                     {/* Zoom Controls */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <span style={{ fontSize: '10px', color: '#6b7280', marginRight: '4px', fontFamily: 'JetBrains Mono' }}>
-                        Ctrl+Scroll to zoom
+                        {t('zoom_ctrl_scroll')}
                       </span>
                       <button
                         type="button"
@@ -1431,7 +1433,7 @@ export const ExamPlayerPage: React.FC<ExamPlayerPageProps> = ({
                       fontWeight: '500',
                     }}
                   >
-                    🏷 {reviewFlags[currentQuestion.questionId] ? 'Marked for Review' : 'Mark for Review'}
+                    🏷 {reviewFlags[currentQuestion.questionId] ? t('marked_for_review') : t('mark_for_review')}
                   </button>
 
                   <button
@@ -1447,7 +1449,7 @@ export const ExamPlayerPage: React.FC<ExamPlayerPageProps> = ({
                       cursor: 'pointer',
                     }}
                   >
-                    Clear Response
+                    {t('clear_response')}
                   </button>
                 </div>
 
@@ -1466,7 +1468,7 @@ export const ExamPlayerPage: React.FC<ExamPlayerPageProps> = ({
                       cursor: currentQuestionIndex === 0 ? 'not-allowed' : 'pointer',
                     }}
                   >
-                    ◀ Previous
+                    ◀ {t('previous')}
                   </button>
 
                   <button
@@ -1495,14 +1497,14 @@ export const ExamPlayerPage: React.FC<ExamPlayerPageProps> = ({
                       boxShadow: '0 2px 6px rgba(6, 182, 212, 0.3)',
                     }}
                   >
-                    Save & Next ▶
+                    {t('save_and_next')} ▶
                   </button>
                 </div>
               </div>
             </div>
           ) : (
             <div style={{ padding: '40px', textAlign: 'center', color: '#9ca3af' }}>
-              No questions found in this section.
+              {t('no_questions_in_section')}
             </div>
           )}
         </div>
@@ -1534,7 +1536,7 @@ export const ExamPlayerPage: React.FC<ExamPlayerPageProps> = ({
             }}
           >
             <h4 style={{ margin: 0, fontSize: '13px', fontFamily: 'JetBrains Mono', color: '#e5e7eb', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Question Palette
+              {t('question_palette')}
             </h4>
           </div>
 
@@ -1555,26 +1557,26 @@ export const ExamPlayerPage: React.FC<ExamPlayerPageProps> = ({
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '11px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: '#10b981' }} />
-                <span>Answered ({answeredCount})</span>
+                <span>{t('answered')} ({answeredCount})</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: '#374151' }} />
-                <span>Unattempted ({unattemptedCount})</span>
+                <span>{t('unattempted')} ({unattemptedCount})</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span style={{ width: '12px', height: '12px', borderRadius: '3px', background: '#8b5cf6' }} />
-                <span>Review ({markedCount})</span>
+                <span>{t('review')} ({markedCount})</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span style={{ width: '12px', height: '12px', borderRadius: '3px', border: '2px solid #06b6d4', background: 'transparent' }} />
-                <span>Current</span>
+                <span>{t('current')}</span>
               </div>
             </div>
 
             {/* Questions Grid for current section */}
             <div>
               <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '8px', fontFamily: 'JetBrains Mono' }}>
-                Section Questions ({sectionQuestions.length}):
+                {t('section_questions')} ({sectionQuestions.length}):
               </div>
               <div
                 style={{
@@ -1645,7 +1647,7 @@ export const ExamPlayerPage: React.FC<ExamPlayerPageProps> = ({
                 boxShadow: '0 2px 8px rgba(16, 185, 129, 0.25)',
               }}
             >
-              Finish & Submit Examination
+              {t('finish_submit_exam')}
             </button>
           </div>
         </aside>
@@ -1677,10 +1679,10 @@ export const ExamPlayerPage: React.FC<ExamPlayerPageProps> = ({
             }}
           >
             <h3 style={{ margin: '0 0 12px', fontSize: '18px', color: '#fff', fontFamily: 'JetBrains Mono' }}>
-              Confirm Examination Submission
+              {t('confirm_submission')}
             </h3>
             <p style={{ color: '#9ca3af', fontSize: '13px', lineHeight: '1.5', margin: '0 0 20px' }}>
-              Are you sure you want to end and submit your examination? Once submitted, answers cannot be modified.
+              {t('confirm_submission_desc')}
             </p>
 
             <div
@@ -1696,10 +1698,10 @@ export const ExamPlayerPage: React.FC<ExamPlayerPageProps> = ({
                 marginBottom: '24px',
               }}
             >
-              <div>Total Questions: <strong style={{ color: '#fff' }}>{attemptState.totalQuestions}</strong></div>
-              <div>Answered: <strong style={{ color: '#10b981' }}>{answeredCount}</strong></div>
-              <div>Unattempted: <strong style={{ color: '#ef4444' }}>{unattemptedCount}</strong></div>
-              <div>Marked for Review: <strong style={{ color: '#8b5cf6' }}>{markedCount}</strong></div>
+              <div>{t('total_questions')}: <strong style={{ color: '#fff' }}>{attemptState.totalQuestions}</strong></div>
+              <div>{t('answered')}: <strong style={{ color: '#10b981' }}>{answeredCount}</strong></div>
+              <div>{t('unattempted')}: <strong style={{ color: '#ef4444' }}>{unattemptedCount}</strong></div>
+              <div>{t('marked_for_review')}: <strong style={{ color: '#8b5cf6' }}>{markedCount}</strong></div>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
@@ -1716,7 +1718,7 @@ export const ExamPlayerPage: React.FC<ExamPlayerPageProps> = ({
                   fontSize: '13px',
                 }}
               >
-                Return to Exam
+                {t('return_to_exam')}
               </button>
               <button
                 id="btn-confirm-submit-exam"
@@ -1733,7 +1735,7 @@ export const ExamPlayerPage: React.FC<ExamPlayerPageProps> = ({
                   fontSize: '13px',
                 }}
               >
-                {submitting ? 'Submitting & Evaluating...' : 'Confirm Submission'}
+                {submitting ? t('submitting_evaluating') : t('confirm_submit_btn')}
               </button>
             </div>
           </div>
@@ -1769,16 +1771,16 @@ export const ExamPlayerPage: React.FC<ExamPlayerPageProps> = ({
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
               <span style={{ fontSize: '24px' }}>⚠️</span>
               <h3 style={{ margin: 0, fontSize: '18px', color: '#f59e0b', fontFamily: 'JetBrains Mono' }}>
-                Active Examination in Progress
+                {t('active_exam_in_progress')}
               </h3>
             </div>
 
             <p style={{ color: '#f3f4f6', fontSize: '14px', lineHeight: '1.6', margin: '0 0 14px', fontWeight: '500' }}>
-              Your exam is still in progress and the timer is still running - are you sure you want to leave?
+              {t('active_exam_warning')}
             </p>
 
             <p style={{ color: '#9ca3af', fontSize: '12px', lineHeight: '1.5', margin: '0 0 24px', background: 'rgba(0, 0, 0, 0.3)', padding: '12px', borderRadius: '8px', border: '1px solid #1f2937' }}>
-              ℹ️ Your answered questions are auto-saved, but the examination timer will continue running in the background server-side. You can re-enter and resume before time expires.
+              ℹ️ {t('exam_auto_saved_note')}
             </p>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
@@ -1795,7 +1797,7 @@ export const ExamPlayerPage: React.FC<ExamPlayerPageProps> = ({
                   fontSize: '13px',
                 }}
               >
-                Continue Exam
+                {t('continue_exam')}
               </button>
               <button
                 onClick={handleConfirmExit}
@@ -1809,7 +1811,7 @@ export const ExamPlayerPage: React.FC<ExamPlayerPageProps> = ({
                   fontSize: '13px',
                 }}
               >
-                Yes, Leave Exam
+                {t('leave_exam')}
               </button>
             </div>
           </div>

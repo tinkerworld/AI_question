@@ -5,6 +5,8 @@ import { ThemeMode } from '@repo/types';
 import { API_BASE } from '../config/api';
 import { MaintenanceControlPanel } from '../components/maintenance/MaintenanceControlPanel';
 import { FeatureMatrixEditor } from '../components/entitlements/FeatureMatrixEditor';
+import { LanguageManagementPanel } from '../components/i18n/LanguageManagementPanel';
+import { useAuth } from '../context/AuthContext';
 
 interface AIProvider {
   id: string;
@@ -22,7 +24,14 @@ interface AIProvider {
 
 export const SettingsPage: React.FC = () => {
   const { theme, setTheme } = useTheme();
-  const [activeSubtab, setActiveSubtab] = useState<'AI' | 'APPEARANCE' | 'EXAM_THEMES' | 'MAINTENANCE' | 'ENTITLEMENTS'>('AI');
+  const { user } = useAuth();
+  const userPermissions = user?.permissions || [];
+  const canManageI18n =
+    userPermissions.includes('i18n.manage') ||
+    userPermissions.includes('*') ||
+    user?.roles?.includes('MAIN_ADMIN');
+
+  const [activeSubtab, setActiveSubtab] = useState<'AI' | 'APPEARANCE' | 'EXAM_THEMES' | 'MAINTENANCE' | 'ENTITLEMENTS' | 'LANGUAGES'>('AI');
   type ScopeFilterType =
     | 'ALL'
     | 'question_generation'
@@ -619,6 +628,30 @@ export const SettingsPage: React.FC = () => {
           <span>💎</span>
           <span>Feature Matrix & Entitlements</span>
         </button>
+
+        {canManageI18n && (
+          <button
+            id="settings-subtab-languages"
+            data-testid="settings-subtab-languages"
+            onClick={() => setActiveSubtab('LANGUAGES')}
+            style={{
+              padding: '8px 16px',
+              borderRadius: '6px',
+              border: activeSubtab === 'LANGUAGES' ? '1px solid #06b6d4' : '1px solid transparent',
+              background: activeSubtab === 'LANGUAGES' ? 'rgba(6, 182, 212, 0.15)' : 'transparent',
+              color: activeSubtab === 'LANGUAGES' ? '#06b6d4' : 'var(--text-main)',
+              fontWeight: activeSubtab === 'LANGUAGES' ? 'bold' : 'normal',
+              fontSize: '13px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+            }}
+          >
+            <span>🌐</span>
+            <span>Language Management</span>
+          </button>
+        )}
       </div>
 
       {/* Global Alerts */}
@@ -1051,6 +1084,11 @@ export const SettingsPage: React.FC = () => {
       {/* SUBTAB 5: FEATURE ENTITLEMENTS MATRIX */}
       {activeSubtab === 'ENTITLEMENTS' && (
         <FeatureMatrixEditor />
+      )}
+
+      {/* SUBTAB 6: LANGUAGE MANAGEMENT */}
+      {activeSubtab === 'LANGUAGES' && canManageI18n && (
+        <LanguageManagementPanel />
       )}
     </div>
   );
