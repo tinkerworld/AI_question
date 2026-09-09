@@ -373,17 +373,17 @@ async function runTests() {
 
   } finally {
     server.close();
-    await memDb.close();
     setTestDb(null);
   }
 
   console.log('\n================================================================');
   console.log(` ALL ${passed}/${total} LANGUAGE LIFECYCLE TESTS PASSED!`);
   console.log('================================================================\n');
-  process.exit(0);
 }
 
-runTests().catch((err) => {
+runTests().then(() => {
+  setTimeout(() => process.exit(0), 100);
+}).catch((err) => {
   console.error('\n[FATAL TEST FAILURE]:', err);
   process.exit(1);
 });
