@@ -287,6 +287,26 @@ export async function initV2Tables(): Promise<void> {
     } catch (permErr) {
       console.error('[initV2Tables] Warning: Failed to ensure system.maintenance permission:', permErr);
     }
+
+    // Ensure 'isVerified' column exists on 'translations' and metadata columns on 'translation_keys'
+    try {
+      await pgDb.query(`
+        ALTER TABLE "translations" ADD COLUMN IF NOT EXISTS "isVerified" BOOLEAN NOT NULL DEFAULT false;
+      `);
+      await pgDb.query(`
+        ALTER TABLE "translation_keys" ADD COLUMN IF NOT EXISTS "category" TEXT NOT NULL DEFAULT 'general';
+      `);
+      await pgDb.query(`
+        ALTER TABLE "translation_keys" ADD COLUMN IF NOT EXISTS "module" TEXT NOT NULL DEFAULT 'common';
+      `);
+      await pgDb.query(`
+        INSERT INTO "ai_providers" ("id", "name", "type", "modelId", "baseUrl", "priority", "scope", "isActive")
+        VALUES ('prov_trans_batch_mock', 'Deterministic Multilingual Batch Translation Engine', 'MOCK', 'mock-translation-v1', 'http://localhost:4043/internal/ai/mock-translation', 1, 'translation_batch', true)
+        ON CONFLICT ("id") DO UPDATE SET "name" = EXCLUDED."name", "scope" = EXCLUDED."scope", "isActive" = true;
+      `);
+    } catch (tErr) {
+      console.error('[initV2Tables] Warning: Failed to ensure translations isVerified column:', tErr);
+    }
   } catch (err) {
     console.error('[initV2Tables] Warning: Failed to auto-initialize V2 tables:', err);
   }

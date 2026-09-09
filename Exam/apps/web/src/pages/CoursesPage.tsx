@@ -731,8 +731,13 @@ export const CoursesPage: React.FC = () => {
               ? `${selectedSubject.name} Syllabus Hierarchy`
               : selectedCourse
               ? `${selectedCourse.name} Curriculum Structure`
-              : 'Academic Structure & Curriculum'}
+              : t('courses_title')}
           </h1>
+          {!selectedCourse && (
+            <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>
+              {t('courses_desc')}
+            </p>
+          )}
         </div>
 
         <div style={{ display: 'flex', gap: '10px' }}>
@@ -750,7 +755,7 @@ export const CoursesPage: React.FC = () => {
                 cursor: 'pointer',
               }}
             >
-              + Create Course
+              {t('courses_add_course')}
             </button>
           ) : selectedSubject ? (
             <button
@@ -837,7 +842,7 @@ export const CoursesPage: React.FC = () => {
                 color: 'var(--text-muted)',
               }}
             >
-              No courses configured yet. Click "+ Create Course" to add Engineering Entrance or Medical Foundation.
+              {t('courses_no_courses')}
             </div>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>

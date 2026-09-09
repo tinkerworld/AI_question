@@ -31,6 +31,16 @@ export const LanguageManagementPanel: React.FC = () => {
   const [allKeys, setAllKeys] = useState<TranslationKeyInfo[]>([]);
   const [translationsMap, setTranslationsMap] = useState<Record<string, string>>({});
   const [loadingTranslations, setLoadingTranslations] = useState<boolean>(false);
+  const [verifiedMap, setVerifiedMap] = useState<Record<string, boolean>>({});
+
+  // Import / Export State
+  const [showImportModal, setShowImportModal] = useState<boolean>(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importing, setImporting] = useState<boolean>(false);
+  const [importError, setImportError] = useState<string | null>(null);
+  const [importSummary, setImportSummary] = useState<{ updatedCount: number; skippedCount: number; unknownKeys: string[]; languageCode?: string } | null>(null);
+  const [exporting, setExporting] = useState<boolean>(false);
+  const [batchTranslating, setBatchTranslating] = useState<boolean>(false);
 
   // Translation editing & filtering state
   const [keyFilterTab, setKeyFilterTab] = useState<'ALL' | 'MISSING' | 'TRANSLATED'>('ALL');
@@ -101,6 +111,7 @@ export const LanguageManagementPanel: React.FC = () => {
         // Use dbTranslations to accurately identify explicit translations vs gaps
         const dict = body.data.dbTranslations || {};
         setTranslationsMap(dict);
+        setVerifiedMap(body.data.verifiedMap || {});
 
         // Pre-fill editable state
         const initialEdits: Record<string, string> = {};
@@ -162,10 +173,14 @@ export const LanguageManagementPanel: React.FC = () => {
         [keyStr]: { success: true, message: 'Saved ✓' },
       }));
 
-      // Update in-memory dictionary
+      // Update in-memory dictionary and mark as verified
       setTranslationsMap((prev) => ({
         ...prev,
         [keyStr]: value.trim(),
+      }));
+      setVerifiedMap((prev) => ({
+        ...prev,
+        [keyStr]: true,
       }));
 
       // Refresh global I18n Context so UI reflects changes immediately
@@ -249,6 +264,150 @@ export const LanguageManagementPanel: React.FC = () => {
       setAddError(err.message || 'Failed to register new language');
     } finally {
       setAddingLanguage(false);
+    }
+  };
+
+
+  // Handle Export Language (JSON or CSV)
+  const handleExportLanguage = async (format: 'json' | 'csv') => {
+    if (!selectedLanguage) return;
+    setExporting(true);
+    try {
+      const res = await fetch(`${API_BASE}/i18n/export/${selectedLanguage.code}?format=${format}`, {
+        headers: getAuthHeaders(),
+      });
+      if (!res.ok) throw new Error('Export failed');
+
+      if (format === 'csv') {
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `translations-${selectedLanguage.code}.csv`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+      } else {
+        const body = await res.json();
+        const blob = new Blob([JSON.stringify(body.data, null, 2)], { type: 'application/json' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `translations-${selectedLanguage.code}.json`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+      }
+      setBannerSuccess(`Successfully exported ${selectedLanguage.name} translations (${format.toUpperCase()})`);
+    } catch (err: any) {
+      setBannerError(err.message || 'Export failed');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  // Handle Export All (Backup)
+  const handleExportAll = async () => {
+    setExporting(true);
+    try {
+      const res = await fetch(`${API_BASE}/i18n/export/all?format=json`, {
+        headers: getAuthHeaders(),
+      });
+      if (!res.ok) throw new Error('Backup export failed');
+      const body = await res.json();
+      const blob = new Blob([JSON.stringify(body.data, null, 2)], { type: 'application/json' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `translations-all-backup-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      setBannerSuccess('Full platform translation backup exported successfully!');
+    } catch (err: any) {
+      setBannerError(err.message || 'Backup export failed');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  // Handle Import Submit
+  const handleImportSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedLanguage || !importFile) {
+      setImportError('Please select a valid .json or .csv translation file.');
+      return;
+    }
+
+    setImporting(true);
+    setImportError(null);
+
+    try {
+      const fileText = await importFile.text();
+      let payload: any = { languageCode: selectedLanguage.code };
+
+      if (importFile.name.endsWith('.csv')) {
+        payload.csvContent = fileText;
+      } else {
+        try {
+          const parsed = JSON.parse(fileText);
+          payload.translations = parsed.translations || parsed;
+        } catch (jsonErr) {
+          throw new Error('Invalid JSON file format.');
+        }
+      }
+
+      const res = await fetch(`${API_BASE}/i18n/import`, {
+        method: 'POST',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const body = await res.json();
+      if (!res.ok || !body.success) {
+        throw new Error(body.message || 'Failed to import translations');
+      }
+
+      setImportSummary(body.data);
+      // Reload translations and languages
+      await loadLanguageTranslations(selectedLanguage.code);
+      await loadLanguages();
+      await refreshLanguages();
+      if (selectedLanguage.code === currentLanguage) {
+        await refreshTranslations(currentLanguage);
+      }
+    } catch (err: any) {
+      setImportError(err.message || 'Import failed');
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  // Handle Batch AI Translation Trigger
+  const handleRunBatchTranslate = async () => {
+    if (!selectedLanguage) return;
+    setBatchTranslating(true);
+    setBannerError(null);
+    try {
+      const res = await fetch(`${API_BASE}/i18n/translate-batch`, {
+        method: 'POST',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ languageCode: selectedLanguage.code }),
+      });
+      const body = await res.json();
+      if (!res.ok || !body.success) {
+        throw new Error(body.message || 'Batch translation failed');
+      }
+      setBannerSuccess(`Batch translation populated for ${selectedLanguage.name}!`);
+      await loadLanguageTranslations(selectedLanguage.code);
+      await loadLanguages();
+    } catch (err: any) {
+      setBannerError(err.message || 'Batch translation error');
+    } finally {
+      setBatchTranslating(false);
     }
   };
 
@@ -382,7 +541,31 @@ export const LanguageManagementPanel: React.FC = () => {
             </div>
 
             {/* Add Language Button */}
-            <button
+            <div style={{ display: 'flex', gap: '6px' }}>
+              <button
+                id="btn-export-all-backup"
+                data-testid="btn-export-all-backup"
+                type="button"
+                onClick={handleExportAll}
+                disabled={exporting}
+                style={{
+                  padding: '6px 10px',
+                  borderRadius: '6px',
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid var(--border-color)',
+                  color: 'var(--text-main)',
+                  fontSize: '11px',
+                  cursor: exporting ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                }}
+                title="Export All Languages Backup (JSON)"
+              >
+                <span>💾</span>
+                <span>Backup All</span>
+              </button>
+              <button
               id="btn-add-language"
               data-testid="btn-add-language"
               onClick={() => {
@@ -407,6 +590,7 @@ export const LanguageManagementPanel: React.FC = () => {
               <span>+</span>
               <span>Add Language</span>
             </button>
+            </div>
           </div>
 
           {/* Search & Filter Bar */}
@@ -556,15 +740,35 @@ export const LanguageManagementPanel: React.FC = () => {
                         >
                           {count} / {total} keys translated ({pct}%)
                         </span>
-                        <span
-                          style={{
-                            color: isComplete ? '#10b981' : '#f59e0b',
-                            fontSize: '10px',
-                            fontWeight: 'bold',
-                          }}
-                        >
-                          {isComplete ? 'Complete ✓' : `${total - count} missing`}
-                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span
+                            style={{
+                              color: isComplete ? '#10b981' : '#f59e0b',
+                              fontSize: '10px',
+                              fontWeight: 'bold',
+                            }}
+                          >
+                            {isComplete ? 'Complete ✓' : `${total - count} missing`}
+                          </span>
+                          {(lang.unverifiedCount ?? 0) > 0 ? (
+                            <span
+                              id={`unverified-badge-${lang.code}`}
+                              data-testid={`unverified-badge-${lang.code}`}
+                              style={{
+                                fontSize: '10px',
+                                color: '#f59e0b',
+                                background: 'rgba(245, 158, 11, 0.15)',
+                                padding: '1px 5px',
+                                borderRadius: '4px',
+                              }}
+                              title="Translations generated by AI needing review"
+                            >
+                              ⚠️ {lang.unverifiedCount} unverified
+                            </span>
+                          ) : (
+                            <span style={{ fontSize: '10px', color: '#10b981' }}>✓ Verified</span>
+                          )}
+                        </div>
                       </div>
                       <div
                         style={{
@@ -694,7 +898,113 @@ export const LanguageManagementPanel: React.FC = () => {
                 </div>
 
                 {/* Quick actions for selected language */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                  {/* Export Dropdown / Buttons */}
+                  <button
+                    type="button"
+                    id="btn-export-json"
+                    data-testid="btn-export-json"
+                    onClick={() => handleExportLanguage('json')}
+                    disabled={exporting}
+                    style={{
+                      padding: '6px 10px',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border-color)',
+                      background: 'rgba(255,255,255,0.04)',
+                      color: 'var(--text-main)',
+                      fontSize: '11px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                    title="Export translations as JSON"
+                  >
+                    <span>📥</span>
+                    <span>Export JSON</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    id="btn-export-csv"
+                    data-testid="btn-export-csv"
+                    onClick={() => handleExportLanguage('csv')}
+                    disabled={exporting}
+                    style={{
+                      padding: '6px 10px',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border-color)',
+                      background: 'rgba(255,255,255,0.04)',
+                      color: 'var(--text-main)',
+                      fontSize: '11px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                    title="Export translations as CSV with UTF-8 BOM"
+                  >
+                    <span>📊</span>
+                    <span>Export CSV</span>
+                  </button>
+
+                  {/* Import Button */}
+                  <button
+                    type="button"
+                    id="btn-import-translations"
+                    data-testid="btn-import-translations"
+                    onClick={() => {
+                      setImportError(null);
+                      setImportSummary(null);
+                      setImportFile(null);
+                      setShowImportModal(true);
+                    }}
+                    style={{
+                      padding: '6px 10px',
+                      borderRadius: '6px',
+                      border: '1px solid #10b981',
+                      background: 'rgba(16, 185, 129, 0.12)',
+                      color: '#10b981',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                  >
+                    <span>📤</span>
+                    <span>Import</span>
+                  </button>
+
+                  {/* Batch AI Translate */}
+                  {selectedLanguage.code !== 'en' && (
+                    <button
+                      type="button"
+                      id="btn-ai-translate-batch"
+                      data-testid="btn-ai-translate-batch"
+                      onClick={handleRunBatchTranslate}
+                      disabled={batchTranslating}
+                      style={{
+                        padding: '6px 10px',
+                        borderRadius: '6px',
+                        border: '1px solid #6366f1',
+                        background: 'rgba(99, 102, 241, 0.12)',
+                        color: '#818cf8',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        cursor: batchTranslating ? 'not-allowed' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                      }}
+                      title="Run AI Batch Translation for this language"
+                    >
+                      <span>⚡</span>
+                      <span>{batchTranslating ? 'Translating...' : 'AI Auto-Fill'}</span>
+                    </button>
+                  )}
+
                   <button
                     type="button"
                     id="btn-preview-in-app"
@@ -906,18 +1216,52 @@ export const LanguageManagementPanel: React.FC = () => {
 
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             {isTranslated ? (
-                              <span
-                                style={{
-                                  fontSize: '11px',
-                                  color: '#10b981',
-                                  background: 'rgba(16, 185, 129, 0.12)',
-                                  padding: '2px 8px',
-                                  borderRadius: '4px',
-                                  fontWeight: 'bold',
-                                }}
-                              >
-                                Translated ✓
-                              </span>
+                              <>
+                                <span
+                                  id={`badge-translated-${keyInfo.key}`}
+                                  style={{
+                                    fontSize: '11px',
+                                    color: '#10b981',
+                                    background: 'rgba(16, 185, 129, 0.12)',
+                                    padding: '2px 8px',
+                                    borderRadius: '4px',
+                                    fontWeight: 'bold',
+                                  }}
+                                >
+                                  Translated ✓
+                                </span>
+                                {verifiedMap[keyInfo.key] ? (
+                                  <span
+                                    id={`badge-verified-${keyInfo.key}`}
+                                    data-testid={`badge-verified-${keyInfo.key}`}
+                                    style={{
+                                      fontSize: '10px',
+                                      color: '#10b981',
+                                      background: 'rgba(16, 185, 129, 0.2)',
+                                      padding: '2px 6px',
+                                      borderRadius: '4px',
+                                      fontWeight: 'bold',
+                                    }}
+                                  >
+                                    Verified ✓
+                                  </span>
+                                ) : (
+                                  <span
+                                    id={`badge-unverified-${keyInfo.key}`}
+                                    data-testid={`badge-unverified-${keyInfo.key}`}
+                                    style={{
+                                      fontSize: '10px',
+                                      color: '#f59e0b',
+                                      background: 'rgba(245, 158, 11, 0.2)',
+                                      padding: '2px 6px',
+                                      borderRadius: '4px',
+                                      fontWeight: 'bold',
+                                    }}
+                                  >
+                                    AI-generated ⚠️
+                                  </span>
+                                )}
+                              </>
                             ) : (
                               <span
                                 style={{
@@ -1273,6 +1617,210 @@ export const LanguageManagementPanel: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Import Translations Modal */}
+      {showImportModal && (
+        <div
+          id="import-translations-modal"
+          data-testid="import-translations-modal"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.7)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              background: 'var(--panel-bg)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '10px',
+              padding: '24px',
+              width: '520px',
+              maxWidth: '90vw',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '18px' }}>📤</span>
+                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold' }}>
+                  Import Translations ({selectedLanguage?.name} - {selectedLanguage?.code})
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowImportModal(false);
+                  setImportSummary(null);
+                }}
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '16px', cursor: 'pointer' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {importError && (
+              <div
+                id="import-error-msg"
+                data-testid="import-error-msg"
+                style={{
+                  padding: '10px',
+                  borderRadius: '6px',
+                  background: 'rgba(239, 68, 68, 0.15)',
+                  border: '1px solid #ef4444',
+                  color: '#ef4444',
+                  fontSize: '12px',
+                }}
+              >
+                {importError}
+              </div>
+            )}
+
+            {/* Import Summary Results Modal Content */}
+            {importSummary ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div
+                  id="import-summary-banner"
+                  data-testid="import-summary-banner"
+                  style={{
+                    padding: '12px',
+                    borderRadius: '6px',
+                    background: 'rgba(16, 185, 129, 0.12)',
+                    border: '1px solid #10b981',
+                    color: '#10b981',
+                    fontSize: '13px',
+                  }}
+                >
+                  🎉 <strong>Import Completed!</strong>
+                </div>
+
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <div style={{ flex: 1, padding: '12px', borderRadius: '6px', background: 'rgba(16, 185, 129, 0.1)', textAlign: 'center' }}>
+                    <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#10b981' }}>{importSummary.updatedCount}</div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Keys Updated</div>
+                  </div>
+                  <div style={{ flex: 1, padding: '12px', borderRadius: '6px', background: 'rgba(245, 158, 11, 0.1)', textAlign: 'center' }}>
+                    <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#f59e0b' }}>{importSummary.skippedCount}</div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Keys Skipped</div>
+                  </div>
+                </div>
+
+                {importSummary.unknownKeys && importSummary.unknownKeys.length > 0 && (
+                  <div style={{ background: 'rgba(0,0,0,0.2)', padding: '10px', borderRadius: '6px', maxHeight: '120px', overflowY: 'auto' }}>
+                    <div style={{ fontSize: '11px', color: '#f59e0b', fontWeight: 'bold', marginBottom: '4px' }}>
+                      Skipped Unknown Keys (not in translation_keys schema):
+                    </div>
+                    <div style={{ fontFamily: 'JetBrains Mono', fontSize: '11px', color: 'var(--text-muted)' }}>
+                      {importSummary.unknownKeys.join(', ')}
+                    </div>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  id="btn-close-import-summary"
+                  data-testid="btn-close-import-summary"
+                  onClick={() => {
+                    setShowImportModal(false);
+                    setImportSummary(null);
+                  }}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '6px',
+                    background: '#06b6d4',
+                    color: '#000',
+                    fontWeight: 'bold',
+                    border: 'none',
+                    cursor: 'pointer',
+                    alignSelf: 'flex-end',
+                    marginTop: '8px',
+                  }}
+                >
+                  Done & Refresh View
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleImportSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                  Upload a <code>.json</code> or <code>.csv</code> translation export file. Human-supplied translations are automatically marked as <strong>Verified ✓</strong>. Unknown keys are safely skipped.
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '6px' }}>
+                    Select Translation File (.json or .csv):
+                  </label>
+                  <input
+                    type="file"
+                    id="import-file-input"
+                    data-testid="import-file-input"
+                    accept=".json,.csv"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        setImportFile(e.target.files[0]);
+                      }
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '8px',
+                      background: 'var(--bg-main)',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: '6px',
+                      color: 'var(--text-main)',
+                      fontSize: '12px',
+                    }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowImportModal(false)}
+                    style={{
+                      padding: '8px 16px',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border-color)',
+                      background: 'transparent',
+                      color: 'var(--text-main)',
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    id="btn-submit-import"
+                    data-testid="btn-submit-import"
+                    disabled={importing || !importFile}
+                    style={{
+                      padding: '8px 18px',
+                      borderRadius: '6px',
+                      background: '#10b981',
+                      border: 'none',
+                      color: '#000',
+                      fontSize: '12px',
+                      fontWeight: 'bold',
+                      cursor: importing || !importFile ? 'not-allowed' : 'pointer',
+                      opacity: importing || !importFile ? 0.7 : 1,
+                    }}
+                  >
+                    {importing ? 'Importing...' : 'Upload & Import'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

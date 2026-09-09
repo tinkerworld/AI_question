@@ -3,7 +3,16 @@ const assert = require('assert');
 const path = require('path');
 const { PGlite } = require('@electric-sql/pglite');
 
-const dbPath = path.resolve(__dirname, '../packages/database/prisma/postgres-data');
+const fs = require('fs');
+function getDbPath() {
+  const c1 = path.resolve(__dirname, '../../postgres-data');
+  const c2 = path.resolve(__dirname, '../postgres-data');
+  const c3 = path.resolve(__dirname, '../packages/database/prisma/postgres-data');
+  if (fs.existsSync(c1)) return c1;
+  if (fs.existsSync(c2)) return c2;
+  return c3;
+}
+const dbPath = getDbPath();
 const db = new PGlite(dbPath);
 
 console.log('====================================================');
@@ -83,7 +92,7 @@ async function run() {
     console.log('\n6. Testing User Preference DB Persistence in PostgreSQL `user_preferences`...');
     const userId = 'usr_admin_test';
     await db.query(
-      `INSERT INTO "users" ("id", "email", "passwordHash", "firstName", "lastName") VALUES ($1, $2, $3, $4, $5) ON CONFLICT ("email") DO NOTHING`,
+      `INSERT INTO "users" ("id", "email", "passwordHash", "firstName", "lastName") VALUES ($1, $2, $3, $4, $5) ON CONFLICT ("id") DO NOTHING`,
       [userId, 'admin@examos.io', '$2b$10$xyz', 'Admin', 'User']
     );
 

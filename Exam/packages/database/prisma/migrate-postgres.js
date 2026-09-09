@@ -349,6 +349,7 @@ async function migrate() {
       "languageId" TEXT NOT NULL REFERENCES "languages"("id") ON DELETE CASCADE,
       "translationKeyId" TEXT NOT NULL REFERENCES "translation_keys"("id") ON DELETE CASCADE,
       "value" TEXT NOT NULL,
+      "isVerified" BOOLEAN NOT NULL DEFAULT false,
       "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       "updatedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       UNIQUE("languageId", "translationKeyId")

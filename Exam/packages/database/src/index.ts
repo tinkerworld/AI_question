@@ -58,9 +58,17 @@ export const pgDb: PGlite = new Proxy({} as PGlite, {
       };
     }
     const db = getOrInitDb();
+    if (prop === 'waitReady') {
+      return db.waitReady;
+    }
     const val = (db as any)[prop];
     if (typeof val === 'function') {
-      return val.bind(db);
+      return async (...args: any[]) => {
+        if (db.waitReady) {
+          await db.waitReady;
+        }
+        return val.apply(db, args);
+      };
     }
     return val;
   },

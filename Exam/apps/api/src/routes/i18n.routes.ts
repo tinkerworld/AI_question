@@ -5,10 +5,11 @@ import { requirePermission } from '../middleware/permission';
 import { PERMISSIONS } from '@repo/permissions';
 import { auditLog } from '../middleware/audit';
 import { AppError } from '../middleware/error';
+import { AITranslationService, KeyToTranslate } from '../services/ai-translation.service';
 
 const router = Router();
 
-const BASELINE_LANGUAGES = [
+export const BASELINE_LANGUAGES = [
   { id: 'l1', code: 'en', name: 'English', nativeName: 'English', isDefault: true },
   { id: 'l2', code: 'hi', name: 'Hindi', nativeName: 'हिन्दी', isDefault: false },
   { id: 'l3', code: 'bn', name: 'Bengali', nativeName: 'বাংলা', isDefault: false },
@@ -60,8 +61,72 @@ const SEED_TRANSLATIONS: Record<string, Record<string, string>> = {
   lus: { welcome: 'ExamOS Platform-ah kan lo lawm a che', app_title: 'ExamOS // Learning Platform', dashboard: 'Dashboard', users: 'User Control', courses: 'Academic Courses', question_bank: 'Question Bank', exam_patterns: 'Exam Patterns', analytics: 'Student Analytics' },
 };
 
+// RFC 4180 CSV serialization helper
+export function escapeCsvCell(val: string | null | undefined): string {
+  if (val === null || val === undefined) return '""';
+  const str = String(val);
+  if (str.includes('"') || str.includes(',') || str.includes('\n') || str.includes('\r')) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return `"${str}"`;
+}
+
+// RFC 4180 CSV parser helper
+export function parseCsv(csvText: string): string[][] {
+  const cleanText = csvText.replace(/^﻿/, '');
+  const rows: string[][] = [];
+  let currentRow: string[] = [];
+  let currentCell = '';
+  let insideQuotes = false;
+
+  for (let i = 0; i < cleanText.length; i++) {
+    const char = cleanText[i];
+    const nextChar = cleanText[i + 1];
+
+    if (insideQuotes) {
+      if (char === '"') {
+        if (nextChar === '"') {
+          currentCell += '"';
+          i++; // Skip escaped quote
+        } else {
+          insideQuotes = false;
+        }
+      } else {
+        currentCell += char;
+      }
+    } else {
+      if (char === '"') {
+        insideQuotes = true;
+      } else if (char === ',') {
+        currentRow.push(currentCell);
+        currentCell = '';
+      } else if (char === '\n') {
+        currentRow.push(currentCell);
+        if (currentRow.some((c) => c.trim().length > 0)) {
+          rows.push(currentRow);
+        }
+        currentRow = [];
+        currentCell = '';
+      } else if (char === '\r') {
+        // Skip CR
+      } else {
+        currentCell += char;
+      }
+    }
+  }
+
+  if (currentCell.length > 0 || currentRow.length > 0) {
+    currentRow.push(currentCell);
+    if (currentRow.some((c) => c.trim().length > 0)) {
+      rows.push(currentRow);
+    }
+  }
+
+  return rows;
+}
+
 // ----------------------------------------------------------------------------
-// GET /api/v1/i18n/languages — List all registered languages from DB
+// GET /api/v1/i18n/languages — List all registered languages with completeness
 // ----------------------------------------------------------------------------
 router.get('/languages', async (req: Request, res: Response) => {
   try {
@@ -75,7 +140,8 @@ router.get('/languages', async (req: Request, res: Response) => {
         l."name", 
         l."nativeName", 
         l."isDefault",
-        COUNT(t."id")::int AS "translatedCount"
+        COUNT(t."id")::int AS "translatedCount",
+        COUNT(CASE WHEN t."isVerified" = false THEN 1 END)::int AS "unverifiedCount"
       FROM "languages" l
       LEFT JOIN "translations" t ON t."languageId" = l."id"
       GROUP BY l."id", l."code", l."name", l."nativeName", l."isDefault"
@@ -85,15 +151,16 @@ router.get('/languages', async (req: Request, res: Response) => {
       const data = dbRes.rows.map((row: any) => ({
         ...row,
         totalKeys,
+        unverifiedCount: Number(row.unverifiedCount || 0),
       }));
       return res.json({ success: true, data });
     }
   } catch (err) {
-    console.warn('Querying baseline languages fallback');
+    console.warn('Querying baseline languages fallback', err);
   }
   return res.json({
     success: true,
-    data: BASELINE_LANGUAGES.map((l) => ({ ...l, translatedCount: 10, totalKeys: 10 })),
+    data: BASELINE_LANGUAGES.map((l) => ({ ...l, translatedCount: 10, totalKeys: 10, unverifiedCount: 0 })),
   });
 });
 
@@ -153,7 +220,8 @@ router.post(
           await pgDb.query(`UPDATE "languages" SET "isDefault" = false WHERE "code" != $1`, [langCode]);
         }
         await pgDb.query(
-          `INSERT INTO "languages" ("id", "code", "name", "nativeName", "isDefault") VALUES ($1, $2, $3, $4, $5) ON CONFLICT ("code") DO UPDATE SET "name" = EXCLUDED."name", "nativeName" = EXCLUDED."nativeName", "isDefault" = EXCLUDED."isDefault"`,
+          `INSERT INTO "languages" ("id", "code", "name", "nativeName", "isDefault") VALUES ($1, $2, $3, $4, $5)
+           ON CONFLICT ("code") DO UPDATE SET "name" = EXCLUDED."name", "nativeName" = EXCLUDED."nativeName", "isDefault" = EXCLUDED."isDefault"`,
           [id, langCode, String(name).trim(), String(nativeName).trim(), Boolean(isDefault)]
         );
       } catch (e) {
@@ -171,13 +239,14 @@ router.post(
 );
 
 // ----------------------------------------------------------------------------
-// GET /api/v1/i18n/translations/:langCode — Get translation dictionary for language from DB
+// GET /api/v1/i18n/translations/:langCode — Get translation dictionary for language
 // ----------------------------------------------------------------------------
 router.get('/translations/:langCode', async (req: Request, res: Response) => {
   const { langCode } = req.params;
   const targetCode = String(langCode).toLowerCase().trim();
   const dict: Record<string, string> = { ...SEED_TRANSLATIONS['en'] };
   const dbDict: Record<string, string> = {};
+  const verifiedMap: Record<string, boolean> = {};
 
   if (SEED_TRANSLATIONS[targetCode]) {
     Object.assign(dict, SEED_TRANSLATIONS[targetCode]);
@@ -185,7 +254,7 @@ router.get('/translations/:langCode', async (req: Request, res: Response) => {
 
   try {
     const transRes = await pgDb.query(
-      `SELECT t."value", tk."key"
+      `SELECT t."value", tk."key", COALESCE(t."isVerified", false) AS "isVerified"
        FROM "translations" t
        JOIN "languages" l ON t."languageId" = l."id"
        JOIN "translation_keys" tk ON t."translationKeyId" = tk."id"
@@ -197,6 +266,7 @@ router.get('/translations/:langCode', async (req: Request, res: Response) => {
       transRes.rows.forEach((row: any) => {
         dict[row.key] = row.value;
         dbDict[row.key] = row.value;
+        verifiedMap[row.key] = Boolean(row.isVerified);
       });
     }
   } catch (err) {
@@ -209,12 +279,13 @@ router.get('/translations/:langCode', async (req: Request, res: Response) => {
       languageCode: targetCode,
       translations: dict,
       dbTranslations: dbDict,
+      verifiedMap,
     },
   });
 });
 
 // ----------------------------------------------------------------------------
-// POST /api/v1/i18n/translations — Upsert translation value in DB
+// POST /api/v1/i18n/translations — Upsert single translation value in DB
 // ----------------------------------------------------------------------------
 router.post(
   '/translations',
@@ -223,13 +294,15 @@ router.post(
   auditLog('UPSERT', 'translation'),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { languageCode, key, value, description, module } = req.body;
-      if (!languageCode || !key || !value) {
+      const { languageCode, key, value, description, module, isVerified } = req.body;
+      if (!languageCode || !key || value === undefined) {
         throw new AppError(400, 'VALIDATION_ERROR', 'languageCode, key, and value are required');
       }
 
       const langCode = String(languageCode).toLowerCase().trim();
       const keyStr = String(key).trim();
+      // Human updates via management panel default to verified true
+      const verified = isVerified !== undefined ? Boolean(isVerified) : true;
 
       try {
         const langRes = await pgDb.query(`SELECT "id" FROM "languages" WHERE "code" = $1`, [langCode]);
@@ -254,12 +327,17 @@ router.post(
 
         const transId = `t_${langCode}_${keyStr}`;
         await pgDb.query(
-          `INSERT INTO "translations" ("id", "languageId", "translationKeyId", "value") VALUES ($1, $2, $3, $4)
-           ON CONFLICT ("languageId", "translationKeyId") DO UPDATE SET "value" = EXCLUDED."value"`,
-          [transId, langId, keyId, String(value)]
+          `INSERT INTO "translations" ("id", "languageId", "translationKeyId", "value", "isVerified")
+           VALUES ($1, $2, $3, $4, $5)
+           ON CONFLICT ("languageId", "translationKeyId")
+           DO UPDATE SET "value" = EXCLUDED."value", "isVerified" = EXCLUDED."isVerified"`,
+          [transId, langId, keyId, String(value), verified]
         );
 
-        return res.json({ success: true, data: { id: transId, languageCode: langCode, key: keyStr, value: String(value) } });
+        return res.json({
+          success: true,
+          data: { id: transId, languageCode: langCode, key: keyStr, value: String(value), isVerified: verified },
+        });
       } catch (e) {
         console.warn('Upsert fallback for translation', keyStr);
       }
@@ -267,7 +345,368 @@ router.post(
       if (!SEED_TRANSLATIONS[langCode]) SEED_TRANSLATIONS[langCode] = {};
       SEED_TRANSLATIONS[langCode][keyStr] = String(value);
 
-      return res.json({ success: true, data: { languageCode: langCode, key: keyStr, value: String(value) } });
+      return res.json({ success: true, data: { languageCode: langCode, key: keyStr, value: String(value), isVerified: verified } });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// ----------------------------------------------------------------------------
+// GET /api/v1/i18n/export/all — Export all languages in single backup JSON or CSV
+// ----------------------------------------------------------------------------
+router.get(
+  '/export/all',
+  authenticate,
+  requirePermission(PERMISSIONS.I18N_MANAGE),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const format = String(req.query.format || 'json').toLowerCase().trim();
+
+      const langsRes = await pgDb.query(`SELECT "id", "code", "name", "nativeName", "isDefault" FROM "languages" ORDER BY "code" ASC`);
+      const languages = langsRes.rows;
+
+      const keysRes = await pgDb.query(`SELECT "id", "key", "module", "description" FROM "translation_keys" ORDER BY "key" ASC`);
+      const keys = keysRes.rows;
+
+      const translationsRes = await pgDb.query(`
+        SELECT l."code" as "langCode", tk."key", t."value", COALESCE(t."isVerified", false) as "isVerified"
+        FROM "translations" t
+        JOIN "languages" l ON t."languageId" = l."id"
+        JOIN "translation_keys" tk ON t."translationKeyId" = tk."id"
+      `);
+
+      const translationsByLang: Record<string, Record<string, string>> = {};
+      const verifiedByLang: Record<string, Record<string, boolean>> = {};
+
+      translationsRes.rows.forEach((r: any) => {
+        if (!translationsByLang[r.langCode]) translationsByLang[r.langCode] = {};
+        if (!verifiedByLang[r.langCode]) verifiedByLang[r.langCode] = {};
+        translationsByLang[r.langCode][r.key] = r.value;
+        verifiedByLang[r.langCode][r.key] = Boolean(r.isVerified);
+      });
+
+      if (format === 'csv') {
+        const langCodes = languages.map((l: any) => l.code);
+        const header = ['key', ...langCodes].join(',') + '\n';
+        const lines = keys.map((k: any) => {
+          const row = [escapeCsvCell(k.key)];
+          for (const lc of langCodes) {
+            row.push(escapeCsvCell(translationsByLang[lc]?.[k.key] || ''));
+          }
+          return row.join(',');
+        });
+        const csvContent = String.fromCharCode(0xfeff) + header + lines.join('\n');
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="translations-all.csv"`);
+        return res.send(csvContent);
+      }
+
+      return res.json({
+        success: true,
+        data: {
+          exportedAt: new Date().toISOString(),
+          languages,
+          totalKeys: keys.length,
+          translations: translationsByLang,
+          verified: verifiedByLang,
+        },
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// ----------------------------------------------------------------------------
+// GET /api/v1/i18n/export/:langCode — Export translations as JSON or CSV
+// ----------------------------------------------------------------------------
+router.get(
+  '/export/:langCode',
+  authenticate,
+  requirePermission(PERMISSIONS.I18N_MANAGE),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { langCode } = req.params;
+      const format = String(req.query.format || 'json').toLowerCase().trim();
+      const targetCode = String(langCode).toLowerCase().trim();
+
+      const langRes = await pgDb.query(`SELECT "id", "code", "name", "nativeName" FROM "languages" WHERE "code" = $1`, [targetCode]);
+      if (!langRes.rows.length) {
+        throw new AppError(404, 'NOT_FOUND', `Language '${targetCode}' does not exist`);
+      }
+      const lang = langRes.rows[0];
+
+      const rowsRes = await pgDb.query(
+        `
+        SELECT 
+          tk."key",
+          tk."module",
+          COALESCE(
+            (SELECT en_t."value" FROM "translations" en_t 
+             JOIN "languages" en_l ON en_t."languageId" = en_l."id" 
+             WHERE en_l."code" = 'en' AND en_t."translationKeyId" = tk."id" LIMIT 1),
+            tk."key"
+          ) AS "english",
+          t."value" AS "translation",
+          COALESCE(t."isVerified", false) AS "isVerified"
+        FROM "translation_keys" tk
+        LEFT JOIN "translations" t ON t."translationKeyId" = tk."id" AND t."languageId" = $1
+        ORDER BY tk."key" ASC
+        `,
+        [lang.id]
+      );
+
+      if (format === 'csv') {
+        const header = 'key,english,translation,isVerified\n';
+        const lines = rowsRes.rows.map((r: any) =>
+          `${escapeCsvCell(r.key)},${escapeCsvCell(r.english)},${escapeCsvCell(r.translation || '')},${r.isVerified ? 'true' : 'false'}`
+        );
+        const csvContent = String.fromCharCode(0xfeff) + header + lines.join('\n');
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="translations-${targetCode}.csv"`);
+        return res.send(csvContent);
+      }
+
+      const translationsObj: Record<string, string> = {};
+      const verifiedObj: Record<string, boolean> = {};
+      rowsRes.rows.forEach((r: any) => {
+        if (r.translation !== null && r.translation !== undefined) {
+          translationsObj[r.key] = r.translation;
+          verifiedObj[r.key] = Boolean(r.isVerified);
+        }
+      });
+
+      return res.json({
+        success: true,
+        data: {
+          languageCode: targetCode,
+          languageName: lang.name,
+          nativeName: lang.nativeName,
+          exportedAt: new Date().toISOString(),
+          translations: translationsObj,
+          verified: verifiedObj,
+          details: rowsRes.rows.map((r: any) => ({
+            key: r.key,
+            english: r.english,
+            translation: r.translation || '',
+            isVerified: Boolean(r.isVerified),
+          })),
+        },
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+
+
+// ----------------------------------------------------------------------------
+// POST /api/v1/i18n/import — Import translations from JSON or CSV
+// ----------------------------------------------------------------------------
+router.post(
+  '/import',
+  authenticate,
+  requirePermission(PERMISSIONS.I18N_MANAGE),
+  auditLog('IMPORT', 'translations'),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      let { languageCode, csvContent, translations, format, content } = req.body;
+      let targetCode = languageCode ? String(languageCode).toLowerCase().trim() : '';
+
+      if (!csvContent && !translations && content) {
+        if (format === 'json') {
+          try {
+            translations = typeof content === 'string' ? JSON.parse(content) : content;
+          } catch {
+            throw new AppError(400, 'VALIDATION_ERROR', 'Invalid JSON content provided');
+          }
+        } else if (format === 'csv') {
+          csvContent = content;
+        } else if (typeof content === 'string') {
+          const trimmed = content.trim();
+          if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+            try {
+              translations = JSON.parse(trimmed);
+            } catch {
+              csvContent = content;
+            }
+          } else {
+            csvContent = content;
+          }
+        } else {
+          translations = content;
+        }
+      }
+
+      // Dictionary of key -> value extracted from payload
+      const pairsToImport: Record<string, string> = {};
+
+      if (csvContent) {
+        const rows = parseCsv(String(csvContent));
+        if (rows.length < 2) {
+          throw new AppError(400, 'VALIDATION_ERROR', 'CSV must have a header row and at least one data row');
+        }
+        const header = rows[0].map((h) => h.toLowerCase().trim().replace(/^\uFEFF/, ''));
+        const keyIdx = header.indexOf('key');
+        let transIdx = header.indexOf('translation');
+        if (transIdx === -1 && targetCode) transIdx = header.indexOf(targetCode);
+        if (transIdx === -1) transIdx = header.indexOf('value');
+        if (transIdx === -1 && header.length >= 2) {
+          transIdx = header.includes('english') ? header.findIndex((h, idx) => idx !== keyIdx && h !== 'english') : 1;
+        }
+
+        if (keyIdx === -1 || transIdx === -1) {
+          throw new AppError(400, 'VALIDATION_ERROR', 'CSV must contain "key" and translation columns');
+        }
+
+        for (let i = 1; i < rows.length; i++) {
+          const row = rows[i];
+          const k = row[keyIdx]?.trim();
+          const v = row[transIdx];
+          if (k) {
+            pairsToImport[k] = v !== undefined ? v : '';
+          }
+        }
+      } else if (translations && typeof translations === 'object') {
+        if (Array.isArray(translations)) {
+          translations.forEach((item) => {
+            if (item && item.key) {
+              pairsToImport[String(item.key).trim()] = item.translation !== undefined ? String(item.translation) : String(item.value ?? '');
+            }
+          });
+        } else {
+          for (const [k, v] of Object.entries(translations)) {
+            if (k) pairsToImport[k.trim()] = String(v ?? '');
+          }
+        }
+      } else {
+        throw new AppError(400, 'VALIDATION_ERROR', 'Either translations object or csvContent must be provided');
+      }
+
+      if (!targetCode) {
+        throw new AppError(400, 'VALIDATION_ERROR', 'languageCode is required');
+      }
+
+      // 1. Strictly validate that language exists in DB (do NOT auto-create on import)
+      const langRes = await pgDb.query(`SELECT "id", "code", "name" FROM "languages" WHERE "code" = $1`, [targetCode]);
+      if (!langRes.rows.length) {
+        throw new AppError(400, 'UNKNOWN_LANGUAGE', `Language code '${targetCode}' does not exist. Please register the language before importing.`);
+      }
+      const lang = langRes.rows[0];
+
+      // 2. Fetch all registered translation keys
+      const allKeysRes = await pgDb.query(`SELECT "id", "key" FROM "translation_keys"`);
+      const keyMap = new Map<string, string>();
+      allKeysRes.rows.forEach((r: any) => keyMap.set(r.key, r.id));
+
+      const unknownKeys: string[] = [];
+      let updatedCount = 0;
+      let skippedCount = 0;
+
+      for (const [key, val] of Object.entries(pairsToImport)) {
+        // If key doesn't exist in translation_keys, skip it without failing the whole batch
+        if (!keyMap.has(key)) {
+          unknownKeys.push(key);
+          skippedCount++;
+          continue;
+        }
+
+        const keyId = keyMap.get(key)!;
+        const transId = `t_${targetCode}_${key}`;
+
+        // Upsert into translations with isVerified = true (human supplied)
+        await pgDb.query(
+          `INSERT INTO "translations" ("id", "languageId", "translationKeyId", "value", "isVerified")
+           VALUES ($1, $2, $3, $4, true)
+           ON CONFLICT ("languageId", "translationKeyId")
+           DO UPDATE SET "value" = EXCLUDED."value", "isVerified" = true`,
+          [transId, lang.id, keyId, val]
+        );
+        updatedCount++;
+      }
+
+      return res.json({
+        success: true,
+        data: {
+          languageCode: targetCode,
+          languageName: lang.name,
+          updatedCount,
+          skippedCount,
+          unknownKeys,
+          failedCount: 0,
+        },
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// ----------------------------------------------------------------------------
+// POST /api/v1/i18n/translate-batch — Run AI batch translation pass for language(s)
+// ----------------------------------------------------------------------------
+router.post(
+  '/translate-batch',
+  authenticate,
+  requirePermission(PERMISSIONS.I18N_MANAGE),
+  auditLog('BATCH_TRANSLATE', 'i18n'),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { languageCode, languageCodes } = req.body;
+      const targets: string[] = [];
+
+      if (languageCode) {
+        targets.push(String(languageCode).toLowerCase().trim());
+      } else if (Array.isArray(languageCodes)) {
+        languageCodes.forEach((c) => targets.push(String(c).toLowerCase().trim()));
+      } else {
+        // Default to all languages in database except 'en'
+        const langs = await pgDb.query(`SELECT "code" FROM "languages" WHERE "code" != 'en'`);
+        langs.rows.forEach((r: any) => targets.push(r.code));
+      }
+
+      // Fetch all translation keys with their base English values
+      const keysRes = await pgDb.query(`
+        SELECT 
+          tk."key", 
+          tk."description", 
+          tk."module",
+          COALESCE(
+            (SELECT t."value" FROM "translations" t 
+             JOIN "languages" l ON t."languageId" = l."id" 
+             WHERE l."code" = 'en' AND t."translationKeyId" = tk."id" LIMIT 1),
+            tk."key"
+          ) AS "en"
+        FROM "translation_keys" tk
+        ORDER BY tk."key" ASC
+      `);
+
+      const allKeys: KeyToTranslate[] = keysRes.rows.map((r: any) => ({
+        key: r.key,
+        en: r.en,
+        description: r.description,
+        module: r.module,
+      }));
+
+      const summary: Record<string, number> = {};
+
+      for (const code of targets) {
+        const translations = await AITranslationService.translateBatchForLanguage(code, allKeys);
+        // Persist translations with isVerified = false
+        const saved = await AITranslationService.persistTranslations(code, translations, false);
+        summary[code] = saved;
+      }
+
+      return res.json({
+        success: true,
+        data: {
+          totalKeys: allKeys.length,
+          processedLanguages: targets,
+          summary,
+        },
+      });
     } catch (err) {
       next(err);
     }

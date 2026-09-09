@@ -1088,10 +1088,10 @@ export const QuestionBankPage: React.FC = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h1 style={{ margin: 0, fontSize: '22px', fontFamily: 'JetBrains Mono' }}>
-            Question Bank Workbench
+            {t('qb_title')}
           </h1>
           <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>
-            Author, version, tag, review, and organize curriculum question assets
+            {t('qb_desc')}
           </div>
         </div>
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
@@ -1150,7 +1150,7 @@ export const QuestionBankPage: React.FC = () => {
               gap: '6px',
             }}
           >
-            <span>+</span> Create Question
+            <span>+</span> {t('qb_add_question')}
           </button>
         </div>
       </div>
@@ -1301,7 +1301,7 @@ export const QuestionBankPage: React.FC = () => {
       >
         <input
           type="text"
-          placeholder="Search question text, tags, or ID..."
+          placeholder={t('qb_search_placeholder')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           style={{
@@ -1327,7 +1327,7 @@ export const QuestionBankPage: React.FC = () => {
             fontSize: '12px',
           }}
         >
-          <option value="">All Difficulties</option>
+          <option value="">{t('qb_filter_difficulty')}</option>
           <option value="EASY">Easy</option>
           <option value="MEDIUM">Medium</option>
           <option value="HARD">Hard</option>
@@ -1592,7 +1592,7 @@ export const QuestionBankPage: React.FC = () => {
                 color: 'var(--text-muted)',
               }}
             >
-              No questions match the current filter selection. Click "+ Create Question" to author new questions.
+              {t('qb_no_questions')}
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>

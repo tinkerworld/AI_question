@@ -7,6 +7,7 @@ import { MaintenanceControlPanel } from '../components/maintenance/MaintenanceCo
 import { FeatureMatrixEditor } from '../components/entitlements/FeatureMatrixEditor';
 import { LanguageManagementPanel } from '../components/i18n/LanguageManagementPanel';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from '../context/I18nContext';
 
 interface AIProvider {
   id: string;
@@ -25,6 +26,7 @@ interface AIProvider {
 export const SettingsPage: React.FC = () => {
   const { theme, setTheme } = useTheme();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const userPermissions = user?.permissions || [];
   const canManageI18n =
     userPermissions.includes('i18n.manage') ||
@@ -509,10 +511,10 @@ export const SettingsPage: React.FC = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h1 style={{ margin: 0, fontSize: '22px', fontFamily: 'JetBrains Mono' }}>
-            System Settings & Administration
+            {t('settings_header_title')}
           </h1>
           <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>
-            Configure AI model providers, gateway cascade routing, appearance preferences, and exam theme styling
+            {t('settings_header_desc')}
           </div>
         </div>
       </div>
@@ -538,7 +540,7 @@ export const SettingsPage: React.FC = () => {
           }}
         >
           <span>✨</span>
-          <span>AI & Model Configuration</span>
+          <span>{t('settings_tab_ai')}</span>
         </button>
 
         <button
@@ -560,7 +562,7 @@ export const SettingsPage: React.FC = () => {
           }}
         >
           <span>🎨</span>
-          <span>Appearance & Theme</span>
+          <span>{t('settings_tab_appearance')}</span>
         </button>
 
         <button
@@ -582,7 +584,7 @@ export const SettingsPage: React.FC = () => {
           }}
         >
           <span>📝</span>
-          <span>Exam Paper Themes</span>
+          <span>{t('settings_tab_exam_themes')}</span>
         </button>
 
         <button
@@ -604,7 +606,7 @@ export const SettingsPage: React.FC = () => {
           }}
         >
           <span>🛠️</span>
-          <span>System Maintenance</span>
+          <span>{t('settings_tab_maintenance')}</span>
         </button>
 
         <button
@@ -626,7 +628,7 @@ export const SettingsPage: React.FC = () => {
           }}
         >
           <span>💎</span>
-          <span>Feature Matrix & Entitlements</span>
+          <span>{t('settings_tab_entitlements')}</span>
         </button>
 
         {canManageI18n && (
@@ -649,7 +651,7 @@ export const SettingsPage: React.FC = () => {
             }}
           >
             <span>🌐</span>
-            <span>Language Management</span>
+            <span>{t('settings_tab_languages')}</span>
           </button>
         )}
       </div>

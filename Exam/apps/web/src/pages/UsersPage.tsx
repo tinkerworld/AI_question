@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from '../context/I18nContext';
 import { useAuth } from '../context/AuthContext';
 import { EntityDiffViewer } from '../components/EntityDiffViewer';
 import { ImpersonationModal } from '../components/ImpersonationModal';
@@ -42,6 +43,7 @@ export interface PreviewAuditLogItem {
 }
 
 export const UsersPage: React.FC = () => {
+  const { t } = useTranslation();
   const { user: currentUser } = useAuth();
   const [activeSubtab, setActiveSubtab] = useState<'ROSTER' | 'AUDIT_TRAIL'>('ROSTER');
   const [users, setUsers] = useState<UserRecord[]>([]);
@@ -319,10 +321,10 @@ export const UsersPage: React.FC = () => {
             data-testid="users-page-heading"
             style={{ margin: 0, fontSize: '22px', fontFamily: 'JetBrains Mono', color: 'var(--text-main)' }}
           >
-            User Management & Security Audit Center
+            {t('users_title')}
           </h1>
           <p style={{ margin: '4px 0 0 0', color: 'var(--text-muted)', fontSize: '13px' }}>
-            Full git-style user revision audit chain (ADR-010) and preview/impersonation access logs (ADR-008 & Spec 06).
+            {t('users_desc')}
           </p>
         </div>
         {activeSubtab === 'ROSTER' && (
@@ -339,7 +341,7 @@ export const UsersPage: React.FC = () => {
               cursor: 'pointer',
             }}
           >
-            + Create User
+            {t('users_add_user')}
           </button>
         )}
       </div>
@@ -427,7 +429,7 @@ export const UsersPage: React.FC = () => {
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center', background: 'var(--panel-bg)', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
             <input
               type="text"
-              placeholder="Search by name, email, or user ID..."
+              placeholder={t('users_search_placeholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{
@@ -452,7 +454,7 @@ export const UsersPage: React.FC = () => {
                 fontSize: '13px',
               }}
             >
-              <option value="ALL">All Roles</option>
+              <option value="ALL">{t('users_role_filter')}</option>
               <option value="MAIN_ADMIN">MAIN_ADMIN</option>
               <option value="SUB_ADMIN">SUB_ADMIN</option>
               <option value="TEACHER">TEACHER</option>
@@ -483,7 +485,7 @@ export const UsersPage: React.FC = () => {
         ) : error ? (
           <div style={{ padding: '30px', textAlign: 'center', color: '#ef4444' }}>{error}</div>
         ) : filteredUsers.length === 0 ? (
-          <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>No users match the search criteria.</div>
+          <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>{t('users_no_users')}</div>
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
             <thead>

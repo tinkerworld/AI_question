@@ -9,6 +9,7 @@ export interface LanguageInfo {
   nativeName: string;
   isDefault?: boolean;
   translatedCount?: number;
+  unverifiedCount?: number;
   totalKeys?: number;
 }
 

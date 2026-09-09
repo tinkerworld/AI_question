@@ -104,9 +104,9 @@ export const LoginPage: React.FC = () => {
         >
           {/* Card Title */}
           <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-            <h2 style={{ margin: 0, fontFamily: 'JetBrains Mono', fontSize: '20px' }}>Sign in to ExamOS</h2>
+            <h2 style={{ margin: 0, fontFamily: 'JetBrains Mono', fontSize: '20px' }}>{t('login_heading')}</h2>
             <p style={{ margin: '6px 0 0 0', fontSize: '12px', color: 'var(--text-muted)' }}>
-              Enter your credentials or choose a quick demo account
+              {t('login_subheading')}
             </p>
           </div>
 
@@ -133,14 +133,14 @@ export const LoginPage: React.FC = () => {
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
               <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '6px' }}>
-                Email Address
+                {t('login_email_label')}
               </label>
               <input
                 id="input-login-email"
                 data-testid="input-login-email"
                 type="email"
                 required
-                placeholder="name@examos.com"
+                placeholder={t('login_email_placeholder')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 style={{
@@ -158,7 +158,7 @@ export const LoginPage: React.FC = () => {
 
             <div>
               <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '6px' }}>
-                Password
+                {t('login_password_label')}
               </label>
               <div style={{ position: 'relative' }}>
                 <input
@@ -195,7 +195,7 @@ export const LoginPage: React.FC = () => {
                     fontSize: '12px',
                   }}
                 >
-                  {showPassword ? 'Hide' : 'Show'}
+                  {showPassword ? t('login_btn_hide') : t('login_btn_show')}
                 </button>
               </div>
             </div>
@@ -218,14 +218,14 @@ export const LoginPage: React.FC = () => {
                 marginTop: '8px',
               }}
             >
-              {loading ? 'Authenticating...' : 'Sign In'}
+              {loading ? t('login_btn_authenticating') : t('login_btn_submit')}
             </button>
           </form>
 
           {/* Quick Demo Credentials */}
           <div style={{ marginTop: '24px', borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
             <div style={{ fontSize: '11px', color: 'var(--text-muted)', textAlign: 'center', marginBottom: '10px' }}>
-              QUICK DEMO ACCOUNTS (ONE-CLICK)
+              {t('login_quick_demo')}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               <button
@@ -246,7 +246,7 @@ export const LoginPage: React.FC = () => {
                 }}
               >
                 <span>👑 <strong>Main Admin</strong> (admin@examos.com)</span>
-                <span style={{ fontSize: '10px', color: '#06b6d4' }}>Auto-Fill</span>
+                <span style={{ fontSize: '10px', color: '#06b6d4' }}>{t('login_autofill')}</span>
               </button>
 
               <button
@@ -267,7 +267,7 @@ export const LoginPage: React.FC = () => {
                 }}
               >
                 <span>🛡️ <strong>Sub Admin</strong> (subadmin@examos.com)</span>
-                <span style={{ fontSize: '10px', color: '#3b82f6' }}>Auto-Fill</span>
+                <span style={{ fontSize: '10px', color: '#3b82f6' }}>{t('login_autofill')}</span>
               </button>
 
               <button
@@ -288,7 +288,7 @@ export const LoginPage: React.FC = () => {
                 }}
               >
                 <span>👨‍🏫 <strong>Teacher</strong> (teacher@examos.com)</span>
-                <span style={{ fontSize: '10px', color: '#8b5cf6' }}>Auto-Fill</span>
+                <span style={{ fontSize: '10px', color: '#8b5cf6' }}>{t('login_autofill')}</span>
               </button>
 
               <button
@@ -309,7 +309,7 @@ export const LoginPage: React.FC = () => {
                 }}
               >
                 <span>🎓 <strong>Student</strong> (student@examos.com)</span>
-                <span style={{ fontSize: '10px', color: '#10b981' }}>Auto-Fill</span>
+                <span style={{ fontSize: '10px', color: '#10b981' }}>{t('login_autofill')}</span>
               </button>
             </div>
           </div>
