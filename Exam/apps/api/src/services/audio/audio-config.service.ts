@@ -66,11 +66,11 @@ export class AudioConfigService {
   }
 
   /**
-   * Synthesize audio preview from script (for authoring inspection).
+   * Synthesize audio preview from script (for authoring inspection or generation).
    */
   static async synthesizePreview(
     script: string,
-    voiceId: string = 'en-GB-Neural2-A',
+    voiceId: string = 'voice_en_gb_f_01',
     speed: number = 1.0
   ): Promise<{
     audioUrl: string;
@@ -78,6 +78,8 @@ export class AudioConfigService {
     voiceId: string;
     durationEstimateSeconds: number;
     format: string;
+    isFallback?: boolean;
+    warning?: string;
   }> {
     const cleanScript = String(script || '')
       .replace(/<[^>]*>/g, '') // Sanitize any SSML tags
@@ -87,20 +89,20 @@ export class AudioConfigService {
       throw new Error('Script cannot be empty');
     }
 
-    const wordCount = cleanScript.split(/\s+/).filter(Boolean).length;
-    // Average speaking rate: ~140 words per minute
-    const durationSeconds = Math.max(2, Math.round((wordCount / (140 * speed)) * 60));
-
-    // Deterministic preview audio identifier
-    const hash = crypto.createHash('md5').update(`${cleanScript}_${voiceId}_${speed}`).digest('hex');
-    const audioUrl = `/assets/audio/previews/${hash}.mp3`;
+    const { TTSService } = await import('./tts.service');
+    const synthRes = await TTSService.synthesize(cleanScript, {
+      voiceId,
+      speed,
+    });
 
     return {
-      audioUrl,
+      audioUrl: synthRes.audioUrl,
       script: cleanScript,
       voiceId,
-      durationEstimateSeconds: durationSeconds,
-      format: 'audio/mpeg',
+      durationEstimateSeconds: synthRes.durationSeconds,
+      format: synthRes.format === 'wav' ? 'audio/wav' : 'audio/mpeg',
+      isFallback: synthRes.isFallback,
+      warning: synthRes.warning,
     };
   }
 }

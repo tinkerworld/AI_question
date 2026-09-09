@@ -307,25 +307,30 @@ class ListeningHandler {
     validate(data) {
         if (!data)
             return false;
-        const hasAudio = Boolean(data.audioUrl || data.audioScript);
+        const hasAudio = Boolean(data.audioUrl || data.audioScript || data.speechText || data.transcript);
         if (!hasAudio)
             return false;
-        if (!Array.isArray(data.subQuestions) || data.subQuestions.length === 0)
-            return false;
-        for (const sq of data.subQuestions) {
-            if (!sq.id || !sq.prompt || typeof sq.marks !== 'number')
-                return false;
+        const subQs = data.subQuestions || data.questions;
+        if (subQs && Array.isArray(subQs) && subQs.length > 0) {
+            for (const sq of subQs) {
+                if (!sq.id || !sq.prompt || typeof sq.marks !== 'number')
+                    return false;
+            }
         }
         return true;
     }
     evaluate(data, userAnswer) {
+        const subQs = data.subQuestions || data.questions || [];
+        if (subQs.length === 0) {
+            return { isCorrect: true, score: 1.0, feedback: 'Audio passage completed' };
+        }
         if (!userAnswer || typeof userAnswer !== 'object') {
             return { isCorrect: false, score: 0, feedback: 'No answers provided for listening sub-questions' };
         }
         let totalMarks = 0;
         let earnedMarks = 0;
         const details = [];
-        for (const sq of data.subQuestions) {
+        for (const sq of subQs) {
             totalMarks += sq.marks;
             const ans = userAnswer[sq.id];
             if (ans === undefined || ans === null) {
@@ -399,37 +404,43 @@ class WritingHandler {
     validate(data) {
         if (!data)
             return false;
-        if (!data.promptText || typeof data.promptText !== 'string')
+        const prompt = data.promptText || data.promptStem;
+        if (!prompt || typeof prompt !== 'string')
             return false;
-        if (typeof data.minWordCount !== 'number' || data.minWordCount < 0)
+        const minWords = data.minWordCount ?? data.minWords ?? 0;
+        const maxWords = data.maxWordCount ?? data.maxWords ?? 1000;
+        if (typeof minWords !== 'number' || minWords < 0)
             return false;
-        if (typeof data.maxWordCount !== 'number' || data.maxWordCount < data.minWordCount)
+        if (typeof maxWords !== 'number' || maxWords < minWords)
             return false;
-        if (!Array.isArray(data.rubric) || data.rubric.length === 0)
+        const rubric = data.rubric || data.rubricCriteria;
+        if (!Array.isArray(rubric) || rubric.length === 0)
             return false;
         return true;
     }
     evaluate(data, userAnswer) {
         const text = String(userAnswer || '').trim();
+        const minWordCount = data.minWordCount ?? data.minWords ?? 150;
+        const maxWordCount = data.maxWordCount ?? data.maxWords ?? 400;
         if (!text) {
             return {
                 isCorrect: false,
                 score: 0,
-                feedback: 'Submission was blank (0 words). Minimum required: ' + data.minWordCount,
+                feedback: 'Submission was blank (0 words). Minimum required: ' + minWordCount,
             };
         }
         const words = text.split(/\s+/).filter(Boolean);
         const wordCount = words.length;
         let lengthPenalty = 0;
-        if (wordCount < data.minWordCount) {
-            const deficit = data.minWordCount - wordCount;
-            lengthPenalty = Math.min(0.5, deficit / data.minWordCount);
+        if (wordCount < minWordCount) {
+            const deficit = minWordCount - wordCount;
+            lengthPenalty = Math.min(0.5, deficit / minWordCount);
         }
         const baselineScore = Math.max(0.1, 1 - lengthPenalty);
         return {
-            isCorrect: wordCount >= data.minWordCount,
+            isCorrect: wordCount >= minWordCount,
             score: Number(baselineScore.toFixed(3)),
-            feedback: `Written submission recorded: ${wordCount} words (Requirement: ${data.minWordCount}-${data.maxWordCount} words). AI diagnostic evaluation queued.`,
+            feedback: `Written submission recorded: ${wordCount} words (Requirement: ${minWordCount}-${maxWordCount} words). AI diagnostic evaluation queued.`,
         };
     }
     serialize(data) {

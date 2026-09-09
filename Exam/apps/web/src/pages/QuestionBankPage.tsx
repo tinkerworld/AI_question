@@ -5,6 +5,9 @@ import { EntityDiffViewer } from '../components/EntityDiffViewer';
 import { AIGeneratorModal } from '../components/ai/AIGeneratorModal';
 import { AIQuestionModifierModal } from '../components/ai/AIQuestionModifierModal';
 import { AIUsageModal } from '../components/ai/AIUsageModal';
+import { ListeningAuthoringPanel, ListeningQuestionConfig } from '../components/listening/ListeningAuthoringPanel';
+import { WritingAuthoringPanel, WritingQuestionConfig } from '../components/writing/WritingAuthoringPanel';
+import { ExamAudioPlayer } from '../components/listening/ExamAudioPlayer';
 import { API_BASE } from '../config/api';
 import { getAuthHeaders } from '../utils/api';
 
@@ -73,6 +76,8 @@ const QUESTION_TYPES = [
   { id: 'MATCHING', label: 'Matrix Matching' },
   { id: 'SUBJECTIVE', label: 'Subjective / Long Answer' },
   { id: 'INTERVIEW', label: 'AI Interview / Oral Assessment' },
+  { id: 'LISTENING', label: 'Listening Comprehension' },
+  { id: 'WRITING', label: 'Writing Essay / Assessment' },
 ];
 
 const extractApiErrorMessage = (data: any, fallback: string = 'Operation failed'): string => {
@@ -232,6 +237,43 @@ export const QuestionBankPage: React.FC = () => {
   const [docRoleContext, setDocRoleContext] = useState<string>('');
   const [isGeneratingDoc, setIsGeneratingDoc] = useState<boolean>(false);
   const [docGenerateError, setDocGenerateError] = useState<string | null>(null);
+
+  // Listening & Writing Config States
+  const [listeningConfig, setListeningConfig] = useState<ListeningQuestionConfig>({
+    maxPlays: 3,
+    playbackSpeed: 1.0,
+    allowTranscriptInReview: true,
+    speechText: '',
+    transcript: '',
+    subQuestions: [
+      {
+        id: 'sq_1',
+        type: 'MCQ',
+        prompt: 'What is the primary theme discussed in the audio clip?',
+        marks: 1,
+        options: [
+          { id: 'opt_1', text: 'Effective learning and preparation strategies' },
+          { id: 'opt_2', text: 'Automobile manufacturing mechanics' },
+          { id: 'opt_3', text: 'Meteorological tracking systems' },
+          { id: 'opt_4', text: 'Ocean current salinity levels' },
+        ],
+        correctOptionId: 'opt_1',
+      },
+    ],
+  });
+
+  const [writingConfig, setWritingConfig] = useState<WritingQuestionConfig>({
+    promptStem: '',
+    minWords: 150,
+    maxWords: 400,
+    recommendedTimeMinutes: 40,
+    rubricCriteria: [
+      { id: 'crit_1', name: 'Task Achievement', weight: 0.25, maxScore: 9, description: 'Addressing all parts of the task' },
+      { id: 'crit_2', name: 'Coherence and Cohesion', weight: 0.25, maxScore: 9, description: 'Logical flow and linking devices' },
+      { id: 'crit_3', name: 'Lexical Resource', weight: 0.25, maxScore: 9, description: 'Range and precision of vocabulary' },
+      { id: 'crit_4', name: 'Grammatical Accuracy', weight: 0.25, maxScore: 9, description: 'Range of complex structures and accuracy' },
+    ],
+  });
 
   const loadInterviewPreset = (preset: string) => {
     setInterviewPreset(preset);
@@ -756,6 +798,26 @@ export const QuestionBankPage: React.FC = () => {
       setInterviewActiveTab('SETTINGS');
       setSimulationResult(null);
       setSimulationError(null);
+    } else if (q.type === 'LISTENING') {
+      setListeningConfig({
+        audioUrl: d.audioUrl || '',
+        speechText: d.speechText || d.audioScript || '',
+        transcript: d.transcript || d.speechText || '',
+        voiceProfileId: d.voiceProfileId || '',
+        maxPlays: d.maxPlays || d.playbackLimit || 3,
+        playbackSpeed: d.playbackSpeed || 1.0,
+        allowTranscriptInReview: d.allowTranscriptInReview ?? true,
+        subQuestions: d.subQuestions || [],
+      });
+    } else if (q.type === 'WRITING') {
+      setWritingConfig({
+        promptStem: d.promptStem || d.promptText || q.content,
+        stimulusText: d.stimulusText || '',
+        minWords: d.minWords || d.minWordCount || 150,
+        maxWords: d.maxWords || d.maxWordCount || 400,
+        recommendedTimeMinutes: d.recommendedTimeMinutes || d.timeLimitMinutes || 40,
+        rubricCriteria: d.rubricCriteria || d.rubric || [],
+      });
     }
 
     setShowCreateModal(true);
@@ -803,6 +865,34 @@ export const QuestionBankPage: React.FC = () => {
             avoidList: interviewAvoidList.filter((a) => a.trim().length > 0),
             followUpAggressiveness: interviewAggressiveness,
           },
+        };
+      case 'LISTENING':
+        return {
+          audioSource: listeningConfig.audioUrl ? 'UPLOADED' : 'SYNTHESIZED',
+          audioUrl: listeningConfig.audioUrl || undefined,
+          speechText: listeningConfig.speechText || undefined,
+          audioScript: listeningConfig.speechText || listeningConfig.transcript || undefined,
+          transcript: listeningConfig.transcript || listeningConfig.speechText || undefined,
+          voiceProfileId: listeningConfig.voiceProfileId || undefined,
+          playbackLimit: Number(listeningConfig.maxPlays || 3),
+          maxPlays: Number(listeningConfig.maxPlays || 3),
+          playbackSpeed: Number(listeningConfig.playbackSpeed || 1.0),
+          allowTranscriptInReview: Boolean(listeningConfig.allowTranscriptInReview),
+          subQuestions: listeningConfig.subQuestions || [],
+        };
+      case 'WRITING':
+        return {
+          promptStem: writingConfig.promptStem || formContent,
+          promptText: writingConfig.promptStem || formContent,
+          stimulusText: writingConfig.stimulusText || undefined,
+          minWords: Number(writingConfig.minWords || 150),
+          minWordCount: Number(writingConfig.minWords || 150),
+          maxWords: Number(writingConfig.maxWords || 400),
+          maxWordCount: Number(writingConfig.maxWords || 400),
+          recommendedTimeMinutes: Number(writingConfig.recommendedTimeMinutes || 40),
+          timeLimitMinutes: Number(writingConfig.recommendedTimeMinutes || 40),
+          rubricCriteria: writingConfig.rubricCriteria || [],
+          rubric: writingConfig.rubricCriteria || [],
         };
       default:
         return {};
@@ -3385,6 +3475,26 @@ export const QuestionBankPage: React.FC = () => {
                     )}
                   </div>
                 )}
+
+                {/* LISTENING TYPE CONFIGURATION */}
+                {formType === 'LISTENING' && (
+                  <div style={{ marginTop: '8px' }}>
+                    <ListeningAuthoringPanel
+                      initialConfig={listeningConfig}
+                      onChange={(cfg) => setListeningConfig(cfg)}
+                    />
+                  </div>
+                )}
+
+                {/* WRITING TYPE CONFIGURATION */}
+                {formType === 'WRITING' && (
+                  <div style={{ marginTop: '8px' }}>
+                    <WritingAuthoringPanel
+                      initialConfig={writingConfig}
+                      onChange={(cfg) => setWritingConfig(cfg)}
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Submit Buttons */}
@@ -3882,6 +3992,88 @@ export const QuestionBankPage: React.FC = () => {
                   >
                     Interactive Multi-Turn AI Audio/Text Interview room launches upon student attempt.
                   </div>
+                </div>
+              )}
+
+              {previewQuestion.type === 'LISTENING' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  <ExamAudioPlayer
+                    audioUrl={previewQuestion.data?.audioUrl}
+                    speechText={previewQuestion.data?.speechText || previewQuestion.data?.audioScript}
+                    maxPlays={previewQuestion.data?.maxPlays || previewQuestion.data?.playbackLimit || 3}
+                    playbackSpeed={previewQuestion.data?.playbackSpeed || 1.0}
+                    allowTranscript={true}
+                    transcript={previewQuestion.data?.transcript || previewQuestion.data?.speechText}
+                  />
+                  {Array.isArray(previewQuestion.data?.subQuestions) && previewQuestion.data.subQuestions.length > 0 && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <strong style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                        Comprehension Questions ({previewQuestion.data.subQuestions.length}):
+                      </strong>
+                      {previewQuestion.data.subQuestions.map((sq: any, idx: number) => (
+                        <div
+                          key={sq.id || idx}
+                          style={{
+                            padding: '10px 12px',
+                            background: 'var(--bg-secondary)',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '6px',
+                            fontSize: '12px',
+                          }}
+                        >
+                          <div style={{ fontWeight: 600, color: 'var(--text-main)', marginBottom: '4px' }}>
+                            {idx + 1}. {sq.prompt} ({sq.marks} marks)
+                          </div>
+                          {sq.type === 'MCQ' && Array.isArray(sq.options) && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginLeft: '12px' }}>
+                              {sq.options.map((opt: any) => (
+                                <div key={opt.id} style={{ color: opt.id === sq.correctOptionId ? '#10b981' : 'var(--text-muted)' }}>
+                                  • {opt.text} {opt.id === sq.correctOptionId && ' ✓ (Key)'}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {sq.type === 'FILL_IN_BLANK' && (
+                            <div style={{ color: '#10b981', fontSize: '11px', marginLeft: '12px' }}>
+                              Expected Key: {sq.blankKey}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {previewQuestion.type === 'WRITING' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div style={{ display: 'flex', gap: '16px', fontSize: '12px', color: 'var(--text-muted)' }}>
+                    <span>Target: <strong style={{ color: '#10b981' }}>{previewQuestion.data?.minWords || previewQuestion.data?.minWordCount || 150}–{previewQuestion.data?.maxWords || previewQuestion.data?.maxWordCount || 400} words</strong></span>
+                    <span>•</span>
+                    <span>Recommended Time: <strong style={{ color: '#06b6d4' }}>{previewQuestion.data?.recommendedTimeMinutes || previewQuestion.data?.timeLimitMinutes || 40} mins</strong></span>
+                  </div>
+                  {previewQuestion.data?.stimulusText && (
+                    <div style={{ padding: '10px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '6px', fontSize: '12px' }}>
+                      <strong style={{ display: 'block', color: 'var(--text-muted)', marginBottom: '4px' }}>Stimulus Context:</strong>
+                      {previewQuestion.data.stimulusText}
+                    </div>
+                  )}
+                  {Array.isArray(previewQuestion.data?.rubricCriteria || previewQuestion.data?.rubric) && (
+                    <div>
+                      <strong style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>Evaluation Rubric:</strong>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
+                        {(previewQuestion.data?.rubricCriteria || previewQuestion.data?.rubric).map((r: any, idx: number) => (
+                          <div key={r.id || idx} style={{ padding: '8px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '6px', fontSize: '11px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600 }}>
+                              <span>{r.name}</span>
+                              <span style={{ color: '#10b981' }}>Max {r.maxScore}</span>
+                            </div>
+                            {r.description && <div style={{ color: 'var(--text-muted)', marginTop: '2px' }}>{r.description}</div>}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

@@ -475,7 +475,7 @@ export const UsersPage: React.FC = () => {
           </div>
 
       {/* Users Table */}
-      <div style={{ background: 'var(--panel-bg)', borderRadius: '8px', border: '1px solid var(--border-color)', overflow: 'hidden' }}>
+      <div style={{ background: 'var(--panel-bg)', borderRadius: '8px', border: '1px solid var(--border-color)', overflow: 'hidden', flexShrink: 0 }}>
         {loading ? (
           <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)', fontFamily: 'JetBrains Mono' }}>
             Loading user profiles...
@@ -709,7 +709,7 @@ export const UsersPage: React.FC = () => {
           </div>
 
           {/* Audit Logs Table */}
-          <div style={{ background: 'var(--panel-bg)', borderRadius: '8px', border: '1px solid var(--border-color)', overflow: 'hidden' }}>
+          <div style={{ background: 'var(--panel-bg)', borderRadius: '8px', border: '1px solid var(--border-color)', overflow: 'hidden', flexShrink: 0 }}>
             {loadingAuditLogs ? (
               <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)', fontFamily: 'JetBrains Mono' }}>
                 Loading security audit logs...

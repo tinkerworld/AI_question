@@ -2,6 +2,7 @@ import { pgDb } from '@repo/database';
 import { questionTypeRegistry } from '@repo/question-types';
 import { AppError } from '../middleware/error';
 import { analyticsService } from './analytics.service';
+import { WritingEvaluationService, BUILTIN_WRITING_RUBRICS } from './writing-evaluation.service';
 import crypto from 'crypto';
 
 // ----------------------------------------------------------------------------
@@ -341,6 +342,17 @@ export class AttemptService {
           pairs = qData.pairs.map((p: any) => ({ left: p.left, right: p.right }));
         }
 
+        let sanitizedSubQuestions = undefined;
+        if (qData?.subQuestions && Array.isArray(qData.subQuestions)) {
+          sanitizedSubQuestions = qData.subQuestions.map((sq: any) => ({
+            id: sq.id,
+            type: sq.type,
+            prompt: sq.prompt,
+            marks: sq.marks,
+            options: sq.options ? sq.options.map((opt: any) => ({ id: opt.id, text: opt.text })) : undefined,
+          }));
+        }
+
         // Create sanitized question snapshot (strip answers / explanations)
         const studentSnapshot = {
           type: q.type,
@@ -354,7 +366,22 @@ export class AttemptService {
           courseId: q.courseId,
           options: sanitizedOptions,
           pairs,
-          rubricCriteria: qData?.rubricCriteria,
+          rubricCriteria: qData?.rubricCriteria || qData?.rubric,
+          // Listening fields
+          audioUrl: qData?.audioUrl,
+          speechText: qData?.speechText || qData?.audioScript,
+          audioScript: qData?.speechText || qData?.audioScript,
+          voiceProfileId: qData?.voiceProfileId,
+          maxPlays: qData?.maxPlays ?? qData?.playbackLimit ?? 3,
+          playbackSpeed: qData?.playbackSpeed ?? 1.0,
+          allowTranscript: qData?.allowTranscript ?? false,
+          subQuestions: sanitizedSubQuestions,
+          // Writing fields
+          promptStem: qData?.promptStem || qData?.promptText || q.content,
+          stimulusText: qData?.stimulusText,
+          minWords: qData?.minWords ?? qData?.minWordCount ?? 150,
+          maxWords: qData?.maxWords ?? qData?.maxWordCount ?? 400,
+          recommendedTimeMinutes: qData?.recommendedTimeMinutes ?? qData?.timeLimitMinutes ?? 40,
         };
 
         const qaId = `qa_${crypto.randomUUID()}`;
@@ -447,6 +474,19 @@ export class AttemptService {
         options: snap?.options,
         pairs: snap?.pairs,
         rubricCriteria: snap?.rubricCriteria,
+        audioUrl: snap?.audioUrl,
+        speechText: snap?.speechText,
+        audioScript: snap?.audioScript,
+        voiceProfileId: snap?.voiceProfileId,
+        maxPlays: snap?.maxPlays,
+        playbackSpeed: snap?.playbackSpeed,
+        allowTranscript: snap?.allowTranscript,
+        subQuestions: snap?.subQuestions,
+        promptStem: snap?.promptStem,
+        stimulusText: snap?.stimulusText,
+        minWords: snap?.minWords,
+        maxWords: snap?.maxWords,
+        recommendedTimeMinutes: snap?.recommendedTimeMinutes,
         studentAnswer: ans,
         isMarkedForReview: qa.isMarkedForReview,
         timeSpentSeconds: qa.timeSpentSeconds,
@@ -659,6 +699,33 @@ export class AttemptService {
            WHERE "id" = $1`,
           [qa.id]
         );
+      } else if (qa.originalType === 'WRITING') {
+        const essayText = typeof studentAnswer === 'string' ? studentAnswer : (studentAnswer?.text || '');
+        const rubric = qData?.rubricCriteria || qData?.rubric || BUILTIN_WRITING_RUBRICS.IELTS_TASK_2.criteria;
+        const evalResult = await WritingEvaluationService.evaluateWriting(
+          essayText,
+          rubric,
+          qData?.minWords || qData?.minWordCount || 150,
+          qData?.maxWords || qData?.maxWordCount || 400,
+          snap?.content || qData?.promptStem
+        );
+        const normalizedFraction = evalResult.maxScore > 0 ? (evalResult.overallScore / evalResult.maxScore) : 0;
+        const awardedMarks = Math.round(normalizedFraction * marksCorrect * 100) / 100;
+        const isPassed = normalizedFraction >= 0.5;
+
+        if (isPassed) {
+          correctAnswers++;
+        } else {
+          wrongAnswers++;
+        }
+        totalScore += awardedMarks;
+
+        await pgDb.query(
+          `UPDATE "question_attempts"
+           SET "isCorrect" = $1, "marksAwarded" = $2, "evaluatorComments" = $3, "updatedAt" = CURRENT_TIMESTAMP
+           WHERE "id" = $4`,
+          [isPassed, awardedMarks, JSON.stringify(evalResult), qa.id]
+        );
       } else {
         // Evaluate using pluggable question types
         const evalResult = questionTypeRegistry.evaluate(qa.originalType, qData, studentAnswer);
@@ -834,6 +901,10 @@ export class AttemptService {
         correctAnswer,
         explanation: qData?.explanation || 'No additional explanation provided.',
         evaluatorComments: qa.evaluatorComments,
+        audioUrl: qData?.audioUrl,
+        speechText: qData?.speechText || qData?.audioScript,
+        subQuestions: qData?.subQuestions,
+        writingEvaluation: qa.originalType === 'WRITING' ? safeParseJson(qa.evaluatorComments) : undefined,
       };
     });
 

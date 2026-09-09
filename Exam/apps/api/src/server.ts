@@ -29,6 +29,7 @@ import { maintenanceRouter } from './routes/maintenance.routes';
 import { audioRouter } from './routes/audio.routes';
 import { writingRouter } from './routes/writing.routes';
 import { vocabularyRouter } from './routes/vocabulary.routes';
+import { listeningRouter } from './routes/listening.routes';
 import { initV2Tables } from './db/init-v2-tables';
 import { errorHandler } from './middleware/error';
 
@@ -70,6 +71,8 @@ app.use('/api/v1/audio', audioRouter);
 app.use('/api/audio', audioRouter);
 app.use('/api/v1/writing', writingRouter);
 app.use('/api/writing', writingRouter);
+app.use('/api/v1/listening', listeningRouter);
+app.use('/api/listening', listeningRouter);
 app.use('/api/v1/vocabulary', vocabularyRouter);
 app.use('/api/vocabulary', vocabularyRouter);
 

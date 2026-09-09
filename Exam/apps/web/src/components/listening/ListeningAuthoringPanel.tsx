@@ -3,6 +3,16 @@ import { API_BASE } from '../../config/api';
 import { getAuthHeaders } from '../../utils/api';
 import { AudioVoiceProfileDTO } from '@repo/types';
 
+export interface ListeningSubQuestionConfig {
+  id: string;
+  type: 'MCQ' | 'FILL_IN_BLANK';
+  prompt: string;
+  marks: number;
+  options?: { id: string; text: string }[];
+  correctOptionId?: string;
+  blankKey?: string;
+}
+
 export interface ListeningQuestionConfig {
   audioUrl?: string;
   transcript?: string;
@@ -11,6 +21,7 @@ export interface ListeningQuestionConfig {
   maxPlays: number;
   playbackSpeed: number;
   allowTranscriptInReview: boolean;
+  subQuestions?: ListeningSubQuestionConfig[];
 }
 
 interface ListeningAuthoringPanelProps {
@@ -22,7 +33,7 @@ export const ListeningAuthoringPanel: React.FC<ListeningAuthoringPanelProps> = (
   initialConfig,
   onChange,
 }) => {
-  const [mode, setMode] = useState<'SYNTHETIC' | 'URL'>('SYNTHETIC');
+  const [mode, setMode] = useState<'SYNTHETIC' | 'URL'>(initialConfig?.audioUrl ? 'URL' : 'SYNTHETIC');
   const [audioUrl, setAudioUrl] = useState(initialConfig?.audioUrl || '');
   const [speechText, setSpeechText] = useState(initialConfig?.speechText || '');
   const [transcript, setTranscript] = useState(initialConfig?.transcript || '');
@@ -32,9 +43,40 @@ export const ListeningAuthoringPanel: React.FC<ListeningAuthoringPanelProps> = (
   const [allowTranscriptInReview, setAllowTranscriptInReview] = useState(
     initialConfig?.allowTranscriptInReview ?? true
   );
+  const [subQuestions, setSubQuestions] = useState<ListeningSubQuestionConfig[]>(
+    initialConfig?.subQuestions && initialConfig.subQuestions.length > 0
+      ? initialConfig.subQuestions
+      : [
+          {
+            id: 'sq_1',
+            type: 'MCQ',
+            prompt: 'What is the main topic of the spoken passage?',
+            marks: 1,
+            options: [
+              { id: 'opt_1', text: 'Effective learning and preparation strategies' },
+              { id: 'opt_2', text: 'The history of automobile manufacturing' },
+              { id: 'opt_3', text: 'Weather forecasting instruments' },
+              { id: 'opt_4', text: 'Marine biology conservation' },
+            ],
+            correctOptionId: 'opt_1',
+          },
+        ]
+  );
 
   const [profiles, setProfiles] = useState<AudioVoiceProfileDTO[]>([]);
   const [testingAudio, setTestingAudio] = useState(false);
+  const [loadingPreview, setLoadingPreview] = useState(false);
+  const [fallbackWarning, setFallbackWarning] = useState<string | null>(null);
+  const previewAudioRef = React.useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (previewAudioRef.current) {
+        previewAudioRef.current.pause();
+        previewAudioRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     fetch(`${API_BASE}/audio/voices`, { headers: getAuthHeaders() })
@@ -59,19 +101,76 @@ export const ListeningAuthoringPanel: React.FC<ListeningAuthoringPanelProps> = (
       maxPlays,
       playbackSpeed,
       allowTranscriptInReview,
+      subQuestions,
     });
-  }, [mode, audioUrl, speechText, transcript, voiceProfileId, maxPlays, playbackSpeed, allowTranscriptInReview]);
+  }, [mode, audioUrl, speechText, transcript, voiceProfileId, maxPlays, playbackSpeed, allowTranscriptInReview, subQuestions]);
 
-  const testSyntheticSpeech = () => {
-    if (!speechText) return;
-    setTestingAudio(true);
-    if (window.speechSynthesis) {
-      window.speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(speechText);
-      u.rate = playbackSpeed;
-      u.onend = () => setTestingAudio(false);
-      u.onerror = () => setTestingAudio(false);
-      window.speechSynthesis.speak(u);
+  const testSyntheticSpeech = async () => {
+    // If currently playing, stop it
+    if (testingAudio && previewAudioRef.current) {
+      previewAudioRef.current.pause();
+      previewAudioRef.current.currentTime = 0;
+      setTestingAudio(false);
+      return;
+    }
+
+    const rawText = speechText.trim();
+    const previewText = rawText
+      ? (rawText.match(/[^.!?]+[.!?]+/)?.[0] || rawText.slice(0, 120))
+      : 'Hello, this is a sample preview of the selected voice and accent.';
+
+    try {
+      setLoadingPreview(true);
+      setFallbackWarning(null);
+      const res = await fetch(`${API_BASE}/audio/synthesize-preview`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify({
+          script: previewText,
+          voiceId: voiceProfileId || undefined,
+          speed: playbackSpeed,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success && data.data?.audioUrl) {
+        if (data.data.isFallback || data.data.warning) {
+          setFallbackWarning(data.data.warning || 'Operating in fallback audio mode.');
+        } else {
+          setFallbackWarning(null);
+        }
+
+        const fullAudioUrl = data.data.audioUrl.startsWith('http')
+          ? data.data.audioUrl
+          : `${API_BASE.replace('/api/v1', '')}${data.data.audioUrl}`;
+
+        if (previewAudioRef.current) {
+          previewAudioRef.current.pause();
+        }
+
+        const audio = new Audio(fullAudioUrl);
+        previewAudioRef.current = audio;
+
+        audio.onended = () => {
+          setTestingAudio(false);
+        };
+        audio.onerror = () => {
+          setTestingAudio(false);
+          console.error('Audio playback error for preview URL:', fullAudioUrl);
+        };
+
+        setTestingAudio(true);
+        await audio.play();
+      } else {
+        console.error('Failed to generate audio preview:', data.message);
+      }
+    } catch (err) {
+      console.error('Error generating audio preview:', err);
+    } finally {
+      setLoadingPreview(false);
     }
   };
 
@@ -177,23 +276,47 @@ export const ListeningAuthoringPanel: React.FC<ListeningAuthoringPanelProps> = (
               <button
                 type="button"
                 onClick={testSyntheticSpeech}
-                disabled={!speechText || testingAudio}
+                disabled={loadingPreview}
                 style={{
                   width: '100%',
-                  background: 'rgba(59, 130, 246, 0.15)',
-                  border: '1px solid #3b82f6',
-                  color: '#3b82f6',
+                  background: testingAudio ? 'rgba(239, 68, 68, 0.15)' : 'rgba(59, 130, 246, 0.15)',
+                  border: testingAudio ? '1px solid #ef4444' : '1px solid #3b82f6',
+                  color: testingAudio ? '#ef4444' : '#3b82f6',
                   borderRadius: '6px',
                   padding: '8px',
                   fontSize: '12px',
                   fontWeight: 600,
-                  cursor: !speechText ? 'not-allowed' : 'pointer',
+                  cursor: loadingPreview ? 'wait' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
                 }}
               >
-                {testingAudio ? '🔊 Playing Sample...' : '▶ Preview Accent'}
+                {loadingPreview ? '⏳ Generating...' : testingAudio ? '⏹ Stop Preview' : '▶ Preview Accent'}
               </button>
             </div>
           </div>
+          {fallbackWarning && (
+            <div
+              data-testid="preview-fallback-warning"
+              style={{
+                marginTop: '8px',
+                padding: '8px 12px',
+                backgroundColor: 'rgba(245, 158, 11, 0.12)',
+                border: '1px solid #f59e0b',
+                borderRadius: '6px',
+                color: '#d97706',
+                fontSize: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              <span>⚠️</span>
+              <span>{fallbackWarning}</span>
+            </div>
+          )}
         </div>
       ) : (
         <div>
@@ -277,6 +400,206 @@ export const ListeningAuthoringPanel: React.FC<ListeningAuthoringPanelProps> = (
             <span>Show Transcript in Review</span>
           </label>
         </div>
+      </div>
+
+      {/* Listening Comprehension Sub-Questions */}
+      <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h4 style={{ margin: 0, fontSize: '13px', fontWeight: 600 }}>Comprehension Questions ({subQuestions.length})</h4>
+            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Questions student must answer while/after listening to the passage</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              const newId = `sq_${Date.now()}`;
+              setSubQuestions([
+                ...subQuestions,
+                {
+                  id: newId,
+                  type: 'MCQ',
+                  prompt: 'New listening question...',
+                  marks: 1,
+                  options: [
+                    { id: `${newId}_opt1`, text: 'Option A' },
+                    { id: `${newId}_opt2`, text: 'Option B' },
+                  ],
+                  correctOptionId: `${newId}_opt1`,
+                },
+              ]);
+            }}
+            style={{
+              padding: '4px 10px',
+              borderRadius: '4px',
+              fontSize: '11px',
+              border: '1px solid #3b82f6',
+              background: 'rgba(59, 130, 246, 0.1)',
+              color: '#3b82f6',
+              cursor: 'pointer',
+              fontWeight: 600,
+            }}
+          >
+            + Add Sub-Question
+          </button>
+        </div>
+
+        {subQuestions.map((sq, idx) => (
+          <div
+            key={sq.id}
+            style={{
+              padding: '12px',
+              borderRadius: '6px',
+              border: '1px solid var(--border-color)',
+              background: 'var(--bg-main)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--accent-color, #06b6d4)' }}>
+                Q{idx + 1}
+              </span>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <select
+                  value={sq.type}
+                  onChange={(e) => {
+                    const newType = e.target.value as any;
+                    setSubQuestions(subQuestions.map((item, i) => i === idx ? { ...item, type: newType } : item));
+                  }}
+                  style={{
+                    fontSize: '11px',
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    background: 'var(--bg-color)',
+                    border: '1px solid var(--border-color)',
+                    color: 'var(--text-main)',
+                  }}
+                >
+                  <option value="MCQ">Single Choice (MCQ)</option>
+                  <option value="FILL_IN_BLANK">Fill in Blank</option>
+                </select>
+                <input
+                  type="number"
+                  min="0.5"
+                  step="0.5"
+                  value={sq.marks}
+                  onChange={(e) => {
+                    const m = parseFloat(e.target.value) || 1;
+                    setSubQuestions(subQuestions.map((item, i) => i === idx ? { ...item, marks: m } : item));
+                  }}
+                  title="Marks"
+                  style={{
+                    width: '50px',
+                    fontSize: '11px',
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    background: 'var(--bg-color)',
+                    border: '1px solid var(--border-color)',
+                    color: 'var(--text-main)',
+                  }}
+                />
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>marks</span>
+                {subQuestions.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => setSubQuestions(subQuestions.filter((_, i) => i !== idx))}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#ef4444',
+                      fontSize: '11px',
+                      cursor: 'pointer',
+                      padding: '2px 6px',
+                    }}
+                  >
+                    ✕ Remove
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <input
+              type="text"
+              value={sq.prompt}
+              onChange={(e) => {
+                const text = e.target.value;
+                setSubQuestions(subQuestions.map((item, i) => i === idx ? { ...item, prompt: text } : item));
+              }}
+              placeholder="Enter sub-question statement..."
+              style={{
+                width: '100%',
+                padding: '6px 10px',
+                fontSize: '12px',
+                borderRadius: '4px',
+                background: 'var(--bg-color)',
+                border: '1px solid var(--border-color)',
+                color: 'var(--text-main)',
+              }}
+            />
+
+            {sq.type === 'MCQ' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '4px' }}>
+                {(sq.options || []).map((opt, optIdx) => (
+                  <div key={opt.id} style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                    <input
+                      type="radio"
+                      name={`sq_correct_${sq.id}`}
+                      checked={sq.correctOptionId === opt.id}
+                      onChange={() => {
+                        setSubQuestions(subQuestions.map((item, i) => i === idx ? { ...item, correctOptionId: opt.id } : item));
+                      }}
+                      title="Mark as correct answer"
+                    />
+                    <input
+                      type="text"
+                      value={opt.text}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const newOpts = (sq.options || []).map((o, oi) => oi === optIdx ? { ...o, text: val } : o);
+                        setSubQuestions(subQuestions.map((item, i) => i === idx ? { ...item, options: newOpts } : item));
+                      }}
+                      placeholder={`Option ${String.fromCharCode(65 + optIdx)}`}
+                      style={{
+                        flex: 1,
+                        padding: '4px 8px',
+                        fontSize: '11px',
+                        borderRadius: '4px',
+                        background: 'var(--bg-color)',
+                        border: '1px solid var(--border-color)',
+                        color: 'var(--text-main)',
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {sq.type === 'FILL_IN_BLANK' && (
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '4px' }}>
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Expected Answer Key:</span>
+                <input
+                  type="text"
+                  value={sq.blankKey || ''}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setSubQuestions(subQuestions.map((item, i) => i === idx ? { ...item, blankKey: val } : item));
+                  }}
+                  placeholder="e.g. 250 / London / renewable energy"
+                  style={{
+                    flex: 1,
+                    padding: '4px 8px',
+                    fontSize: '11px',
+                    borderRadius: '4px',
+                    background: 'var(--bg-color)',
+                    border: '1px solid var(--border-color)',
+                    color: 'var(--text-main)',
+                  }}
+                />
+              </div>
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );

@@ -433,13 +433,18 @@ export interface ListeningSubQuestion {
 }
 
 export interface ListeningQuestionData {
-  audioSource: 'SYNTHESIZED' | 'UPLOADED';
+  audioSource?: 'SYNTHESIZED' | 'UPLOADED' | 'URL' | 'SYNTHETIC';
   audioUrl?: string;
   audioScript?: string;
+  speechText?: string;
+  transcript?: string;
   voiceProfileId?: string;
   playbackLimit?: number;
+  maxPlays?: number;
+  playbackSpeed?: number;
   allowPause?: boolean;
-  subQuestions: ListeningSubQuestion[];
+  allowTranscriptInReview?: boolean;
+  subQuestions?: ListeningSubQuestion[];
 }
 
 export class ListeningHandler implements QuestionTypeHandler<ListeningQuestionData, Record<string, any>> {
@@ -447,16 +452,23 @@ export class ListeningHandler implements QuestionTypeHandler<ListeningQuestionDa
 
   validate(data: ListeningQuestionData): boolean {
     if (!data) return false;
-    const hasAudio = Boolean(data.audioUrl || data.audioScript);
+    const hasAudio = Boolean(data.audioUrl || data.audioScript || data.speechText || data.transcript);
     if (!hasAudio) return false;
-    if (!Array.isArray(data.subQuestions) || data.subQuestions.length === 0) return false;
-    for (const sq of data.subQuestions) {
-      if (!sq.id || !sq.prompt || typeof sq.marks !== 'number') return false;
+    const subQs = data.subQuestions || (data as any).questions;
+    if (subQs && Array.isArray(subQs) && subQs.length > 0) {
+      for (const sq of subQs) {
+        if (!sq.id || !sq.prompt || typeof sq.marks !== 'number') return false;
+      }
     }
     return true;
   }
 
   evaluate(data: ListeningQuestionData, userAnswer: Record<string, any>): EvaluationResult {
+    const subQs = data.subQuestions || (data as any).questions || [];
+    if (subQs.length === 0) {
+      return { isCorrect: true, score: 1.0, feedback: 'Audio passage completed' };
+    }
+
     if (!userAnswer || typeof userAnswer !== 'object') {
       return { isCorrect: false, score: 0, feedback: 'No answers provided for listening sub-questions' };
     }
@@ -465,7 +477,7 @@ export class ListeningHandler implements QuestionTypeHandler<ListeningQuestionDa
     let earnedMarks = 0;
     const details: string[] = [];
 
-    for (const sq of data.subQuestions) {
+    for (const sq of subQs) {
       totalMarks += sq.marks;
       const ans = userAnswer[sq.id];
       if (ans === undefined || ans === null) {
@@ -545,12 +557,18 @@ export interface WritingRubricCriterion {
 }
 
 export interface WritingQuestionData {
-  promptText: string;
+  promptText?: string;
+  promptStem?: string;
   promptImageUrl?: string;
-  minWordCount: number;
-  maxWordCount: number;
+  stimulusText?: string;
+  minWordCount?: number;
+  minWords?: number;
+  maxWordCount?: number;
+  maxWords?: number;
   timeLimitMinutes?: number;
-  rubric: WritingRubricCriterion[];
+  recommendedTimeMinutes?: number;
+  rubric?: WritingRubricCriterion[];
+  rubricCriteria?: WritingRubricCriterion[];
   preset?: 'IELTS_TASK_1' | 'IELTS_TASK_2' | 'TOEFL_INDEPENDENT' | 'ACADEMIC_ESSAY' | 'CUSTOM' | string;
 }
 
@@ -559,20 +577,27 @@ export class WritingHandler implements QuestionTypeHandler<WritingQuestionData, 
 
   validate(data: WritingQuestionData): boolean {
     if (!data) return false;
-    if (!data.promptText || typeof data.promptText !== 'string') return false;
-    if (typeof data.minWordCount !== 'number' || data.minWordCount < 0) return false;
-    if (typeof data.maxWordCount !== 'number' || data.maxWordCount < data.minWordCount) return false;
-    if (!Array.isArray(data.rubric) || data.rubric.length === 0) return false;
+    const prompt = data.promptText || data.promptStem;
+    if (!prompt || typeof prompt !== 'string') return false;
+    const minWords = data.minWordCount ?? data.minWords ?? 0;
+    const maxWords = data.maxWordCount ?? data.maxWords ?? 1000;
+    if (typeof minWords !== 'number' || minWords < 0) return false;
+    if (typeof maxWords !== 'number' || maxWords < minWords) return false;
+    const rubric = data.rubric || data.rubricCriteria;
+    if (!Array.isArray(rubric) || rubric.length === 0) return false;
     return true;
   }
 
   evaluate(data: WritingQuestionData, userAnswer: string): EvaluationResult {
     const text = String(userAnswer || '').trim();
+    const minWordCount = data.minWordCount ?? data.minWords ?? 150;
+    const maxWordCount = data.maxWordCount ?? data.maxWords ?? 400;
+
     if (!text) {
       return {
         isCorrect: false,
         score: 0,
-        feedback: 'Submission was blank (0 words). Minimum required: ' + data.minWordCount,
+        feedback: 'Submission was blank (0 words). Minimum required: ' + minWordCount,
       };
     }
 
@@ -580,16 +605,16 @@ export class WritingHandler implements QuestionTypeHandler<WritingQuestionData, 
     const wordCount = words.length;
 
     let lengthPenalty = 0;
-    if (wordCount < data.minWordCount) {
-      const deficit = data.minWordCount - wordCount;
-      lengthPenalty = Math.min(0.5, deficit / data.minWordCount);
+    if (wordCount < minWordCount) {
+      const deficit = minWordCount - wordCount;
+      lengthPenalty = Math.min(0.5, deficit / minWordCount);
     }
 
     const baselineScore = Math.max(0.1, 1 - lengthPenalty);
     return {
-      isCorrect: wordCount >= data.minWordCount,
+      isCorrect: wordCount >= minWordCount,
       score: Number(baselineScore.toFixed(3)),
-      feedback: `Written submission recorded: ${wordCount} words (Requirement: ${data.minWordCount}-${data.maxWordCount} words). AI diagnostic evaluation queued.`,
+      feedback: `Written submission recorded: ${wordCount} words (Requirement: ${minWordCount}-${maxWordCount} words). AI diagnostic evaluation queued.`,
     };
   }
 

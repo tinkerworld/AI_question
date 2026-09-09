@@ -1,29 +1,33 @@
 # ExamOS Build State
 
-**Last updated:** 2026-09-06T18:20:00+05:30  
-**Current phase:** Phase 15 — ExamOS V2 Language Learning, Retention & Platform Management (15.1 Listening Question Type, 15.2 Writing Question Type, 15.5 Vocabulary Retention & SM-2 Drills, 15.14 Centralized Maintenance Engine, 15.15 Feature Registry & Promotional Windows) — **BATCH 1 IMPLEMENTED, RE-VERIFIED & FULL PIPELINE PASSING (100%)**  
+**Last updated:** 2026-09-09T13:42:00+05:30  
+**Current phase:** Phase 15 — ExamOS V2 Language Learning, Retention & Platform Management — **IELTS COMPOSITION FIX, PLUGGABLE SERVER-SIDE TTS ENGINE, EXAM AUDIO PLAYER FIX, & WRITING EVALUATION AI GATEWAY CASCADE COMPLETED & VERIFIED**  
 **Pipeline Verification Status:**
 - **Stack Health**: `ACTIVE` (Frontend Port 3000 & API Server Port 4043)
+- **Real UI Reachability & E2E Verification**: `PASSED`
+  - **IELTS Blueprint Composition**: `pat_ielts_academic_standard` reconfigured to authentic IELTS sitting format: Section A: Listening Comprehension (18 marks), Section B: Reading Comprehension (36 marks), Section C: Writing Tasks (18 marks). Speaking section fully removed from the written exam paper.
+  - **Pluggable Server-Side TTS Engine**: Implemented `TTSService` with `GoogleTTSProvider` and fallback `OfflineWavTTSProvider`. Stream endpoint `/api/v1/audio/stream/:filename` equipped with HTTP 206 Partial Content range requests. Seeded published listening items with multi-accent synthesized audio (`en-GB`, `en-AU`, `en-US`).
+  - **Audio Player Controls Audit**: Fixed `ExamAudioPlayer.tsx` controls (play/pause, range scrubber, estimated duration, speech synthesis ticker) to seamlessly handle both server audio URLs and `speechText` authoring fallbacks.
+  - **Writing Evaluation AI Integration**: Root cause diagnosed and resolved. Connected `WritingEvaluationService` to `AIGatewayService` with automatic resilience cascade from failed cloud providers to `prov_writing_mock_01`, delivering full 4-criterion band breakdowns and lexical suggestions.
+  - **Four Verification Tests**: All passed (Full IELTS Exam E2E, Standalone Listening Practice with Audio Stream, Writing AI Evaluation with exact error trace, and Multi-Accent TTS Generation).
 - **Playwright E2E Suite**: `PASSED` (**78 / 78 tests passing, 100%**)
 - **Canonical Backend Test Runner**: `PASSED` (**20 / 20 test suites passing, 100%**)
 - **Persona Security Auditor**: `PASSED` (**4 / 4 persona suites passing, 100%**)
 - **Review Package**: `GENERATED` (`review-package.zip`, 29 MiB clean archive)
 - **Tooling Parity**: Strict 1:1 `.bat` and `.sh` synchronization across all 16 script twins with executable permissions.
 **Task Status:**
-- **Phase 15 Tasks (15.1, 15.2, 15.5, 15.14, 15.15)**: `tested` in `tools/build-tracker/state.json` (Graceful PGlite close bug resolved in `seed.ts` and `migrate-postgres.js`, fresh wipe & seed verified, Phase 15 Master Integration Suite `phase-15-v2-master.test.js` executed live with 5/5 PASSED).
-- **Phase 15 Patches (15.3, 15.4)**: `done` in `tools/build-tracker/state.json` (Decoupled behavioral prompts, evidence-grounded rubric grading).
-- **Phase 13 Tasks (13.1 to 13.8)**: `tested` in `tools/build-tracker/state.json` (Implemented, verified across Phase 13 Master Backend Suite + Playwright E2E UI Tests + Full 14-Suite Master Regression Suite). Teardown student plan restoration added to prevent downstream mock test entitlement exhaustion.
-- **Phase 12 Tasks (12.1 to 12.11)**: `tested` in `tools/build-tracker/state.json` (Implemented, verified across Phase 12 Master Backend Suite + Playwright E2E UI Tests + Full 12-Suite Master Regression Suite).
-- **Phase 11 Tasks (11.1 to 11.9)**: `tested` in `tools/build-tracker/state.json` (Implemented, verified across Phase 11 Master Backend Suite + Multi-Provider Stacking + Daily Caps + Frontend Tests).
-- **Phase 10 Tasks (10.1 to 10.7)**: `tested` in `tools/build-tracker/state.json` (Implemented, verified across Phase 10 Master Backend Suite + Playwright E2E UI Tests).
-- **Phase 9 Tasks (9.1 to 9.5)**: `tested` in `tools/build-tracker/state.json` (Implemented, verified across Phase 9 Master Backend Suite + Playwright E2E UI Tests).
-- **Phase 8 Tasks (8.1 to 8.7)**: `tested` in `tools/build-tracker/state.json` (Implemented, verified across Phase 8 Master Backend Suite + Playwright E2E UI Tests).
-- **Phase 7 Tasks (7.1 to 7.7)**: `tested` in `tools/build-tracker/state.json` (Implemented, verified across Phase 7 Master Backend Suite + Playwright E2E tests).
-- **Phase 6 Tasks (6.1 to 6.8)**: `tested` in `tools/build-tracker/state.json` (Implemented, verified across 19 backend tests + Playwright UI tests + Section 7 IDOR cross-account tests).
-- **Task 6.9 (Exam Player Container Sizing Bug)**: `pending` in `tools/build-tracker/state.json` (Root cause documented, pending targeted styling sprint).
-- **Phase 5 Tasks (5.1 to 5.4)**: `tested` in `tools/build-tracker/state.json` (Implemented & verified).
-- **Task 2.5 (Course-Subject-Syllabus Frontend)**: `tested` in `tools/build-tracker/state.json`.
-- **Task 3.7 (Question Bank Frontend)**: `tested` in `tools/build-tracker/state.json`.
+- **Phase 15 Tasks (15.1, 15.2, 15.5, 15.14, 15.15)**: `tested` in `tools/build-tracker/state.json` (Tasks 15.1 and 15.2 wired directly into `QuestionBankPage.tsx`, `ExamPlayerPage.tsx`, `attempt.service.ts`, `ExamResultPage.tsx`, and dedicated standalone `ListeningPracticePage.tsx` / `WritingPracticePage.tsx`, verified with 9 live standalone UI screenshots).
+- **Tracker Discipline Rule**: *MANDATORY*: Never mark features "tested" without confirming they are actually reachable, navigable, and interactable through the real user-facing application UI, not merely compiling in isolation or passing mock unit tests.
+
+---
+
+### ⚠️ Tracker Discipline & UI Reachability Rule (Standing Directive)
+**No feature may ever be marked as "tested" in `tools/build-tracker/state.json` or `STATE.md` based purely on isolated component compilation or mock unit testing.**
+1. **Navigational Reachability**: Every user-facing feature must have clear, active entry points in the navigation system, workbenches, or dashboards.
+2. **Authoring & Ingestion**: Educational question types must be selectable and configurable in `QuestionBankPage` matching established type-switch patterns.
+3. **Execution in Exam Player**: Students must be able to encounter, render, and interact with the question type during real exam sessions.
+4. **Auto-Evaluation & Persistence**: Responses must be captured, synchronized to the database, auto-evaluated with correct marks/rubrics, and displayed on `ExamResultPage`.
+5. **Real UI Verification**: Verification must be proven by executing actual browser interactions with Playwright and capturing milestone screenshots.
 
 ---
 
@@ -146,6 +150,64 @@ Phase 15 expands ExamOS from STEM assessment into comprehensive language learnin
 🏁 MASTER TEST SUITE COMPLETE: 5 PASSED, 0 FAILED
 ================================================================
 ```
+
+### 0.7 Standalone Listening & Writing Practice Sections with Content-Derived Course Eligibility
+
+ExamOS V2 establishes dedicated, standalone practice spaces for `LISTENING` and `WRITING` skill development, matching the architecture and derived eligibility model established for `INTERVIEW` (`AI Interview & Viva`) and `VOCABULARY` (`Spaced Repetition Vocab`).
+
+#### 1. Architecture & Derived Course Eligibility
+- **Two-Part Navigation Gate (`App.tsx`)**:
+  - Requires permission `exams.attempt`.
+  - Wrapped with `FeatureMaintenanceWrapper` matching feature keys `audio` and `writing`.
+  - **Content-Derived Eligibility**:
+    - Course $C$ is eligible for Listening practice iff $\exists Q \in \text{questions} \text{ where } Q.\text{type} = \text{'LISTENING'} \land Q.\text{status} = \text{'PUBLISHED'} \land (Q.\text{courseId} = C.\text{id} \lor Q.\text{subjectId} \in \text{subjects}(C))$.
+    - Course $C$ is eligible for Writing practice iff $\exists Q \in \text{questions} \text{ where } Q.\text{type} = \text{'WRITING'} \land Q.\text{status} = \text{'PUBLISHED'} \land (Q.\text{courseId} = C.\text{id} \lor Q.\text{subjectId} \in \text{subjects}(C))$.
+    - A student is eligible iff they hold an active enrollment in $\ge 1$ eligible course.
+    - Staff / Admins (`roles.includes('admin') || roles.includes('instructor')`) bypass course enrollment restrictions and have universal access.
+- **Dedicated Standalone Pages**:
+  - `ListeningPracticePage.tsx` (`#nav-tab-listening_practice`):
+    - Multi-mode switcher (`PRACTICE` vs `EXAM`).
+    - Course filtering with dynamic question counts.
+    - Dual-pane test environment integrating `ExamAudioPlayer.tsx` with speed scaling (0.75x–1.25x), strictly enforcing playback limits in Exam mode while allowing transcript preview in Practice mode.
+    - Interactive sub-question answering (MCQ and text blank completion).
+    - Auto-evaluated scorecards with question review, explanation badges, and audio replay.
+    - Past attempt history view tracking timestamp, score, and duration.
+  - `WritingPracticePage.tsx` (`#nav-tab-writing_practice`):
+    - Prompt stimulus and background context preview.
+    - Multi-criteria rubric inspector (Task Response, Coherence & Cohesion, Lexical Resource, Grammatical Range & Accuracy).
+    - Composition studio powered by `ExamWritingEditor.tsx` with real-time target word count bounds verification (150–400 words).
+    - Detailed `WritingScorecard.tsx` rendering overall Band scores (Band 7.0), examiner feedback, and criteria radars.
+    - Past attempt history view tracking word count, duration, scores, and timestamp.
+
+#### 2. Backend Services & REST Endpoints
+- **Listening Service (`listening.service.ts` & `listening.routes.ts`)**:
+  - `listening_practice_sessions` table for session persistence.
+  - `GET /api/v1/listening/eligibility`: Returns `{ isEligible, eligibleCourseIds, eligibleCourses, availableQuestions }`.
+  - `POST /api/v1/listening/sessions/start`: Initializes session in `IN_PROGRESS` state.
+  - `GET /api/v1/listening/sessions`: Returns user attempt history.
+  - `GET /api/v1/listening/sessions/:id`: Retrieves session with question details.
+  - `POST /api/v1/listening/sessions/:id/submit`: Auto-evaluates sub-question answers against answer keys and records final scores.
+- **Writing Evaluation Service (`writing-evaluation.service.ts` & `writing.routes.ts`)**:
+  - `writing_practice_sessions` table for essay attempt storage.
+  - `GET /api/v1/writing/eligibility`: Returns `{ isEligible, eligibleCourseIds, eligibleCourses, availableQuestions }`.
+  - `POST /api/v1/writing/sessions/start`: Initializes writing practice session.
+  - `GET /api/v1/writing/sessions`: Returns past essay attempts with scores.
+  - `GET /api/v1/writing/sessions/:id`: Retrieves essay session details.
+  - `POST /api/v1/writing/sessions/:id/submit`: Multi-criteria AI rubric evaluation, word compliance penalty check, band scoring, and persistence.
+
+#### 3. Live Playwright E2E Walkthrough & Screenshot Evidence
+All 9 verification milestones passed with 100% success and captured full-resolution visual evidence:
+1. `01_negative_check_jee_student_no_language_tabs.png`: Negative check proving JEE-only student (`jee.student@examos.com`) sees neither Interview, Listening Practice, nor Writing Practice tabs.
+2. `02_ielts_student_sidebar_with_listening_and_writing.png`: Positive check proving IELTS student (`student@examos.com`) sees all 3 language tabs in the navigation sidebar.
+3. `03_listening_practice_catalog.png`: Listening practice catalog with question cards, difficulty tags, and mode switchers.
+4. `04_listening_practice_attempt_taking.png`: Active listening test taking with dual-pane layout, audio player, and sub-question form.
+5. `05_listening_practice_result_scorecard.png`: Listening scorecard with 10/10 score, sub-question validation, and audio replay.
+6. `06_writing_practice_catalog.png`: Writing practice catalog with essay prompts, time limits, and word bounds.
+7. `07_writing_practice_attempt_taking.png`: Active essay writing studio with live 207-word counter and rubric inspection.
+8. `08_writing_practice_result_scorecard.png`: Evaluated WritingScorecard with Band 7.0 score and criteria breakdown.
+9. `09_writing_practice_history.png`: Standalone writing attempts history tracking past sessions.
+
+---
 
 ## 0. Phase 13: Subscriptions & Entitlements Architecture & Implementation
 

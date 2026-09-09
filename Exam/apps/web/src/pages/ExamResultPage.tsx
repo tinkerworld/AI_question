@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { WritingScorecard } from '../components/writing/WritingScorecard';
+import { ExamAudioPlayer } from '../components/listening/ExamAudioPlayer';
 import { API_BASE } from '../config/api';
 
 interface QuestionReviewItem {
@@ -23,6 +25,10 @@ interface QuestionReviewItem {
   correctAnswer: any;
   explanation: string;
   evaluatorComments?: string;
+  audioUrl?: string;
+  speechText?: string;
+  subQuestions?: any[];
+  writingEvaluation?: any;
 }
 
 interface SectionScore {
@@ -515,10 +521,54 @@ export const ExamResultPage: React.FC<ExamResultPageProps> = ({ attemptId, onBac
                 )}
 
                 {/* Non-MCQ Answer Summary */}
-                {!q.options && (
+                {!q.options && q.type !== 'WRITING' && q.type !== 'LISTENING' && (
                   <div style={{ padding: '10px 14px', borderRadius: '8px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--border-color)', marginBottom: '14px', fontSize: '13px' }}>
                     <div>Your Response: <strong style={{ color: isUnanswered ? 'var(--text-muted)' : q.isCorrect ? '#10b981' : '#ef4444' }}>{isUnanswered ? 'Unattempted' : JSON.stringify(q.studentAnswer)}</strong></div>
                     <div style={{ marginTop: '4px' }}>Correct Key: <strong style={{ color: '#10b981' }}>{JSON.stringify(q.correctAnswer)}</strong></div>
+                  </div>
+                )}
+
+                {/* LISTENING Passage & Sub-Questions Review */}
+                {q.type === 'LISTENING' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '16px' }}>
+                    <ExamAudioPlayer
+                      audioUrl={q.audioUrl || (q as any).data?.audioUrl}
+                      speechText={q.speechText || (q as any).data?.speechText || (q as any).data?.audioScript}
+                      allowTranscript={true}
+                    />
+                    {Array.isArray(q.subQuestions) && q.subQuestions.length > 0 && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <strong style={{ fontSize: '13px', color: 'var(--text-main)' }}>Comprehension Question Review:</strong>
+                        {q.subQuestions.map((sq: any, sIdx: number) => {
+                          const stuAns = q.studentAnswer ? q.studentAnswer[sq.id] : undefined;
+                          let correctKey = sq.correctOptionId || sq.blankKey;
+                          if (sq.type === 'MCQ' && sq.options) {
+                            const correctOpt = sq.options.find((o: any) => o.id === sq.correctOptionId);
+                            if (correctOpt) correctKey = `${correctOpt.text} (${correctOpt.id})`;
+                          }
+                          const isSqCorrect = stuAns !== undefined && String(stuAns).trim().toLowerCase() === String(sq.correctOptionId || sq.blankKey || '').trim().toLowerCase();
+
+                          return (
+                            <div key={sq.id || sIdx} style={{ padding: '10px 12px', borderRadius: '6px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-color)', fontSize: '12px' }}>
+                              <div style={{ fontWeight: 600, color: 'var(--text-main)', marginBottom: '4px' }}>
+                                {sIdx + 1}. {sq.prompt} ({sq.marks} marks)
+                              </div>
+                              <div style={{ display: 'flex', gap: '16px', marginTop: '4px' }}>
+                                <span>Your Response: <strong style={{ color: isSqCorrect ? '#10b981' : '#ef4444' }}>{stuAns ? String(stuAns) : 'Unattempted'}</strong></span>
+                                <span>Correct Key: <strong style={{ color: '#10b981' }}>{correctKey}</strong></span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* WRITING Scorecard Review */}
+                {q.type === 'WRITING' && q.writingEvaluation && (
+                  <div style={{ marginBottom: '16px' }}>
+                    <WritingScorecard result={q.writingEvaluation} isLocked={false} />
                   </div>
                 )}
 

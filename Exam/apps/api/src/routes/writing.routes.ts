@@ -63,3 +63,105 @@ writingRouter.post(['/evaluate', '/evaluate-preview'], authenticate, async (req:
     next(err);
   }
 });
+
+/**
+ * GET /api/v1/writing/eligibility
+ * Returns derived course eligibility, eligible courses, and available writing questions.
+ */
+writingRouter.get(
+  '/eligibility',
+  authenticate,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const eligibility = await WritingEvaluationService.getUserEligibility(
+        (req as any).user.userId,
+        (req as any).user.roles || []
+      );
+      res.json({ success: true, data: eligibility });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+/**
+ * POST /api/v1/writing/sessions/start
+ * Starts a new standalone writing practice attempt.
+ */
+writingRouter.post(
+  ['/sessions', '/sessions/start'],
+  authenticate,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const result = await WritingEvaluationService.startWritingSession(req.body, {
+        userId: (req as any).user.userId,
+        roles: (req as any).user.roles || [],
+      });
+      res.status(201).json({ success: true, data: result });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+/**
+ * GET /api/v1/writing/sessions
+ * List past writing practice attempts for user.
+ */
+writingRouter.get(
+  '/sessions',
+  authenticate,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const sessions = await WritingEvaluationService.getUserSessions((req as any).user.userId);
+      res.json({ success: true, data: sessions });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+/**
+ * GET /api/v1/writing/sessions/:id
+ * Retrieves writing practice session details.
+ */
+writingRouter.get(
+  '/sessions/:id',
+  authenticate,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const session = await WritingEvaluationService.getWritingSession(req.params.id, {
+        userId: (req as any).user.userId,
+        roles: (req as any).user.roles || [],
+      });
+      res.json({ success: true, data: session });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+/**
+ * POST /api/v1/writing/sessions/:id/submit
+ * Submits candidate essay and auto-evaluates the writing session.
+ */
+writingRouter.post(
+  ['/sessions/:id/submit', '/sessions/:id/complete'],
+  authenticate,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const result = await WritingEvaluationService.submitWritingSession(
+        req.params.id,
+        req.body,
+        {
+          userId: (req as any).user.userId,
+          roles: (req as any).user.roles || [],
+        }
+      );
+      res.json({ success: true, data: result });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+

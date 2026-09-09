@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useExamLock } from '../context/ExamLockContext';
+import { ExamAudioPlayer } from '../components/listening/ExamAudioPlayer';
+import { ExamWritingEditor } from '../components/writing/ExamWritingEditor';
 import { API_BASE } from '../config/api';
 
 interface QuestionOption {
@@ -23,6 +25,18 @@ interface QuestionItem {
   options?: QuestionOption[];
   pairs?: { left: string; right: string }[];
   rubricCriteria?: string[];
+  audioUrl?: string;
+  speechText?: string;
+  audioScript?: string;
+  maxPlays?: number;
+  playbackSpeed?: number;
+  allowTranscript?: boolean;
+  subQuestions?: any[];
+  promptStem?: string;
+  stimulusText?: string;
+  minWords?: number;
+  maxWords?: number;
+  recommendedTimeMinutes?: number;
   studentAnswer: any;
   isMarkedForReview: boolean;
   timeSpentSeconds: number;
@@ -804,6 +818,40 @@ export const ExamPlayerPage: React.FC<ExamPlayerPageProps> = ({
                       {currentQuestion.content}
                     </div>
 
+                    {/* LISTENING Audio Passage Player */}
+                    {currentQuestion.type === 'LISTENING' && (
+                      <div style={{ marginTop: '16px' }}>
+                        <ExamAudioPlayer
+                          audioUrl={currentQuestion.audioUrl || (currentQuestion as any).data?.audioUrl}
+                          speechText={currentQuestion.speechText || currentQuestion.audioScript || (currentQuestion as any).data?.speechText || (currentQuestion as any).data?.audioScript}
+                          maxPlays={currentQuestion.maxPlays || (currentQuestion as any).data?.maxPlays || (currentQuestion as any).data?.playbackLimit || 3}
+                          playbackSpeed={currentQuestion.playbackSpeed || (currentQuestion as any).data?.playbackSpeed || 1.0}
+                          allowTranscript={currentQuestion.allowTranscript || (currentQuestion as any).data?.allowTranscript || false}
+                        />
+                      </div>
+                    )}
+
+                    {/* WRITING Question Stimulus & Target Instructions */}
+                    {currentQuestion.type === 'WRITING' && (
+                      <div style={{ marginTop: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <div style={{ display: 'flex', gap: '16px', fontSize: `${12 * questionZoom}px`, color: '#9ca3af', background: 'rgba(6, 182, 212, 0.08)', padding: '8px 12px', borderRadius: '6px', border: '1px solid rgba(6, 182, 212, 0.2)' }}>
+                          <span>Target: <strong style={{ color: '#06b6d4' }}>{currentQuestion.minWords || 150}–{currentQuestion.maxWords || 400} words</strong></span>
+                          <span>•</span>
+                          <span>Time Limit: <strong style={{ color: '#a78bfa' }}>{currentQuestion.recommendedTimeMinutes || 40} mins</strong></span>
+                        </div>
+                        {currentQuestion.stimulusText && (
+                          <div style={{ padding: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid #1f2937', borderRadius: '8px' }}>
+                            <strong style={{ color: '#06b6d4', display: 'block', marginBottom: '6px', fontSize: `${13 * questionZoom}px` }}>
+                              Stimulus Context:
+                            </strong>
+                            <div style={{ fontSize: `${14 * questionZoom}px`, color: '#e5e7eb', lineHeight: '1.6' }}>
+                              {currentQuestion.stimulusText}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     {/* MATCHING Question Column Preview */}
                     {currentQuestion.type === 'MATCHING' && currentQuestion.pairs && (
                       <div style={{ marginTop: '16px', background: 'rgba(0,0,0,0.2)', border: '1px solid #1f2937', borderRadius: '8px', padding: '14px' }}>
@@ -1220,6 +1268,136 @@ export const ExamPlayerPage: React.FC<ExamPlayerPageProps> = ({
                         })}
                       </div>
                     )}
+
+                    {/* LISTENING Sub-Questions Area */}
+                    {currentQuestion.type === 'LISTENING' && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '680px' }}>
+                        <div style={{ fontSize: `${13 * optionsZoom}px`, color: '#9ca3af' }}>
+                          Answer the comprehension question(s) below based on the spoken audio passage:
+                        </div>
+                        {Array.isArray(currentQuestion.subQuestions) && currentQuestion.subQuestions.length > 0 ? (
+                          currentQuestion.subQuestions.map((sq: any, idx: number) => {
+                            const currentAnsMap = userAnswers[currentQuestion.questionId] || {};
+                            const sqAns = currentAnsMap[sq.id];
+
+                            return (
+                              <div
+                                key={sq.id || idx}
+                                style={{
+                                  padding: '14px',
+                                  borderRadius: '8px',
+                                  background: 'rgba(255, 255, 255, 0.03)',
+                                  border: '1px solid #1f2937',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: '10px',
+                                }}
+                              >
+                                <div style={{ fontSize: `${14 * optionsZoom}px`, color: '#f3f4f6', fontWeight: 600 }}>
+                                  <span style={{ color: '#06b6d4', marginRight: '6px' }}>{idx + 1}.</span>
+                                  {sq.prompt} ({sq.marks} marks)
+                                </div>
+
+                                {sq.type === 'MCQ' && Array.isArray(sq.options) && (
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    {sq.options.map((opt: any) => {
+                                      const isSelected = sqAns === opt.id;
+                                      return (
+                                        <div
+                                          key={opt.id}
+                                          onClick={() => {
+                                            const updated = { ...currentAnsMap, [sq.id]: opt.id };
+                                            handleSelectAnswer(currentQuestion.questionId, updated);
+                                          }}
+                                          style={{
+                                            padding: '10px 14px',
+                                            borderRadius: '6px',
+                                            border: isSelected ? '1px solid #06b6d4' : '1px solid #374151',
+                                            background: isSelected ? 'rgba(6, 182, 212, 0.12)' : '#090d16',
+                                            color: isSelected ? '#fff' : '#d1d5db',
+                                            cursor: 'pointer',
+                                            fontSize: `${13 * optionsZoom}px`,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '10px',
+                                          }}
+                                        >
+                                          <input
+                                            type="radio"
+                                            name={`listening_sq_${sq.id}`}
+                                            checked={isSelected}
+                                            onChange={() => {
+                                              const updated = { ...currentAnsMap, [sq.id]: opt.id };
+                                              handleSelectAnswer(currentQuestion.questionId, updated);
+                                            }}
+                                            style={{ cursor: 'pointer' }}
+                                          />
+                                          <span>{opt.text}</span>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+
+                                {sq.type === 'FILL_IN_BLANK' && (
+                                  <div>
+                                    <input
+                                      type="text"
+                                      value={sqAns || ''}
+                                      onChange={(e) => {
+                                        const updated = { ...currentAnsMap, [sq.id]: e.target.value };
+                                        handleSelectAnswer(currentQuestion.questionId, updated);
+                                      }}
+                                      placeholder="Type your answer here..."
+                                      style={{
+                                        width: '100%',
+                                        padding: '10px 12px',
+                                        borderRadius: '6px',
+                                        background: '#090d16',
+                                        border: '1px solid #374151',
+                                        color: '#fff',
+                                        fontSize: `${14 * optionsZoom}px`,
+                                      }}
+                                    />
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })
+                        ) : (
+                          <div>
+                            <input
+                              type="text"
+                              value={userAnswers[currentQuestion.questionId] || ''}
+                              onChange={(e) => handleSelectAnswer(currentQuestion.questionId, e.target.value)}
+                              placeholder="Type your answer or notes here..."
+                              style={{
+                                width: '100%',
+                                padding: '10px 12px',
+                                borderRadius: '6px',
+                                background: '#090d16',
+                                border: '1px solid #374151',
+                                color: '#fff',
+                                fontSize: `${14 * optionsZoom}px`,
+                              }}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* WRITING Editor Area */}
+                    {currentQuestion.type === 'WRITING' && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%', maxWidth: '800px' }}>
+                        <ExamWritingEditor
+                          value={typeof userAnswers[currentQuestion.questionId] === 'string' ? userAnswers[currentQuestion.questionId] : (userAnswers[currentQuestion.questionId]?.text || '')}
+                          onChange={(text) => handleSelectAnswer(currentQuestion.questionId, text)}
+                          minWords={currentQuestion.minWords || 150}
+                          maxWords={currentQuestion.maxWords || 400}
+                          placeholder="Begin writing your response or essay here..."
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1452,6 +1630,7 @@ export const ExamPlayerPage: React.FC<ExamPlayerPageProps> = ({
           <div style={{ padding: '14px 20px', borderTop: '1px solid #1f2937', background: '#0e1526' }}>
             <button
               type="button"
+              id="btn-palette-open-submit"
               onClick={() => setShowSubmitModal(true)}
               style={{
                 width: '100%',

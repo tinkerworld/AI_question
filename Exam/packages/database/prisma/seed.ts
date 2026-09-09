@@ -3283,6 +3283,164 @@ export async function runSeed() {
         sampleAnswer: 'The exponential rise of generative artificial intelligence has sparked intense scrutiny regarding the sanctity of human intellectual and artistic innovation...',
       },
     },
+
+    // IELTS Academic Listening Passages & Comprehension Modules
+    {
+      id: 'q_ielts_lis_01',
+      subjectId: 'sub_ielts_listening',
+      topicId: 'top_ielts_listening',
+      type: 'LISTENING',
+      difficulty: 'MEDIUM',
+      marks: 9.0,
+      content: 'IELTS Listening Section 1: International Student Residential Induction & Accommodation Services Enquiry',
+      data: {
+        mode: 'SYNTHETIC',
+        speechText: 'Good morning, welcome to the university residential services desk. How can I assist you with your campus accommodation today? Hello, thank you. I am an incoming postgraduate researcher arriving for the autumn semester, and I would like to confirm my studio booking details. Certainly. For single occupancy postgraduate studios in West Hall, the weekly rent is £185, inclusive of high-speed broadband and utilities. Please note that a security deposit of £450 must be submitted electronically before key collection on arrival weekend.',
+        voiceProfileId: 'voice_en_gb_f_01',
+        maxPlays: 2,
+        playbackSpeed: 1.0,
+        allowTranscriptInReview: true,
+        subQuestions: [
+          {
+            id: 'sq_lis_01_1',
+            type: 'MCQ',
+            prompt: 'Which residential hall is allocated for single postgraduate studios?',
+            marks: 4.5,
+            options: [
+              { id: 'opt_1', text: 'West Hall' },
+              { id: 'opt_2', text: 'East Quadrangle' },
+              { id: 'opt_3', text: 'Victoria Terrace' },
+              { id: 'opt_4', text: 'North Common' },
+            ],
+            correctOptionId: 'opt_1',
+          },
+          {
+            id: 'sq_lis_01_2',
+            type: 'FILL_IN_BLANK',
+            prompt: 'The mandatory security deposit required prior to key collection is £____.',
+            marks: 4.5,
+            blankKey: '450',
+          },
+        ],
+      },
+    },
+    {
+      id: 'q_ielts_lis_02',
+      subjectId: 'sub_ielts_listening',
+      topicId: 'top_ielts_listening',
+      type: 'LISTENING',
+      difficulty: 'MEDIUM',
+      marks: 9.0,
+      content: 'IELTS Listening Section 2: Municipal Botanical Garden Conservation and Biodiversity Volunteer Briefing',
+      data: {
+        mode: 'SYNTHETIC',
+        speechText: 'Welcome volunteers to the South Coast Botanic Sanctuary. Over the next six months, our preservation team will be rehabilitating indigenous coastal flora and establishing pollinator corridors. As field volunteers, your primary duty every Saturday morning will be cataloguing native bee species and removing invasive creeping thistle from the eastern dune restoration sector. Please ensure you sign in at the visitors centre by 8:30 AM and collect your high-visibility protective gear.',
+        voiceProfileId: 'voice_en_au_m_01',
+        maxPlays: 2,
+        playbackSpeed: 1.0,
+        allowTranscriptInReview: true,
+        subQuestions: [
+          {
+            id: 'sq_lis_02_1',
+            type: 'MCQ',
+            prompt: 'Which invasive weed species are volunteers tasked with removing from the eastern sector?',
+            marks: 4.5,
+            options: [
+              { id: 'opt_1', text: 'Creeping thistle' },
+              { id: 'opt_2', text: 'Japanese knotweed' },
+              { id: 'opt_3', text: 'Giant hogweed' },
+              { id: 'opt_4', text: 'Water hyacinth' },
+            ],
+            correctOptionId: 'opt_1',
+          },
+          {
+            id: 'sq_lis_02_2',
+            type: 'FILL_IN_BLANK',
+            prompt: 'Volunteers must complete their safety sign-in at the visitor centre by ____ AM.',
+            marks: 4.5,
+            blankKey: '8:30',
+          },
+        ],
+      },
+    },
+    {
+      id: 'q_ielts_lis_03',
+      subjectId: 'sub_ielts_listening',
+      topicId: 'top_ielts_listening',
+      type: 'LISTENING',
+      difficulty: 'HARD',
+      marks: 9.0,
+      content: 'IELTS Listening Section 3: Academic Tutorial on Urban Heat Island Mitigation via Green Architecture',
+      data: {
+        mode: 'SYNTHETIC',
+        speechText: 'Dr. Henderson: Welcome Marcus and Priya. Let us review the computational models for your architectural dissertations on urban microclimates. Priya, your thermal imaging data indicates that extensive sedum green roofs reduce rooftop solar heat absorption by up to 65%. Marcus, what were your findings regarding vertical façade vegetation? Marcus: Well, vertical trellises with deciduous climbing ivy provide optimal solar shading during summer peak hours while permitting winter passive heating once leaves drop in November.',
+        voiceProfileId: 'voice_en_gb_m_01',
+        maxPlays: 2,
+        playbackSpeed: 1.0,
+        allowTranscriptInReview: true,
+        subQuestions: [
+          {
+            id: 'sq_lis_03_1',
+            type: 'MCQ',
+            prompt: 'According to Priya’s data, by what percentage do sedum green roofs reduce rooftop solar heat absorption?',
+            marks: 4.5,
+            options: [
+              { id: 'opt_1', text: 'Up to 65%' },
+              { id: 'opt_2', text: 'Up to 35%' },
+              { id: 'opt_3', text: 'Exactly 50%' },
+              { id: 'opt_4', text: 'Up to 80%' },
+            ],
+            correctOptionId: 'opt_1',
+          },
+          {
+            id: 'sq_lis_03_2',
+            type: 'FILL_IN_BLANK',
+            prompt: 'Deciduous foliage on vertical trellises permits winter passive heating when leaves drop in ____.',
+            marks: 4.5,
+            blankKey: 'November',
+          },
+        ],
+      },
+    },
+    {
+      id: 'q_ielts_lis_04',
+      subjectId: 'sub_ielts_listening',
+      topicId: 'top_ielts_listening',
+      type: 'LISTENING',
+      difficulty: 'HARD',
+      marks: 9.0,
+      content: 'IELTS Listening Section 4: University Lecture on Deep-Sea Bioluminescence and Counter-Illumination',
+      data: {
+        mode: 'SYNTHETIC',
+        speechText: 'Good morning everyone. Today we examine biochemical adaptations in mesopelagic cephalopods. At ocean depths between two hundred and one thousand metres, sunlight penetrates only faintly. Organisms such as the firefly squid possess ventral photophores containing luciferase enzymes that catalyze luciferin oxidation, emitting blue-green light at a wavelength of four hundred and seventy nanometres. This precisely matches downwelling sunlight, effectively erasing the animal silhouette from predators hunting below.',
+        voiceProfileId: 'voice_en_us_f_01',
+        maxPlays: 2,
+        playbackSpeed: 1.0,
+        allowTranscriptInReview: true,
+        subQuestions: [
+          {
+            id: 'sq_lis_04_1',
+            type: 'MCQ',
+            prompt: 'At what wavelength does the ventral photophore bioluminescence emit blue-green light?',
+            marks: 4.5,
+            options: [
+              { id: 'opt_1', text: '470 nanometres' },
+              { id: 'opt_2', text: '530 nanometres' },
+              { id: 'opt_3', text: '620 nanometres' },
+              { id: 'opt_4', text: '390 nanometres' },
+            ],
+            correctOptionId: 'opt_1',
+          },
+          {
+            id: 'sq_lis_04_2',
+            type: 'FILL_IN_BLANK',
+            prompt: 'Counter-illumination eliminates the cephalopod ____ from predators looking upwards.',
+            marks: 4.5,
+            blankKey: 'silhouette',
+          },
+        ],
+      },
+    },
   ];
 
   for (const iq of ieltsAcademicQuestions) {
@@ -3687,7 +3845,7 @@ export async function runSeed() {
     `, [s.id, s.subjectId, s.name, s.order, s.numQ, s.marks, s.numQ * s.marks, s.marks, s.wrong]);
   }
 
-  // 8c. IELTS Blueprint (Reading + Writing + Speaking)
+  // 8c. IELTS Blueprint (Listening + Reading + Writing)
   await pgDb.query(`
     INSERT INTO "exam_patterns" (
       "id", "name", "courseId", "durationMinutes", "description", "status", "type", "totalMarks", "version", "createdById", "createdAt", "updatedAt"
@@ -3696,7 +3854,7 @@ export async function runSeed() {
       'IELTS Academic Complete Blueprint',
       'c3',
       160,
-      'Standard IELTS Academic Examination covering Reading (Passage Analysis), Writing (Task 1 & Task 2), and Speaking (Oral Interview Assessment)',
+      'Standard IELTS Academic Examination covering Listening (Comprehension), Reading (Passage Analysis), and Writing (Task 1 & Task 2)',
       'PUBLISHED',
       'MULTI',
       72.0,
@@ -3706,11 +3864,15 @@ export async function runSeed() {
       CURRENT_TIMESTAMP
     ) ON CONFLICT ("id") DO UPDATE SET
       "name" = EXCLUDED."name",
+      "description" = EXCLUDED."description",
       "status" = 'PUBLISHED',
       "totalMarks" = 72.0
   `);
 
-  for (const sub of [{ id: 'sub_ielts_reading', marks: 36 }, { id: 'sub_ielts_writing', marks: 18 }, { id: 'sub_ielts_speaking', marks: 18 }]) {
+  await pgDb.query(`DELETE FROM "exam_pattern_subjects" WHERE "examPatternId" = 'pat_ielts_academic_standard' AND "subjectId" = 'sub_ielts_speaking'`);
+  await pgDb.query(`DELETE FROM "exam_pattern_sections" WHERE "id" = 'sec_ielts_speak'`);
+
+  for (const sub of [{ id: 'sub_ielts_listening', marks: 18 }, { id: 'sub_ielts_reading', marks: 36 }, { id: 'sub_ielts_writing', marks: 18 }]) {
     await pgDb.query(`
       INSERT INTO "exam_pattern_subjects" ("examPatternId", "subjectId", "targetMarks")
       VALUES ('pat_ielts_academic_standard', $1, $2)
@@ -3719,9 +3881,9 @@ export async function runSeed() {
   }
 
   const ieltsSections = [
-    { id: 'sec_ielts_read', name: 'Section A: Academic Reading Comprehension', subjectId: 'sub_ielts_reading', numQ: 4, marks: 9.0, wrong: 0.0, order: 1 },
-    { id: 'sec_ielts_write', name: 'Section B: Academic Writing Tasks (Task 1 & Task 2)', subjectId: 'sub_ielts_writing', numQ: 2, marks: 9.0, wrong: 0.0, order: 2 },
-    { id: 'sec_ielts_speak', name: 'Section C: Oral Speaking & Interview Assessment', subjectId: 'sub_ielts_speaking', numQ: 2, marks: 9.0, wrong: 0.0, order: 3 },
+    { id: 'sec_ielts_listen', name: 'Section A: Academic Listening Comprehension', subjectId: 'sub_ielts_listening', numQ: 2, marks: 9.0, wrong: 0.0, order: 1, allowed: ['LISTENING'] },
+    { id: 'sec_ielts_read', name: 'Section B: Academic Reading Comprehension', subjectId: 'sub_ielts_reading', numQ: 4, marks: 9.0, wrong: 0.0, order: 2, allowed: ['MCQ', 'SHORT_ANSWER'] },
+    { id: 'sec_ielts_write', name: 'Section C: Academic Writing Tasks (Task 1 & Task 2)', subjectId: 'sub_ielts_writing', numQ: 2, marks: 9.0, wrong: 0.0, order: 3, allowed: ['WRITING', 'SUBJECTIVE'] },
   ];
 
   for (const s of ieltsSections) {
@@ -3731,10 +3893,20 @@ export async function runSeed() {
       ) VALUES ($1, 'pat_ielts_academic_standard', $2, $3, $4, $5, $6, $7, $8, $9, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
       ON CONFLICT ("id") DO UPDATE SET
         "name" = EXCLUDED."name",
+        "subjectId" = EXCLUDED."subjectId",
+        "sequenceOrder" = EXCLUDED."sequenceOrder",
         "numQuestions" = EXCLUDED."numQuestions",
         "marksPerQuestion" = EXCLUDED."marksPerQuestion",
         "totalMarks" = EXCLUDED."totalMarks"
     `, [s.id, s.subjectId, s.name, s.order, s.numQ, s.marks, s.numQ * s.marks, s.marks, s.wrong]);
+
+    await pgDb.query(`
+      INSERT INTO "exam_pattern_section_rules" (
+        "id", "sectionId", "allowedQuestionTypes", "createdAt", "updatedAt"
+      ) VALUES ($1, $2, $3, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      ON CONFLICT ("sectionId") DO UPDATE SET
+        "allowedQuestionTypes" = EXCLUDED."allowedQuestionTypes"
+    `, [`rule_${s.id}`, s.id, JSON.stringify(s.allowed)]);
   }
 
   console.log('9. Pre-generating and publishing 2 authentic demo exams for EACH of the 3 courses (JEE, NEET, IELTS) via real service pipeline...');

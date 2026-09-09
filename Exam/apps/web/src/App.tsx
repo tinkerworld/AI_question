@@ -18,6 +18,8 @@ import { SettingsPage } from './pages/SettingsPage';
 import { InterviewPage } from './pages/InterviewPage';
 import { SubscriptionPage } from './pages/SubscriptionPage';
 import { VocabularyPracticePage } from './pages/VocabularyPracticePage';
+import { ListeningPracticePage } from './pages/ListeningPracticePage';
+import { WritingPracticePage } from './pages/WritingPracticePage';
 import { StudentAnalyticsPage } from './pages/StudentAnalyticsPage';
 import { PreviewBanner } from './components/PreviewBanner';
 import { PreviewConfigurationModal } from './components/PreviewConfigurationModal';
@@ -39,6 +41,8 @@ const NAV_ITEMS: NavTabConfig[] = [
   { id: 'student_exams', label: 'My Assessments & Tests', requiredPermission: 'exams.attempt', featureKey: 'exams' },
   { id: 'practice', label: 'Practice & Drills', requiredPermission: 'practice.attempt', featureKey: 'practice' },
   { id: 'interview', label: 'AI Interview & Viva', requiredPermission: 'interview.attempt', featureKey: 'interview' },
+  { id: 'listening_practice', label: 'Listening Practice', requiredPermission: 'exams.attempt', featureKey: 'audio' },
+  { id: 'writing_practice', label: 'Writing Practice', requiredPermission: 'exams.attempt', featureKey: 'writing' },
   { id: 'vocabulary', label: 'Spaced Repetition Vocab', featureKey: 'vocabulary' },
   { id: 'subscription', label: 'Subscription & Credits', requiredPermission: 'subscriptions.read', featureKey: 'subscriptions' },
   { id: 'analytics', label: 'Student Analytics & Mastery', requiredPermission: 'analytics.read_own', featureKey: 'analytics' },
@@ -63,6 +67,8 @@ const MainLayout: React.FC = () => {
   const { isExamLocked, triggerExitWarning } = useExamLock();
   const [showPreviewConfig, setShowPreviewConfig] = useState<boolean>(false);
   const [isInterviewEligible, setIsInterviewEligible] = useState<boolean>(true);
+  const [isListeningEligible, setIsListeningEligible] = useState<boolean>(true);
+  const [isWritingEligible, setIsWritingEligible] = useState<boolean>(true);
 
   const [maintenanceStatus, setMaintenanceStatus] = useState<any>(null);
 
@@ -100,6 +106,8 @@ const MainLayout: React.FC = () => {
 
     if (isStaff) {
       setIsInterviewEligible(true);
+      setIsListeningEligible(true);
+      setIsWritingEligible(true);
       return;
     }
 
@@ -113,11 +121,35 @@ const MainLayout: React.FC = () => {
         }
       })
       .catch(() => {});
+
+    fetch(`${API_BASE}/listening/eligibility`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success) {
+          setIsListeningEligible(Boolean(d.data?.isEligible));
+        }
+      })
+      .catch(() => {});
+
+    fetch(`${API_BASE}/writing/eligibility`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success) {
+          setIsWritingEligible(Boolean(d.data?.isEligible));
+        }
+      })
+      .catch(() => {});
   }, [token, user]);
 
   const visibleNavItems = NAV_ITEMS.filter((item) => {
     if (!hasPermission(userPermissions, item.requiredPermission)) return false;
     if (item.id === 'interview' && !isInterviewEligible) return false;
+    if (item.id === 'listening_practice' && !isListeningEligible) return false;
+    if (item.id === 'writing_practice' && !isWritingEligible) return false;
 
     // DisplayMode HIDDEN enforcement: removes entry point entirely for blocked users
     if (item.featureKey && maintenanceStatus?.featureControls) {
@@ -298,6 +330,8 @@ const MainLayout: React.FC = () => {
 
           {/* Logout Button */}
           <button
+            id="btn-logout"
+            data-testid="btn-logout"
             onClick={() => {
               if (isExamLocked) {
                 triggerExitWarning();
@@ -436,6 +470,8 @@ const MainLayout: React.FC = () => {
               activeTab === 'student_exams' ||
               activeTab === 'practice' ||
               activeTab === 'interview' ||
+              activeTab === 'listening_practice' ||
+              activeTab === 'writing_practice' ||
               activeTab === 'vocabulary' ||
               activeTab === 'subscription' ||
               activeTab === 'analytics' ||
@@ -465,6 +501,14 @@ const MainLayout: React.FC = () => {
           ) : activeTab === 'interview' ? (
             <FeatureMaintenanceWrapper featureKey="interview" featureName="AI Interview & Viva" onNavigateHome={() => setActiveTab('dashboard')}>
               <InterviewPage />
+            </FeatureMaintenanceWrapper>
+          ) : activeTab === 'listening_practice' ? (
+            <FeatureMaintenanceWrapper featureKey="audio" featureName="Listening Practice" onNavigateHome={() => setActiveTab('dashboard')}>
+              <ListeningPracticePage />
+            </FeatureMaintenanceWrapper>
+          ) : activeTab === 'writing_practice' ? (
+            <FeatureMaintenanceWrapper featureKey="writing" featureName="Writing Practice" onNavigateHome={() => setActiveTab('dashboard')}>
+              <WritingPracticePage />
             </FeatureMaintenanceWrapper>
           ) : activeTab === 'vocabulary' ? (
             <FeatureMaintenanceWrapper featureKey="vocabulary" featureName="Vocabulary Practice" onNavigateHome={() => setActiveTab('dashboard')}>

@@ -18,6 +18,7 @@ export const ExamAudioPlayer: React.FC<ExamAudioPlayerProps> = ({
   allowTranscript = false,
   maxPlays = 3,
   speechText,
+  accent = 'en-GB',
   playbackSpeed = 1.0,
   onPlayLimitReached,
 }) => {
@@ -28,6 +29,23 @@ export const ExamAudioPlayer: React.FC<ExamAudioPlayerProps> = ({
   const [speed, setSpeed] = useState(playbackSpeed);
   const [showTranscript, setShowTranscript] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const speechIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Compute effective duration (estimated from speechText words if audio metadata not available)
+  const estimatedDuration = React.useMemo(() => {
+    if (!speechText) return 0;
+    const words = speechText.trim().split(/\s+/).filter(Boolean).length;
+    return Math.max(5, Math.round((words / (140 * speed)) * 60));
+  }, [speechText, speed]);
+
+  const effectiveDuration = duration > 0 ? duration : estimatedDuration;
+
+  const clearSpeechTicker = () => {
+    if (speechIntervalRef.current) {
+      clearInterval(speechIntervalRef.current);
+      speechIntervalRef.current = null;
+    }
+  };
 
   // Security requirement: Auto-pause when user navigates away or tabs switch
   useEffect(() => {
@@ -48,6 +66,7 @@ export const ExamAudioPlayer: React.FC<ExamAudioPlayerProps> = ({
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('blur', handleBlur);
+      clearSpeechTicker();
       if (window.speechSynthesis) {
         window.speechSynthesis.cancel();
       }
@@ -61,6 +80,7 @@ export const ExamAudioPlayer: React.FC<ExamAudioPlayerProps> = ({
     if (window.speechSynthesis) {
       window.speechSynthesis.pause();
     }
+    clearSpeechTicker();
     setIsPlaying(false);
   };
 
@@ -72,24 +92,64 @@ export const ExamAudioPlayer: React.FC<ExamAudioPlayerProps> = ({
     if (audioUrl) {
       if (audioRef.current) {
         audioRef.current.playbackRate = speed;
-        audioRef.current.play();
+        audioRef.current.play().catch(() => {});
         setIsPlaying(true);
       }
     } else if (speechText && window.speechSynthesis) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(speechText);
-      utterance.rate = speed;
-      utterance.onend = () => {
-        setIsPlaying(false);
-        handlePlaybackEnded();
-      };
-      utterance.onerror = () => setIsPlaying(false);
-      window.speechSynthesis.speak(utterance);
-      setIsPlaying(true);
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+        setIsPlaying(true);
+        startSpeechTicker();
+      } else {
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.resume();
+
+        const utterance = new SpeechSynthesisUtterance(speechText);
+        utterance.rate = speed;
+
+        // Map accent if provided
+        if (accent) {
+          const voices = window.speechSynthesis.getVoices();
+          const target = accent.toLowerCase().replace(/_/g, '-');
+          const matchedVoice = voices.find(v => v.lang.toLowerCase().includes(target));
+          if (matchedVoice) utterance.voice = matchedVoice;
+        }
+
+        utterance.onend = () => {
+          clearSpeechTicker();
+          setIsPlaying(false);
+          setCurrentTime(0);
+          handlePlaybackEnded();
+        };
+
+        utterance.onerror = () => {
+          clearSpeechTicker();
+          setIsPlaying(false);
+        };
+
+        window.speechSynthesis.speak(utterance);
+        setIsPlaying(true);
+        startSpeechTicker();
+      }
     }
   };
 
+  const startSpeechTicker = () => {
+    clearSpeechTicker();
+    speechIntervalRef.current = setInterval(() => {
+      setCurrentTime((prev) => {
+        const next = prev + 1;
+        if (effectiveDuration > 0 && next >= effectiveDuration) {
+          clearSpeechTicker();
+          return effectiveDuration;
+        }
+        return next;
+      });
+    }, 1000);
+  };
+
   const handlePlaybackEnded = () => {
+    clearSpeechTicker();
     setIsPlaying(false);
     const newCount = playCount + 1;
     setPlayCount(newCount);
@@ -107,6 +167,7 @@ export const ExamAudioPlayer: React.FC<ExamAudioPlayerProps> = ({
 
   const remainingPlays = Math.max(0, maxPlays - playCount);
   const isLimitReached = playCount >= maxPlays;
+  const hasAudioSource = Boolean(audioUrl || speechText);
 
   return (
     <div
@@ -157,19 +218,20 @@ export const ExamAudioPlayer: React.FC<ExamAudioPlayerProps> = ({
       <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
         <button
           onClick={isPlaying ? pauseAudio : handlePlay}
-          disabled={isLimitReached && !isPlaying}
+          disabled={(isLimitReached && !isPlaying) || !hasAudioSource}
           data-testid="audio-play-btn"
+          title={!hasAudioSource ? 'No audio passage available' : isLimitReached && !isPlaying ? 'Playback limit reached' : isPlaying ? 'Pause audio' : 'Play audio'}
           style={{
             width: '42px',
             height: '42px',
             borderRadius: '50%',
-            background: isLimitReached && !isPlaying ? '#64748b' : '#3b82f6',
+            background: (isLimitReached && !isPlaying) || !hasAudioSource ? '#64748b' : '#3b82f6',
             color: '#fff',
             border: 'none',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            cursor: isLimitReached && !isPlaying ? 'not-allowed' : 'pointer',
+            cursor: (isLimitReached && !isPlaying) || !hasAudioSource ? 'not-allowed' : 'pointer',
             fontSize: '16px',
             boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
           }}
@@ -182,19 +244,25 @@ export const ExamAudioPlayer: React.FC<ExamAudioPlayerProps> = ({
           <input
             type="range"
             min={0}
-            max={duration || 100}
+            max={effectiveDuration || 100}
             value={currentTime}
             onChange={(e) => {
               const time = Number(e.target.value);
               setCurrentTime(time);
               if (audioRef.current) audioRef.current.currentTime = time;
             }}
-            disabled={!audioUrl}
-            style={{ width: '100%', cursor: audioUrl ? 'pointer' : 'default' }}
+            disabled={!hasAudioSource}
+            style={{ width: '100%', cursor: hasAudioSource ? 'pointer' : 'default' }}
           />
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-muted)' }}>
             <span>{formatTime(currentTime)}</span>
-            <span>{audioUrl ? formatTime(duration) : 'Synthesized Passage'}</span>
+            <span>
+              {effectiveDuration > 0
+                ? formatTime(effectiveDuration)
+                : audioUrl
+                ? formatTime(duration)
+                : 'Synthesized Passage'}
+            </span>
           </div>
         </div>
 
