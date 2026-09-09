@@ -293,6 +293,9 @@ export async function initV2Tables(): Promise<void> {
     // Ensure 'isVerified' column exists on 'translations' and metadata columns on 'translation_keys'
     try {
       await pgDb.query(`
+        ALTER TABLE "languages" ADD COLUMN IF NOT EXISTS "isActive" BOOLEAN NOT NULL DEFAULT true;
+      `);
+      await pgDb.query(`
         ALTER TABLE "translations" ADD COLUMN IF NOT EXISTS "isVerified" BOOLEAN NOT NULL DEFAULT false;
       `);
       await pgDb.query(`

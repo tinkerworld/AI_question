@@ -151,6 +151,11 @@ export const LanguageManagementPanel: React.FC = () => {
   const [addingLanguage, setAddingLanguage] = useState<boolean>(false);
   const [addError, setAddError] = useState<string | null>(null);
 
+  // Language lifecycle (toggle active & delete)
+  const [languageToDelete, setLanguageToDelete] = useState<LanguageInfo | null>(null);
+  const [deletingLanguage, setDeletingLanguage] = useState<boolean>(false);
+  const [togglingActive, setTogglingActive] = useState<Record<string, boolean>>({});
+
   // Global alerts
   const [bannerSuccess, setBannerSuccess] = useState<string | null>(null);
   const [bannerError, setBannerError] = useState<string | null>(null);
@@ -360,6 +365,75 @@ export const LanguageManagementPanel: React.FC = () => {
     }
   };
 
+  // Toggle active status of a language
+  const handleToggleActive = async (lang: LanguageInfo) => {
+    if (lang.isDefault || lang.code === 'en') {
+      setBannerError('Default system language cannot be disabled.');
+      return;
+    }
+    setTogglingActive((prev) => ({ ...prev, [lang.code]: true }));
+    setBannerError(null);
+    setBannerSuccess(null);
+    try {
+      const res = await fetch(`${API_BASE}/i18n/languages/${lang.code}/toggle-active`, {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+      });
+      const body = await res.json();
+      if (!res.ok || !body.success) {
+        throw new Error(body.error?.message || body.message || 'Failed to toggle language status');
+      }
+      setBannerSuccess(body.message || `Language "${lang.name}" status updated.`);
+      await loadLanguages();
+      await refreshLanguages();
+    } catch (err: any) {
+      setBannerError(err.message || 'Failed to toggle language status');
+    } finally {
+      setTogglingActive((prev) => ({ ...prev, [lang.code]: false }));
+    }
+  };
+
+  // Confirm delete language
+  const handleConfirmDeleteLanguage = async () => {
+    if (!languageToDelete) return;
+    if (languageToDelete.isDefault || languageToDelete.code === 'en') {
+      setBannerError('Default system language cannot be deleted.');
+      setLanguageToDelete(null);
+      return;
+    }
+
+    setDeletingLanguage(true);
+    setBannerError(null);
+    setBannerSuccess(null);
+    try {
+      const res = await fetch(`${API_BASE}/i18n/languages/${languageToDelete.code}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+      const body = await res.json();
+      if (!res.ok || !body.success) {
+        throw new Error(body.error?.message || body.message || 'Failed to delete language');
+      }
+
+      setBannerSuccess(body.message || `Language "${languageToDelete.name}" deleted successfully.`);
+
+      // If the deleted language was currently selected, fallback to English or the default language
+      if (selectedLanguage?.code === languageToDelete.code) {
+        const remaining = languages.filter((l) => l.code !== languageToDelete.code);
+        const fallback = remaining.find((l) => l.code === 'en' || l.isDefault) || remaining[0] || null;
+        setSelectedLanguage(fallback);
+      }
+
+      setLanguageToDelete(null);
+      await loadLanguages();
+      await refreshLanguages();
+      await refreshTranslations();
+    } catch (err: any) {
+      setBannerError(err.message || 'Failed to delete language');
+    } finally {
+      setDeletingLanguage(false);
+    }
+  };
 
   // Handle Export Language (JSON or CSV)
   const handleExportLanguage = async (format: 'json' | 'csv') => {
@@ -963,6 +1037,8 @@ export const LanguageManagementPanel: React.FC = () => {
                 const count = lang.translatedCount ?? 0;
                 const pct = Math.min(100, Math.round((count / total) * 100));
                 const isComplete = count >= total;
+                const isInactive = lang.isActive === false;
+                const isDefaultOrEn = lang.isDefault || lang.code === 'en';
 
                 return (
                   <div
@@ -973,8 +1049,10 @@ export const LanguageManagementPanel: React.FC = () => {
                     style={{
                       padding: '12px',
                       borderRadius: '6px',
-                      border: isSelected ? '1px solid #06b6d4' : '1px solid var(--border-color)',
-                      background: isSelected ? 'rgba(6, 182, 212, 0.08)' : 'rgba(255,255,255,0.02)',
+                      border: isSelected ? '1px solid #06b6d4' : isInactive ? '1px dashed rgba(255,255,255,0.15)' : '1px solid var(--border-color)',
+                      background: isSelected ? 'rgba(6, 182, 212, 0.08)' : isInactive ? 'rgba(255,255,255,0.01)' : 'rgba(255,255,255,0.02)',
+                      opacity: isInactive ? 0.65 : 1,
+                      filter: isInactive ? 'grayscale(40%)' : 'none',
                       cursor: 'pointer',
                       transition: 'all 0.15s ease',
                       display: 'flex',
@@ -1001,13 +1079,30 @@ export const LanguageManagementPanel: React.FC = () => {
                             DEFAULT
                           </span>
                         )}
+                        {isInactive && (
+                          <span
+                            id={`badge-inactive-${lang.code}`}
+                            data-testid={`badge-inactive-${lang.code}`}
+                            style={{
+                              fontSize: '10px',
+                              background: 'rgba(239, 68, 68, 0.15)',
+                              color: '#ef4444',
+                              border: '1px solid rgba(239, 68, 68, 0.3)',
+                              padding: '1px 6px',
+                              borderRadius: '4px',
+                              fontWeight: 'bold',
+                            }}
+                          >
+                            INACTIVE
+                          </span>
+                        )}
                       </div>
                       <span
                         style={{
                           fontFamily: 'JetBrains Mono',
                           fontSize: '11px',
-                          color: '#06b6d4',
-                          background: 'rgba(6, 182, 212, 0.15)',
+                          color: isInactive ? 'var(--text-muted)' : '#06b6d4',
+                          background: isInactive ? 'rgba(255, 255, 255, 0.05)' : 'rgba(6, 182, 212, 0.15)',
                           padding: '1px 6px',
                           borderRadius: '4px',
                           fontWeight: 'bold',
@@ -1081,8 +1176,58 @@ export const LanguageManagementPanel: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Manage Translations Button */}
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '2px', flexWrap: 'wrap' }}>
+                    {/* Manage Translations & Lifecycle Buttons */}
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '6px', marginTop: '2px', flexWrap: 'wrap' }}>
+                      {!isDefaultOrEn && (
+                        <>
+                          <button
+                            type="button"
+                            id={`btn-toggle-active-${lang.code}`}
+                            data-testid={`btn-toggle-active-${lang.code}`}
+                            disabled={togglingActive[lang.code]}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleToggleActive(lang);
+                            }}
+                            title={isInactive ? 'Enable this language for students & users' : 'Disable this language from user selection'}
+                            style={{
+                              padding: '3px 8px',
+                              borderRadius: '4px',
+                              border: isInactive ? '1px solid #10b981' : '1px solid #f59e0b',
+                              background: isInactive ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)',
+                              color: isInactive ? '#10b981' : '#f59e0b',
+                              fontSize: '11px',
+                              cursor: togglingActive[lang.code] ? 'not-allowed' : 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                            }}
+                          >
+                            {togglingActive[lang.code] ? '...' : isInactive ? '✓ Enable' : '⏸ Disable'}
+                          </button>
+                          <button
+                            type="button"
+                            id={`btn-delete-${lang.code}`}
+                            data-testid={`btn-delete-${lang.code}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setLanguageToDelete(lang);
+                            }}
+                            title={`Delete language ${lang.name} and all its translations`}
+                            style={{
+                              padding: '3px 8px',
+                              borderRadius: '4px',
+                              border: '1px solid rgba(239, 68, 68, 0.4)',
+                              background: 'rgba(239, 68, 68, 0.1)',
+                              color: '#ef4444',
+                              fontSize: '11px',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            🗑️ Delete
+                          </button>
+                        </>
+                      )}
                       <button
                         type="button"
                         id={`btn-manage-${lang.code}`}
@@ -2360,6 +2505,117 @@ export const LanguageManagementPanel: React.FC = () => {
                 }}
               >
                 {bulkImporting ? 'Importing in Progress...' : 'Done & Close'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Language Confirmation Modal */}
+      {languageToDelete && (
+        <div
+          id="delete-language-modal"
+          data-testid="delete-language-modal"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.75)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1100,
+          }}
+        >
+          <div
+            style={{
+              background: 'var(--panel-bg)',
+              border: '1px solid rgba(239, 68, 68, 0.4)',
+              borderRadius: '10px',
+              padding: '24px',
+              width: '460px',
+              maxWidth: '90vw',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)',
+            }}
+          >
+            {/* Modal Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '20px' }}>⚠️</span>
+                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold', color: '#ef4444' }}>
+                  Delete Language: {languageToDelete.name}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setLanguageToDelete(null)}
+                disabled={deletingLanguage}
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '16px', cursor: 'pointer' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: '1.5' }}>
+              <p style={{ margin: '0 0 12px 0', color: '#fff' }}>
+                Are you sure you want to delete <strong>{languageToDelete.name} ({languageToDelete.code})</strong>? All translation keys and values for this language will be permanently removed. This action cannot be undone.
+              </p>
+              <div
+                style={{
+                  background: 'rgba(239, 68, 68, 0.1)',
+                  border: '1px solid rgba(239, 68, 68, 0.25)',
+                  borderRadius: '6px',
+                  padding: '12px',
+                  color: '#ef4444',
+                  fontSize: '12px',
+                }}
+              >
+                Warning: Any users currently assigned this language will be reset to English.
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '6px' }}>
+              <button
+                type="button"
+                id="btn-cancel-delete-language"
+                data-testid="btn-cancel-delete-language"
+                disabled={deletingLanguage}
+                onClick={() => setLanguageToDelete(null)}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  background: 'rgba(255,255,255,0.05)',
+                  color: 'var(--text-muted)',
+                  border: '1px solid var(--border-color)',
+                  fontSize: '12px',
+                  cursor: deletingLanguage ? 'not-allowed' : 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                id="btn-confirm-delete-language"
+                data-testid="btn-confirm-delete-language"
+                disabled={deletingLanguage}
+                onClick={handleConfirmDeleteLanguage}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  background: deletingLanguage ? 'rgba(239, 68, 68, 0.4)' : '#ef4444',
+                  color: '#fff',
+                  fontWeight: 'bold',
+                  border: 'none',
+                  fontSize: '12px',
+                  cursor: deletingLanguage ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {deletingLanguage ? 'Deleting...' : 'Delete Language'}
               </button>
             </div>
           </div>

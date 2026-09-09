@@ -7,6 +7,9 @@ dotenv.config();
 
 function getDbPath(): string {
   if (process.env.PG_DATA_DIR) {
+    if (process.env.PG_DATA_DIR === 'memory://' || process.env.PG_DATA_DIR === ':memory:') {
+      return process.env.PG_DATA_DIR;
+    }
     return path.resolve(process.env.PG_DATA_DIR);
   }
   let cur = typeof __dirname !== 'undefined' ? __dirname : process.cwd();
@@ -29,18 +32,26 @@ function getDbPath(): string {
   return fallback;
 }
 
-const dbPath = getDbPath();
 let _pgDbInstance: PGlite | null = null;
+
+export function setTestDb(db: PGlite | null) {
+  _pgDbInstance = db;
+}
 
 function getOrInitDb(): PGlite {
   if (!_pgDbInstance) {
-    const pidFile = path.join(dbPath, 'postmaster.pid');
-    if (fs.existsSync(pidFile)) {
-      try {
-        fs.unlinkSync(pidFile);
-      } catch {}
+    const dbPath = getDbPath();
+    if (dbPath === 'memory://' || dbPath === ':memory:') {
+      _pgDbInstance = new PGlite();
+    } else {
+      const pidFile = path.join(dbPath, 'postmaster.pid');
+      if (fs.existsSync(pidFile)) {
+        try {
+          fs.unlinkSync(pidFile);
+        } catch {}
+      }
+      _pgDbInstance = new PGlite(dbPath);
     }
-    _pgDbInstance = new PGlite(dbPath);
   }
   return _pgDbInstance;
 }

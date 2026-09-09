@@ -5,7 +5,9 @@ export const LanguageSelector: React.FC = () => {
   const { currentLanguage, language, setLanguage, availableLanguages } = useTranslation();
 
   const activeCode = currentLanguage || language || 'en';
-  const list = (availableLanguages && availableLanguages.length > 0) ? availableLanguages : BASELINE_LANGUAGES;
+  const list = (availableLanguages && availableLanguages.length > 0)
+    ? availableLanguages.filter((lang) => lang.isActive !== false)
+    : BASELINE_LANGUAGES;
 
   return (
     <select

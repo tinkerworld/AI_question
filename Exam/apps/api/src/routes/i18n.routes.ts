@@ -108,26 +108,38 @@ export function parseCsv(csvText: string): string[][] {
 // ----------------------------------------------------------------------------
 router.get('/languages', async (req: Request, res: Response) => {
   try {
+    const activeOnly = req.query.activeOnly === 'true';
     const totalKeysRes = await pgDb.query(`SELECT COUNT(*)::int AS count FROM "translation_keys"`);
     const totalKeys = totalKeysRes.rows[0]?.count || 10;
 
-    const dbRes = await pgDb.query(`
+    let query = `
       SELECT 
         l."id", 
         l."code", 
         l."name", 
         l."nativeName", 
         l."isDefault",
+        COALESCE(l."isActive", true) AS "isActive",
         COUNT(t."id")::int AS "translatedCount",
         COUNT(CASE WHEN t."isVerified" = false THEN 1 END)::int AS "unverifiedCount"
       FROM "languages" l
       LEFT JOIN "translations" t ON t."languageId" = l."id"
-      GROUP BY l."id", l."code", l."name", l."nativeName", l."isDefault"
+    `;
+
+    if (activeOnly) {
+      query += ` WHERE COALESCE(l."isActive", true) = true `;
+    }
+
+    query += `
+      GROUP BY l."id", l."code", l."name", l."nativeName", l."isDefault", l."isActive"
       ORDER BY l."name" ASC
-    `);
+    `;
+
+    const dbRes = await pgDb.query(query);
     if (dbRes && dbRes.rows && dbRes.rows.length > 0) {
       const data = dbRes.rows.map((row: any) => ({
         ...row,
+        isActive: row.isActive !== false,
         totalKeys,
         unverifiedCount: Number(row.unverifiedCount || 0),
       }));
@@ -138,7 +150,7 @@ router.get('/languages', async (req: Request, res: Response) => {
   }
   return res.json({
     success: true,
-    data: BASELINE_LANGUAGES.map((l) => ({ ...l, translatedCount: 10, totalKeys: 10, unverifiedCount: 0 })),
+    data: BASELINE_LANGUAGES.map((l) => ({ ...l, isActive: true, translatedCount: 10, totalKeys: 10, unverifiedCount: 0 })),
   });
 });
 
@@ -208,7 +220,116 @@ router.post(
 
       return res.status(201).json({
         success: true,
-        data: { id, code: langCode, name: String(name).trim(), nativeName: String(nativeName).trim(), isDefault: Boolean(isDefault) },
+        data: { id, code: langCode, name: String(name).trim(), nativeName: String(nativeName).trim(), isDefault: Boolean(isDefault), isActive: true },
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// ----------------------------------------------------------------------------
+// PATCH /api/v1/i18n/languages/:code/toggle-active — Enable / Disable language
+// ----------------------------------------------------------------------------
+router.patch(
+  '/languages/:code/toggle-active',
+  authenticate,
+  requirePermission(PERMISSIONS.I18N_MANAGE),
+  auditLog('TOGGLE_ACTIVE', 'language'),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const code = String(req.params.code || '').toLowerCase().trim();
+      if (!code) {
+        throw new AppError(400, 'VALIDATION_ERROR', 'Language code is required');
+      }
+
+      if (code === 'en') {
+        throw new AppError(400, 'CANNOT_DISABLE_DEFAULT_LANGUAGE', 'The default system language (en) cannot be disabled');
+      }
+
+      const langRes = await pgDb.query(
+        `SELECT "id", "code", "name", "isDefault", COALESCE("isActive", true) AS "isActive" FROM "languages" WHERE "code" = $1`,
+        [code]
+      );
+      if (langRes.rows.length === 0) {
+        throw new AppError(404, 'LANGUAGE_NOT_FOUND', `Language with code "${code}" not found`);
+      }
+
+      const lang = langRes.rows[0] as any;
+      if (lang.isDefault) {
+        throw new AppError(400, 'CANNOT_DISABLE_DEFAULT_LANGUAGE', 'Default system language cannot be disabled');
+      }
+
+      const currentActive = lang.isActive !== false;
+      const newActive = !currentActive;
+
+      await pgDb.query(
+        `UPDATE "languages" SET "isActive" = $1, "updatedAt" = CURRENT_TIMESTAMP WHERE "code" = $2`,
+        [newActive, code]
+      );
+
+      return res.json({
+        success: true,
+        data: {
+          code,
+          isActive: newActive,
+          message: `Language "${code}" ${newActive ? 'enabled' : 'disabled'} successfully`,
+        },
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// ----------------------------------------------------------------------------
+// DELETE /api/v1/i18n/languages/:code — Delete language and associated translations
+// ----------------------------------------------------------------------------
+router.delete(
+  '/languages/:code',
+  authenticate,
+  requirePermission(PERMISSIONS.I18N_MANAGE),
+  auditLog('DELETE', 'language'),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const code = String(req.params.code || '').toLowerCase().trim();
+      if (!code) {
+        throw new AppError(400, 'VALIDATION_ERROR', 'Language code is required');
+      }
+
+      if (code === 'en') {
+        throw new AppError(400, 'CANNOT_DELETE_DEFAULT_LANGUAGE', 'The default system language (en) cannot be deleted');
+      }
+
+      const langRes = await pgDb.query(
+        `SELECT "id", "code", "name", "isDefault" FROM "languages" WHERE "code" = $1`,
+        [code]
+      );
+      if (langRes.rows.length === 0) {
+        throw new AppError(404, 'LANGUAGE_NOT_FOUND', `Language with code "${code}" not found`);
+      }
+
+      const lang = langRes.rows[0] as any;
+      if (lang.isDefault) {
+        throw new AppError(400, 'CANNOT_DELETE_DEFAULT_LANGUAGE', 'Default system language cannot be deleted');
+      }
+
+      // 1. Reset user_preferences to default 'en' if set to this deleted language code
+      try {
+        await pgDb.query(`UPDATE "user_preferences" SET "languageCode" = 'en' WHERE "languageCode" = $1`, [code]);
+      } catch (prefErr) {
+        // user_preferences table may not exist in isolated test environments
+      }
+
+      // 2. Cascade delete translations for this language
+      await pgDb.query(`DELETE FROM "translations" WHERE "languageId" = $1`, [lang.id]);
+
+      // 3. Delete language record
+      await pgDb.query(`DELETE FROM "languages" WHERE "id" = $1`, [lang.id]);
+
+      return res.json({
+        success: true,
+        message: `Language "${code}" and all associated translations deleted successfully`,
       });
     } catch (err) {
       next(err);

@@ -91,7 +91,7 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
     }
 
     req.user = {
-      userId: payload.sub,
+      userId: payload.sub || payload.userId,
       email: payload.email,
       roles: payload.roles || [],
       permissions: payload.permissions || [],

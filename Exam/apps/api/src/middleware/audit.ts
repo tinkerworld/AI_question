@@ -8,7 +8,7 @@ export function auditLog(action: string, resource: string) {
         try {
           const id = `aud_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
           const userId = req.user?.userId || null;
-          const resourceId = req.params.id || null;
+          const resourceId = req.params.id || req.params.code || null;
           const details = JSON.stringify({
             method: req.method,
             path: req.originalUrl,

@@ -126,6 +126,36 @@ async function runI18nFrontendTests() {
   assert.ok(usersCode.includes("t('users_no_users')"), "UsersPage must use t('users_no_users')");
   console.log('   ✓ UsersPage wired with translation keys');
 
+  // --------------------------------------------------------------------------
+  // 9. Language Lifecycle UI: Enable/Disable Toggle & Delete
+  // --------------------------------------------------------------------------
+  console.log('\n9. Testing Language Lifecycle UI (Enable/Disable & Delete)...');
+  const selectorPath = path.resolve(__dirname, '../apps/web/src/components/LanguageSelector.tsx');
+  const contextPath = path.resolve(__dirname, '../apps/web/src/context/I18nContext.tsx');
+  assert.ok(fs.existsSync(selectorPath), 'LanguageSelector.tsx must exist');
+  assert.ok(fs.existsSync(contextPath), 'I18nContext.tsx must exist');
+
+  const selectorCode = fs.readFileSync(selectorPath, 'utf8');
+  const contextCode = fs.readFileSync(contextPath, 'utf8');
+
+  // Panel state and handlers
+  assert.ok(panelCode.includes('handleToggleActive'), 'LanguageManagementPanel must define handleToggleActive');
+  assert.ok(panelCode.includes('handleConfirmDeleteLanguage'), 'LanguageManagementPanel must define handleConfirmDeleteLanguage');
+  assert.ok(panelCode.includes('languageToDelete'), 'LanguageManagementPanel must track languageToDelete');
+  assert.ok(panelCode.includes('btn-toggle-active-'), 'LanguageManagementPanel must render btn-toggle-active buttons');
+  assert.ok(panelCode.includes('btn-delete-'), 'LanguageManagementPanel must render btn-delete buttons');
+  assert.ok(panelCode.includes('badge-inactive-'), 'LanguageManagementPanel must render badge-inactive badges');
+  assert.ok(panelCode.includes('INACTIVE'), 'LanguageManagementPanel must render INACTIVE badge text');
+  assert.ok(panelCode.includes('delete-language-modal'), 'LanguageManagementPanel must render delete-language-modal');
+  assert.ok(panelCode.includes('btn-confirm-delete-language'), 'LanguageManagementPanel must have confirm delete button');
+  assert.ok(panelCode.includes('btn-cancel-delete-language'), 'LanguageManagementPanel must have cancel delete button');
+  assert.ok(panelCode.includes('!isDefaultOrEn'), 'LanguageManagementPanel must hide lifecycle buttons for default/en language');
+
+  // Student-facing filtering
+  assert.ok(contextCode.includes('activeOnly=true'), 'I18nContext fetchLanguages must query with activeOnly=true');
+  assert.ok(selectorCode.includes('lang.isActive !== false'), 'LanguageSelector must filter out inactive languages');
+  console.log('   ✓ Language lifecycle buttons, guards, badges, modal, and student-facing activeOnly filters verified');
+
   console.log('\n====================================================');
   console.log('✅ ALL I18N FRONTEND & INTERACTION TESTS PASSED!');
   console.log('====================================================\n');

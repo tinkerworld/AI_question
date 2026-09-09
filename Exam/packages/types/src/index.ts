@@ -11,6 +11,7 @@ export interface BaselineLanguageItem {
   name: string;
   nativeName: string;
   isDefault?: boolean;
+  isActive?: boolean;
 }
 
 export const BASELINE_LANGUAGES: BaselineLanguageItem[] = [

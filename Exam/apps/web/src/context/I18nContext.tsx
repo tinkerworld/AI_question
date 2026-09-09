@@ -8,6 +8,7 @@ export interface LanguageInfo {
   name: string;
   nativeName: string;
   isDefault?: boolean;
+  isActive?: boolean;
   translatedCount?: number;
   unverifiedCount?: number;
   totalKeys?: number;
@@ -45,7 +46,7 @@ export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const fetchLanguages = async () => {
     try {
-      const res = await fetch(`${API_BASE}/i18n/languages`);
+      const res = await fetch(`${API_BASE}/i18n/languages?activeOnly=true`);
       if (res.ok) {
         const body = await res.json();
         if (body.success && Array.isArray(body.data) && body.data.length > 0) {
