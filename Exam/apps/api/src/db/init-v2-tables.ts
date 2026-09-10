@@ -432,6 +432,13 @@ export async function ensureLanguagesSeeded(db?: any): Promise<void> {
     if (finalCount !== initialCount) {
       console.log(`[i18n-seed] Language database status: ${finalCount} language rows exist / ${BASELINE_LANGUAGES.length} expected (healed)`);
     }
+
+    // 7. Check translation keys baseline count and warn if below 172
+    const keyCountRes = await client.query(`SELECT COUNT(*)::int AS count FROM "translation_keys"`);
+    const keyCount = Number(keyCountRes.rows[0]?.count || 0);
+    if (keyCount < 172) {
+      console.warn(`[i18n-startup] WARNING: Only ${keyCount}/172 translation keys registered in database. Run seed-translation-keys to restore full UI localization.`);
+    }
   } catch (err) {
     console.error('[i18n-seed] Error ensuring languages seeded:', err);
   }

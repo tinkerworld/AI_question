@@ -1,6 +1,6 @@
-import { pgDb } from '../src/index';
+import { pgDb } from '@repo/database';
 import { AITranslationService } from '../../../apps/api/src/services/ai-translation.service';
-import { BASELINE_LANGUAGES } from '../../../apps/api/src/routes/i18n.routes';
+import { BASELINE_LANGUAGES } from '@repo/types';
 
 export interface TranslationKeyDefinition {
   key: string;
@@ -308,7 +308,7 @@ export async function runTranslationKeysSeed(): Promise<void> {
     const targetCode = lang.code;
 
     try {
-      const translatedMap = await AITranslationService.translateBatchForLanguage(targetCode, allKeysPayload);
+      const translatedMap = await AITranslationService.translateBatchForLanguage(targetCode, allKeysPayload, lang.name);
       // Persist with isVerified = false (Part B)
       const count = await AITranslationService.persistTranslations(targetCode, translatedMap, false);
       totalTranslatedLangs++;

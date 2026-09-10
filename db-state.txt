@@ -1,0 +1,168 @@
+================================================================================
+ ExamOS Database State Snapshot
+ Generated at: 2026-09-10T00:14:30.534Z
+ Target file:  db-state.txt
+ Notice:       Read-only diagnostic snapshot. Contains no PII, secrets, or content.
+================================================================================
+
+[LANGUAGES] Total: 24
+  - as    | Assamese             | active: true  | default: false | updated: 2026-09-09T23:02:28.204Z
+  - bn    | Bengali              | active: true  | default: false | updated: 2026-09-09T23:02:28.183Z
+  - br    | Bodo                 | active: true  | default: false | updated: 2026-09-09T23:02:28.214Z
+  - doi   | Dogri                | active: true  | default: false | updated: 2026-09-09T23:02:28.216Z
+  - en    | English              | active: true  | default: true  | updated: 2026-09-09T23:02:28.169Z
+  - fr    | French               | active: true  | default: false | updated: 2026-09-09T23:02:46.116Z
+  - gu    | Gujarati             | active: true  | default: false | updated: 2026-09-09T23:02:28.194Z
+  - hi    | Hindi                | active: true  | default: false | updated: 2026-09-09T23:02:28.181Z
+  - kn    | Kannada              | active: true  | default: false | updated: 2026-09-09T23:02:28.196Z
+  - ks    | Kashmiri             | active: true  | default: false | updated: 2026-09-09T23:02:28.209Z
+  - lus   | Mizo                 | active: true  | default: false | updated: 2026-09-09T23:02:28.221Z
+  - ma    | Maithili             | active: true  | default: false | updated: 2026-09-09T23:02:28.206Z
+  - ml    | Malayalam            | active: true  | default: false | updated: 2026-09-09T23:02:28.198Z
+  - mni   | Manipuri             | active: true  | default: false | updated: 2026-09-09T23:02:28.218Z
+  - mr    | Marathi              | active: true  | default: false | updated: 2026-09-09T23:02:28.188Z
+  - ne    | Nepali               | active: true  | default: false | updated: 2026-09-09T23:02:28.211Z
+  - or    | Odia                 | active: true  | default: false | updated: 2026-09-09T23:02:28.200Z
+  - pa    | Punjabi              | active: true  | default: false | updated: 2026-09-09T23:02:28.202Z
+  - sa    | Sanskrit             | active: true  | default: false | updated: 2026-09-09T23:02:28.208Z
+  - sat   | Santhali             | active: true  | default: false | updated: 2026-09-09T23:16:53.196Z
+  - sd    | Sindhi               | active: true  | default: false | updated: 2026-09-09T23:02:28.212Z
+  - ta    | Tamil                | active: true  | default: false | updated: 2026-09-09T23:02:28.190Z
+  - te    | Telugu               | active: true  | default: false | updated: 2026-09-09T23:02:28.186Z
+  - ur    | Urdu                 | active: true  | default: false | updated: 2026-09-09T23:02:28.192Z
+
+[TRANSLATIONS BY LANGUAGE] Total rows: 3957
+  - as    | Assamese             : 172 rows
+  - bn    | Bengali              : 172 rows
+  - br    | Bodo                 : 172 rows
+  - doi   | Dogri                : 172 rows
+  - en    | English              : 172 rows
+  - fr    | French               : 1 rows
+  - gu    | Gujarati             : 172 rows
+  - hi    | Hindi                : 172 rows
+  - kn    | Kannada              : 172 rows
+  - ks    | Kashmiri             : 172 rows
+  - lus   | Mizo                 : 172 rows
+  - ma    | Maithili             : 172 rows
+  - ml    | Malayalam            : 172 rows
+  - mni   | Manipuri             : 172 rows
+  - mr    | Marathi              : 172 rows
+  - ne    | Nepali               : 172 rows
+  - or    | Odia                 : 172 rows
+  - pa    | Punjabi              : 172 rows
+  - sa    | Sanskrit             : 172 rows
+  - sat   | Santhali             : 172 rows
+  - sd    | Sindhi               : 172 rows
+  - ta    | Tamil                : 172 rows
+  - te    | Telugu               : 172 rows
+  - ur    | Urdu                 : 172 rows
+
+[TRANSLATION KEYS] Total registered keys: 172 (baseline target: 172)
+
+[PERMISSIONS] Total defined: 53
+  - ai.admin_config
+  - ai.batch
+  - ai.generate
+  - ai.modify
+  - ai.review
+  - ai.usage_read
+  - analytics.read
+  - analytics.read_own
+  - archive.answer_key
+  - archive.correct
+  - archive.export
+  - archive.read
+  - audit.read
+  - billing.manage
+  - billing.read_own
+  - courses.create
+  - courses.delete
+  - courses.read
+  - courses.update
+  - entitlements.manage
+  - entitlements.read
+  - exams.attempt
+  - exams.create
+  - exams.publish
+  - exams.read
+  - i18n.manage
+  - impersonate.use
+  - interview.attempt
+  - interview.evaluate
+  - interview.manage
+  - interview.read_own
+  - practice.attempt
+  - practice.create
+  - practice.evaluate
+  - practice.read
+  - preferences.update
+  - preview.audit_read
+  - preview.config
+  - preview.use
+  - questions.create
+  - questions.delete
+  - questions.read
+  - questions.update
+  - results.flag
+  - results.read_own
+  - roles.manage
+  - subscriptions.manage
+  - subscriptions.read
+  - system.maintenance
+  - users.create
+  - users.delete
+  - users.read
+  - users.update
+
+[ROLE PERMISSIONS] Total roles: 4
+  - MAIN_ADMIN       (r1): 53 permissions granted
+  - STUDENT          (r4): 18 permissions granted
+  - SUB_ADMIN        (r2): 46 permissions granted
+  - TEACHER          (r3): 30 permissions granted
+
+[AI PROVIDERS] Total configured: 37
+  - [translation_batch] Deterministic Multilingual Batch Translation Engine | active: true  | priority: 1
+  - [question_paraphrase] Groq Cloud Instant Paraphraser (Llama 3.1 8B Instant) | active: false | priority: 1
+  - [question_generation] Groq Cloud Provider (Llama 3.3 70B Versatile) | active: false | priority: 1
+  - [interview_grading] Groq Cloud Rubric Evaluator (Llama 3.3 70B) | active: false | priority: 1
+  - [interview_conversation] Groq Cloud Ultra-Low Latency Conversationalist (Llama 3.3 70B) | active: true  | priority: 1
+  - [writing_analysis] Groq Cloud Writing Rubric Scorer (Llama 3.3 70B) | active: false | priority: 1
+  - [question_generation] NVIDIA Build Cloud (Nemotron 70B Generation) | active: false | priority: 1
+  - [question_paraphrase] NVIDIA Build Cloud Fast (Llama 3.1 8B Instruct) | active: false | priority: 1
+  - [interview_conversation] NVIDIA Build Conversational Examiner (Nemotron 70B Dialogue) | active: false | priority: 1
+  - [writing_analysis] NVIDIA Build Nemotron Essay & Writing Analyst (Nemotron 70B) | active: false | priority: 1
+  - [interview_grading] NVIDIA Build Nemotron Rubric Evaluator (Nemotron 70B Reasoning) | active: false | priority: 1
+  - [interview_conversation] ALLaM AI Multilingual Oral Examiner (allam-7b) | active: false | priority: 2
+  - [interview_conversation] Google Gemini Flash Dialogue Agent (gemini-1.5-flash) | active: false | priority: 2
+  - [interview_grading] Google Gemini Flash Rubric Grader (gemini-1.5-flash) | active: false | priority: 2
+  - [writing_analysis] Google Gemini Flash Writing Grader (gemini-1.5-flash) | active: false | priority: 2
+  - [question_paraphrase] Google Gemini Provider (Flash 1.5 Paraphraser) | active: false | priority: 2
+  - [question_generation] Google Gemini Provider (Flash 1.5 Synthesis) | active: false | priority: 2
+  - [interview_grading] OpenAI Cloud Rubric Evaluator (GPT-4o Mini) | active: false | priority: 3
+  - [writing_analysis] OpenAI Essay Evaluator (GPT-4o Mini) | active: false | priority: 3
+  - [question_paraphrase] OpenRouter Fast (Llama 3.1 8B Free) | active: false | priority: 3
+  - [interview_conversation] OpenRouter Free Oral Examiner (Llama 3.3 70B) | active: false | priority: 3
+  - [question_generation] OpenRouter Provider (Meta Llama 3.3 70B Free) | active: false | priority: 3
+  - [question_paraphrase] OpenAI Cloud Provider (GPT-4o Mini) | active: false | priority: 4
+  - [question_generation] OpenAI Cloud Provider (GPT-4o Mini) | active: false | priority: 4
+  - [interview_conversation] OpenAI GPT-4o Mini Examiner | active: false | priority: 4
+  - [interview_grading] OpenRouter Free Rubric Grader (Llama 3.3 70B Free) | active: false | priority: 4
+  - [writing_analysis] OpenRouter Free Writing Assessor (Llama 3.3 70B Free) | active: false | priority: 4
+  - [question_generation] Local LLM (Ollama / LocalAI) | active: false | priority: 10
+  - [question_paraphrase] Local LLM Paraphraser (Ollama / LocalAI) | active: false | priority: 10
+  - [writing_analysis] Local LLM Writing Evaluator (Ollama / LocalAI) | active: false | priority: 10
+  - [interview_conversation] Local Ollama Gemma Dialogue (gemma4:e2b) | active: true  | priority: 10
+  - [interview_grading] Local Ollama Gemma Evaluator (gemma4:e2b) | active: false | priority: 10
+  - [interview_conversation] Deterministic Oral Examiner Mock Engine | active: true  | priority: 999
+  - [question_generation] Deterministic Question Generator Mock Engine | active: true  | priority: 999
+  - [question_paraphrase] Deterministic Question Paraphrase Mock Engine | active: true  | priority: 999
+  - [interview_grading] Deterministic Rubric Evaluator Mock Engine | active: true  | priority: 999
+  - [writing_analysis] Deterministic Writing Analysis Mock Engine | active: true  | priority: 999
+
+[INTERVIEW SESSIONS BY PHASE] Total sessions: 0
+  (No interview sessions currently recorded)
+
+[SCHEMA MIGRATION MARKERS & RECENT PHASE TABLE COUNTS]
+plans: 3 | entitlement_rules: 27 | subscriptions: 2 | ai_credit_packages: 3 | audio_voice_profiles: 10 | vocabulary_words: 8 | interview_sessions: 0 | candidate_interview_profiles: 0 | languages: 24 | translation_keys: 172 | translations: 3957 | feature_registry: 8 | maintenance_configs: 0
+
+================================================================================

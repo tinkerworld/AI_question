@@ -241,6 +241,10 @@ export class AIGatewayService {
             if (!parsedJson.knowledgeDataset || !parsedJson.scenarioContext) {
               throw new Error('SCHEMA_VALIDATION_FAILED: Missing required interview generation fields');
             }
+          } else if (targetScope === 'translation_batch' || req.featureKey === 'translation_batch' || (parsedJson && parsedJson.translations)) {
+            if (!parsedJson.translations || typeof parsedJson.translations !== 'object') {
+              throw new Error('SCHEMA_VALIDATION_FAILED: Missing required translations object');
+            }
           } else {
             if (!parsedJson.content || !parsedJson.type || !parsedJson.data) {
               throw new Error('SCHEMA_VALIDATION_FAILED: Missing required question fields');
@@ -432,6 +436,34 @@ export class AIGatewayService {
           content: JSON.stringify(writingMockOutput),
           promptTokens: Math.min(4096, 120 + Math.floor(userPrompt.length / 4)),
           completionTokens: 95,
+        };
+      }
+
+      if (
+        provider.scope === 'translation_batch' ||
+        systemPrompt.toLowerCase().includes('localization') ||
+        systemPrompt.toLowerCase().includes('translate the given english ui strings')
+      ) {
+        const translatedItems: Record<string, string> = {};
+        const jsonMatch = userPrompt.match(/\[[\s\S]*\]/);
+        if (jsonMatch) {
+          try {
+            const parsedList = JSON.parse(jsonMatch[0]);
+            const langCodeMatch = userPrompt.match(/\(([a-z]{2,5})\):/i);
+            const langNameMatch = userPrompt.match(/Translate these UI keys to ([^(]+)\s*\(/i);
+            const langCode = langCodeMatch ? langCodeMatch[1].toLowerCase() : '';
+            const langName = langNameMatch ? langNameMatch[1].trim() : langCode;
+            for (const item of parsedList) {
+              if (item && item.key) {
+                translatedItems[item.key] = `${item.en} (${langName})`;
+              }
+            }
+          } catch {}
+        }
+        return {
+          content: JSON.stringify({ translations: translatedItems }),
+          promptTokens: Math.min(4096, 100 + Math.floor(userPrompt.length / 4)),
+          completionTokens: Math.min(4096, 100 + Math.floor(JSON.stringify(translatedItems).length / 4)),
         };
       }
 
