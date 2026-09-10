@@ -57,11 +57,17 @@ else
     echo "No .git found in root or Exam/ — skipping git status." > git-status.txt
 fi
 
+echo "Generating read-only database state snapshot..."
+node tools/db-snapshot.js 2>&1 || true
+if [ ! -f "db-state.txt" ]; then
+    echo "DB snapshot unavailable: database offline or script execution failed" > db-state.txt
+fi
+
 echo "Checking for UI test tool run history..."
 E2ECOUNT=$(find tools/e2e-tester/logs -name "*.txt" 2>/dev/null | wc -l || echo 0)
 
 echo "Zipping project for review..."
-echo "  Including: everything in this folder, plus tree.txt, git-log.txt, and git-status.txt"
+echo "  Including: everything in this folder, plus db-state.txt, tree.txt, git-log.txt, and git-status.txt"
 echo "  Excluding: node_modules, build output, database data/binaries, secrets"
 echo ""
 
@@ -106,6 +112,7 @@ if [ -f "$OUTFILE" ]; then
     echo "===================================================="
     echo ""
     echo "Included in package:"
+    echo "  - db-state.txt"
     echo "  - lockfile-check.txt"
     echo "  - tree.txt"
     echo "  - git-log.txt & git-log-oneline.txt"

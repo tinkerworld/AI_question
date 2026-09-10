@@ -74,6 +74,12 @@ if exist .git (
     echo No .git found in root or Exam\ — skipping git status.> git-status.txt
 )
 
+echo Generating read-only database state snapshot...
+node tools\db-snapshot.js 2>nul
+if not exist db-state.txt (
+    echo DB snapshot unavailable: database offline or script execution failed > db-state.txt
+)
+
 echo Checking for UI test tool run history...
 set E2ECOUNT=0
 if exist tools\e2e-tester\logs (
@@ -81,7 +87,7 @@ if exist tools\e2e-tester\logs (
 )
 
 echo Zipping project for review...
-echo   Including: everything in this folder, plus tree.txt, git-log.txt, and git-status.txt
+echo   Including: everything in this folder, plus db-state.txt, tree.txt, git-log.txt, and git-status.txt
 echo   Excluding: node_modules, build output, database data/binaries, secrets
 echo.
 
@@ -121,6 +127,8 @@ if exist %OUTFILE% (
     echo Done. Created %OUTFILE% — upload this instead of the full folder.
     echo.
     echo Included this time:
+    echo   db-state.txt          - read-only database state snapshot ^(table
+    echo                           counts, language list, roles/permissions^)
     echo   lockfile-check.txt    - flags if the pnpm/npm lock file situation
     echo                           has drifted again
     echo   tree.txt              - full file listing, so new/removed/renamed
