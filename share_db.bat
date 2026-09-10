@@ -33,7 +33,7 @@ if not exist "setupdb.bat" (
 )
 
 REM --- 2. Check and Stop Running Services ---
-echo [1/4] Checking for active ExamOS services...
+echo [1/6] Checking for active ExamOS services...
 <nul powershell -NoProfile -ExecutionPolicy Bypass -Command ^
   "$ports = @(3000, 4043, 3050); $found = $false; " ^
   "foreach ($p in $ports) { " ^
@@ -61,7 +61,7 @@ if exist "postgres-data\postmaster.pid" (
 
 REM --- 3. Schema-Ensure & Table Verification ---
 echo.
-echo [2/5] Verifying database schema and ensuring all feature tables...
+echo [2/6] Verifying database schema and ensuring all feature tables...
 <nul node tools\verify-and-ensure-db.js "postgres-data"
 set VERIFY_ERR=%ERRORLEVEL%
 
@@ -93,9 +93,28 @@ echo Proceeding with packaging despite missing tables...
 
 :VERIFY_OK
 
-REM --- 4. Locate Compression Engine (7-Zip or PowerShell) ---
+REM --- 4. Run Database State Snapshot & Manifest Generator ---
 echo.
-echo [3/5] Detecting compression engine...
+echo [3/6] Generating database state snapshot (db-state.txt)...
+<nul node tools\db-snapshot.js
+if exist "db-state.txt" (
+    copy /y "db-state.txt" "postgres-data\db-state.txt" >nul 2>&1
+) else (
+    echo [WARNING] db-state.txt could not be generated.
+)
+
+echo.
+echo [4/6] Generating export share manifest (share-manifest.txt)...
+<nul node tools\generate-share-manifest.js
+if exist "share-manifest.txt" (
+    copy /y "share-manifest.txt" "postgres-data\share-manifest.txt" >nul 2>&1
+) else (
+    echo [WARNING] share-manifest.txt could not be generated.
+)
+
+REM --- 5. Locate Compression Engine (7-Zip or PowerShell) ---
+echo.
+echo [5/6] Detecting compression engine...
 set SEVENZIP=
 if exist "C:\Program Files\7-Zip\7z.exe" (
     set "SEVENZIP=C:\Program Files\7-Zip\7z.exe"
@@ -111,17 +130,15 @@ if not "%SEVENZIP%"=="" (
     echo       7-Zip not found. Using native Windows PowerShell zip engine.
 )
 
-REM --- 5. Package Database and Installer ---
+REM --- 6. Package Database and Installer ---
 echo.
-echo [4/5] Compressing database and setupdb.bat into zip archives...
+echo [6/6] Compressing database and setupdb.bat into zip archive...
 set OUTFILE=examos-database.zip
-set OUTFILE_ALIAS=database.zip
 
 if exist "%OUTFILE%" del /f /q "%OUTFILE%" >nul 2>&1
-if exist "%OUTFILE_ALIAS%" del /f /q "%OUTFILE_ALIAS%" >nul 2>&1
 
 if not "%SEVENZIP%"=="" (
-    "%SEVENZIP%" a -tzip "%OUTFILE%" postgres-data setupdb.bat setupdb.sh README_DATABASE.txt
+    "%SEVENZIP%" a -tzip "%OUTFILE%" postgres-data setupdb.bat setupdb.sh README_DATABASE.txt db-state.txt share-manifest.txt -xr!postmaster.pid
     if errorlevel 1 (
         echo [ERROR] 7-Zip packaging failed.
         if "%~1"=="" pause
@@ -129,7 +146,7 @@ if not "%SEVENZIP%"=="" (
     )
 ) else (
     powershell -NoProfile -Command ^
-      "$items = @('postgres-data', 'setupdb.bat', 'setupdb.sh', 'README_DATABASE.txt'); " ^
+      "$items = @('postgres-data', 'setupdb.bat', 'setupdb.sh', 'README_DATABASE.txt', 'db-state.txt', 'share-manifest.txt'); " ^
       "Compress-Archive -Path $items -DestinationPath '%OUTFILE%' -Force"
     if errorlevel 1 (
         echo [ERROR] PowerShell archive creation failed.
@@ -138,12 +155,9 @@ if not "%SEVENZIP%"=="" (
     )
 )
 
-REM Create database.zip alias for convenience
-copy /y "%OUTFILE%" "%OUTFILE_ALIAS%" >nul 2>&1
-
-REM --- 6. Verify Package Integrity ---
+REM --- 7. Verify Package Integrity ---
 echo.
-echo [5/5] Verifying archive integrity...
+echo Verifying archive integrity...
 if not exist "%OUTFILE%" (
     echo [ERROR] Output zip file was not created.
     if "%~1"=="" pause
@@ -154,7 +168,6 @@ for %%F in ("%OUTFILE%") do set ZIP_BYTES=%%~zF
 set /a ZIP_MB=%ZIP_BYTES% / 1048576
 
 echo       Archive created: %OUTFILE% (%ZIP_MB% MB / %ZIP_BYTES% bytes)
-echo       Archive created: %OUTFILE_ALIAS% (%ZIP_MB% MB / %ZIP_BYTES% bytes)
 
 echo.
 echo ==============================================================
@@ -166,6 +179,8 @@ echo     - postgres-data/       (Verified pre-seeded PostgreSQL database)
 echo     - setupdb.bat          (Windows 1-click automated installer)
 echo     - setupdb.sh           (Linux/macOS automated installer)
 echo     - README_DATABASE.txt  (Instructions ^& default login credentials)
+echo     - db-state.txt         (Read-only database state snapshot)
+echo     - share-manifest.txt   (Export manifest: timestamp, git commit, machine, OS)
 echo.
 echo   Database Verification: Schema and content verified before packaging.
 echo   Verified Features:
@@ -176,9 +191,8 @@ echo     - Spaced-Repetition Vocabulary Bank ^& SM-2 Engine
 echo     - Multilingual i18n Translations (23 Languages, 172 Keys)
 echo     - Core JEE/NEET/IELTS Courses, Questions, Blueprints ^& Personas
 echo.
-echo   Distribution Files:
+echo   Distribution File:
 echo     - %OUTFILE%
-echo     - %OUTFILE_ALIAS%
 echo.
 echo   How the recipient installs it:
 echo     1. Extract %OUTFILE% into their ExamOS directory

@@ -30,7 +30,7 @@ fi
 
 # Stop running services if any
 if [ -f "stop_all.sh" ]; then
-    echo "[1/5] Stopping active services to ensure database consistency..."
+    echo "[1/6] Stopping active services to ensure database consistency..."
     bash stop_all.sh >/dev/null 2>&1 || true
 fi
 
@@ -38,7 +38,7 @@ rm -f "postgres-data/postmaster.pid"
 
 # Pre-packaging schema-ensure and verification
 echo ""
-echo "[2/5] Verifying database schema and ensuring all feature tables..."
+echo "[2/6] Verifying database schema and ensuring all feature tables..."
 set +e
 node tools/verify-and-ensure-db.js "postgres-data"
 VERIFY_EXIT=$?
@@ -71,12 +71,25 @@ elif [ $VERIFY_EXIT -ne 0 ]; then
     exit 1
 fi
 
+echo ""
+echo "[3/6] Generating database state snapshot (db-state.txt)..."
+node tools/db-snapshot.js || true
+if [ -f "db-state.txt" ]; then
+    cp "db-state.txt" "postgres-data/db-state.txt"
+fi
+
+echo ""
+echo "[4/6] Generating export share manifest (share-manifest.txt)..."
+node tools/generate-share-manifest.js || true
+if [ -f "share-manifest.txt" ]; then
+    cp "share-manifest.txt" "postgres-data/share-manifest.txt"
+fi
+
 OUTFILE="examos-database.zip"
-OUTFILE_ALIAS="database.zip"
+rm -f "$OUTFILE"
 
-rm -f "$OUTFILE" "$OUTFILE_ALIAS"
-
-echo "[3/5] Packaging database and installer into zip..."
+echo ""
+echo "[5/6] Packaging database and installer into zip..."
 SEVENZIP=""
 if command -v 7z >/dev/null 2>&1; then
     SEVENZIP="7z"
@@ -87,17 +100,16 @@ elif [ -f "/c/Program Files (x86)/7-Zip/7z.exe" ]; then
 fi
 
 if [ -n "$SEVENZIP" ]; then
-    "$SEVENZIP" a -tzip "$OUTFILE" postgres-data setupdb.bat setupdb.sh README_DATABASE.txt -xr!postmaster.pid >/dev/null
+    "$SEVENZIP" a -tzip "$OUTFILE" postgres-data setupdb.bat setupdb.sh README_DATABASE.txt db-state.txt share-manifest.txt -xr!postmaster.pid >/dev/null
 elif command -v zip >/dev/null 2>&1; then
-    zip -q -r "$OUTFILE" postgres-data setupdb.bat setupdb.sh README_DATABASE.txt -x "*/postmaster.pid"
+    zip -q -r "$OUTFILE" postgres-data setupdb.bat setupdb.sh README_DATABASE.txt db-state.txt share-manifest.txt -x "*/postmaster.pid"
 else
     echo "[ERROR] Neither 7z nor zip utility found."
     exit 1
 fi
 
-cp "$OUTFILE" "$OUTFILE_ALIAS"
-
-echo "[4/5] Verifying archive..."
+echo ""
+echo "[6/6] Verifying archive..."
 if [ ! -f "$OUTFILE" ]; then
     echo "[ERROR] Failed to generate $OUTFILE"
     exit 1
@@ -105,7 +117,7 @@ fi
 
 ZIP_SIZE=$(du -h "$OUTFILE" | cut -f1)
 
-echo "[5/5] Package ready: $OUTFILE ($ZIP_SIZE)"
+echo "      Package ready: $OUTFILE ($ZIP_SIZE)"
 echo ""
 echo "=============================================================="
 echo "  Database Sharing Package Created Successfully!"
@@ -116,6 +128,8 @@ echo "  - postgres-data/       (Verified pre-seeded PostgreSQL database)"
 echo "  - setupdb.bat          (Windows 1-click automated installer)"
 echo "  - setupdb.sh           (Linux/macOS automated installer)"
 echo "  - README_DATABASE.txt  (Instructions & default login credentials)"
+echo "  - db-state.txt         (Read-only database state snapshot)"
+echo "  - share-manifest.txt   (Export manifest: timestamp, git commit, machine, OS)"
 echo ""
 echo "Database Verification: Schema and content verified before packaging."
 echo "Verified Features:"
@@ -126,7 +140,7 @@ echo "  - Spaced-Repetition Vocabulary Bank & SM-2 Engine"
 echo "  - Multilingual i18n Translations (23 Languages, 172 Keys)"
 echo "  - Core JEE/NEET/IELTS Courses, Questions, Blueprints & Personas"
 echo ""
-echo "Distribution file: $OUTFILE (alias: $OUTFILE_ALIAS)"
+echo "Distribution file: $OUTFILE"
 echo "Recipient installs via: bash setupdb.sh"
 echo ""
 exit 0
