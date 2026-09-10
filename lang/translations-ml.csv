@@ -1,0 +1,173 @@
+﻿key,english,translation,isVerified
+"actions","Actions","പ്രവർത്തനങ്ങൾ",true
+"all","All","എല്ലാം",true
+"analytics","Student Analytics","വിദ്യാർത്ഥി വിശകലനം",true
+"app_subtitle","Adaptive Learning & Assessment OS","അഡാപ്റ്റീവ് ലേണിംഗ് & അസസ്മെന്റ് OS",true
+"app_title","ExamOS // Adaptive Learning Platform","ExamOS // അഡാപ്റ്റീവ് ലേണിംഗ് പ്ലാറ്റ്ഫോം",true
+"archive","Published Archive","പ്രസിദ്ധീകരിച്ച ആർക്കൈവ്",true
+"audio_passage","Audio Passage","ഓഡിയോ ഭാഗം",true
+"cancel","Cancel","റദ്ദാക്കുക",true
+"close","Close","അടയ്ക്കുക",true
+"comprehension_questions","Comprehension Questions","ഗ്രഹണ ചോദ്യങ്ങൾ",true
+"confirm","Confirm","സ്ഥിരീകരിക്കുക",true
+"correct_choice_label","Correct Answer","ശരിയായ ഉത്തരം",true
+"courses","Academic Courses","അക്കാദമിക് കോഴ്സുകൾ",true
+"courses_add_course","+ Add Course","+ കോഴ്സ് ചേർക്കുക",true
+"courses_desc","Manage courses, subjects, chapters, and hierarchical syllabus taxonomy","കോഴ്സുകൾ, വിഷയങ്ങൾ, അധ്യായങ്ങൾ, ശ്രേണീകൃത പാഠ്യപദ്ധതി വർഗ്ഗീകരണം എന്നിവ കൈകാര്യം ചെയ്യുക",true
+"courses_no_courses","No academic courses registered yet.","ഇതുവരെ അക്കാദമിക് കോഴ്സുകളൊന്നും രജിസ്റ്റർ ചെയ്തിട്ടില്ല.",true
+"courses_title","Academic Course Hierarchy","അക്കാദമിക് കോഴ്സ് ശ്രേണി",true
+"dashboard","Dashboard","ഡാഷ്‌ബോർഡ്",true
+"dashboard_welcome_desc","Welcome to ExamOS. Select a module from the sidebar to begin your academic workflow.","ExamOS-ലേക്ക് സ്വാഗതം. നിങ്ങളുടെ അക്കാദമിക് വർക്ക്ഫ്ലോ ആരംഭിക്കാൻ സൈഡ്‌ബാറിൽ നിന്ന് ഒരു മൊഡ്യൂൾ തിരഞ്ഞെടുക്കുക.",true
+"delete","Delete","ഇല്ലാതാക്കുക",true
+"edit","Edit","എഡിറ്റ് ചെയ്യുക",true
+"error","Error","പിശക്",true
+"exam_patterns","Exam Patterns","പരീക്ഷാ രീതികൾ",true
+"exam_player_answered","Answered","ഉത്തരം നൽകി",true
+"exam_player_clear_answer","Clear Response","ഉത്തരം മായ്ക്കുക",true
+"exam_player_flag_cancel","Cancel","റദ്ദാക്കുക",true
+"exam_player_flag_modal_desc","Report ambiguities, inaccuracies, or typos in this question.","ഈ ചോദ്യത്തിലെ അവ്യക്തതകൾ, തെറ്റുകൾ അല്ലെങ്കിൽ ടൈപ്പോകൾ റിപ്പോർട്ട് ചെയ്യുക.",true
+"exam_player_flag_modal_title","Dispute / Flag Question","ചോദ്യത്തിൽ എതിർപ്പ് / ഫ്ലാഗ് ചെയ്യുക",true
+"exam_player_flag_question","Flag Dispute","എതിർപ്പ് ഫ്ലാഗ് ചെയ്യുക",true
+"exam_player_flag_reason_placeholder","Describe the issue or error in detail...","പ്രശ്നം വിശദമായി വിവരിക്കുക...",true
+"exam_player_flag_submit","Submit Flag","ഫ്ലാഗ് സമർപ്പിക്കുക",true
+"exam_player_flag_success","Question flagged successfully for review.","ചോദ്യം അവലോകനത്തിനായി വിജയകരമായി ഫ്ലാഗ് ചെയ്തു.",true
+"exam_player_mark_review","Mark for Review","അവലോകനത്തിനായി അടയാളപ്പെടുത്തുക",true
+"exam_player_marked_for_review","Marked for Review","അവലോകനത്തിനായി അടയാളപ്പെടുത്തി",true
+"exam_player_marks","Marks","മാർക്കുകൾ",true
+"exam_player_multiple_choice","Multiple Choice","ബഹുവിധ തിരഞ്ഞെടുപ്പ്",true
+"exam_player_next","Save & Next","സേവ് ചെയ്ത് അടുത്തത്",true
+"exam_player_not_visited","Not Visited","സന്ദർശിച്ചിട്ടില്ല",true
+"exam_player_numerical","Numerical Value","സംഖ്യാ മൂല്യം",true
+"exam_player_of","of","ൽ",true
+"exam_player_prev","Previous","മുമ്പത്തെ",true
+"exam_player_question_counter","Question","ചോദ്യം",true
+"exam_player_single_choice","Single Choice","ഒറ്റ തിരഞ്ഞെടുപ്പ്",true
+"exam_player_submit_cancel","Return to Exam","പരീക്ഷയിലേക്ക് മടങ്ങുക",true
+"exam_player_submit_confirm","Yes, Submit Exam","അതെ, പരീക്ഷ സമർപ്പിക്കുക",true
+"exam_player_submit_exam","Submit Test","ടെസ്റ്റ് സമർപ്പിക്കുക",true
+"exam_player_submit_modal_desc","Are you sure you want to finalize and submit your assessment? Unanswered questions cannot be changed after submission.","നിങ്ങളുടെ മൂല്യനിർണ്ണയം അന്തിമമാക്കി സമർപ്പിക്കാൻ ആഗ്രഹിക്കുന്നുവോ? സമർപ്പിച്ചതിന് ശേഷം ഉത്തരം നൽകാത്ത ചോദ്യങ്ങൾ മാറ്റാൻ കഴിയില്ല.",true
+"exam_player_submit_modal_title","Confirm Exam Submission","പരീക്ഷാ സമർപ്പണം സ്ഥിരീകരിക്കുക",true
+"exam_player_time_left","Time Left","ശേഷിക്കുന്ന സമയം",true
+"exam_player_title","Exam Hall","പരീക്ഷാ ഹാൾ",true
+"exam_player_unanswered","Unanswered","ഉത്തരം നൽകാത്ത",true
+"exam_player_unmark_review","Unmark Review","അവലോകന അടയാളം നീക്കം ചെയ്യുക",true
+"exam_result_back_to_exams","Back to Assessments","മൂല്യനിർണ്ണയങ്ങളിലേക്ക് മടങ്ങുക",true
+"exam_result_breakdown","Section Performance Breakdown","വിഭാഗം തിരിച്ചുള്ള പ്രകടന വിശദാംശം",true
+"exam_result_percentage","Percentage","ശതമാനം",true
+"exam_result_score","Total Score","മൊത്തം സ്കോർ",true
+"exam_result_title","Evaluation Scorecard & Analysis","മൂല്യനിർണ്ണയ സ്കോർകാർഡ് & വിശകലനം",true
+"exam_result_total_marks","Maximum Marks","പരമാവധി മാർക്ക്",true
+"exams","Exam Generator","പരീക്ഷാ ജനറേറ്റർ",true
+"explanation","Explanation","വിശദീകരണം",true
+"feature_maintenance_tooltip","Feature disabled for maintenance","പരിപാലനത്തിനായി ഫീച്ചർ പ്രവർത്തനരഹിതമാക്കി",true
+"filter","Filter","ഫിൽട്ടർ",true
+"interview_desc","Conduct interactive voice and text oral examinations with multi-turn adaptive follow-ups and rubric scoring","ബഹു-ഘട്ട അഡാപ്റ്റീവ് ഫോളോ-അപ്പുകളും റൂബ്രിക് സ്കോറിംഗും ഉള്ള സംവേദനാത്മക വോയ്സ് & ടെക്സ്റ്റ് വാമൊഴി പരീക്ഷകൾ നടത്തുക",true
+"interview_end","Conclude Interview & Grade","അഭിമുഖം അവസാനിപ്പിച്ച് ഗ്രേഡ് നൽകുക",true
+"interview_mic_off","Muted","മ്യൂട്ട്",true
+"interview_mic_on","Microphone Active","മൈക്രോഫോൺ സജീവം",true
+"interview_start","Start Interview Session","അഭിമുഖ സെഷൻ ആരംഭിക്കുക",true
+"interview_title","AI Interview & Oral Viva","AI അഭിമുഖം & വാമൊഴി വൈവ",true
+"listening_lab_subtitle","Standardized audio drills with natural multi-accent speech and comprehension items","സ്വാഭാവിക ബഹു-ഉച്ചാരണ സംഭാഷണവും ഗ്രഹണ ഇനങ്ങളും ഉള്ള മാനകീകൃത ഓഡിയോ പരിശീലനങ്ങൾ",true
+"listening_lab_title","Listening Comprehension Lab","ശ്രവണ ഗ്രഹണ ലാബ്",true
+"loading","Loading...","ലോഡ് ചെയ്യുന്നു...",true
+"login_autofill","Auto-Fill","ഓട്ടോ-ഫിൽ",true
+"login_btn_authenticating","Authenticating...","ആധികാരികത ഉറപ്പാക്കുന്നു...",true
+"login_btn_hide","Hide","മറയ്ക്കുക",true
+"login_btn_show","Show","കാണിക്കുക",true
+"login_btn_submit","Sign In","സൈൻ ഇൻ ചെയ്യുക",true
+"login_email_label","Email Address","ഇമെയിൽ വിലാസം",true
+"login_email_placeholder","name@examos.com","name@examos.com",true
+"login_heading","Sign in to ExamOS","ExamOS-ലേക്ക് സൈൻ ഇൻ ചെയ്യുക",true
+"login_invalid_credentials","Invalid email or password","അസാധുവായ ഇമെയിൽ അല്ലെങ്കിൽ പാസ്‌വേഡ്",true
+"login_password_label","Password","പാസ്‌വേഡ്",true
+"login_quick_demo","QUICK DEMO ACCOUNTS (ONE-CLICK)","വേഗത്തിലുള്ള ഡെമോ അക്കൗണ്ടുകൾ (ഒറ്റ-ക്ലിക്ക്)",true
+"login_subheading","Enter your credentials or choose a quick demo account","നിങ്ങളുടെ വിവരങ്ങൾ നൽകുക അല്ലെങ്കിൽ വേഗത്തിലുള്ള ഡെമോ അക്കൗണ്ട് തിരഞ്ഞെടുക്കുക",true
+"logout","Log Out","ലോഗ് ഔട്ട്",true
+"logout_locked_tooltip","Exam in progress - complete assessment first","പരീക്ഷ പുരോഗമിക്കുന്നു - ആദ്യം മൂല്യനിർണ്ണയം പൂർത്തിയാക്കുക",true
+"logout_tooltip","Sign out from ExamOS","ExamOS-ൽ നിന്ന് സൈൻ ഔട്ട് ചെയ്യുക",true
+"nav_analytics","Student Analytics & Mastery","വിദ്യാർത്ഥി വിശകലനം & വൈദഗ്ധ്യം",true
+"nav_archive","Published Archive","പ്രസിദ്ധീകരിച്ച ആർക്കൈവ്",true
+"nav_courses","Academic Structure","അക്കാദമിക് ഘടന",true
+"nav_dashboard","Dashboard","ഡാഷ്‌ബോർഡ്",true
+"nav_exam_patterns","Exam Patterns","പരീക്ഷാ രീതികൾ",true
+"nav_exams","Exam Generator & Papers","പരീക്ഷാ ജനറേറ്റർ & പേപ്പറുകൾ",true
+"nav_interview","AI Interview & Viva","AI അഭിമുഖം & വൈവ",true
+"nav_listening_practice","Listening Practice","ശ്രവണ പരിശീലനം",true
+"nav_locked_tooltip","Navigation locked during active exam session","സജീവ പരീക്ഷാ സെഷനിൽ നാവിഗേഷൻ ലോക്ക് ചെയ്തിരിക്കുന്നു",true
+"nav_practice","Practice & Training","പരിശീലനം & പരിശീലനം",true
+"nav_question_bank","Question Bank","ചോദ്യ ബാങ്ക്",true
+"nav_settings","Settings","ക്രമീകരണങ്ങൾ",true
+"nav_student_exams","My Assessments & Tests","എന്റെ മൂല്യനിർണ്ണയങ്ങളും പരീക്ഷകളും",true
+"nav_subscription","Subscription & Credits","സബ്‌സ്ക്രിപ്ഷനും ക്രെഡിറ്റുകളും",true
+"nav_users","User Management","ഉപയോക്തൃ മാനേജ്മെന്റ്",true
+"nav_vocabulary","Vocabulary Training","പദാവലി പരിശീലനം",true
+"nav_writing_practice","Writing Practice","എഴുത്ത് പരിശീലനം",true
+"no_active_exams","No assessments available right now","ഇപ്പോൾ മൂല്യനിർണ്ണയങ്ങളൊന്നും ലഭ്യമല്ല",true
+"no_active_exams_desc","You do not have any pending tests scheduled for your enrolled curriculum.","നിങ്ങളുടെ എൻറോൾ ചെയ്ത പാഠ്യപദ്ധതിക്കായി തീർപ്പുകൽപ്പിക്കാത്ത ടെസ്റ്റുകളൊന്നും ഷെഡ്യൂൾ ചെയ്തിട്ടില്ല.",true
+"no_listening_drills","No listening drills found for selected filter.","തിരഞ്ഞെടുത്ത ഫിൽട്ടറിനായി ശ്രവണ പരിശീലനങ്ങളൊന്നും കണ്ടെത്തിയില്ല.",true
+"offline_badge","Offline","ഓഫ്‌ലൈൻ",true
+"preview_as_student","Preview as Student","വിദ്യാർത്ഥിയായി പ്രിവ്യൂ ചെയ്യുക",true
+"priority_weaknesses","Priority Weaknesses","മുൻഗണനാ ദൗർബല്യങ്ങൾ",true
+"qb_add_question","+ New Question","+ പുതിയ ചോദ്യം",true
+"qb_desc","Author, version, tag, review, and organize curriculum question assets","പാഠ്യപദ്ധതി ചോദ്യ ആസ്തികൾ രചിക്കുക, പതിപ്പിടുക, ടാഗ് ചെയ്യുക, അവലോകനം ചെയ്യുക, ക്രമീകരിക്കുക",true
+"qb_filter_difficulty","All Difficulties","എല്ലാ പ്രയാസ നിലകളും",true
+"qb_filter_subject","Filter by Subject","വിഷയം അനുസരിച്ച് ഫിൽട്ടർ ചെയ്യുക",true
+"qb_no_questions","No questions match the current filter criteria.","നിലവിലെ ഫിൽട്ടർ മാനദണ്ഡവുമായി ചോദ്യങ്ങളൊന്നും പൊരുത്തപ്പെടുന്നില്ല.",true
+"qb_search_placeholder","Search questions by statement, formula, or tag...","പ്രസ്താവന, സൂത്രവാക്യം അല്ലെങ്കിൽ ടാഗ് വഴി ചോദ്യങ്ങൾ തിരയുക...",true
+"qb_title","Question Bank Workbench","ചോദ്യ ബാങ്ക് വർക്ക്ബെഞ്ച്",true
+"question_bank","Question Bank","ചോദ്യ ബാങ്ക്",true
+"question_palette","Question Palette","ചോദ്യ പാലറ്റ്",true
+"recalculate_mastery","Recalculate Mastery","വൈദഗ്ധ്യം വീണ്ടും കണക്കാക്കുക",true
+"refresh","Refresh","പുതുക്കുക",true
+"resume_exam","Resume Active Session","സജീവ സെഷൻ പുനരാരംഭിക്കുക",true
+"role_main_admin","Main Admin","മുഖ്യ അഡ്മിൻ",true
+"role_student","Student","വിദ്യാർത്ഥി",true
+"role_sub_admin","Sub Admin","സബ് അഡ്മിൻ",true
+"role_teacher","Teacher","അധ്യാപകൻ",true
+"save","Save","സേവ് ചെയ്യുക",true
+"saved","Saved ✓","സേവ് ചെയ്തു ✓",true
+"saving","Saving...","സേവ് ചെയ്യുന്നു...",true
+"scorecard_solution_analysis","Solution & Answer Key Analysis","പരിഹാരവും ഉത്തര കീ വിശകലനവും",true
+"search","Search","തിരയുക",true
+"select_your_answer","Select your answer:","നിങ്ങളുടെ ഉത്തരം തിരഞ്ഞെടുക്കുക:",true
+"settings_header_desc","Configure AI model providers, gateway cascade routing, appearance preferences, and exam theme styling","AI മോഡൽ ദാതാക്കൾ, ഗേറ്റ്‌വേ കാസ്‌കേഡ് റൂട്ടിംഗ്, രൂപഭാവ മുൻഗണനകൾ, പരീക്ഷാ തീം സ്റ്റൈലിംഗ് എന്നിവ കോൺഫിഗർ ചെയ്യുക",true
+"settings_header_title","System Settings & Administration","സിസ്റ്റം ക്രമീകരണങ്ങളും ഭരണവും",true
+"settings_tab_ai","AI & Model Configuration","AI & മോഡൽ കോൺഫിഗറേഷൻ",true
+"settings_tab_appearance","Appearance & Theme","രൂപഭാവവും തീമും",true
+"settings_tab_entitlements","Feature Matrix & Entitlements","ഫീച്ചർ മാട്രിക്സും അവകാശങ്ങളും",true
+"settings_tab_exam_themes","Exam Paper Themes","പരീക്ഷാ പേപ്പർ തീമുകൾ",true
+"settings_tab_languages","Language Management","ഭാഷാ മാനേജ്മെന്റ്",true
+"settings_tab_maintenance","System Maintenance","സിസ്റ്റം പരിപാലനം",true
+"sidebar_modules","Modules","മൊഡ്യൂളുകൾ",true
+"status","Status","നില",true
+"student_analytics_accuracy","Accuracy Rate","കൃത്യത നിരക്ക്",true
+"student_analytics_avg_score","Weighted Score","വെയ്റ്റഡ് സ്കോർ",true
+"student_analytics_subtitle","Track performance trends, syllabus coverage, and priority areas across all test sessions","എല്ലാ ടെസ്റ്റ് സെഷനുകളിലും പ്രകടന പ്രവണതകൾ, പാഠ്യപദ്ധതി കവറേജ്, മുൻഗണനാ മേഖലകൾ എന്നിവ ട്രാക്ക് ചെയ്യുക",true
+"student_analytics_title","Student Analytics & Mastery","വിദ്യാർത്ഥി വിശകലനം & വൈദഗ്ധ്യം",true
+"student_analytics_total_tests","Tests Completed","പൂർത്തിയാക്കിയ ടെസ്റ്റുകൾ",true
+"student_exams_available","Available Assessments","ലഭ്യമായ മൂല്യനിർണ്ണയങ്ങൾ",true
+"student_exams_completed","Evaluated Attempts","വിലയിരുത്തിയ ശ്രമങ്ങൾ",true
+"student_exams_start_exam","Enter Exam Hall","പരീക്ഷാ ഹാളിൽ പ്രവേശിക്കുക",true
+"student_exams_subtitle","Assigned curriculum examinations, mock papers, and historical test sessions","നിയോഗിച്ച പാഠ്യപദ്ധതി പരീക്ഷകൾ, മോക്ക് പേപ്പറുകൾ, ചരിത്രപരമായ ടെസ്റ്റ് സെഷനുകൾ",true
+"student_exams_title","My Assessments & Tests","എന്റെ മൂല്യനിർണ്ണയങ്ങളും പരീക്ഷകളും",true
+"student_exams_view_result","View Scorecard","സ്കോർകാർഡ് കാണുക",true
+"submit_listening_drill","Submit Drill Evaluation","പരിശീലന മൂല്യനിർണ്ണയം സമർപ്പിക്കുക",true
+"success","Success","വിജയം",true
+"theme_dark","Dark","ഡാർക്ക്",true
+"theme_light","Light","ലൈറ്റ്",true
+"theme_slate","Slate","സ്ലേറ്റ്",true
+"top_strengths","Top Mastery Strengths","മുൻനിര വൈദഗ്ധ്യ ശക്തികൾ",true
+"users","User Management","ഉപയോക്തൃ മാനേജ്മെന്റ്",true
+"users_add_user","+ Create User","+ ഉപയോക്താവിനെ സൃഷ്ടിക്കുക",true
+"users_desc","Manage institutional accounts, role assignments, and authentication permissions","സ്ഥാപന അക്കൗണ്ടുകൾ, റോൾ അസൈൻമെന്റുകൾ, ആധികാരികത അനുമതികൾ എന്നിവ കൈകാര്യം ചെയ്യുക",true
+"users_no_users","No users found matching query.","അന്വേഷണവുമായി പൊരുത്തപ്പെടുന്ന ഉപയോക്താക്കളൊന്നും കണ്ടെത്തിയില്ല.",true
+"users_role_filter","All Roles","എല്ലാ റോളുകളും",true
+"users_search_placeholder","Search users by name, email, or role...","പേര്, ഇമെയിൽ അല്ലെങ്കിൽ റോൾ വഴി ഉപയോക്താക്കളെ തിരയുക...",true
+"users_title","User & Identity Management","ഉപയോക്തൃ & ഐഡന്റിറ്റി മാനേജ്മെന്റ്",true
+"verifying_session","Verifying ExamOS session...","ExamOS സെഷൻ പരിശോധിക്കുന്നു...",true
+"welcome","Welcome to ExamOS Platform","ExamOS പ്ലാറ്റ്‌ഫോമിലേക്ക് സ്വാഗതം",true
+"writing_practice_desc","AI-evaluated essay submissions across task achievement, coherence, lexical resource, and grammatical accuracy","ടാസ്ക് നേട്ടം, യോജിപ്പ്, പദാവലി വിഭവം, വ്യാകരണ കൃത്യത എന്നിവയിലുടനീളം AI-മൂല്യനിർണ്ണയം ചെയ്ത ഉപന്യാസ സമർപ്പണങ്ങൾ",true
+"writing_practice_submit","Submit for AI Evaluation","AI മൂല്യനിർണ്ണയത്തിനായി സമർപ്പിക്കുക",true
+"writing_practice_title","Writing Assessment & Essay Lab","എഴുത്ത് മൂല്യനിർണ്ണയവും ഉപന്യാസ ലാബും",true
+"writing_practice_word_count","Word Count","വാക്ക് എണ്ണം",true
+"your_choice_label","Your Response","നിങ്ങളുടെ ഉത്തരം",true

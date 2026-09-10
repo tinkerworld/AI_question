@@ -1,0 +1,173 @@
+﻿key,english,translation,isVerified
+"actions","Actions","কার্যক্রম",true
+"all","All","সকল",true
+"analytics","Student Analytics","শিক্ষার্থী বিশ্লেষণ",true
+"app_subtitle","Adaptive Learning & Assessment OS","অভিযোজিত শিক্ষণ ও মূল্যায়ন ওএস",true
+"app_title","ExamOS // Adaptive Learning Platform","ExamOS // অ্যাডাপ্টিভ লার্নিং প্ল্যাটফর্ম",true
+"archive","Published Archive","প্রকাশিত সংগ্রহশালা",true
+"audio_passage","Audio Passage","অডিও অংশ",true
+"cancel","Cancel","বাতিল করুন",true
+"close","Close","বন্ধ করুন",true
+"comprehension_questions","Comprehension Questions","বোধগম্যতা প্রশ্ন",true
+"confirm","Confirm","নিশ্চিত করুন",true
+"correct_choice_label","Correct Answer","সঠিক উত্তর",true
+"courses","Academic Courses","একাডেমিক কোর্স",true
+"courses_add_course","+ Add Course","+ কোর্স যোগ করুন",true
+"courses_desc","Manage courses, subjects, chapters, and hierarchical syllabus taxonomy","কোর্স, বিষয়, অধ্যায় এবং পাঠ্যক্রম শ্রেণিবিন্যাস পরিচালনা করুন",true
+"courses_no_courses","No academic courses registered yet.","এখনও কোনো একাডেমিক কোর্স নিবন্ধিত হয়নি।",true
+"courses_title","Academic Course Hierarchy","একাডেমিক কোর্স স্তরবিন্যাস",true
+"dashboard","Dashboard","ড্যাশবোর্ড",true
+"dashboard_welcome_desc","Welcome to ExamOS. Select a module from the sidebar to begin your academic workflow.","ExamOS-এ আপনাকে স্বাগতম। আপনার একাডেমিক কাজ শুরু করতে সাইডবার থেকে একটি মডিউল নির্বাচন করুন।",true
+"delete","Delete","মুছুন",true
+"edit","Edit","সম্পাদনা করুন",true
+"error","Error","ত্রুটি",true
+"exam_patterns","Exam Patterns","পরীক্ষার প্যাটার্ন",true
+"exam_player_answered","Answered","উত্তর দেওয়া হয়েছে",true
+"exam_player_clear_answer","Clear Response","উত্তর সাফ করুন",true
+"exam_player_flag_cancel","Cancel","বাতিল করুন",true
+"exam_player_flag_modal_desc","Report ambiguities, inaccuracies, or typos in this question.","এই প্রশ্নে অস্পষ্টতা, ভুল বা টাইপো রিপোর্ট করুন।",true
+"exam_player_flag_modal_title","Dispute / Flag Question","প্রশ্নে আপত্তি / ফ্ল্যাগ করুন",true
+"exam_player_flag_question","Flag Dispute","আপত্তি ফ্ল্যাগ করুন",true
+"exam_player_flag_reason_placeholder","Describe the issue or error in detail...","সমস্যাটি বিস্তারিত বর্ণনা করুন...",true
+"exam_player_flag_submit","Submit Flag","ফ্ল্যাগ জমা দিন",true
+"exam_player_flag_success","Question flagged successfully for review.","প্রশ্নটি পর্যালোচনার জন্য সফলভাবে ফ্ল্যাগ করা হয়েছে।",true
+"exam_player_mark_review","Mark for Review","পর্যালোচনার জন্য চিহ্নিত করুন",true
+"exam_player_marked_for_review","Marked for Review","পর্যালোচনার জন্য চিহ্নিত",true
+"exam_player_marks","Marks","নম্বর",true
+"exam_player_multiple_choice","Multiple Choice","বহু নির্বাচনী",true
+"exam_player_next","Save & Next","সংরক্ষণ করুন ও পরবর্তী",true
+"exam_player_not_visited","Not Visited","দেখা হয়নি",true
+"exam_player_numerical","Numerical Value","সাংখ্যিক মান",true
+"exam_player_of","of","এর মধ্যে",true
+"exam_player_prev","Previous","পূর্ববর্তী",true
+"exam_player_question_counter","Question","প্রশ্ন",true
+"exam_player_single_choice","Single Choice","একক নির্বাচন",true
+"exam_player_submit_cancel","Return to Exam","পরীক্ষায় ফিরে যান",true
+"exam_player_submit_confirm","Yes, Submit Exam","হ্যাঁ, পরীক্ষা জমা দিন",true
+"exam_player_submit_exam","Submit Test","পরীক্ষা জমা দিন",true
+"exam_player_submit_modal_desc","Are you sure you want to finalize and submit your assessment? Unanswered questions cannot be changed after submission.","আপনি কি নিশ্চিত যে আপনি আপনার মূল্যায়ন চূড়ান্ত করে জমা দিতে চান? জমা দেওয়ার পর অনুত্তরিত প্রশ্ন পরিবর্তন করা যাবে না।",true
+"exam_player_submit_modal_title","Confirm Exam Submission","পরীক্ষা জমা নিশ্চিত করুন",true
+"exam_player_time_left","Time Left","অবশিষ্ট সময়",true
+"exam_player_title","Exam Hall","পরীক্ষা হল",true
+"exam_player_unanswered","Unanswered","অনুত্তরিত",true
+"exam_player_unmark_review","Unmark Review","পর্যালোচনা চিহ্ন সরান",true
+"exam_result_back_to_exams","Back to Assessments","মূল্যায়নে ফিরে যান",true
+"exam_result_breakdown","Section Performance Breakdown","বিভাগভিত্তিক কার্যক্ষমতার বিবরণ",true
+"exam_result_percentage","Percentage","শতাংশ",true
+"exam_result_score","Total Score","মোট স্কোর",true
+"exam_result_title","Evaluation Scorecard & Analysis","মূল্যায়ন স্কোরকার্ড ও বিশ্লেষণ",true
+"exam_result_total_marks","Maximum Marks","সর্বোচ্চ নম্বর",true
+"exams","Exam Generator","পরীক্ষা জেনারেটর",true
+"explanation","Explanation","ব্যাখ্যা",true
+"feature_maintenance_tooltip","Feature disabled for maintenance","রক্ষণাবেক্ষণের জন্য বৈশিষ্ট্য নিষ্ক্রিয়",true
+"filter","Filter","ফিল্টার",true
+"interview_desc","Conduct interactive voice and text oral examinations with multi-turn adaptive follow-ups and rubric scoring","বহু-পর্যায়ের অভিযোজিত ফলো-আপ ও রুব্রিক স্কোরিং সহ ইন্টারেক্টিভ ভয়েস ও টেক্সট মৌখিক পরীক্ষা পরিচালনা করুন",true
+"interview_end","Conclude Interview & Grade","সাক্ষাৎকার শেষ করুন ও গ্রেড দিন",true
+"interview_mic_off","Muted","মিউট",true
+"interview_mic_on","Microphone Active","মাইক্রোফোন সক্রিয়",true
+"interview_start","Start Interview Session","সাক্ষাৎকার সেশন শুরু করুন",true
+"interview_title","AI Interview & Oral Viva","এআই সাক্ষাৎকার ও মৌখিক ভাইভা",true
+"listening_lab_subtitle","Standardized audio drills with natural multi-accent speech and comprehension items","প্রাকৃতিক বহু-উচ্চারণ বক্তৃতা ও বোধগম্যতা আইটেম সহ প্রমিত অডিও অনুশীলন",true
+"listening_lab_title","Listening Comprehension Lab","শ্রবণ বোধগম্যতা ল্যাব",true
+"loading","Loading...","লোড হচ্ছে...",true
+"login_autofill","Auto-Fill","অটো-ফিল",true
+"login_btn_authenticating","Authenticating...","প্রমাণীকরণ চলছে...",true
+"login_btn_hide","Hide","লুকান",true
+"login_btn_show","Show","দেখান",true
+"login_btn_submit","Sign In","সাইন ইন করুন",true
+"login_email_label","Email Address","ইমেল ঠিকানা",true
+"login_email_placeholder","name@examos.com","name@examos.com",true
+"login_heading","Sign in to ExamOS","ExamOS-এ সাইন ইন করুন",true
+"login_invalid_credentials","Invalid email or password","অবৈধ ইমেল বা পাসওয়ার্ড",true
+"login_password_label","Password","পাসওয়ার্ড",true
+"login_quick_demo","QUICK DEMO ACCOUNTS (ONE-CLICK)","দ্রুত ডেমো অ্যাকাউন্ট (এক-ক্লিক)",true
+"login_subheading","Enter your credentials or choose a quick demo account","আপনার তথ্য প্রবেশ করান বা দ্রুত ডেমো অ্যাকাউন্ট বেছে নিন",true
+"logout","Log Out","লগ আউট",true
+"logout_locked_tooltip","Exam in progress - complete assessment first","পরীক্ষা চলমান - প্রথমে মূল্যায়ন সম্পূর্ণ করুন",true
+"logout_tooltip","Sign out from ExamOS","ExamOS থেকে সাইন আউট করুন",true
+"nav_analytics","Student Analytics & Mastery","শিক্ষার্থী বিশ্লেষণ ও দক্ষতা",true
+"nav_archive","Published Archive","প্রকাশিত সংগ্রহশালা",true
+"nav_courses","Academic Structure","একাডেমিক কাঠামো",true
+"nav_dashboard","Dashboard","ড্যাশবোর্ড",true
+"nav_exam_patterns","Exam Patterns","পরীক্ষার প্যাটার্ন",true
+"nav_exams","Exam Generator & Papers","পরীক্ষা জেনারেটর ও প্রশ্নপত্র",true
+"nav_interview","AI Interview & Viva","এআই সাক্ষাৎকার ও ভাইভা",true
+"nav_listening_practice","Listening Practice","শ্রবণ অনুশীলন",true
+"nav_locked_tooltip","Navigation locked during active exam session","সক্রিয় পরীক্ষা সেশনের সময় নেভিগেশন লক করা",true
+"nav_practice","Practice & Training","অনুশীলন ও প্রশিক্ষণ",true
+"nav_question_bank","Question Bank","প্রশ্ন ব্যাংক",true
+"nav_settings","Settings","সেটিংস",true
+"nav_student_exams","My Assessments & Tests","আমার মূল্যায়ন ও পরীক্ষা",true
+"nav_subscription","Subscription & Credits","সাবস্ক্রিপশন ও ক্রেডিট",true
+"nav_users","User Management","ব্যবহারকারী ব্যবস্থাপনা",true
+"nav_vocabulary","Vocabulary Training","শব্দভাণ্ডার প্রশিক্ষণ",true
+"nav_writing_practice","Writing Practice","লেখার অনুশীলন",true
+"no_active_exams","No assessments available right now","এই মুহূর্তে কোনো মূল্যায়ন উপলব্ধ নেই",true
+"no_active_exams_desc","You do not have any pending tests scheduled for your enrolled curriculum.","আপনার নথিভুক্ত পাঠ্যক্রমের জন্য কোনো মুলতুবি পরীক্ষা নির্ধারিত নেই।",true
+"no_listening_drills","No listening drills found for selected filter.","নির্বাচিত ফিল্টারের জন্য কোনো শ্রবণ অনুশীলন পাওয়া যায়নি।",true
+"offline_badge","Offline","অফলাইন",true
+"preview_as_student","Preview as Student","শিক্ষার্থী হিসেবে পূর্বরূপ দেখুন",true
+"priority_weaknesses","Priority Weaknesses","অগ্রাধিকার দুর্বলতা",true
+"qb_add_question","+ New Question","+ নতুন প্রশ্ন",true
+"qb_desc","Author, version, tag, review, and organize curriculum question assets","পাঠ্যক্রম প্রশ্ন সম্পদ রচনা, সংস্করণ, ট্যাগ, পর্যালোচনা ও সংগঠিত করুন",true
+"qb_filter_difficulty","All Difficulties","সকল কঠিনতা স্তর",true
+"qb_filter_subject","Filter by Subject","বিষয় অনুযায়ী ফিল্টার করুন",true
+"qb_no_questions","No questions match the current filter criteria.","বর্তমান ফিল্টার মানদণ্ডের সাথে কোনো প্রশ্ন মেলে না।",true
+"qb_search_placeholder","Search questions by statement, formula, or tag...","বিবৃতি, সূত্র বা ট্যাগ দ্বারা প্রশ্ন খুঁজুন...",true
+"qb_title","Question Bank Workbench","প্রশ্ন ব্যাংক ওয়ার্কবেঞ্চ",true
+"question_bank","Question Bank","প্রশ্ন ব্যাংক",true
+"question_palette","Question Palette","প্রশ্ন প্যালেট",true
+"recalculate_mastery","Recalculate Mastery","দক্ষতা পুনঃগণনা করুন",true
+"refresh","Refresh","রিফ্রেশ করুন",true
+"resume_exam","Resume Active Session","সক্রিয় সেশন পুনরায় শুরু করুন",true
+"role_main_admin","Main Admin","প্রধান প্রশাসক",true
+"role_student","Student","শিক্ষার্থী",true
+"role_sub_admin","Sub Admin","উপ-প্রশাসক",true
+"role_teacher","Teacher","শিক্ষক",true
+"save","Save","সংরক্ষণ করুন",true
+"saved","Saved ✓","সংরক্ষিত ✓",true
+"saving","Saving...","সংরক্ষণ হচ্ছে...",true
+"scorecard_solution_analysis","Solution & Answer Key Analysis","সমাধান ও উত্তরপত্র বিশ্লেষণ",true
+"search","Search","খুঁজুন",true
+"select_your_answer","Select your answer:","আপনার উত্তর নির্বাচন করুন:",true
+"settings_header_desc","Configure AI model providers, gateway cascade routing, appearance preferences, and exam theme styling","এআই মডেল প্রদানকারী, গেটওয়ে কাস্কেড রাউটিং, চেহারার পছন্দ ও পরীক্ষার থিম স্টাইলিং কনফিগার করুন",true
+"settings_header_title","System Settings & Administration","সিস্টেম সেটিংস ও প্রশাসন",true
+"settings_tab_ai","AI & Model Configuration","এআই ও মডেল কনফিগারেশন",true
+"settings_tab_appearance","Appearance & Theme","চেহারা ও থিম",true
+"settings_tab_entitlements","Feature Matrix & Entitlements","বৈশিষ্ট্য ম্যাট্রিক্স ও অধিকার",true
+"settings_tab_exam_themes","Exam Paper Themes","পরীক্ষার প্রশ্নপত্র থিম",true
+"settings_tab_languages","Language Management","ভাষা ব্যবস্থাপনা",true
+"settings_tab_maintenance","System Maintenance","সিস্টেম রক্ষণাবেক্ষণ",true
+"sidebar_modules","Modules","মডিউল",true
+"status","Status","অবস্থা",true
+"student_analytics_accuracy","Accuracy Rate","নির্ভুলতার হার",true
+"student_analytics_avg_score","Weighted Score","ওজনযুক্ত স্কোর",true
+"student_analytics_subtitle","Track performance trends, syllabus coverage, and priority areas across all test sessions","সকল পরীক্ষা সেশনে কার্যক্ষমতার প্রবণতা, পাঠ্যক্রম কভারেজ ও অগ্রাধিকার ক্ষেত্র ট্র্যাক করুন",true
+"student_analytics_title","Student Analytics & Mastery","শিক্ষার্থী বিশ্লেষণ ও দক্ষতা",true
+"student_analytics_total_tests","Tests Completed","সম্পন্ন পরীক্ষা",true
+"student_exams_available","Available Assessments","উপলব্ধ মূল্যায়ন",true
+"student_exams_completed","Evaluated Attempts","মূল্যায়িত প্রচেষ্টা",true
+"student_exams_start_exam","Enter Exam Hall","পরীক্ষা হলে প্রবেশ করুন",true
+"student_exams_subtitle","Assigned curriculum examinations, mock papers, and historical test sessions","নির্ধারিত পাঠ্যক্রম পরীক্ষা, মক পেপার ও ঐতিহাসিক পরীক্ষা সেশন",true
+"student_exams_title","My Assessments & Tests","আমার মূল্যায়ন ও পরীক্ষা",true
+"student_exams_view_result","View Scorecard","স্কোরকার্ড দেখুন",true
+"submit_listening_drill","Submit Drill Evaluation","অনুশীলন মূল্যায়ন জমা দিন",true
+"success","Success","সাফল্য",true
+"theme_dark","Dark","ডার্ক",true
+"theme_light","Light","লাইট",true
+"theme_slate","Slate","স্লেট",true
+"top_strengths","Top Mastery Strengths","শীর্ষ দক্ষতার শক্তি",true
+"users","User Management","ব্যবহারকারী ব্যবস্থাপনা",true
+"users_add_user","+ Create User","+ ব্যবহারকারী তৈরি করুন",true
+"users_desc","Manage institutional accounts, role assignments, and authentication permissions","প্রাতিষ্ঠানিক অ্যাকাউন্ট, ভূমিকা বরাদ্দ ও প্রমাণীকরণ অনুমতি পরিচালনা করুন",true
+"users_no_users","No users found matching query.","কোয়েরির সাথে মেলে এমন কোনো ব্যবহারকারী পাওয়া যায়নি।",true
+"users_role_filter","All Roles","সকল ভূমিকা",true
+"users_search_placeholder","Search users by name, email, or role...","নাম, ইমেল বা ভূমিকা দ্বারা ব্যবহারকারী খুঁজুন...",true
+"users_title","User & Identity Management","ব্যবহারকারী ও পরিচয় ব্যবস্থাপনা",true
+"verifying_session","Verifying ExamOS session...","ExamOS সেশন যাচাই হচ্ছে...",true
+"welcome","Welcome to ExamOS Platform","ExamOS প্ল্যাটফর্মে আপনাকে স্বাগতম",true
+"writing_practice_desc","AI-evaluated essay submissions across task achievement, coherence, lexical resource, and grammatical accuracy","কাজের সাফল্য, সংগতি, শব্দভাণ্ডার সম্পদ ও ব্যাকরণগত নির্ভুলতা জুড়ে এআই-মূল্যায়িত প্রবন্ধ জমা",true
+"writing_practice_submit","Submit for AI Evaluation","এআই মূল্যায়নের জন্য জমা দিন",true
+"writing_practice_title","Writing Assessment & Essay Lab","লেখার মূল্যায়ন ও প্রবন্ধ ল্যাব",true
+"writing_practice_word_count","Word Count","শব্দ সংখ্যা",true
+"your_choice_label","Your Response","আপনার উত্তর",true

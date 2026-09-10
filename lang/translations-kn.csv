@@ -1,0 +1,173 @@
+﻿key,english,translation,isVerified
+"actions","Actions","ಕ್ರಿಯೆಗಳು",true
+"all","All","ಎಲ್ಲಾ",true
+"analytics","Student Analytics","ವಿದ್ಯಾರ್ಥಿ ವಿಶ್ಲೇಷಣೆ",true
+"app_subtitle","Adaptive Learning & Assessment OS","ಹೊಂದಾಣಿಕೆಯ ಕಲಿಕೆ ಮತ್ತು ಮೌಲ್ಯಮಾಪನ OS",true
+"app_title","ExamOS // Adaptive Learning Platform","ExamOS // ಅಡಾಪ್ಟಿವ್ ಕಲಿಕಾ ವೇದಿಕೆ",true
+"archive","Published Archive","ಪ್ರಕಟಿತ ಆರ್ಕೈವ್",true
+"audio_passage","Audio Passage","ಆಡಿಯೋ ಭಾಗ",true
+"cancel","Cancel","ರದ್ದುಮಾಡಿ",true
+"close","Close","ಮುಚ್ಚಿ",true
+"comprehension_questions","Comprehension Questions","ಗ್ರಹಿಕೆ ಪ್ರಶ್ನೆಗಳು",true
+"confirm","Confirm","ದೃಢೀಕರಿಸಿ",true
+"correct_choice_label","Correct Answer","ಸರಿಯಾದ ಉತ್ತರ",true
+"courses","Academic Courses","ಶೈಕ್ಷಣಿಕ ಕೋರ್ಸ್‌ಗಳು",true
+"courses_add_course","+ Add Course","+ ಕೋರ್ಸ್ ಸೇರಿಸಿ",true
+"courses_desc","Manage courses, subjects, chapters, and hierarchical syllabus taxonomy","ಕೋರ್ಸ್‌ಗಳು, ವಿಷಯಗಳು, ಅಧ್ಯಾಯಗಳು ಮತ್ತು ಶ್ರೇಣೀಕೃತ ಪಠ್ಯಕ್ರಮ ವರ್ಗೀಕರಣವನ್ನು ನಿರ್ವಹಿಸಿ",true
+"courses_no_courses","No academic courses registered yet.","ಇನ್ನೂ ಯಾವುದೇ ಶೈಕ್ಷಣಿಕ ಕೋರ್ಸ್ ನೋಂದಣಿಯಾಗಿಲ್ಲ.",true
+"courses_title","Academic Course Hierarchy","ಶೈಕ್ಷಣಿಕ ಕೋರ್ಸ್ ಶ್ರೇಣಿ",true
+"dashboard","Dashboard","ಡ್ಯಾಶ್‌ಬೋರ್ಡ್",true
+"dashboard_welcome_desc","Welcome to ExamOS. Select a module from the sidebar to begin your academic workflow.","ExamOS ಗೆ ಸ್ವಾಗತ. ನಿಮ್ಮ ಶೈಕ್ಷಣಿಕ ಕಾರ್ಯಹರಿವನ್ನು ಪ್ರಾರಂಭಿಸಲು ಸೈಡ್‌ಬಾರ್‌ನಿಂದ ಮಾಡ್ಯೂಲ್ ಆಯ್ಕೆಮಾಡಿ.",true
+"delete","Delete","ಅಳಿಸಿ",true
+"edit","Edit","ಸಂಪಾದಿಸಿ",true
+"error","Error","ದೋಷ",true
+"exam_patterns","Exam Patterns","ಪರೀಕ್ಷಾ ಮಾದರಿಗಳು",true
+"exam_player_answered","Answered","ಉತ್ತರಿಸಲಾಗಿದೆ",true
+"exam_player_clear_answer","Clear Response","ಉತ್ತರ ತೆರವುಗೊಳಿಸಿ",true
+"exam_player_flag_cancel","Cancel","ರದ್ದುಮಾಡಿ",true
+"exam_player_flag_modal_desc","Report ambiguities, inaccuracies, or typos in this question.","ಈ ಪ್ರಶ್ನೆಯಲ್ಲಿ ಅಸ್ಪಷ್ಟತೆಗಳು, ದೋಷಗಳು ಅಥವಾ ಟೈಪೋಗಳನ್ನು ವರದಿ ಮಾಡಿ.",true
+"exam_player_flag_modal_title","Dispute / Flag Question","ಪ್ರಶ್ನೆಯ ಮೇಲೆ ಆಕ್ಷೇಪಣೆ / ಫ್ಲ್ಯಾಗ್ ಮಾಡಿ",true
+"exam_player_flag_question","Flag Dispute","ಆಕ್ಷೇಪಣೆಯನ್ನು ಫ್ಲ್ಯಾಗ್ ಮಾಡಿ",true
+"exam_player_flag_reason_placeholder","Describe the issue or error in detail...","ಸಮಸ್ಯೆಯನ್ನು ವಿವರವಾಗಿ ವಿವರಿಸಿ...",true
+"exam_player_flag_submit","Submit Flag","ಫ್ಲ್ಯಾಗ್ ಸಲ್ಲಿಸಿ",true
+"exam_player_flag_success","Question flagged successfully for review.","ಪ್ರಶ್ನೆಯನ್ನು ಪರಿಶೀಲನೆಗಾಗಿ ಯಶಸ್ವಿಯಾಗಿ ಫ್ಲ್ಯಾಗ್ ಮಾಡಲಾಗಿದೆ.",true
+"exam_player_mark_review","Mark for Review","ಪರಿಶೀಲನೆಗಾಗಿ ಗುರುತಿಸಿ",true
+"exam_player_marked_for_review","Marked for Review","ಪರಿಶೀಲನೆಗಾಗಿ ಗುರುತಿಸಲಾಗಿದೆ",true
+"exam_player_marks","Marks","ಅಂಕಗಳು",true
+"exam_player_multiple_choice","Multiple Choice","ಬಹು ಆಯ್ಕೆ",true
+"exam_player_next","Save & Next","ಉಳಿಸಿ ಮತ್ತು ಮುಂದೆ",true
+"exam_player_not_visited","Not Visited","ಭೇಟಿ ನೀಡಿಲ್ಲ",true
+"exam_player_numerical","Numerical Value","ಸಂಖ್ಯಾತ್ಮಕ ಮೌಲ್ಯ",true
+"exam_player_of","of","ರಲ್ಲಿ",true
+"exam_player_prev","Previous","ಹಿಂದಿನ",true
+"exam_player_question_counter","Question","ಪ್ರಶ್ನೆ",true
+"exam_player_single_choice","Single Choice","ಏಕ ಆಯ್ಕೆ",true
+"exam_player_submit_cancel","Return to Exam","ಪರೀಕ್ಷೆಗೆ ಹಿಂತಿರುಗಿ",true
+"exam_player_submit_confirm","Yes, Submit Exam","ಹೌದು, ಪರೀಕ್ಷೆ ಸಲ್ಲಿಸಿ",true
+"exam_player_submit_exam","Submit Test","ಪರೀಕ್ಷೆ ಸಲ್ಲಿಸಿ",true
+"exam_player_submit_modal_desc","Are you sure you want to finalize and submit your assessment? Unanswered questions cannot be changed after submission.","ನಿಮ್ಮ ಮೌಲ್ಯಮಾಪನವನ್ನು ಅಂತಿಮಗೊಳಿಸಿ ಸಲ್ಲಿಸಲು ಖಚಿತವಾಗಿ ಬಯಸುವಿರಾ? ಸಲ್ಲಿಸಿದ ನಂತರ ಉತ್ತರಿಸದ ಪ್ರಶ್ನೆಗಳನ್ನು ಬದಲಾಯಿಸಲಾಗುವುದಿಲ್ಲ.",true
+"exam_player_submit_modal_title","Confirm Exam Submission","ಪರೀಕ್ಷಾ ಸಲ್ಲಿಕೆಯನ್ನು ದೃಢೀಕರಿಸಿ",true
+"exam_player_time_left","Time Left","ಉಳಿದ ಸಮಯ",true
+"exam_player_title","Exam Hall","ಪರೀಕ್ಷಾ ಸಭಾಂಗಣ",true
+"exam_player_unanswered","Unanswered","ಉತ್ತರಿಸದ",true
+"exam_player_unmark_review","Unmark Review","ಪರಿಶೀಲನಾ ಗುರುತು ತೆಗೆದುಹಾಕಿ",true
+"exam_result_back_to_exams","Back to Assessments","ಮೌಲ್ಯಮಾಪನಗಳಿಗೆ ಹಿಂತಿರುಗಿ",true
+"exam_result_breakdown","Section Performance Breakdown","ವಿಭಾಗವಾರು ಕಾರ್ಯಕ್ಷಮತೆ ವಿವರ",true
+"exam_result_percentage","Percentage","ಶೇಕಡಾವಾರು",true
+"exam_result_score","Total Score","ಒಟ್ಟು ಅಂಕಗಳು",true
+"exam_result_title","Evaluation Scorecard & Analysis","ಮೌಲ್ಯಮಾಪನ ಸ್ಕೋರ್‌ಕಾರ್ಡ್ ಮತ್ತು ವಿಶ್ಲೇಷಣೆ",true
+"exam_result_total_marks","Maximum Marks","ಗರಿಷ್ಠ ಅಂಕಗಳು",true
+"exams","Exam Generator","ಪರೀಕ್ಷಾ ಜನರೇಟರ್",true
+"explanation","Explanation","ವಿವರಣೆ",true
+"feature_maintenance_tooltip","Feature disabled for maintenance","ನಿರ್ವಹಣೆಗಾಗಿ ವೈಶಿಷ್ಟ್ಯ ನಿಷ್ಕ್ರಿಯಗೊಳಿಸಲಾಗಿದೆ",true
+"filter","Filter","ಫಿಲ್ಟರ್",true
+"interview_desc","Conduct interactive voice and text oral examinations with multi-turn adaptive follow-ups and rubric scoring","ಬಹು-ಹಂತದ ಹೊಂದಾಣಿಕೆಯ ಫಾಲೋ-ಅಪ್‌ಗಳು ಮತ್ತು ರೂಬ್ರಿಕ್ ಸ್ಕೋರಿಂಗ್‌ನೊಂದಿಗೆ ಸಂವಾದಾತ್ಮಕ ಧ್ವನಿ ಮತ್ತು ಪಠ್ಯ ಮೌಖಿಕ ಪರೀಕ್ಷೆಗಳನ್ನು ನಡೆಸಿ",true
+"interview_end","Conclude Interview & Grade","ಸಂದರ್ಶನ ಮುಗಿಸಿ ಮತ್ತು ಗ್ರೇಡ್ ನೀಡಿ",true
+"interview_mic_off","Muted","ಮ್ಯೂಟ್",true
+"interview_mic_on","Microphone Active","ಮೈಕ್ರೋಫೋನ್ ಸಕ್ರಿಯ",true
+"interview_start","Start Interview Session","ಸಂದರ್ಶನ ಅಧಿವೇಶನ ಪ್ರಾರಂಭಿಸಿ",true
+"interview_title","AI Interview & Oral Viva","AI ಸಂದರ್ಶನ ಮತ್ತು ಮೌಖಿಕ ವೈವಾ",true
+"listening_lab_subtitle","Standardized audio drills with natural multi-accent speech and comprehension items","ನೈಸರ್ಗಿಕ ಬಹು-ಉಚ್ಚಾರಣೆ ಭಾಷಣ ಮತ್ತು ಗ್ರಹಿಕೆ ವಸ್ತುಗಳೊಂದಿಗೆ ಪ್ರಮಾಣಿತ ಆಡಿಯೋ ವ್ಯಾಯಾಮಗಳು",true
+"listening_lab_title","Listening Comprehension Lab","ಶ್ರವಣ ಗ್ರಹಿಕೆ ಪ್ರಯೋಗಾಲಯ",true
+"loading","Loading...","ಲೋಡ್ ಆಗುತ್ತಿದೆ...",true
+"login_autofill","Auto-Fill","ಆಟೋ-ಫಿಲ್",true
+"login_btn_authenticating","Authenticating...","ದೃಢೀಕರಣ ನಡೆಯುತ್ತಿದೆ...",true
+"login_btn_hide","Hide","ಮರೆಮಾಡಿ",true
+"login_btn_show","Show","ತೋರಿಸಿ",true
+"login_btn_submit","Sign In","ಸೈನ್ ಇನ್ ಮಾಡಿ",true
+"login_email_label","Email Address","ಇಮೇಲ್ ವಿಳಾಸ",true
+"login_email_placeholder","name@examos.com","name@examos.com",true
+"login_heading","Sign in to ExamOS","ExamOS ಗೆ ಸೈನ್ ಇನ್ ಮಾಡಿ",true
+"login_invalid_credentials","Invalid email or password","ಅಮಾನ್ಯ ಇಮೇಲ್ ಅಥವಾ ಪಾಸ್‌ವರ್ಡ್",true
+"login_password_label","Password","ಪಾಸ್‌ವರ್ಡ್",true
+"login_quick_demo","QUICK DEMO ACCOUNTS (ONE-CLICK)","ತ್ವರಿತ ಡೆಮೊ ಖಾತೆಗಳು (ಒನ್-ಕ್ಲಿಕ್)",true
+"login_subheading","Enter your credentials or choose a quick demo account","ನಿಮ್ಮ ರುಜುವಾತುಗಳನ್ನು ನಮೂದಿಸಿ ಅಥವಾ ತ್ವರಿತ ಡೆಮೊ ಖಾತೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ",true
+"logout","Log Out","ಲಾಗ್ ಔಟ್",true
+"logout_locked_tooltip","Exam in progress - complete assessment first","ಪರೀಕ್ಷೆ ಪ್ರಗತಿಯಲ್ಲಿದೆ - ಮೊದಲು ಮೌಲ್ಯಮಾಪನ ಪೂರ್ಣಗೊಳಿಸಿ",true
+"logout_tooltip","Sign out from ExamOS","ExamOS ನಿಂದ ಸೈನ್ ಔಟ್ ಮಾಡಿ",true
+"nav_analytics","Student Analytics & Mastery","ವಿದ್ಯಾರ್ಥಿ ವಿಶ್ಲೇಷಣೆ ಮತ್ತು ಪಾಂಡಿತ್ಯ",true
+"nav_archive","Published Archive","ಪ್ರಕಟಿತ ಆರ್ಕೈವ್",true
+"nav_courses","Academic Structure","ಶೈಕ್ಷಣಿಕ ರಚನೆ",true
+"nav_dashboard","Dashboard","ಡ್ಯಾಶ್‌ಬೋರ್ಡ್",true
+"nav_exam_patterns","Exam Patterns","ಪರೀಕ್ಷಾ ಮಾದರಿಗಳು",true
+"nav_exams","Exam Generator & Papers","ಪರೀಕ್ಷಾ ಜನರೇಟರ್ ಮತ್ತು ಪತ್ರಿಕೆಗಳು",true
+"nav_interview","AI Interview & Viva","AI ಸಂದರ್ಶನ ಮತ್ತು ವೈವಾ",true
+"nav_listening_practice","Listening Practice","ಶ್ರವಣ ಅಭ್ಯಾಸ",true
+"nav_locked_tooltip","Navigation locked during active exam session","ಸಕ್ರಿಯ ಪರೀಕ್ಷಾ ಅಧಿವೇಶನದ ಸಮಯದಲ್ಲಿ ನ್ಯಾವಿಗೇಷನ್ ಲಾಕ್ ಆಗಿದೆ",true
+"nav_practice","Practice & Training","ಅಭ್ಯಾಸ ಮತ್ತು ತರಬೇತಿ",true
+"nav_question_bank","Question Bank","ಪ್ರಶ್ನೆ ಬ್ಯಾಂಕ್",true
+"nav_settings","Settings","ಸಂಯೋಜನೆಗಳು",true
+"nav_student_exams","My Assessments & Tests","ನನ್ನ ಮೌಲ್ಯಮಾಪನಗಳು ಮತ್ತು ಪರೀಕ್ಷೆಗಳು",true
+"nav_subscription","Subscription & Credits","ಚಂದಾದಾರಿಕೆ ಮತ್ತು ಕ್ರೆಡಿಟ್‌ಗಳು",true
+"nav_users","User Management","ಬಳಕೆದಾರ ನಿರ್ವಹಣೆ",true
+"nav_vocabulary","Vocabulary Training","ಶಬ್ದಕೋಶ ತರಬೇತಿ",true
+"nav_writing_practice","Writing Practice","ಬರವಣಿಗೆ ಅಭ್ಯಾಸ",true
+"no_active_exams","No assessments available right now","ಈಗ ಯಾವುದೇ ಮೌಲ್ಯಮಾಪನಗಳು ಲಭ್ಯವಿಲ್ಲ",true
+"no_active_exams_desc","You do not have any pending tests scheduled for your enrolled curriculum.","ನಿಮ್ಮ ದಾಖಲಾದ ಪಠ್ಯಕ್ರಮಕ್ಕಾಗಿ ಯಾವುದೇ ಬಾಕಿ ಇರುವ ಪರೀಕ್ಷೆಗಳನ್ನು ನಿಗದಿಪಡಿಸಲಾಗಿಲ್ಲ.",true
+"no_listening_drills","No listening drills found for selected filter.","ಆಯ್ಕೆಮಾಡಿದ ಫಿಲ್ಟರ್‌ಗೆ ಯಾವುದೇ ಶ್ರವಣ ವ್ಯಾಯಾಮಗಳು ಕಂಡುಬಂದಿಲ್ಲ.",true
+"offline_badge","Offline","ಆಫ್‌ಲೈನ್",true
+"preview_as_student","Preview as Student","ವಿದ್ಯಾರ್ಥಿಯಾಗಿ ಮುನ್ನೋಟ ಮಾಡಿ",true
+"priority_weaknesses","Priority Weaknesses","ಆದ್ಯತೆಯ ದೌರ್ಬಲ್ಯಗಳು",true
+"qb_add_question","+ New Question","+ ಹೊಸ ಪ್ರಶ್ನೆ",true
+"qb_desc","Author, version, tag, review, and organize curriculum question assets","ಪಠ್ಯಕ್ರಮ ಪ್ರಶ್ನೆ ಆಸ್ತಿಗಳನ್ನು ರಚಿಸಿ, ಆವೃತ್ತಿ ಮಾಡಿ, ಟ್ಯಾಗ್ ಮಾಡಿ, ಪರಿಶೀಲಿಸಿ ಮತ್ತು ಸಂಘಟಿಸಿ",true
+"qb_filter_difficulty","All Difficulties","ಎಲ್ಲಾ ಕಷ್ಟದ ಮಟ್ಟಗಳು",true
+"qb_filter_subject","Filter by Subject","ವಿಷಯದ ಮೂಲಕ ಫಿಲ್ಟರ್ ಮಾಡಿ",true
+"qb_no_questions","No questions match the current filter criteria.","ಪ್ರಸ್ತುತ ಫಿಲ್ಟರ್ ಮಾನದಂಡಕ್ಕೆ ಯಾವುದೇ ಪ್ರಶ್ನೆ ಹೊಂದಿಕೆಯಾಗುವುದಿಲ್ಲ.",true
+"qb_search_placeholder","Search questions by statement, formula, or tag...","ಹೇಳಿಕೆ, ಸೂತ್ರ ಅಥವಾ ಟ್ಯಾಗ್ ಮೂಲಕ ಪ್ರಶ್ನೆಗಳನ್ನು ಹುಡುಕಿ...",true
+"qb_title","Question Bank Workbench","ಪ್ರಶ್ನೆ ಬ್ಯಾಂಕ್ ವರ್ಕ್‌ಬೆಂಚ್",true
+"question_bank","Question Bank","ಪ್ರಶ್ನೆ ಬ್ಯಾಂಕ್",true
+"question_palette","Question Palette","ಪ್ರಶ್ನೆ ಪ್ಯಾಲೆಟ್",true
+"recalculate_mastery","Recalculate Mastery","ಪಾಂಡಿತ್ಯವನ್ನು ಮರುಲೆಕ್ಕಾಚಾರ ಮಾಡಿ",true
+"refresh","Refresh","ರಿಫ್ರೆಶ್ ಮಾಡಿ",true
+"resume_exam","Resume Active Session","ಸಕ್ರಿಯ ಅಧಿವೇಶನವನ್ನು ಪುನರಾರಂಭಿಸಿ",true
+"role_main_admin","Main Admin","ಮುಖ್ಯ ನಿರ್ವಾಹಕ",true
+"role_student","Student","ವಿದ್ಯಾರ್ಥಿ",true
+"role_sub_admin","Sub Admin","ಉಪ-ನಿರ್ವಾಹಕ",true
+"role_teacher","Teacher","ಶಿಕ್ಷಕ",true
+"save","Save","ಉಳಿಸಿ",true
+"saved","Saved ✓","ಉಳಿಸಲಾಗಿದೆ ✓",true
+"saving","Saving...","ಉಳಿಸಲಾಗುತ್ತಿದೆ...",true
+"scorecard_solution_analysis","Solution & Answer Key Analysis","ಪರಿಹಾರ ಮತ್ತು ಉತ್ತರ ಕೀ ವಿಶ್ಲೇಷಣೆ",true
+"search","Search","ಹುಡುಕಿ",true
+"select_your_answer","Select your answer:","ನಿಮ್ಮ ಉತ್ತರವನ್ನು ಆಯ್ಕೆಮಾಡಿ:",true
+"settings_header_desc","Configure AI model providers, gateway cascade routing, appearance preferences, and exam theme styling","AI ಮಾದರಿ ಪೂರೈಕೆದಾರರು, ಗೇಟ್‌ವೇ ಕ್ಯಾಸ್ಕೇಡ್ ರೂಟಿಂಗ್, ನೋಟ ಆದ್ಯತೆಗಳು ಮತ್ತು ಪರೀಕ್ಷಾ ಥೀಮ್ ಸ್ಟೈಲಿಂಗ್ ಕಾನ್ಫಿಗರ್ ಮಾಡಿ",true
+"settings_header_title","System Settings & Administration","ಸಿಸ್ಟಮ್ ಸಂಯೋಜನೆಗಳು ಮತ್ತು ಆಡಳಿತ",true
+"settings_tab_ai","AI & Model Configuration","AI ಮತ್ತು ಮಾದರಿ ಕಾನ್ಫಿಗರೇಶನ್",true
+"settings_tab_appearance","Appearance & Theme","ನೋಟ ಮತ್ತು ಥೀಮ್",true
+"settings_tab_entitlements","Feature Matrix & Entitlements","ವೈಶಿಷ್ಟ್ಯ ಮ್ಯಾಟ್ರಿಕ್ಸ್ ಮತ್ತು ಹಕ್ಕುಗಳು",true
+"settings_tab_exam_themes","Exam Paper Themes","ಪರೀಕ್ಷಾ ಪತ್ರಿಕೆ ಥೀಮ್‌ಗಳು",true
+"settings_tab_languages","Language Management","ಭಾಷಾ ನಿರ್ವಹಣೆ",true
+"settings_tab_maintenance","System Maintenance","ಸಿಸ್ಟಮ್ ನಿರ್ವಹಣೆ",true
+"sidebar_modules","Modules","ಮಾಡ್ಯೂಲ್‌ಗಳು",true
+"status","Status","ಸ್ಥಿತಿ",true
+"student_analytics_accuracy","Accuracy Rate","ನಿಖರತೆ ದರ",true
+"student_analytics_avg_score","Weighted Score","ತೂಕದ ಅಂಕ",true
+"student_analytics_subtitle","Track performance trends, syllabus coverage, and priority areas across all test sessions","ಎಲ್ಲಾ ಪರೀಕ್ಷಾ ಅಧಿವೇಶನಗಳಲ್ಲಿ ಕಾರ್ಯಕ್ಷಮತೆ ಪ್ರವೃತ್ತಿಗಳು, ಪಠ್ಯಕ್ರಮ ವ್ಯಾಪ್ತಿ ಮತ್ತು ಆದ್ಯತೆಯ ಪ್ರದೇಶಗಳನ್ನು ಟ್ರ್ಯಾಕ್ ಮಾಡಿ",true
+"student_analytics_title","Student Analytics & Mastery","ವಿದ್ಯಾರ್ಥಿ ವಿಶ್ಲೇಷಣೆ ಮತ್ತು ಪಾಂಡಿತ್ಯ",true
+"student_analytics_total_tests","Tests Completed","ಪೂರ್ಣಗೊಂಡ ಪರೀಕ್ಷೆಗಳು",true
+"student_exams_available","Available Assessments","ಲಭ್ಯವಿರುವ ಮೌಲ್ಯಮಾಪನಗಳು",true
+"student_exams_completed","Evaluated Attempts","ಮೌಲ್ಯಮಾಪನಗೊಂಡ ಪ್ರಯತ್ನಗಳು",true
+"student_exams_start_exam","Enter Exam Hall","ಪರೀಕ್ಷಾ ಸಭಾಂಗಣ ಪ್ರವೇಶಿಸಿ",true
+"student_exams_subtitle","Assigned curriculum examinations, mock papers, and historical test sessions","ನಿಯೋಜಿತ ಪಠ್ಯಕ್ರಮ ಪರೀಕ್ಷೆಗಳು, ಮಾಕ್ ಪತ್ರಿಕೆಗಳು ಮತ್ತು ಐತಿಹಾಸಿಕ ಪರೀಕ್ಷಾ ಅಧಿವೇಶನಗಳು",true
+"student_exams_title","My Assessments & Tests","ನನ್ನ ಮೌಲ್ಯಮಾಪನಗಳು ಮತ್ತು ಪರೀಕ್ಷೆಗಳು",true
+"student_exams_view_result","View Scorecard","ಸ್ಕೋರ್‌ಕಾರ್ಡ್ ವೀಕ್ಷಿಸಿ",true
+"submit_listening_drill","Submit Drill Evaluation","ವ್ಯಾಯಾಮ ಮೌಲ್ಯಮಾಪನ ಸಲ್ಲಿಸಿ",true
+"success","Success","ಯಶಸ್ಸು",true
+"theme_dark","Dark","ಡಾರ್ಕ್",true
+"theme_light","Light","ಲೈಟ್",true
+"theme_slate","Slate","ಸ್ಲೇಟ್",true
+"top_strengths","Top Mastery Strengths","ಪ್ರಮುಖ ಪಾಂಡಿತ್ಯ ಸಾಮರ್ಥ್ಯಗಳು",true
+"users","User Management","ಬಳಕೆದಾರ ನಿರ್ವಹಣೆ",true
+"users_add_user","+ Create User","+ ಬಳಕೆದಾರರನ್ನು ರಚಿಸಿ",true
+"users_desc","Manage institutional accounts, role assignments, and authentication permissions","ಸಾಂಸ್ಥಿಕ ಖಾತೆಗಳು, ಪಾತ್ರ ನಿಯೋಜನೆಗಳು ಮತ್ತು ದೃಢೀಕರಣ ಅನುಮತಿಗಳನ್ನು ನಿರ್ವಹಿಸಿ",true
+"users_no_users","No users found matching query.","ಪ್ರಶ್ನೆಗೆ ಹೊಂದಿಕೆಯಾಗುವ ಯಾವುದೇ ಬಳಕೆದಾರರು ಕಂಡುಬಂದಿಲ್ಲ.",true
+"users_role_filter","All Roles","ಎಲ್ಲಾ ಪಾತ್ರಗಳು",true
+"users_search_placeholder","Search users by name, email, or role...","ಹೆಸರು, ಇಮೇಲ್ ಅಥವಾ ಪಾತ್ರದ ಮೂಲಕ ಬಳಕೆದಾರರನ್ನು ಹುಡುಕಿ...",true
+"users_title","User & Identity Management","ಬಳಕೆದಾರ ಮತ್ತು ಗುರುತಿನ ನಿರ್ವಹಣೆ",true
+"verifying_session","Verifying ExamOS session...","ExamOS ಅಧಿವೇಶನ ಪರಿಶೀಲಿಸಲಾಗುತ್ತಿದೆ...",true
+"welcome","Welcome to ExamOS Platform","ExamOS ವೇದಿಕೆಗೆ ಸುಸ್ವಾಗತ",true
+"writing_practice_desc","AI-evaluated essay submissions across task achievement, coherence, lexical resource, and grammatical accuracy","ಕಾರ್ಯ ಸಾಧನೆ, ಸುಸಂಬದ್ಧತೆ, ಶಬ್ದಕೋಶ ಸಂಪನ್ಮೂಲ ಮತ್ತು ವ್ಯಾಕರಣ ನಿಖರತೆಯಾದ್ಯಂತ AI-ಮೌಲ್ಯಮಾಪನಗೊಂಡ ಪ್ರಬಂಧ ಸಲ್ಲಿಕೆಗಳು",true
+"writing_practice_submit","Submit for AI Evaluation","AI ಮೌಲ್ಯಮಾಪನಕ್ಕಾಗಿ ಸಲ್ಲಿಸಿ",true
+"writing_practice_title","Writing Assessment & Essay Lab","ಬರವಣಿಗೆ ಮೌಲ್ಯಮಾಪನ ಮತ್ತು ಪ್ರಬಂಧ ಪ್ರಯೋಗಾಲಯ",true
+"writing_practice_word_count","Word Count","ಪದ ಎಣಿಕೆ",true
+"your_choice_label","Your Response","ನಿಮ್ಮ ಉತ್ತರ",true

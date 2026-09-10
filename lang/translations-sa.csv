@@ -1,0 +1,173 @@
+﻿key,english,translation,isVerified
+"actions","Actions","क्रियाः",true
+"all","All","सर्वे",true
+"analytics","Student Analytics","छात्र-विश्लेषणम्",true
+"app_subtitle","Adaptive Learning & Assessment OS","अनुकूलन-अध्ययन-मूल्याङ्कन-सञ्चालनतन्त्रम्",true
+"app_title","ExamOS // Adaptive Learning Platform","ExamOS // अनुकूलाधिगममञ्चः",true
+"archive","Published Archive","प्रकाशित-अभिलेखागारम्",true
+"audio_passage","Audio Passage","श्रव्य-अंशः",true
+"cancel","Cancel","निरस्तं करोतु",true
+"close","Close","पिधानं करोतु",true
+"comprehension_questions","Comprehension Questions","बोध-प्रश्नाः",true
+"confirm","Confirm","निश्चितं करोतु",true
+"correct_choice_label","Correct Answer","सम्यक् उत्तरम्",true
+"courses","Academic Courses","शैक्षणिकपाठ्यक्रमाः",true
+"courses_add_course","+ Add Course","+ पाठ्यक्रमं योजयतु",true
+"courses_desc","Manage courses, subjects, chapters, and hierarchical syllabus taxonomy","पाठ्यक्रमान्, विषयान्, अध्यायान् च श्रेणीबद्धं वर्गीकरणं च व्यवस्थापयतु",true
+"courses_no_courses","No academic courses registered yet.","अद्यापि कोऽपि शैक्षणिकपाठ्यक्रमः पञ्जीकृतो नास्ति।",true
+"courses_title","Academic Course Hierarchy","शैक्षणिकपाठ्यक्रम-क्रमः",true
+"dashboard","Dashboard","नियन्त्रणपट्टिका",true
+"dashboard_welcome_desc","Welcome to ExamOS. Select a module from the sidebar to begin your academic workflow.","ExamOS इत्यत्र स्वागतम्। स्वस्य शैक्षणिकं कार्यप्रवाहं आरब्धुं पार्श्वपट्टिकातः विभागं चिनोतु।",true
+"delete","Delete","अपाकरोतु",true
+"edit","Edit","सम्पादयतु",true
+"error","Error","त्रुटिः",true
+"exam_patterns","Exam Patterns","परीक्षाप्रारूपाणि",true
+"exam_player_answered","Answered","उत्तरितम्",true
+"exam_player_clear_answer","Clear Response","उत्तरं शुद्धं करोतु",true
+"exam_player_flag_cancel","Cancel","निरस्तं करोतु",true
+"exam_player_flag_modal_desc","Report ambiguities, inaccuracies, or typos in this question.","अस्मिन् प्रश्ने अस्पष्टतां, त्रुटिं वा लेखनदोषं निवेदयतु।",true
+"exam_player_flag_modal_title","Dispute / Flag Question","प्रश्ने आक्षेपः / चिह्नितं करोतु",true
+"exam_player_flag_question","Flag Dispute","आक्षेपं चिह्नितं करोतु",true
+"exam_player_flag_reason_placeholder","Describe the issue or error in detail...","समस्यां विस्तरेण वर्णयतु...",true
+"exam_player_flag_submit","Submit Flag","चिह्नं प्रेषयतु",true
+"exam_player_flag_success","Question flagged successfully for review.","प्रश्नः पुनरीक्षणार्थं सफलतया चिह्नितः।",true
+"exam_player_mark_review","Mark for Review","पुनरीक्षणार्थं चिह्नितं करोतु",true
+"exam_player_marked_for_review","Marked for Review","पुनरीक्षणार्थं चिह्नितम्",true
+"exam_player_marks","Marks","अङ्काः",true
+"exam_player_multiple_choice","Multiple Choice","बहुविकल्पः",true
+"exam_player_next","Save & Next","रक्षित्वा अग्रे गच्छतु",true
+"exam_player_not_visited","Not Visited","न दृष्टम्",true
+"exam_player_numerical","Numerical Value","सांख्यिकमूल्यम्",true
+"exam_player_of","of","मध्ये",true
+"exam_player_prev","Previous","पूर्वम्",true
+"exam_player_question_counter","Question","प्रश्नः",true
+"exam_player_single_choice","Single Choice","एकविकल्पः",true
+"exam_player_submit_cancel","Return to Exam","परीक्षां प्रति गच्छतु",true
+"exam_player_submit_confirm","Yes, Submit Exam","आम्, परीक्षां प्रेषयतु",true
+"exam_player_submit_exam","Submit Test","परीक्षां प्रेषयतु",true
+"exam_player_submit_modal_desc","Are you sure you want to finalize and submit your assessment? Unanswered questions cannot be changed after submission.","भवान् निश्चितं स्वमूल्याङ्कनं अन्तिमीकृत्य प्रेषयितुम् इच्छति वा? प्रेषणानन्तरं अनुत्तरिताः प्रश्नाः परिवर्तितुं न शक्यन्ते।",true
+"exam_player_submit_modal_title","Confirm Exam Submission","परीक्षाप्रेषणं निश्चितं करोतु",true
+"exam_player_time_left","Time Left","शेषः कालः",true
+"exam_player_title","Exam Hall","परीक्षा-सभागृहम्",true
+"exam_player_unanswered","Unanswered","अनुत्तरितम्",true
+"exam_player_unmark_review","Unmark Review","पुनरीक्षण-चिह्नम् अपाकरोतु",true
+"exam_result_back_to_exams","Back to Assessments","मूल्याङ्कनं प्रति गच्छतु",true
+"exam_result_breakdown","Section Performance Breakdown","विभागानुसारं कार्यनिष्पत्ति-विवरणम्",true
+"exam_result_percentage","Percentage","प्रतिशतम्",true
+"exam_result_score","Total Score","सम्पूर्णाङ्काः",true
+"exam_result_title","Evaluation Scorecard & Analysis","मूल्याङ्कन-अङ्कपत्रं विश्लेषणं च",true
+"exam_result_total_marks","Maximum Marks","अधिकतमाङ्काः",true
+"exams","Exam Generator","परीक्षा-जनकः",true
+"explanation","Explanation","व्याख्या",true
+"feature_maintenance_tooltip","Feature disabled for maintenance","परिरक्षणार्थं सुविधा निष्क्रिया",true
+"filter","Filter","निस्यन्दकः",true
+"interview_desc","Conduct interactive voice and text oral examinations with multi-turn adaptive follow-ups and rubric scoring","बहु-चरण-अनुकूल-अनुवर्तनैः रूब्रिक-अङ्कनेन च सह संवादात्मक-वाक्-पाठ-मौखिक-परीक्षाः सञ्चालयतु",true
+"interview_end","Conclude Interview & Grade","साक्षात्कारं समापयतु श्रेणीं च ददातु",true
+"interview_mic_off","Muted","मूकम्",true
+"interview_mic_on","Microphone Active","ध्वनिग्राहकः सक्रियः",true
+"interview_start","Start Interview Session","साक्षात्कार-सत्रम् आरभतु",true
+"interview_title","AI Interview & Oral Viva","कृत्रिमबुद्धि-साक्षात्कारः मौखिक-वाइवा च",true
+"listening_lab_subtitle","Standardized audio drills with natural multi-accent speech and comprehension items","स्वाभाविक-बहूच्चारण-वाणी-बोध-अंशैः सह मानकीकृत-श्रव्य-अभ्यासाः",true
+"listening_lab_title","Listening Comprehension Lab","श्रवण-बोध-प्रयोगशाला",true
+"loading","Loading...","भारितं भवति...",true
+"login_autofill","Auto-Fill","स्वचालित-पूरणम्",true
+"login_btn_authenticating","Authenticating...","प्रमाणीकरणं भवति...",true
+"login_btn_hide","Hide","गोपयतु",true
+"login_btn_show","Show","दर्शयतु",true
+"login_btn_submit","Sign In","प्रवेशं करोतु",true
+"login_email_label","Email Address","विद्युत्पत्रं",true
+"login_email_placeholder","name@examos.com","name@examos.com",true
+"login_heading","Sign in to ExamOS","ExamOS मध्ये प्रवेशं करोतु",true
+"login_invalid_credentials","Invalid email or password","अवैधं विद्युत्पत्रं गुप्तशब्दः वा",true
+"login_password_label","Password","गुप्तशब्दः",true
+"login_quick_demo","QUICK DEMO ACCOUNTS (ONE-CLICK)","त्वरित-प्रदर्शन-खाताः (एक-क्लिक्)",true
+"login_subheading","Enter your credentials or choose a quick demo account","स्वप्रमाणपत्राणि प्रविशतु अथवा त्वरित-प्रदर्शन-खातं चिनोतु",true
+"logout","Log Out","निर्गमः",true
+"logout_locked_tooltip","Exam in progress - complete assessment first","परीक्षा प्रचलति - प्रथमं मूल्याङ्कनं समापयतु",true
+"logout_tooltip","Sign out from ExamOS","ExamOS तः निर्गच्छतु",true
+"nav_analytics","Student Analytics & Mastery","छात्र-विश्लेषणं प्रावीण्यं च",true
+"nav_archive","Published Archive","प्रकाशित-अभिलेखागारम्",true
+"nav_courses","Academic Structure","शैक्षणिकसंरचना",true
+"nav_dashboard","Dashboard","नियन्त्रणपट्टिका",true
+"nav_exam_patterns","Exam Patterns","परीक्षाप्रारूपाणि",true
+"nav_exams","Exam Generator & Papers","परीक्षा-जनकः पत्राणि च",true
+"nav_interview","AI Interview & Viva","कृत्रिमबुद्धि-साक्षात्कारः वाइवा च",true
+"nav_listening_practice","Listening Practice","श्रवणाभ्यासः",true
+"nav_locked_tooltip","Navigation locked during active exam session","सक्रिय-परीक्षा-सत्रकाले सञ्चरणं निरुद्धम्",true
+"nav_practice","Practice & Training","अभ्यासः प्रशिक्षणं च",true
+"nav_question_bank","Question Bank","प्रश्नकोशः",true
+"nav_settings","Settings","सेटिंग्स्",true
+"nav_student_exams","My Assessments & Tests","मम मूल्याङ्कनानि परीक्षाश्च",true
+"nav_subscription","Subscription & Credits","सदस्यता-प्रत्ययौ",true
+"nav_users","User Management","प्रयोक्तृ-प्रबन्धनम्",true
+"nav_vocabulary","Vocabulary Training","शब्दावली-प्रशिक्षणम्",true
+"nav_writing_practice","Writing Practice","लेखनाभ्यासः",true
+"no_active_exams","No assessments available right now","अधुना कोऽपि मूल्याङ्कनः उपलब्धः नास्ति",true
+"no_active_exams_desc","You do not have any pending tests scheduled for your enrolled curriculum.","भवतः नामाङ्कित-पाठ्यक्रमार्थं कोऽपि प्रलम्बितः परीक्षः निर्धारितः नास्ति।",true
+"no_listening_drills","No listening drills found for selected filter.","चयनित-निस्यन्दकार्थं कोऽपि श्रवणाभ्यासः न प्राप्तः।",true
+"offline_badge","Offline","असंयोजितः",true
+"preview_as_student","Preview as Student","छात्ररूपेण पूर्वावलोकनं करोतु",true
+"priority_weaknesses","Priority Weaknesses","प्राथमिकता-दुर्बलताः",true
+"qb_add_question","+ New Question","+ नूतनः प्रश्नः",true
+"qb_desc","Author, version, tag, review, and organize curriculum question assets","पाठ्यक्रम-प्रश्न-सम्पत्तीः लिखतु, संस्करणं करोतु, चिह्नयतु, पुनरीक्षतु, व्यवस्थापयतु च",true
+"qb_filter_difficulty","All Difficulties","सर्वे कठिनता-स्तराः",true
+"qb_filter_subject","Filter by Subject","विषयानुसारं निस्यन्दयतु",true
+"qb_no_questions","No questions match the current filter criteria.","वर्तमान-निस्यन्दक-मानदण्डेन सह कोऽपि प्रश्नः न मेलति।",true
+"qb_search_placeholder","Search questions by statement, formula, or tag...","कथनेन, सूत्रेण, चिह्नेन वा प्रश्नान् अन्विष्यतु...",true
+"qb_title","Question Bank Workbench","प्रश्नकोश-कार्यस्थलम्",true
+"question_bank","Question Bank","प्रश्नकोशः",true
+"question_palette","Question Palette","प्रश्न-पट्टिका",true
+"recalculate_mastery","Recalculate Mastery","प्रावीण्यं पुनः गणयतु",true
+"refresh","Refresh","नवीकरोतु",true
+"resume_exam","Resume Active Session","सक्रिय-सत्रं पुनः आरभतु",true
+"role_main_admin","Main Admin","मुख्य-प्रशासकः",true
+"role_student","Student","छात्रः",true
+"role_sub_admin","Sub Admin","उप-प्रशासकः",true
+"role_teacher","Teacher","शिक्षकः",true
+"save","Save","रक्षतु",true
+"saved","Saved ✓","रक्षितम् ✓",true
+"saving","Saving...","रक्ष्यते...",true
+"scorecard_solution_analysis","Solution & Answer Key Analysis","समाधान-उत्तरकुञ्जी-विश्लेषणम्",true
+"search","Search","अन्विष्यतु",true
+"select_your_answer","Select your answer:","स्वस्य उत्तरं चिनोतु:",true
+"settings_header_desc","Configure AI model providers, gateway cascade routing, appearance preferences, and exam theme styling","कृत्रिमबुद्धि-प्रतिरूप-प्रदातॄन्, प्रवेशद्वार-मार्गनिर्देशनं, दर्शन-प्राथमिकताः परीक्षा-विषय-शैलीं च संरचयतु",true
+"settings_header_title","System Settings & Administration","तन्त्र-सेटिंग्स्-प्रशासने च",true
+"settings_tab_ai","AI & Model Configuration","कृत्रिमबुद्धिः प्रतिरूप-संरचना च",true
+"settings_tab_appearance","Appearance & Theme","दर्शनं विषयश्च",true
+"settings_tab_entitlements","Feature Matrix & Entitlements","सुविधा-आव्यूहः अधिकाराश्च",true
+"settings_tab_exam_themes","Exam Paper Themes","परीक्षापत्र-विषयाः",true
+"settings_tab_languages","Language Management","भाषा-प्रबन्धनम्",true
+"settings_tab_maintenance","System Maintenance","तन्त्र-परिरक्षणम्",true
+"sidebar_modules","Modules","विभागाः",true
+"status","Status","स्थितिः",true
+"student_analytics_accuracy","Accuracy Rate","यथार्थता-दरः",true
+"student_analytics_avg_score","Weighted Score","भारित-अङ्काः",true
+"student_analytics_subtitle","Track performance trends, syllabus coverage, and priority areas across all test sessions","सर्वेषु परीक्षा-सत्रेषु कार्यनिष्पत्ति-प्रवृत्तीः, पाठ्यक्रम-व्याप्तिं, प्राथमिकता-क्षेत्राणि च अनुसरतु",true
+"student_analytics_title","Student Analytics & Mastery","छात्र-विश्लेषणं प्रावीण्यं च",true
+"student_analytics_total_tests","Tests Completed","समाप्ताः परीक्षाः",true
+"student_exams_available","Available Assessments","उपलब्धानि मूल्याङ्कनानि",true
+"student_exams_completed","Evaluated Attempts","मूल्याङ्कितप्रयासाः",true
+"student_exams_start_exam","Enter Exam Hall","परीक्षा-सभागृहं प्रविशतु",true
+"student_exams_subtitle","Assigned curriculum examinations, mock papers, and historical test sessions","नियुक्त-पाठ्यक्रम-परीक्षाः, अभ्यास-पत्राणि, ऐतिहासिक-परीक्षा-सत्राणि च",true
+"student_exams_title","My Assessments & Tests","मम मूल्याङ्कनानि परीक्षाश्च",true
+"student_exams_view_result","View Scorecard","अङ्कपत्रं पश्यतु",true
+"submit_listening_drill","Submit Drill Evaluation","अभ्यास-मूल्याङ्कनं प्रेषयतु",true
+"success","Success","सफलता",true
+"theme_dark","Dark","तमः",true
+"theme_light","Light","प्रकाशः",true
+"theme_slate","Slate","श्यामवर्णः",true
+"top_strengths","Top Mastery Strengths","प्रमुख-प्रावीण्य-शक्तयः",true
+"users","User Management","प्रयोक्तृ-प्रबन्धनम्",true
+"users_add_user","+ Create User","+ प्रयोक्तारं निर्मातु",true
+"users_desc","Manage institutional accounts, role assignments, and authentication permissions","संस्थागत-खातानि, भूमिका-नियुक्तीः, प्रमाणीकरण-अनुमतीश्च व्यवस्थापयतु",true
+"users_no_users","No users found matching query.","अन्वेषणेन सह मेलत् कोऽपि प्रयोक्ता न प्राप्तः।",true
+"users_role_filter","All Roles","सर्वाः भूमिकाः",true
+"users_search_placeholder","Search users by name, email, or role...","नाम्ना, विद्युत्पत्रेण, भूमिकया वा प्रयोक्तॄन् अन्विष्यतु...",true
+"users_title","User & Identity Management","प्रयोक्तृ-परिचय-प्रबन्धनम्",true
+"verifying_session","Verifying ExamOS session...","ExamOS सत्रं सत्याप्यते...",true
+"welcome","Welcome to ExamOS Platform","ExamOS मञ्चे भवतां स्वागतम्",true
+"writing_practice_desc","AI-evaluated essay submissions across task achievement, coherence, lexical resource, and grammatical accuracy","कार्यसिद्धौ, सुसंगतौ, शब्दावली-सम्पत्तौ, व्याकरण-यथार्थतायां च कृत्रिमबुद्धि-मूल्याङ्कित-निबन्ध-प्रेषणानि",true
+"writing_practice_submit","Submit for AI Evaluation","कृत्रिमबुद्धि-मूल्याङ्कनार्थं प्रेषयतु",true
+"writing_practice_title","Writing Assessment & Essay Lab","लेखन-मूल्याङ्कनं निबन्ध-प्रयोगशाला च",true
+"writing_practice_word_count","Word Count","शब्द-गणना",true
+"your_choice_label","Your Response","भवतः उत्तरम्",true

@@ -1,0 +1,173 @@
+﻿key,english,translation,isVerified
+"actions","Actions","কাৰ্যসমূহ",true
+"all","All","সকলো",true
+"analytics","Student Analytics","ছাত্ৰ-ছাত্ৰী বিশ্লেষণ",true
+"app_subtitle","Adaptive Learning & Assessment OS","অভিযোজনক্ষম শিক্ষণ আৰু মূল্যায়ন অ'এছ",true
+"app_title","ExamOS // Adaptive Learning Platform","ExamOS // এডাপ্টিভ লাৰ্নিং প্লেটফৰ্ম",true
+"archive","Published Archive","প্ৰকাশিত সংগ্ৰহাগাৰ",true
+"audio_passage","Audio Passage","অডিঅ' অংশ",true
+"cancel","Cancel","বাতিল কৰক",true
+"close","Close","বন্ধ কৰক",true
+"comprehension_questions","Comprehension Questions","বোধগম্যতা প্ৰশ্ন",true
+"confirm","Confirm","নিশ্চিত কৰক",true
+"correct_choice_label","Correct Answer","শুদ্ধ উত্তৰ",true
+"courses","Academic Courses","শৈক্ষিক পাঠ্যক্ৰম",true
+"courses_add_course","+ Add Course","+ পাঠ্যক্ৰম যোগ কৰক",true
+"courses_desc","Manage courses, subjects, chapters, and hierarchical syllabus taxonomy","পাঠ্যক্ৰম, বিষয়, অধ্যায় আৰু শ্ৰেণীবদ্ধ পাঠ্যক্ৰম শ্ৰেণীবিভাজন পৰিচালনা কৰক",true
+"courses_no_courses","No academic courses registered yet.","এতিয়াও কোনো শৈক্ষিক পাঠ্যক্ৰম পঞ্জীয়ন কৰা হোৱা নাই।",true
+"courses_title","Academic Course Hierarchy","শৈক্ষিক পাঠ্যক্ৰম শ্ৰেণীক্ৰম",true
+"dashboard","Dashboard","ড্যাশবোর্ড",true
+"dashboard_welcome_desc","Welcome to ExamOS. Select a module from the sidebar to begin your academic workflow.","ExamOS লৈ স্বাগতম। আপোনাৰ শৈক্ষিক কাৰ্যপ্ৰবাহ আৰম্ভ কৰিবলৈ ছাইডবাৰৰ পৰা এটা মডিউল বাছক।",true
+"delete","Delete","মচক",true
+"edit","Edit","সম্পাদনা কৰক",true
+"error","Error","ত্ৰুটি",true
+"exam_patterns","Exam Patterns","পৰীক্ষাৰ আৰ্হি",true
+"exam_player_answered","Answered","উত্তৰ দিয়া হৈছে",true
+"exam_player_clear_answer","Clear Response","উত্তৰ পৰিষ্কাৰ কৰক",true
+"exam_player_flag_cancel","Cancel","বাতিল কৰক",true
+"exam_player_flag_modal_desc","Report ambiguities, inaccuracies, or typos in this question.","এই প্ৰশ্নত থকা অস্পষ্টতা, ভুল বা টাইপো ৰিপ'ৰ্ট কৰক।",true
+"exam_player_flag_modal_title","Dispute / Flag Question","প্ৰশ্নত আপত্তি / ফ্লেগ কৰক",true
+"exam_player_flag_question","Flag Dispute","আপত্তি ফ্লেগ কৰক",true
+"exam_player_flag_reason_placeholder","Describe the issue or error in detail...","সমস্যাটো বিতংভাৱে বৰ্ণনা কৰক...",true
+"exam_player_flag_submit","Submit Flag","ফ্লেগ দাখিল কৰক",true
+"exam_player_flag_success","Question flagged successfully for review.","প্ৰশ্নটো পৰ্যালোচনাৰ বাবে সফলতাৰে ফ্লেগ কৰা হ'ল।",true
+"exam_player_mark_review","Mark for Review","পৰ্যালোচনাৰ বাবে চিহ্নিত কৰক",true
+"exam_player_marked_for_review","Marked for Review","পৰ্যালোচনাৰ বাবে চিহ্নিত",true
+"exam_player_marks","Marks","নম্বৰ",true
+"exam_player_multiple_choice","Multiple Choice","বহু বিকল্প",true
+"exam_player_next","Save & Next","সংৰক্ষণ কৰক আৰু আগবাঢ়ক",true
+"exam_player_not_visited","Not Visited","চোৱা হোৱা নাই",true
+"exam_player_numerical","Numerical Value","সাংখ্যিক মান",true
+"exam_player_of","of","ৰ ভিতৰত",true
+"exam_player_prev","Previous","পূৰ্বৱৰ্তী",true
+"exam_player_question_counter","Question","প্ৰশ্ন",true
+"exam_player_single_choice","Single Choice","একক বিকল্প",true
+"exam_player_submit_cancel","Return to Exam","পৰীক্ষালৈ উভতি যাওক",true
+"exam_player_submit_confirm","Yes, Submit Exam","হয়, পৰীক্ষা দাখিল কৰক",true
+"exam_player_submit_exam","Submit Test","পৰীক্ষা দাখিল কৰক",true
+"exam_player_submit_modal_desc","Are you sure you want to finalize and submit your assessment? Unanswered questions cannot be changed after submission.","আপুনি নিশ্চিতনে যে আপুনি আপোনাৰ মূল্যায়ন চূড়ান্ত কৰি দাখিল কৰিব বিচাৰে? দাখিল কৰাৰ পিছত উত্তৰ নিদিয়া প্ৰশ্নসমূহ সলনি কৰিব নোৱাৰি।",true
+"exam_player_submit_modal_title","Confirm Exam Submission","পৰীক্ষা দাখিলৰ নিশ্চিতকৰণ কৰক",true
+"exam_player_time_left","Time Left","অৱশিষ্ট সময়",true
+"exam_player_title","Exam Hall","পৰীক্ষা হল",true
+"exam_player_unanswered","Unanswered","উত্তৰহীন",true
+"exam_player_unmark_review","Unmark Review","পৰ্যালোচনা চিহ্ন আঁতৰাওক",true
+"exam_result_back_to_exams","Back to Assessments","মূল্যায়নলৈ উভতি যাওক",true
+"exam_result_breakdown","Section Performance Breakdown","খণ্ডভিত্তিক কাৰ্যক্ষমতাৰ বিৱৰণ",true
+"exam_result_percentage","Percentage","শতাংশ",true
+"exam_result_score","Total Score","মুঠ স্ক'ৰ",true
+"exam_result_title","Evaluation Scorecard & Analysis","মূল্যায়ন স্ক'ৰকাৰ্ড আৰু বিশ্লেষণ",true
+"exam_result_total_marks","Maximum Marks","সৰ্বাধিক নম্বৰ",true
+"exams","Exam Generator","পৰীক্ষা জেনেৰেটৰ",true
+"explanation","Explanation","ব্যাখ্যা",true
+"feature_maintenance_tooltip","Feature disabled for maintenance","প্ৰতিপালনৰ বাবে বৈশিষ্ট্য অক্ষম",true
+"filter","Filter","ফিল্টাৰ",true
+"interview_desc","Conduct interactive voice and text oral examinations with multi-turn adaptive follow-ups and rubric scoring","বহু-পৰ্যায়ৰ অভিযোজনক্ষম ফলো-আপ আৰু ৰুব্ৰিক স্ক'ৰিঙৰ সৈতে ইণ্টাৰেক্টিভ ভইচ আৰু টেক্সট মৌখিক পৰীক্ষা পৰিচালনা কৰক",true
+"interview_end","Conclude Interview & Grade","সাক্ষাৎকাৰ সমাপ্ত কৰক আৰু গ্ৰেড দিয়ক",true
+"interview_mic_off","Muted","মিউট",true
+"interview_mic_on","Microphone Active","মাইক্ৰ'ফ'ন সক্ৰিয়",true
+"interview_start","Start Interview Session","সাক্ষাৎকাৰ অধিৱেশন আৰম্ভ কৰক",true
+"interview_title","AI Interview & Oral Viva","এআই সাক্ষাৎকাৰ আৰু মৌখিক ভাইভা",true
+"listening_lab_subtitle","Standardized audio drills with natural multi-accent speech and comprehension items","প্ৰাকৃতিক বহু-উচ্চাৰণ কথন আৰু বোধগম্যতা বস্তুৰ সৈতে প্ৰামাণিক অডিঅ' অনুশীলন",true
+"listening_lab_title","Listening Comprehension Lab","শ্ৰৱণ বোধগম্যতা লেব",true
+"loading","Loading...","ল'ড হৈ আছে...",true
+"login_autofill","Auto-Fill","অটো-ফিল",true
+"login_btn_authenticating","Authenticating...","প্ৰামাণীকৰণ কৰা হৈছে...",true
+"login_btn_hide","Hide","লুকুৱাওক",true
+"login_btn_show","Show","দেখুৱাওক",true
+"login_btn_submit","Sign In","ছাইন ইন কৰক",true
+"login_email_label","Email Address","ইমেইল ঠিকনা",true
+"login_email_placeholder","name@examos.com","name@examos.com",true
+"login_heading","Sign in to ExamOS","ExamOS ত ছাইন ইন কৰক",true
+"login_invalid_credentials","Invalid email or password","অবৈধ ইমেইল বা পাছৱৰ্ড",true
+"login_password_label","Password","পাছৱৰ্ড",true
+"login_quick_demo","QUICK DEMO ACCOUNTS (ONE-CLICK)","দ্ৰুত ডেম' একাউণ্ট (এক-ক্লিক)",true
+"login_subheading","Enter your credentials or choose a quick demo account","আপোনাৰ প্ৰমাণপত্ৰ প্ৰৱেশ কৰক বা দ্ৰুত ডেম' একাউণ্ট বাছক",true
+"logout","Log Out","লগ আউট",true
+"logout_locked_tooltip","Exam in progress - complete assessment first","পৰীক্ষা চলি আছে - প্ৰথমে মূল্যায়ন সম্পূৰ্ণ কৰক",true
+"logout_tooltip","Sign out from ExamOS","ExamOS ৰ পৰা ছাইন আউট কৰক",true
+"nav_analytics","Student Analytics & Mastery","ছাত্ৰ-ছাত্ৰী বিশ্লেষণ আৰু দক্ষতা",true
+"nav_archive","Published Archive","প্ৰকাশিত সংগ্ৰহাগাৰ",true
+"nav_courses","Academic Structure","শৈক্ষিক গঠন",true
+"nav_dashboard","Dashboard","ড্যাশবোর্ড",true
+"nav_exam_patterns","Exam Patterns","পৰীক্ষাৰ আৰ্হি",true
+"nav_exams","Exam Generator & Papers","পৰীক্ষা জেনেৰেটৰ আৰু প্ৰশ্নকাকত",true
+"nav_interview","AI Interview & Viva","এআই সাক্ষাৎকাৰ আৰু ভাইভা",true
+"nav_listening_practice","Listening Practice","শ্ৰৱণ অনুশীলন",true
+"nav_locked_tooltip","Navigation locked during active exam session","সক্ৰিয় পৰীক্ষা অধিৱেশনৰ সময়ত নেভিগেশ্যন লক",true
+"nav_practice","Practice & Training","অনুশীলন আৰু প্ৰশিক্ষণ",true
+"nav_question_bank","Question Bank","প্ৰশ্ন বেংক",true
+"nav_settings","Settings","ছেটিং",true
+"nav_student_exams","My Assessments & Tests","মোৰ মূল্যায়ন আৰু পৰীক্ষা",true
+"nav_subscription","Subscription & Credits","ছাবস্ক্ৰিপশ্যন আৰু ক্ৰেডিট",true
+"nav_users","User Management","ব্যৱহাৰকাৰী ব্যৱস্থাপনা",true
+"nav_vocabulary","Vocabulary Training","শব্দভাণ্ডাৰ প্ৰশিক্ষণ",true
+"nav_writing_practice","Writing Practice","লিখা অনুশীলন",true
+"no_active_exams","No assessments available right now","এতিয়া কোনো মূল্যায়ন উপলব্ধ নাই",true
+"no_active_exams_desc","You do not have any pending tests scheduled for your enrolled curriculum.","আপোনাৰ নামভৰ্তি কৰা পাঠ্যক্ৰমৰ বাবে কোনো বাকী থকা পৰীক্ষা নিৰ্ধাৰিত হোৱা নাই।",true
+"no_listening_drills","No listening drills found for selected filter.","বাছনি কৰা ফিল্টাৰৰ বাবে কোনো শ্ৰৱণ অনুশীলন পোৱা নগ'ল।",true
+"offline_badge","Offline","অফলাইন",true
+"preview_as_student","Preview as Student","ছাত্ৰ হিচাপে পূৰ্বদৰ্শন কৰক",true
+"priority_weaknesses","Priority Weaknesses","অগ্ৰাধিকাৰ দুৰ্বলতা",true
+"qb_add_question","+ New Question","+ নতুন প্ৰশ্ন",true
+"qb_desc","Author, version, tag, review, and organize curriculum question assets","পাঠ্যক্ৰম প্ৰশ্ন সম্পত্তি লিখক, সংস্কৰণ কৰক, টেগ কৰক, পৰ্যালোচনা কৰক আৰু সংগঠিত কৰক",true
+"qb_filter_difficulty","All Difficulties","সকলো কঠিনতা স্তৰ",true
+"qb_filter_subject","Filter by Subject","বিষয় অনুসৰি ফিল্টাৰ কৰক",true
+"qb_no_questions","No questions match the current filter criteria.","বৰ্তমানৰ ফিল্টাৰ মাপকাঠীৰ সৈতে কোনো প্ৰশ্ন মিল নাখায়।",true
+"qb_search_placeholder","Search questions by statement, formula, or tag...","বিৱৃতি, সূত্ৰ বা টেগৰ দ্বাৰা প্ৰশ্ন বিচাৰক...",true
+"qb_title","Question Bank Workbench","প্ৰশ্ন বেংক ৱৰ্কবেঞ্চ",true
+"question_bank","Question Bank","প্ৰশ্ন বেংক",true
+"question_palette","Question Palette","প্ৰশ্ন পেলেট",true
+"recalculate_mastery","Recalculate Mastery","দক্ষতা পুনৰ গণনা কৰক",true
+"refresh","Refresh","ৰিফ্ৰেশ কৰক",true
+"resume_exam","Resume Active Session","সক্ৰিয় অধিৱেশন পুনৰাৰম্ভ কৰক",true
+"role_main_admin","Main Admin","মুখ্য প্ৰশাসক",true
+"role_student","Student","ছাত্ৰ",true
+"role_sub_admin","Sub Admin","উপ-প্ৰশাসক",true
+"role_teacher","Teacher","শিক্ষক",true
+"save","Save","সংৰক্ষণ কৰক",true
+"saved","Saved ✓","সংৰক্ষিত ✓",true
+"saving","Saving...","সংৰক্ষণ কৰা হৈছে...",true
+"scorecard_solution_analysis","Solution & Answer Key Analysis","সমাধান আৰু উত্তৰ চাবি বিশ্লেষণ",true
+"search","Search","বিচাৰক",true
+"select_your_answer","Select your answer:","আপোনাৰ উত্তৰ বাছক:",true
+"settings_header_desc","Configure AI model providers, gateway cascade routing, appearance preferences, and exam theme styling","এআই মডেল প্ৰদানকাৰী, গেটৱে কাস্কেড ৰাউটিং, ৰূপ পছন্দ আৰু পৰীক্ষা থিম ষ্টাইলিং কনফিগাৰ কৰক",true
+"settings_header_title","System Settings & Administration","চিষ্টেম ছেটিং আৰু প্ৰশাসন",true
+"settings_tab_ai","AI & Model Configuration","এআই আৰু মডেল কনফিগাৰেশ্যন",true
+"settings_tab_appearance","Appearance & Theme","ৰূপ আৰু থিম",true
+"settings_tab_entitlements","Feature Matrix & Entitlements","বৈশিষ্ট্য মেট্ৰিক্স আৰু অধিকাৰ",true
+"settings_tab_exam_themes","Exam Paper Themes","পৰীক্ষা প্ৰশ্নকাকত থিম",true
+"settings_tab_languages","Language Management","ভাষা ব্যৱস্থাপনা",true
+"settings_tab_maintenance","System Maintenance","চিষ্টেম প্ৰতিপালন",true
+"sidebar_modules","Modules","মডিউল",true
+"status","Status","অৱস্থা",true
+"student_analytics_accuracy","Accuracy Rate","নিখুঁততাৰ হাৰ",true
+"student_analytics_avg_score","Weighted Score","ওজনযুক্ত স্ক'ৰ",true
+"student_analytics_subtitle","Track performance trends, syllabus coverage, and priority areas across all test sessions","সকলো পৰীক্ষা অধিৱেশনত কাৰ্যক্ষমতাৰ প্ৰৱণতা, পাঠ্যক্ৰম কভাৰেজ আৰু অগ্ৰাধিকাৰ ক্ষেত্ৰ ট্ৰেক কৰক",true
+"student_analytics_title","Student Analytics & Mastery","ছাত্ৰ-ছাত্ৰী বিশ্লেষণ আৰু দক্ষতা",true
+"student_analytics_total_tests","Tests Completed","সম্পূৰ্ণ পৰীক্ষা",true
+"student_exams_available","Available Assessments","উপলব্ধ মূল্যায়ন",true
+"student_exams_completed","Evaluated Attempts","মূল্যায়ন কৰা প্ৰচেষ্টা",true
+"student_exams_start_exam","Enter Exam Hall","পৰীক্ষা হলত প্ৰৱেশ কৰক",true
+"student_exams_subtitle","Assigned curriculum examinations, mock papers, and historical test sessions","নিৰ্ধাৰিত পাঠ্যক্ৰম পৰীক্ষা, মক পত্ৰ আৰু ঐতিহাসিক পৰীক্ষা অধিৱেশন",true
+"student_exams_title","My Assessments & Tests","মোৰ মূল্যায়ন আৰু পৰীক্ষা",true
+"student_exams_view_result","View Scorecard","স্ক'ৰকাৰ্ড চাওক",true
+"submit_listening_drill","Submit Drill Evaluation","অনুশীলন মূল্যায়ন দাখিল কৰক",true
+"success","Success","সফলতা",true
+"theme_dark","Dark","ডাৰ্ক",true
+"theme_light","Light","লাইট",true
+"theme_slate","Slate","স্লেট",true
+"top_strengths","Top Mastery Strengths","শীৰ্ষ দক্ষতাৰ শক্তি",true
+"users","User Management","ব্যৱহাৰকাৰী ব্যৱস্থাপনা",true
+"users_add_user","+ Create User","+ ব্যৱহাৰকাৰী সৃষ্টি কৰক",true
+"users_desc","Manage institutional accounts, role assignments, and authentication permissions","প্ৰাতিষ্ঠানিক একাউণ্ট, ভূমিকা নিযুক্তি আৰু প্ৰামাণীকৰণ অনুমতি পৰিচালনা কৰক",true
+"users_no_users","No users found matching query.","প্ৰশ্নৰ সৈতে মিল থকা কোনো ব্যৱহাৰকাৰী পোৱা নগ'ল।",true
+"users_role_filter","All Roles","সকলো ভূমিকা",true
+"users_search_placeholder","Search users by name, email, or role...","নাম, ইমেইল বা ভূমিকাৰ দ্বাৰা ব্যৱহাৰকাৰী বিচাৰক...",true
+"users_title","User & Identity Management","ব্যৱহাৰকাৰী আৰু পৰিচয় ব্যৱস্থাপনা",true
+"verifying_session","Verifying ExamOS session...","ExamOS অধিৱেশন সত্যাপন কৰা হৈছে...",true
+"welcome","Welcome to ExamOS Platform","ExamOS প্লেটফৰ্মলৈ স্বাগতম",true
+"writing_practice_desc","AI-evaluated essay submissions across task achievement, coherence, lexical resource, and grammatical accuracy","কাম সাফল্য, সংগতি, শব্দভাণ্ডাৰ সম্পদ আৰু ব্যাকৰণিক নিখুঁততাত এআই-মূল্যায়িত ৰচনা দাখিল",true
+"writing_practice_submit","Submit for AI Evaluation","এআই মূল্যায়নৰ বাবে দাখিল কৰক",true
+"writing_practice_title","Writing Assessment & Essay Lab","লিখা মূল্যায়ন আৰু ৰচনা লেব",true
+"writing_practice_word_count","Word Count","শব্দ গণনা",true
+"your_choice_label","Your Response","আপোনাৰ উত্তৰ",true

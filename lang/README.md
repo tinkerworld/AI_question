@@ -1,0 +1,3 @@
+# ExamOS Language & Translation Assets
+
+This directory contains version-controlled backups of the ExamOS `translations` database table across all 23 baseline languages, serialized in RFC 4180 CSV format (`key,english,translation,isVerified`). These files represent periodic snapshots exported from the system via the **Backup All** (Export All) flow. To regenerate or update these files with the latest localized content from the live database, navigate to **Settings > Language Management** and click **💾 Backup All** (or trigger the export endpoint). To restore or synchronize translation rows into any ExamOS instance or environment, use the **📥 Import All** button in Language Management to select and import all translation CSV files in a single bulk operation.

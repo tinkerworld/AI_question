@@ -1,0 +1,173 @@
+﻿key,english,translation,isVerified
+"actions","Actions","Actions",true
+"all","All","All",true
+"analytics","Student Analytics","Student Analytics",true
+"app_subtitle","Adaptive Learning & Assessment OS","Adaptive Learning & Assessment OS",true
+"app_title","ExamOS // Adaptive Learning Platform","ExamOS // Adaptive Learning Platform",true
+"archive","Published Archive","Published Archive",true
+"audio_passage","Audio Passage","Audio Passage",true
+"cancel","Cancel","Cancel",true
+"close","Close","Close",true
+"comprehension_questions","Comprehension Questions","Comprehension Questions",true
+"confirm","Confirm","Confirm",true
+"correct_choice_label","Correct Answer","Correct Answer",true
+"courses","Academic Courses","Academic Courses",true
+"courses_add_course","+ Add Course","+ Add Course",true
+"courses_desc","Manage courses, subjects, chapters, and hierarchical syllabus taxonomy","Manage courses, subjects, chapters, and hierarchical syllabus taxonomy",true
+"courses_no_courses","No academic courses registered yet.","No academic courses registered yet.",true
+"courses_title","Academic Course Hierarchy","Academic Course Hierarchy",true
+"dashboard","Dashboard","Dashboard",true
+"dashboard_welcome_desc","Welcome to ExamOS. Select a module from the sidebar to begin your academic workflow.","Welcome to ExamOS. Select a module from the sidebar to begin your academic workflow.",true
+"delete","Delete","Delete",true
+"edit","Edit","Edit",true
+"error","Error","Error",true
+"exam_patterns","Exam Patterns","Exam Patterns",true
+"exam_player_answered","Answered","Answered",true
+"exam_player_clear_answer","Clear Response","Clear Response",true
+"exam_player_flag_cancel","Cancel","Cancel",true
+"exam_player_flag_modal_desc","Report ambiguities, inaccuracies, or typos in this question.","Report ambiguities, inaccuracies, or typos in this question.",true
+"exam_player_flag_modal_title","Dispute / Flag Question","Dispute / Flag Question",true
+"exam_player_flag_question","Flag Dispute","Flag Dispute",true
+"exam_player_flag_reason_placeholder","Describe the issue or error in detail...","Describe the issue or error in detail...",true
+"exam_player_flag_submit","Submit Flag","Submit Flag",true
+"exam_player_flag_success","Question flagged successfully for review.","Question flagged successfully for review.",true
+"exam_player_mark_review","Mark for Review","Mark for Review",true
+"exam_player_marked_for_review","Marked for Review","Marked for Review",true
+"exam_player_marks","Marks","Marks",true
+"exam_player_multiple_choice","Multiple Choice","Multiple Choice",true
+"exam_player_next","Save & Next","Save & Next",true
+"exam_player_not_visited","Not Visited","Not Visited",true
+"exam_player_numerical","Numerical Value","Numerical Value",true
+"exam_player_of","of","of",true
+"exam_player_prev","Previous","Previous",true
+"exam_player_question_counter","Question","Question",true
+"exam_player_single_choice","Single Choice","Single Choice",true
+"exam_player_submit_cancel","Return to Exam","Return to Exam",true
+"exam_player_submit_confirm","Yes, Submit Exam","Yes, Submit Exam",true
+"exam_player_submit_exam","Submit Test","Submit Test",true
+"exam_player_submit_modal_desc","Are you sure you want to finalize and submit your assessment? Unanswered questions cannot be changed after submission.","Are you sure you want to finalize and submit your assessment? Unanswered questions cannot be changed after submission.",true
+"exam_player_submit_modal_title","Confirm Exam Submission","Confirm Exam Submission",true
+"exam_player_time_left","Time Left","Time Left",true
+"exam_player_title","Exam Hall","Exam Hall",true
+"exam_player_unanswered","Unanswered","Unanswered",true
+"exam_player_unmark_review","Unmark Review","Unmark Review",true
+"exam_result_back_to_exams","Back to Assessments","Back to Assessments",true
+"exam_result_breakdown","Section Performance Breakdown","Section Performance Breakdown",true
+"exam_result_percentage","Percentage","Percentage",true
+"exam_result_score","Total Score","Total Score",true
+"exam_result_title","Evaluation Scorecard & Analysis","Evaluation Scorecard & Analysis",true
+"exam_result_total_marks","Maximum Marks","Maximum Marks",true
+"exams","Exam Generator","Exam Generator",true
+"explanation","Explanation","Explanation",true
+"feature_maintenance_tooltip","Feature disabled for maintenance","Feature disabled for maintenance",true
+"filter","Filter","Filter",true
+"interview_desc","Conduct interactive voice and text oral examinations with multi-turn adaptive follow-ups and rubric scoring","Conduct interactive voice and text oral examinations with multi-turn adaptive follow-ups and rubric scoring",true
+"interview_end","Conclude Interview & Grade","Conclude Interview & Grade",true
+"interview_mic_off","Muted","Muted",true
+"interview_mic_on","Microphone Active","Microphone Active",true
+"interview_start","Start Interview Session","Start Interview Session",true
+"interview_title","AI Interview & Oral Viva","AI Interview & Oral Viva",true
+"listening_lab_subtitle","Standardized audio drills with natural multi-accent speech and comprehension items","Standardized audio drills with natural multi-accent speech and comprehension items",true
+"listening_lab_title","Listening Comprehension Lab","Listening Comprehension Lab",true
+"loading","Loading...","Loading...",true
+"login_autofill","Auto-Fill","Auto-Fill",true
+"login_btn_authenticating","Authenticating...","Authenticating...",true
+"login_btn_hide","Hide","Hide",true
+"login_btn_show","Show","Show",true
+"login_btn_submit","Sign In","Sign In",true
+"login_email_label","Email Address","Email Address",true
+"login_email_placeholder","name@examos.com","name@examos.com",true
+"login_heading","Sign in to ExamOS","Sign in to ExamOS",true
+"login_invalid_credentials","Invalid email or password","Invalid email or password",true
+"login_password_label","Password","Password",true
+"login_quick_demo","QUICK DEMO ACCOUNTS (ONE-CLICK)","QUICK DEMO ACCOUNTS (ONE-CLICK)",true
+"login_subheading","Enter your credentials or choose a quick demo account","Enter your credentials or choose a quick demo account",true
+"logout","Log Out","Log Out",true
+"logout_locked_tooltip","Exam in progress - complete assessment first","Exam in progress - complete assessment first",true
+"logout_tooltip","Sign out from ExamOS","Sign out from ExamOS",true
+"nav_analytics","Student Analytics & Mastery","Student Analytics & Mastery",true
+"nav_archive","Published Archive","Published Archive",true
+"nav_courses","Academic Structure","Academic Structure",true
+"nav_dashboard","Dashboard","Dashboard",true
+"nav_exam_patterns","Exam Patterns","Exam Patterns",true
+"nav_exams","Exam Generator & Papers","Exam Generator & Papers",true
+"nav_interview","AI Interview & Viva","AI Interview & Viva",true
+"nav_listening_practice","Listening Practice","Listening Practice",true
+"nav_locked_tooltip","Navigation locked during active exam session","Navigation locked during active exam session",true
+"nav_practice","Practice & Training","Practice & Training",true
+"nav_question_bank","Question Bank","Question Bank",true
+"nav_settings","Settings","Settings",true
+"nav_student_exams","My Assessments & Tests","My Assessments & Tests",true
+"nav_subscription","Subscription & Credits","Subscription & Credits",true
+"nav_users","User Management","User Management",true
+"nav_vocabulary","Vocabulary Training","Vocabulary Training",true
+"nav_writing_practice","Writing Practice","Writing Practice",true
+"no_active_exams","No assessments available right now","No assessments available right now",true
+"no_active_exams_desc","You do not have any pending tests scheduled for your enrolled curriculum.","You do not have any pending tests scheduled for your enrolled curriculum.",true
+"no_listening_drills","No listening drills found for selected filter.","No listening drills found for selected filter.",true
+"offline_badge","Offline","Offline",true
+"preview_as_student","Preview as Student","Preview as Student",true
+"priority_weaknesses","Priority Weaknesses","Priority Weaknesses",true
+"qb_add_question","+ New Question","+ New Question",true
+"qb_desc","Author, version, tag, review, and organize curriculum question assets","Author, version, tag, review, and organize curriculum question assets",true
+"qb_filter_difficulty","All Difficulties","All Difficulties",true
+"qb_filter_subject","Filter by Subject","Filter by Subject",true
+"qb_no_questions","No questions match the current filter criteria.","No questions match the current filter criteria.",true
+"qb_search_placeholder","Search questions by statement, formula, or tag...","Search questions by statement, formula, or tag...",true
+"qb_title","Question Bank Workbench","Question Bank Workbench",true
+"question_bank","Question Bank","Question Bank",true
+"question_palette","Question Palette","Question Palette",true
+"recalculate_mastery","Recalculate Mastery","Recalculate Mastery",true
+"refresh","Refresh","Refresh",true
+"resume_exam","Resume Active Session","Resume Active Session",true
+"role_main_admin","Main Admin","Main Admin",true
+"role_student","Student","Student",true
+"role_sub_admin","Sub Admin","Sub Admin",true
+"role_teacher","Teacher","Teacher",true
+"save","Save","Save",true
+"saved","Saved ✓","Saved ✓",true
+"saving","Saving...","Saving...",true
+"scorecard_solution_analysis","Solution & Answer Key Analysis","Solution & Answer Key Analysis",true
+"search","Search","Search",true
+"select_your_answer","Select your answer:","Select your answer:",true
+"settings_header_desc","Configure AI model providers, gateway cascade routing, appearance preferences, and exam theme styling","Configure AI model providers, gateway cascade routing, appearance preferences, and exam theme styling",true
+"settings_header_title","System Settings & Administration","System Settings & Administration",true
+"settings_tab_ai","AI & Model Configuration","AI & Model Configuration",true
+"settings_tab_appearance","Appearance & Theme","Appearance & Theme",true
+"settings_tab_entitlements","Feature Matrix & Entitlements","Feature Matrix & Entitlements",true
+"settings_tab_exam_themes","Exam Paper Themes","Exam Paper Themes",true
+"settings_tab_languages","Language Management","Language Management",true
+"settings_tab_maintenance","System Maintenance","System Maintenance",true
+"sidebar_modules","Modules","Modules",true
+"status","Status","Status",true
+"student_analytics_accuracy","Accuracy Rate","Accuracy Rate",true
+"student_analytics_avg_score","Weighted Score","Weighted Score",true
+"student_analytics_subtitle","Track performance trends, syllabus coverage, and priority areas across all test sessions","Track performance trends, syllabus coverage, and priority areas across all test sessions",true
+"student_analytics_title","Student Analytics & Mastery","Student Analytics & Mastery",true
+"student_analytics_total_tests","Tests Completed","Tests Completed",true
+"student_exams_available","Available Assessments","Available Assessments",true
+"student_exams_completed","Evaluated Attempts","Evaluated Attempts",true
+"student_exams_start_exam","Enter Exam Hall","Enter Exam Hall",true
+"student_exams_subtitle","Assigned curriculum examinations, mock papers, and historical test sessions","Assigned curriculum examinations, mock papers, and historical test sessions",true
+"student_exams_title","My Assessments & Tests","My Assessments & Tests",true
+"student_exams_view_result","View Scorecard","View Scorecard",true
+"submit_listening_drill","Submit Drill Evaluation","Submit Drill Evaluation",true
+"success","Success","Success",true
+"theme_dark","Dark","Dark",true
+"theme_light","Light","Light",true
+"theme_slate","Slate","Slate",true
+"top_strengths","Top Mastery Strengths","Top Mastery Strengths",true
+"users","User Management","User Management",true
+"users_add_user","+ Create User","+ Create User",true
+"users_desc","Manage institutional accounts, role assignments, and authentication permissions","Manage institutional accounts, role assignments, and authentication permissions",true
+"users_no_users","No users found matching query.","No users found matching query.",true
+"users_role_filter","All Roles","All Roles",true
+"users_search_placeholder","Search users by name, email, or role...","Search users by name, email, or role...",true
+"users_title","User & Identity Management","User & Identity Management",true
+"verifying_session","Verifying ExamOS session...","Verifying ExamOS session...",true
+"welcome","Welcome to ExamOS Platform","Welcome to ExamOS Platform",true
+"writing_practice_desc","AI-evaluated essay submissions across task achievement, coherence, lexical resource, and grammatical accuracy","AI-evaluated essay submissions across task achievement, coherence, lexical resource, and grammatical accuracy",true
+"writing_practice_submit","Submit for AI Evaluation","Submit for AI Evaluation",true
+"writing_practice_title","Writing Assessment & Essay Lab","Writing Assessment & Essay Lab",true
+"writing_practice_word_count","Word Count","Word Count",true
+"your_choice_label","Your Response","Your Response",true

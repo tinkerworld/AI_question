@@ -1,0 +1,173 @@
+﻿key,english,translation,isVerified
+"actions","Actions","செயல்கள்",true
+"all","All","அனைத்தும்",true
+"analytics","Student Analytics","மாணவர் பகுப்பாய்வு",true
+"app_subtitle","Adaptive Learning & Assessment OS","தகவமைப்பு கற்றல் & மதிப்பீட்டு ஓஎஸ்",true
+"app_title","ExamOS // Adaptive Learning Platform","ExamOS // அடாப்டிவ் கற்றல் தளம்",true
+"archive","Published Archive","வெளியிடப்பட்ட காப்பகம்",true
+"audio_passage","Audio Passage","ஒலிப் பகுதி",true
+"cancel","Cancel","ரத்துசெய்",true
+"close","Close","மூடு",true
+"comprehension_questions","Comprehension Questions","புரிதல் கேள்விகள்",true
+"confirm","Confirm","உறுதிப்படுத்து",true
+"correct_choice_label","Correct Answer","சரியான பதில்",true
+"courses","Academic Courses","கல்விப் பாடங்கள்",true
+"courses_add_course","+ Add Course","+ பாடத்தைச் சேர்",true
+"courses_desc","Manage courses, subjects, chapters, and hierarchical syllabus taxonomy","பாடங்கள், பாடப்பிரிவுகள், அத்தியாயங்கள் மற்றும் பாடத்திட்ட வகைப்பாட்டை நிர்வகிக்கவும்",true
+"courses_no_courses","No academic courses registered yet.","இதுவரை கல்விப் பாடங்கள் எதுவும் பதிவு செய்யப்படவில்லை.",true
+"courses_title","Academic Course Hierarchy","கல்விப் பாடப் படிநிலை",true
+"dashboard","Dashboard","முகப்புப்பலகை",true
+"dashboard_welcome_desc","Welcome to ExamOS. Select a module from the sidebar to begin your academic workflow.","ExamOS-க்கு வரவேற்கிறோம். உங்கள் கல்விப் பணிப்பாய்வைத் தொடங்க பக்கப்பட்டியிலிருந்து ஒரு தொகுதியைத் தேர்ந்தெடுக்கவும்.",true
+"delete","Delete","நீக்கு",true
+"edit","Edit","திருத்து",true
+"error","Error","பிழை",true
+"exam_patterns","Exam Patterns","தேர்வு முறைகள்",true
+"exam_player_answered","Answered","பதிலளிக்கப்பட்டது",true
+"exam_player_clear_answer","Clear Response","பதிலை அழி",true
+"exam_player_flag_cancel","Cancel","ரத்துசெய்",true
+"exam_player_flag_modal_desc","Report ambiguities, inaccuracies, or typos in this question.","இந்த கேள்வியில் உள்ள தெளிவின்மை, தவறுகள் அல்லது எழுத்துப்பிழைகளைப் புகாரளிக்கவும்.",true
+"exam_player_flag_modal_title","Dispute / Flag Question","கேள்வியில் ஆட்சேபனை / கொடியிடு",true
+"exam_player_flag_question","Flag Dispute","ஆட்சேபனையைக் கொடியிடு",true
+"exam_player_flag_reason_placeholder","Describe the issue or error in detail...","சிக்கலை விரிவாக விவரிக்கவும்...",true
+"exam_player_flag_submit","Submit Flag","கொடியைச் சமர்ப்பி",true
+"exam_player_flag_success","Question flagged successfully for review.","கேள்வி மறுஆய்வுக்காக வெற்றிகரமாகக் கொடியிடப்பட்டது.",true
+"exam_player_mark_review","Mark for Review","மறுஆய்வுக்குக் குறி",true
+"exam_player_marked_for_review","Marked for Review","மறுஆய்வுக்குக் குறிக்கப்பட்டது",true
+"exam_player_marks","Marks","மதிப்பெண்கள்",true
+"exam_player_multiple_choice","Multiple Choice","பல்தேர்வு",true
+"exam_player_next","Save & Next","சேமித்து அடுத்து செல்",true
+"exam_player_not_visited","Not Visited","பார்க்கப்படவில்லை",true
+"exam_player_numerical","Numerical Value","எண் மதிப்பு",true
+"exam_player_of","of","இல்",true
+"exam_player_prev","Previous","முந்தையது",true
+"exam_player_question_counter","Question","கேள்வி",true
+"exam_player_single_choice","Single Choice","ஒற்றைத் தேர்வு",true
+"exam_player_submit_cancel","Return to Exam","தேர்வுக்குத் திரும்பு",true
+"exam_player_submit_confirm","Yes, Submit Exam","ஆம், தேர்வைச் சமர்ப்பி",true
+"exam_player_submit_exam","Submit Test","தேர்வைச் சமர்ப்பி",true
+"exam_player_submit_modal_desc","Are you sure you want to finalize and submit your assessment? Unanswered questions cannot be changed after submission.","உங்கள் மதிப்பீட்டை இறுதிசெய்து சமர்ப்பிக்க விரும்புகிறீர்களா? சமர்ப்பித்த பிறகு பதிலளிக்கப்படாத கேள்விகளை மாற்ற முடியாது.",true
+"exam_player_submit_modal_title","Confirm Exam Submission","தேர்வு சமர்ப்பிப்பை உறுதிப்படுத்து",true
+"exam_player_time_left","Time Left","மீதமுள்ள நேரம்",true
+"exam_player_title","Exam Hall","தேர்வு அரங்கம்",true
+"exam_player_unanswered","Unanswered","பதிலளிக்கப்படவில்லை",true
+"exam_player_unmark_review","Unmark Review","மறுஆய்வுக் குறியை நீக்கு",true
+"exam_result_back_to_exams","Back to Assessments","மதிப்பீடுகளுக்குத் திரும்பு",true
+"exam_result_breakdown","Section Performance Breakdown","பிரிவு வாரியான செயல்திறன் விவரம்",true
+"exam_result_percentage","Percentage","சதவீதம்",true
+"exam_result_score","Total Score","மொத்த மதிப்பெண்",true
+"exam_result_title","Evaluation Scorecard & Analysis","மதிப்பீட்டு மதிப்பெண் அட்டை & பகுப்பாய்வு",true
+"exam_result_total_marks","Maximum Marks","அதிகபட்ச மதிப்பெண்கள்",true
+"exams","Exam Generator","தேர்வு உருவாக்கி",true
+"explanation","Explanation","விளக்கம்",true
+"feature_maintenance_tooltip","Feature disabled for maintenance","பராமரிப்புக்காக அம்சம் முடக்கப்பட்டுள்ளது",true
+"filter","Filter","வடிகட்டி",true
+"interview_desc","Conduct interactive voice and text oral examinations with multi-turn adaptive follow-ups and rubric scoring","பல-சுற்று தகவமைப்பு தொடர்நடவடிக்கைகள் மற்றும் ரூப்ரிக் மதிப்பெண்ணிடலுடன் ஊடாடும் குரல் & உரை வாய்மொழி தேர்வுகளை நடத்தவும்",true
+"interview_end","Conclude Interview & Grade","நேர்காணலை முடித்து தரமிடு",true
+"interview_mic_off","Muted","முடக்கப்பட்டது",true
+"interview_mic_on","Microphone Active","மைக்ரோஃபோன் செயலில் உள்ளது",true
+"interview_start","Start Interview Session","நேர்காணல் அமர்வைத் தொடங்கு",true
+"interview_title","AI Interview & Oral Viva","ஏஐ நேர்காணல் & வாய்மொழி வைவா",true
+"listening_lab_subtitle","Standardized audio drills with natural multi-accent speech and comprehension items","இயற்கையான பல்-உச்சரிப்பு பேச்சு மற்றும் புரிதல் உருப்படிகளுடன் தரப்படுத்தப்பட்ட ஒலிப் பயிற்சிகள்",true
+"listening_lab_title","Listening Comprehension Lab","செவிமடல் புரிதல் ஆய்வகம்",true
+"loading","Loading...","ஏற்றுகிறது...",true
+"login_autofill","Auto-Fill","தானியங்கி நிரப்பு",true
+"login_btn_authenticating","Authenticating...","அங்கீகரிக்கப்படுகிறது...",true
+"login_btn_hide","Hide","மறை",true
+"login_btn_show","Show","காட்டு",true
+"login_btn_submit","Sign In","உள்நுழை",true
+"login_email_label","Email Address","மின்னஞ்சல் முகவரி",true
+"login_email_placeholder","name@examos.com","name@examos.com",true
+"login_heading","Sign in to ExamOS","ExamOS-ல் உள்நுழையவும்",true
+"login_invalid_credentials","Invalid email or password","தவறான மின்னஞ்சல் அல்லது கடவுச்சொல்",true
+"login_password_label","Password","கடவுச்சொல்",true
+"login_quick_demo","QUICK DEMO ACCOUNTS (ONE-CLICK)","விரைவு டெமோ கணக்குகள் (ஒரு-கிளிக்)",true
+"login_subheading","Enter your credentials or choose a quick demo account","உங்கள் சான்றுகளை உள்ளிடவும் அல்லது விரைவு டெமோ கணக்கைத் தேர்ந்தெடுக்கவும்",true
+"logout","Log Out","வெளியேறு",true
+"logout_locked_tooltip","Exam in progress - complete assessment first","தேர்வு நடைபெறுகிறது - முதலில் மதிப்பீட்டை முடிக்கவும்",true
+"logout_tooltip","Sign out from ExamOS","ExamOS-லிருந்து வெளியேறு",true
+"nav_analytics","Student Analytics & Mastery","மாணவர் பகுப்பாய்வு & திறன்",true
+"nav_archive","Published Archive","வெளியிடப்பட்ட காப்பகம்",true
+"nav_courses","Academic Structure","கல்வி அமைப்பு",true
+"nav_dashboard","Dashboard","முகப்புப்பலகை",true
+"nav_exam_patterns","Exam Patterns","தேர்வு முறைகள்",true
+"nav_exams","Exam Generator & Papers","தேர்வு உருவாக்கி & வினாத்தாள்கள்",true
+"nav_interview","AI Interview & Viva","ஏஐ நேர்காணல் & வைவா",true
+"nav_listening_practice","Listening Practice","செவிமடல் பயிற்சி",true
+"nav_locked_tooltip","Navigation locked during active exam session","செயலில் உள்ள தேர்வு அமர்வின் போது வழிசெலுத்தல் பூட்டப்பட்டுள்ளது",true
+"nav_practice","Practice & Training","பயிற்சி & பயிற்றுவிப்பு",true
+"nav_question_bank","Question Bank","வினா வங்கி",true
+"nav_settings","Settings","அமைப்புகள்",true
+"nav_student_exams","My Assessments & Tests","எனது மதிப்பீடுகள் & தேர்வுகள்",true
+"nav_subscription","Subscription & Credits","சந்தா & கிரெடிட்டுகள்",true
+"nav_users","User Management","பயனர் மேலாண்மை",true
+"nav_vocabulary","Vocabulary Training","சொல்வளப் பயிற்சி",true
+"nav_writing_practice","Writing Practice","எழுத்துப் பயிற்சி",true
+"no_active_exams","No assessments available right now","இப்போது எந்த மதிப்பீடும் கிடைக்கவில்லை",true
+"no_active_exams_desc","You do not have any pending tests scheduled for your enrolled curriculum.","உங்கள் பதிவு செய்யப்பட்ட பாடத்திட்டத்திற்கு நிலுவையில் உள்ள தேர்வுகள் எதுவும் திட்டமிடப்படவில்லை.",true
+"no_listening_drills","No listening drills found for selected filter.","தேர்ந்தெடுக்கப்பட்ட வடிகட்டிக்கு செவிமடல் பயிற்சிகள் எதுவும் கிடைக்கவில்லை.",true
+"offline_badge","Offline","ஆஃப்லைன்",true
+"preview_as_student","Preview as Student","மாணவராக முன்னோட்டம் காண்க",true
+"priority_weaknesses","Priority Weaknesses","முன்னுரிமை பலவீனங்கள்",true
+"qb_add_question","+ New Question","+ புதிய கேள்வி",true
+"qb_desc","Author, version, tag, review, and organize curriculum question assets","பாடத்திட்ட கேள்வி சொத்துக்களை உருவாக்கி, பதிப்பிட்டு, குறியிட்டு, மறுஆய்வு செய்து ஒழுங்கமைக்கவும்",true
+"qb_filter_difficulty","All Difficulties","அனைத்து சிரமநிலைகள்",true
+"qb_filter_subject","Filter by Subject","பாடத்தின்படி வடிகட்டு",true
+"qb_no_questions","No questions match the current filter criteria.","தற்போதைய வடிகட்டி அளவுகோலுக்கு எந்த கேள்வியும் பொருந்தவில்லை.",true
+"qb_search_placeholder","Search questions by statement, formula, or tag...","கூற்று, சூத்திரம் அல்லது குறிச்சொல் மூலம் கேள்விகளைத் தேடு...",true
+"qb_title","Question Bank Workbench","வினா வங்கி பணிமேடை",true
+"question_bank","Question Bank","வினா வங்கி",true
+"question_palette","Question Palette","கேள்வி பலகை",true
+"recalculate_mastery","Recalculate Mastery","திறனை மறுகணக்கிடு",true
+"refresh","Refresh","புதுப்பி",true
+"resume_exam","Resume Active Session","செயலில் உள்ள அமர்வைத் தொடரவும்",true
+"role_main_admin","Main Admin","தலைமை நிர்வாகி",true
+"role_student","Student","மாணவர்",true
+"role_sub_admin","Sub Admin","துணை நிர்வாகி",true
+"role_teacher","Teacher","ஆசிரியர்",true
+"save","Save","சேமி",true
+"saved","Saved ✓","சேமிக்கப்பட்டது ✓",true
+"saving","Saving...","சேமிக்கிறது...",true
+"scorecard_solution_analysis","Solution & Answer Key Analysis","தீர்வு & விடைத்தாள் பகுப்பாய்வு",true
+"search","Search","தேடு",true
+"select_your_answer","Select your answer:","உங்கள் பதிலைத் தேர்ந்தெடுக்கவும்:",true
+"settings_header_desc","Configure AI model providers, gateway cascade routing, appearance preferences, and exam theme styling","ஏஐ மாதிரி வழங்குநர்கள், நுழைவாயில் கேஸ்கேட் திசைவழி, தோற்ற விருப்பங்கள் & தேர்வு தீம் பாணியை உள்ளமைக்கவும்",true
+"settings_header_title","System Settings & Administration","கணினி அமைப்புகள் & நிர்வாகம்",true
+"settings_tab_ai","AI & Model Configuration","ஏஐ & மாதிரி உள்ளமைவு",true
+"settings_tab_appearance","Appearance & Theme","தோற்றம் & தீம்",true
+"settings_tab_entitlements","Feature Matrix & Entitlements","அம்ச அணி & உரிமைகள்",true
+"settings_tab_exam_themes","Exam Paper Themes","தேர்வு வினாத்தாள் தீம்",true
+"settings_tab_languages","Language Management","மொழி மேலாண்மை",true
+"settings_tab_maintenance","System Maintenance","கணினி பராமரிப்பு",true
+"sidebar_modules","Modules","தொகுதிகள்",true
+"status","Status","நிலை",true
+"student_analytics_accuracy","Accuracy Rate","துல்லிய விகிதம்",true
+"student_analytics_avg_score","Weighted Score","எடையிடப்பட்ட மதிப்பெண்",true
+"student_analytics_subtitle","Track performance trends, syllabus coverage, and priority areas across all test sessions","அனைத்து தேர்வு அமர்வுகளிலும் செயல்திறன் போக்குகள், பாடத்திட்ட உள்ளடக்கம் & முன்னுரிமை பகுதிகளைக் கண்காணிக்கவும்",true
+"student_analytics_title","Student Analytics & Mastery","மாணவர் பகுப்பாய்வு & திறன்",true
+"student_analytics_total_tests","Tests Completed","முடிக்கப்பட்ட தேர்வுகள்",true
+"student_exams_available","Available Assessments","கிடைக்கும் மதிப்பீடுகள்",true
+"student_exams_completed","Evaluated Attempts","மதிப்பிடப்பட்ட முயற்சிகள்",true
+"student_exams_start_exam","Enter Exam Hall","தேர்வு அரங்கில் நுழையவும்",true
+"student_exams_subtitle","Assigned curriculum examinations, mock papers, and historical test sessions","ஒதுக்கப்பட்ட பாடத்திட்ட தேர்வுகள், மாதிரி வினாத்தாள்கள் & கடந்தகால தேர்வு அமர்வுகள்",true
+"student_exams_title","My Assessments & Tests","எனது மதிப்பீடுகள் & தேர்வுகள்",true
+"student_exams_view_result","View Scorecard","மதிப்பெண் அட்டையைக் காண்க",true
+"submit_listening_drill","Submit Drill Evaluation","பயிற்சி மதிப்பீட்டைச் சமர்ப்பி",true
+"success","Success","வெற்றி",true
+"theme_dark","Dark","இருள்",true
+"theme_light","Light","வெளிச்சம்",true
+"theme_slate","Slate","ஸ்லேட்",true
+"top_strengths","Top Mastery Strengths","முதன்மைத் திறன் பலங்கள்",true
+"users","User Management","பயனர் மேலாண்மை",true
+"users_add_user","+ Create User","+ பயனரை உருவாக்கு",true
+"users_desc","Manage institutional accounts, role assignments, and authentication permissions","நிறுவனக் கணக்குகள், பங்கு ஒதுக்கீடுகள் & அங்கீகார அனுமதிகளை நிர்வகிக்கவும்",true
+"users_no_users","No users found matching query.","வினவலுடன் பொருந்தும் பயனர் எதுவும் கிடைக்கவில்லை.",true
+"users_role_filter","All Roles","அனைத்து பங்குகள்",true
+"users_search_placeholder","Search users by name, email, or role...","பெயர், மின்னஞ்சல் அல்லது பங்கு மூலம் பயனர்களைத் தேடு...",true
+"users_title","User & Identity Management","பயனர் & அடையாள மேலாண்மை",true
+"verifying_session","Verifying ExamOS session...","ExamOS அமர்வு சரிபார்க்கப்படுகிறது...",true
+"welcome","Welcome to ExamOS Platform","ExamOS தளத்திற்கு உங்களை வரவேற்கிறோம்",true
+"writing_practice_desc","AI-evaluated essay submissions across task achievement, coherence, lexical resource, and grammatical accuracy","பணி நிறைவேற்றம், ஒருங்கிணைவு, சொல்வளம் & இலக்கண துல்லியம் ஆகியவற்றில் ஏஐ-மதிப்பிடப்பட்ட கட்டுரை சமர்ப்பிப்புகள்",true
+"writing_practice_submit","Submit for AI Evaluation","ஏஐ மதிப்பீட்டிற்குச் சமர்ப்பி",true
+"writing_practice_title","Writing Assessment & Essay Lab","எழுத்து மதிப்பீடு & கட்டுரை ஆய்வகம்",true
+"writing_practice_word_count","Word Count","சொல் எண்ணிக்கை",true
+"your_choice_label","Your Response","உங்கள் பதில்",true

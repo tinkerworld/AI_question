@@ -1,0 +1,173 @@
+﻿key,english,translation,isVerified
+"actions","Actions","کارروائیاں",true
+"all","All","تمام",true
+"analytics","Student Analytics","طلباء کے تجزیات",true
+"app_subtitle","Adaptive Learning & Assessment OS","اڈاپٹیو لرننگ اینڈ اسیسمنٹ او ایس",true
+"app_title","ExamOS // Adaptive Learning Platform","ExamOS // اڊاپٽو لرننگ پليٽفارم",true
+"archive","Published Archive","شائع شدہ آرکائیو",true
+"audio_passage","Audio Passage","آڈیو اقتباس",true
+"cancel","Cancel","منسوخ کریں",true
+"close","Close","بند کریں",true
+"comprehension_questions","Comprehension Questions","فہمی سوالات",true
+"confirm","Confirm","تصدیق کریں",true
+"correct_choice_label","Correct Answer","درست جواب",true
+"courses","Academic Courses","تعلیمی کورسز",true
+"courses_add_course","+ Add Course","+ کورس شامل کریں",true
+"courses_desc","Manage courses, subjects, chapters, and hierarchical syllabus taxonomy","کورسز، مضامین، ابواب اور درجہ بند نصاب کی درجہ بندی کا انتظام کریں",true
+"courses_no_courses","No academic courses registered yet.","ابھی تک کوئی تعلیمی کورس رجسٹرڈ نہیں ہے۔",true
+"courses_title","Academic Course Hierarchy","تعلیمی کورس درجہ بندی",true
+"dashboard","Dashboard","ڊيش بورڊ",true
+"dashboard_welcome_desc","Welcome to ExamOS. Select a module from the sidebar to begin your academic workflow.","ExamOS میں خوش آمدید۔ اپنا تعلیمی ورک فلو شروع کرنے کے لیے سائیڈ بار سے ماڈیول منتخب کریں۔",true
+"delete","Delete","حذف کریں",true
+"edit","Edit","ترمیم کریں",true
+"error","Error","خرابی",true
+"exam_patterns","Exam Patterns","امتحانی انداز",true
+"exam_player_answered","Answered","جواب دیا گیا",true
+"exam_player_clear_answer","Clear Response","جواب صاف کریں",true
+"exam_player_flag_cancel","Cancel","منسوخ کریں",true
+"exam_player_flag_modal_desc","Report ambiguities, inaccuracies, or typos in this question.","اس سوال میں ابہام، غلطیاں یا ٹائپو رپورٹ کریں۔",true
+"exam_player_flag_modal_title","Dispute / Flag Question","سوال پر اعتراض / فلیگ کریں",true
+"exam_player_flag_question","Flag Dispute","اعتراض فلیگ کریں",true
+"exam_player_flag_reason_placeholder","Describe the issue or error in detail...","مسئلے کی تفصیل سے وضاحت کریں...",true
+"exam_player_flag_submit","Submit Flag","فلیگ جمع کروائیں",true
+"exam_player_flag_success","Question flagged successfully for review.","سوال کامیابی سے جائزے کے لیے فلیگ کر دیا گیا۔",true
+"exam_player_mark_review","Mark for Review","جائزے کے لیے نشان زد کریں",true
+"exam_player_marked_for_review","Marked for Review","جائزے کے لیے نشان زد",true
+"exam_player_marks","Marks","نمبرات",true
+"exam_player_multiple_choice","Multiple Choice","کثیر انتخابی",true
+"exam_player_next","Save & Next","محفوظ کریں اور آگے بڑھیں",true
+"exam_player_not_visited","Not Visited","ملاحظہ نہیں کیا گیا",true
+"exam_player_numerical","Numerical Value","عددی قدر",true
+"exam_player_of","of","میں سے",true
+"exam_player_prev","Previous","پچھلا",true
+"exam_player_question_counter","Question","سوال",true
+"exam_player_single_choice","Single Choice","واحد انتخاب",true
+"exam_player_submit_cancel","Return to Exam","امتحان پر واپس جائیں",true
+"exam_player_submit_confirm","Yes, Submit Exam","ہاں، امتحان جمع کروائیں",true
+"exam_player_submit_exam","Submit Test","ٹیسٹ جمع کروائیں",true
+"exam_player_submit_modal_desc","Are you sure you want to finalize and submit your assessment? Unanswered questions cannot be changed after submission.","کیا آپ واقعی اپنی تشخیص کو حتمی شکل دے کر جمع کروانا چاہتے ہیں؟ جمع کروانے کے بعد غیر جواب شدہ سوالات تبدیل نہیں کیے جا سکتے۔",true
+"exam_player_submit_modal_title","Confirm Exam Submission","امتحان جمع کروانے کی تصدیق کریں",true
+"exam_player_time_left","Time Left","باقی وقت",true
+"exam_player_title","Exam Hall","امتحانی ہال",true
+"exam_player_unanswered","Unanswered","غیر جواب شدہ",true
+"exam_player_unmark_review","Unmark Review","جائزہ نشان ہٹائیں",true
+"exam_result_back_to_exams","Back to Assessments","تشخیصات پر واپس جائیں",true
+"exam_result_breakdown","Section Performance Breakdown","سیکشن وار کارکردگی کی تفصیل",true
+"exam_result_percentage","Percentage","فیصد",true
+"exam_result_score","Total Score","کل اسکور",true
+"exam_result_title","Evaluation Scorecard & Analysis","تشخیصی اسکور کارڈ اور تجزیہ",true
+"exam_result_total_marks","Maximum Marks","زیادہ سے زیادہ نمبرات",true
+"exams","Exam Generator","امتحان جنریٹر",true
+"explanation","Explanation","وضاحت",true
+"feature_maintenance_tooltip","Feature disabled for maintenance","دیکھ بھال کے لیے فیچر غیر فعال ہے",true
+"filter","Filter","فلٹر",true
+"interview_desc","Conduct interactive voice and text oral examinations with multi-turn adaptive follow-ups and rubric scoring","کثیر مرحلہ موافقتی فالو اپ اور روبرک اسکورنگ کے ساتھ انٹرایکٹو صوتی اور تحریری زبانی امتحانات منعقد کریں",true
+"interview_end","Conclude Interview & Grade","انٹرویو ختم کریں اور گریڈ دیں",true
+"interview_mic_off","Muted","خاموش",true
+"interview_mic_on","Microphone Active","مائیکروفون فعال",true
+"interview_start","Start Interview Session","انٹرویو سیشن شروع کریں",true
+"interview_title","AI Interview & Oral Viva","اے آئی انٹرویو اور زبانی وائیوا",true
+"listening_lab_subtitle","Standardized audio drills with natural multi-accent speech and comprehension items","قدرتی کثیر لہجہ گفتگو اور فہمی اشیاء کے ساتھ معیاری آڈیو مشقیں",true
+"listening_lab_title","Listening Comprehension Lab","سماعتی فہمی لیب",true
+"loading","Loading...","لوڈ ہو رہا ہے...",true
+"login_autofill","Auto-Fill","آٹو فل",true
+"login_btn_authenticating","Authenticating...","تصدیق ہو رہی ہے...",true
+"login_btn_hide","Hide","چھپائیں",true
+"login_btn_show","Show","دکھائیں",true
+"login_btn_submit","Sign In","سائن ان کریں",true
+"login_email_label","Email Address","ای میل پتہ",true
+"login_email_placeholder","name@examos.com","name@examos.com",true
+"login_heading","Sign in to ExamOS","ExamOS میں سائن ان کریں",true
+"login_invalid_credentials","Invalid email or password","غلط ای میل یا پاس ورڈ",true
+"login_password_label","Password","پاس ورڈ",true
+"login_quick_demo","QUICK DEMO ACCOUNTS (ONE-CLICK)","فوری ڈیمو اکاؤنٹس (ون کلک)",true
+"login_subheading","Enter your credentials or choose a quick demo account","اپنی تفصیلات درج کریں یا فوری ڈیمو اکاؤنٹ منتخب کریں",true
+"logout","Log Out","لاگ آؤٹ",true
+"logout_locked_tooltip","Exam in progress - complete assessment first","امتحان جاری ہے - پہلے تشخیص مکمل کریں",true
+"logout_tooltip","Sign out from ExamOS","ExamOS سے سائن آؤٹ کریں",true
+"nav_analytics","Student Analytics & Mastery","طلباء کے تجزیات اور مہارت",true
+"nav_archive","Published Archive","شائع شدہ آرکائیو",true
+"nav_courses","Academic Structure","تعلیمی ڈھانچہ",true
+"nav_dashboard","Dashboard","ڈیش بورڈ",true
+"nav_exam_patterns","Exam Patterns","امتحانی انداز",true
+"nav_exams","Exam Generator & Papers","امتحان جنریٹر اور پرچے",true
+"nav_interview","AI Interview & Viva","اے آئی انٹرویو اور وائیوا",true
+"nav_listening_practice","Listening Practice","سماعتی مشق",true
+"nav_locked_tooltip","Navigation locked during active exam session","فعال امتحانی سیشن کے دوران نیویگیشن مقفل ہے",true
+"nav_practice","Practice & Training","مشق اور تربیت",true
+"nav_question_bank","Question Bank","سوالات کا بینک",true
+"nav_settings","Settings","ترتیبات",true
+"nav_student_exams","My Assessments & Tests","میری تشخیصات اور امتحانات",true
+"nav_subscription","Subscription & Credits","سبسکرپشن اور کریڈٹس",true
+"nav_users","User Management","صارفين جي سنڀال",true
+"nav_vocabulary","Vocabulary Training","الفاظ کی تربیت",true
+"nav_writing_practice","Writing Practice","تحریری مشق",true
+"no_active_exams","No assessments available right now","فی الحال کوئی تشخیص دستیاب نہیں ہے",true
+"no_active_exams_desc","You do not have any pending tests scheduled for your enrolled curriculum.","آپ کے اندراج شدہ نصاب کے لیے کوئی زیر التواء ٹیسٹ شیڈول نہیں ہیں۔",true
+"no_listening_drills","No listening drills found for selected filter.","منتخب فلٹر کے لیے کوئی سماعتی مشق نہیں ملی۔",true
+"offline_badge","Offline","آف لائن",true
+"preview_as_student","Preview as Student","طالب علم کے طور پر پیش نظارہ کریں",true
+"priority_weaknesses","Priority Weaknesses","ترجیحی کمزوریاں",true
+"qb_add_question","+ New Question","+ نیا سوال",true
+"qb_desc","Author, version, tag, review, and organize curriculum question assets","نصابی سوالاتی اثاثے تحریر کریں، ورژن کریں، ٹیگ کریں، جائزہ لیں اور منظم کریں",true
+"qb_filter_difficulty","All Difficulties","تمام مشکل درجات",true
+"qb_filter_subject","Filter by Subject","مضمون کے لحاظ سے فلٹر کریں",true
+"qb_no_questions","No questions match the current filter criteria.","موجودہ فلٹر معیار سے کوئی سوال مماثل نہیں ہے۔",true
+"qb_search_placeholder","Search questions by statement, formula, or tag...","بیان، فارمولا یا ٹیگ کے ذریعے سوالات تلاش کریں...",true
+"qb_title","Question Bank Workbench","سوالات کا بینک ورک بینچ",true
+"question_bank","Question Bank","سوالات کا بینک",true
+"question_palette","Question Palette","سوالاتی پیلیٹ",true
+"recalculate_mastery","Recalculate Mastery","مہارت کا دوبارہ حساب لگائیں",true
+"refresh","Refresh","تازہ کریں",true
+"resume_exam","Resume Active Session","فعال سیشن دوبارہ شروع کریں",true
+"role_main_admin","Main Admin","مرکزی منتظم",true
+"role_student","Student","طالب علم",true
+"role_sub_admin","Sub Admin","ذیلی منتظم",true
+"role_teacher","Teacher","استاد",true
+"save","Save","محفوظ کریں",true
+"saved","Saved ✓","محفوظ ہو گیا ✓",true
+"saving","Saving...","محفوظ ہو رہا ہے...",true
+"scorecard_solution_analysis","Solution & Answer Key Analysis","حل اور جوابی کلید تجزیہ",true
+"search","Search","تلاش کریں",true
+"select_your_answer","Select your answer:","اپنا جواب منتخب کریں:",true
+"settings_header_desc","Configure AI model providers, gateway cascade routing, appearance preferences, and exam theme styling","اے آئی ماڈل فراہم کنندگان، گیٹ وے کاسکیڈ روٹنگ، ظاہری ترجیحات اور امتحانی تھیم اسٹائلنگ کنفیگر کریں",true
+"settings_header_title","System Settings & Administration","سسٹم ترتیبات اور انتظام",true
+"settings_tab_ai","AI & Model Configuration","اے آئی اور ماڈل کنفیگریشن",true
+"settings_tab_appearance","Appearance & Theme","ظاہری شکل اور تھیم",true
+"settings_tab_entitlements","Feature Matrix & Entitlements","فیچر میٹرکس اور حقوق",true
+"settings_tab_exam_themes","Exam Paper Themes","امتحانی پرچہ تھیمز",true
+"settings_tab_languages","Language Management","زبان کا انتظام",true
+"settings_tab_maintenance","System Maintenance","سسٹم کی دیکھ بھال",true
+"sidebar_modules","Modules","ماڈیولز",true
+"status","Status","حیثیت",true
+"student_analytics_accuracy","Accuracy Rate","درستگی کی شرح",true
+"student_analytics_avg_score","Weighted Score","وزنی اسکور",true
+"student_analytics_subtitle","Track performance trends, syllabus coverage, and priority areas across all test sessions","تمام ٹیسٹ سیشنز میں کارکردگی کے رجحانات، نصابی احاطہ اور ترجیحی شعبوں کو ٹریک کریں",true
+"student_analytics_title","Student Analytics & Mastery","طلباء کے تجزیات اور مہارت",true
+"student_analytics_total_tests","Tests Completed","مکمل شدہ ٹیسٹ",true
+"student_exams_available","Available Assessments","دستیاب تشخیصات",true
+"student_exams_completed","Evaluated Attempts","تشخیص شدہ کوششیں",true
+"student_exams_start_exam","Enter Exam Hall","امتحانی ہال میں داخل ہوں",true
+"student_exams_subtitle","Assigned curriculum examinations, mock papers, and historical test sessions","تفویض شدہ نصابی امتحانات، موک پرچے اور سابقہ ٹیسٹ سیشنز",true
+"student_exams_title","My Assessments & Tests","میری تشخیصات اور امتحانات",true
+"student_exams_view_result","View Scorecard","اسکور کارڈ دیکھیں",true
+"submit_listening_drill","Submit Drill Evaluation","مشق کی تشخیص جمع کروائیں",true
+"success","Success","کامیابی",true
+"theme_dark","Dark","ڈارک",true
+"theme_light","Light","لائٹ",true
+"theme_slate","Slate","سلیٹ",true
+"top_strengths","Top Mastery Strengths","اعلیٰ مہارت کی طاقتیں",true
+"users","User Management","صارفين جي سنڀال",true
+"users_add_user","+ Create User","+ صارف بنائیں",true
+"users_desc","Manage institutional accounts, role assignments, and authentication permissions","ادارہ جاتی اکاؤنٹس، کردار کی تفویض اور تصدیقی اجازتوں کا انتظام کریں",true
+"users_no_users","No users found matching query.","استفسار سے مماثل کوئی صارف نہیں ملا۔",true
+"users_role_filter","All Roles","تمام کردار",true
+"users_search_placeholder","Search users by name, email, or role...","نام، ای میل یا کردار کے ذریعے صارفین تلاش کریں...",true
+"users_title","User & Identity Management","صارف اور شناختی انتظام",true
+"verifying_session","Verifying ExamOS session...","ExamOS سیشن کی تصدیق ہو رہی ہے...",true
+"welcome","Welcome to ExamOS Platform","ExamOS پليٽفارم تي ڀلي ڪري آيا",true
+"writing_practice_desc","AI-evaluated essay submissions across task achievement, coherence, lexical resource, and grammatical accuracy","کام کی تکمیل، ہم آہنگی، الفاظ کے وسائل اور گرامر کی درستگی میں اے آئی سے تشخیص شدہ مضمون جمع کرانے",true
+"writing_practice_submit","Submit for AI Evaluation","اے آئی تشخیص کے لیے جمع کروائیں",true
+"writing_practice_title","Writing Assessment & Essay Lab","تحریری تشخیص اور مضمون لیب",true
+"writing_practice_word_count","Word Count","الفاظ کی گنتی",true
+"your_choice_label","Your Response","آپ کا جواب",true

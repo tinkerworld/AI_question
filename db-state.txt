@@ -1,17 +1,16 @@
 ================================================================================
  ExamOS Database State Snapshot
- Generated at: 2026-09-10T00:14:30.534Z
+ Generated at: 2026-09-10T00:22:05.657Z
  Target file:  db-state.txt
  Notice:       Read-only diagnostic snapshot. Contains no PII, secrets, or content.
 ================================================================================
 
-[LANGUAGES] Total: 24
+[LANGUAGES] Total: 23
   - as    | Assamese             | active: true  | default: false | updated: 2026-09-09T23:02:28.204Z
   - bn    | Bengali              | active: true  | default: false | updated: 2026-09-09T23:02:28.183Z
   - br    | Bodo                 | active: true  | default: false | updated: 2026-09-09T23:02:28.214Z
   - doi   | Dogri                | active: true  | default: false | updated: 2026-09-09T23:02:28.216Z
   - en    | English              | active: true  | default: true  | updated: 2026-09-09T23:02:28.169Z
-  - fr    | French               | active: true  | default: false | updated: 2026-09-09T23:02:46.116Z
   - gu    | Gujarati             | active: true  | default: false | updated: 2026-09-09T23:02:28.194Z
   - hi    | Hindi                | active: true  | default: false | updated: 2026-09-09T23:02:28.181Z
   - kn    | Kannada              | active: true  | default: false | updated: 2026-09-09T23:02:28.196Z
@@ -25,19 +24,18 @@
   - or    | Odia                 | active: true  | default: false | updated: 2026-09-09T23:02:28.200Z
   - pa    | Punjabi              | active: true  | default: false | updated: 2026-09-09T23:02:28.202Z
   - sa    | Sanskrit             | active: true  | default: false | updated: 2026-09-09T23:02:28.208Z
-  - sat   | Santhali             | active: true  | default: false | updated: 2026-09-09T23:16:53.196Z
+  - sat   | Santhali             | active: false | default: false | updated: 2026-09-09T23:47:38.647Z
   - sd    | Sindhi               | active: true  | default: false | updated: 2026-09-09T23:02:28.212Z
   - ta    | Tamil                | active: true  | default: false | updated: 2026-09-09T23:02:28.190Z
   - te    | Telugu               | active: true  | default: false | updated: 2026-09-09T23:02:28.186Z
   - ur    | Urdu                 | active: true  | default: false | updated: 2026-09-09T23:02:28.192Z
 
-[TRANSLATIONS BY LANGUAGE] Total rows: 3957
+[TRANSLATIONS BY LANGUAGE] Total rows: 3956
   - as    | Assamese             : 172 rows
   - bn    | Bengali              : 172 rows
   - br    | Bodo                 : 172 rows
   - doi   | Dogri                : 172 rows
   - en    | English              : 172 rows
-  - fr    | French               : 1 rows
   - gu    | Gujarati             : 172 rows
   - hi    | Hindi                : 172 rows
   - kn    | Kannada              : 172 rows
@@ -163,6 +161,6 @@
   (No interview sessions currently recorded)
 
 [SCHEMA MIGRATION MARKERS & RECENT PHASE TABLE COUNTS]
-plans: 3 | entitlement_rules: 27 | subscriptions: 2 | ai_credit_packages: 3 | audio_voice_profiles: 10 | vocabulary_words: 8 | interview_sessions: 0 | candidate_interview_profiles: 0 | languages: 24 | translation_keys: 172 | translations: 3957 | feature_registry: 8 | maintenance_configs: 0
+plans: 3 | entitlement_rules: 27 | subscriptions: 2 | ai_credit_packages: 3 | audio_voice_profiles: 10 | vocabulary_words: 8 | interview_sessions: 0 | candidate_interview_profiles: 0 | languages: 23 | translation_keys: 172 | translations: 3956 | feature_registry: 8 | maintenance_configs: 0
 
 ================================================================================

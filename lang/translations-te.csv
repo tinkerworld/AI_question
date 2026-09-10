@@ -1,0 +1,173 @@
+﻿key,english,translation,isVerified
+"actions","Actions","చర్యలు",true
+"all","All","అన్నీ",true
+"analytics","Student Analytics","విద్యార్థి విశ్లేషణలు",true
+"app_subtitle","Adaptive Learning & Assessment OS","అనుకూలిత అభ్యాస & మూల్యాంకన OS",true
+"app_title","ExamOS // Adaptive Learning Platform","ExamOS // అడాప్టివ్ లెర్నింగ్ ప్లాట్‌ఫారమ్",true
+"archive","Published Archive","ప్రచురించిన ఆర్కైవ్",true
+"audio_passage","Audio Passage","ఆడియో భాగం",true
+"cancel","Cancel","రద్దు చేయి",true
+"close","Close","మూసివేయి",true
+"comprehension_questions","Comprehension Questions","గ్రహణ ప్రశ్నలు",true
+"confirm","Confirm","నిర్ధారించు",true
+"correct_choice_label","Correct Answer","సరైన సమాధానం",true
+"courses","Academic Courses","అకాడమిక్ కోర్సులు",true
+"courses_add_course","+ Add Course","+ కోర్సును జోడించు",true
+"courses_desc","Manage courses, subjects, chapters, and hierarchical syllabus taxonomy","కోర్సులు, సబ్జెక్టులు, అధ్యాయాలు మరియు క్రమానుగత పాఠ్యప్రణాళిక వర్గీకరణను నిర్వహించండి",true
+"courses_no_courses","No academic courses registered yet.","ఇంకా ఏ అకాడమిక్ కోర్సులు నమోదు కాలేదు.",true
+"courses_title","Academic Course Hierarchy","అకాడమిక్ కోర్సు క్రమానుగతం",true
+"dashboard","Dashboard","డాష్‌బోర్డ్",true
+"dashboard_welcome_desc","Welcome to ExamOS. Select a module from the sidebar to begin your academic workflow.","ExamOS కు స్వాగతం. మీ అకాడమిక్ వర్క్‌ఫ్లోను ప్రారంభించడానికి సైడ్‌బార్ నుండి మాడ్యూల్‌ను ఎంచుకోండి.",true
+"delete","Delete","తొలగించు",true
+"edit","Edit","సవరించు",true
+"error","Error","పొరపాటు",true
+"exam_patterns","Exam Patterns","పరీక్ష విధానాలు",true
+"exam_player_answered","Answered","సమాధానం ఇచ్చారు",true
+"exam_player_clear_answer","Clear Response","సమాధానాన్ని క్లియర్ చేయి",true
+"exam_player_flag_cancel","Cancel","రద్దు చేయి",true
+"exam_player_flag_modal_desc","Report ambiguities, inaccuracies, or typos in this question.","ఈ ప్రశ్నలో అస్పష్టతలు, తప్పులు లేదా టైపోలను నివేదించండి.",true
+"exam_player_flag_modal_title","Dispute / Flag Question","ప్రశ్నపై అభ్యంతరం / ఫ్లాగ్ చేయి",true
+"exam_player_flag_question","Flag Dispute","అభ్యంతరాన్ని ఫ్లాగ్ చేయి",true
+"exam_player_flag_reason_placeholder","Describe the issue or error in detail...","సమస్యను వివరంగా వివరించండి...",true
+"exam_player_flag_submit","Submit Flag","ఫ్లాగ్ సమర్పించు",true
+"exam_player_flag_success","Question flagged successfully for review.","ప్రశ్న సమీక్ష కోసం విజయవంతంగా ఫ్లాగ్ చేయబడింది.",true
+"exam_player_mark_review","Mark for Review","సమీక్ష కోసం గుర్తుంచు",true
+"exam_player_marked_for_review","Marked for Review","సమీక్ష కోసం గుర్తించబడింది",true
+"exam_player_marks","Marks","మార్కులు",true
+"exam_player_multiple_choice","Multiple Choice","బహుళైచ్ఛిక",true
+"exam_player_next","Save & Next","సేవ్ చేసి తదుపరికి వెళ్లు",true
+"exam_player_not_visited","Not Visited","సందర్శించలేదు",true
+"exam_player_numerical","Numerical Value","సంఖ్యా విలువ",true
+"exam_player_of","of","లో",true
+"exam_player_prev","Previous","మునుపటి",true
+"exam_player_question_counter","Question","ప్రశ్న",true
+"exam_player_single_choice","Single Choice","ఏకైక ఎంపిక",true
+"exam_player_submit_cancel","Return to Exam","పరీక్షకు తిరిగి వెళ్లు",true
+"exam_player_submit_confirm","Yes, Submit Exam","అవును, పరీక్షను సమర్పించు",true
+"exam_player_submit_exam","Submit Test","పరీక్షను సమర్పించు",true
+"exam_player_submit_modal_desc","Are you sure you want to finalize and submit your assessment? Unanswered questions cannot be changed after submission.","మీరు మీ మూల్యాంకనాన్ని ఖరారు చేసి సమర్పించాలనుకుంటున్నారా? సమర్పించిన తర్వాత సమాధానం ఇవ్వని ప్రశ్నలను మార్చలేరు.",true
+"exam_player_submit_modal_title","Confirm Exam Submission","పరీక్ష సమర్పణను నిర్ధారించు",true
+"exam_player_time_left","Time Left","మిగిలిన సమయం",true
+"exam_player_title","Exam Hall","పరీక్షా హాలు",true
+"exam_player_unanswered","Unanswered","సమాధానం ఇవ్వలేదు",true
+"exam_player_unmark_review","Unmark Review","సమీక్ష గుర్తును తీసివేయి",true
+"exam_result_back_to_exams","Back to Assessments","మూల్యాంకనాలకు తిరిగి వెళ్లు",true
+"exam_result_breakdown","Section Performance Breakdown","విభాగాల వారీగా పనితీరు వివరణ",true
+"exam_result_percentage","Percentage","శాతం",true
+"exam_result_score","Total Score","మొత్తం స్కోరు",true
+"exam_result_title","Evaluation Scorecard & Analysis","మూల్యాంకన స్కోర్‌కార్డ్ & విశ్లేషణ",true
+"exam_result_total_marks","Maximum Marks","గరిష్ట మార్కులు",true
+"exams","Exam Generator","పరీక్ష జనరేటర్",true
+"explanation","Explanation","వివరణ",true
+"feature_maintenance_tooltip","Feature disabled for maintenance","నిర్వహణ కోసం ఫీచర్ నిలిపివేయబడింది",true
+"filter","Filter","ఫిల్టర్",true
+"interview_desc","Conduct interactive voice and text oral examinations with multi-turn adaptive follow-ups and rubric scoring","బహుళ-దశల అనుకూల ఫాలో-అప్‌లు మరియు రూబ్రిక్ స్కోరింగ్‌తో ఇంటరాక్టివ్ వాయిస్ & టెక్స్ట్ మౌఖిక పరీక్షలను నిర్వహించండి",true
+"interview_end","Conclude Interview & Grade","ఇంటర్వ్యూను ముగించి గ్రేడ్ ఇవ్వండి",true
+"interview_mic_off","Muted","మ్యూట్",true
+"interview_mic_on","Microphone Active","మైక్రోఫోన్ యాక్టివ్",true
+"interview_start","Start Interview Session","ఇంటర్వ్యూ సెషన్ ప్రారంభించండి",true
+"interview_title","AI Interview & Oral Viva","AI ఇంటర్వ్యూ & మౌఖిక వైవా",true
+"listening_lab_subtitle","Standardized audio drills with natural multi-accent speech and comprehension items","సహజ బహుళ-యాస ప్రసంగం మరియు గ్రహణ అంశాలతో ప్రామాణిక ఆడియో వ్యాయామాలు",true
+"listening_lab_title","Listening Comprehension Lab","శ్రవణ గ్రహణ ప్రయోగశాల",true
+"loading","Loading...","లోడ్ అవుతోంది...",true
+"login_autofill","Auto-Fill","ఆటో-ఫిల్",true
+"login_btn_authenticating","Authenticating...","ప్రామాణీకరిస్తోంది...",true
+"login_btn_hide","Hide","దాచు",true
+"login_btn_show","Show","చూపించు",true
+"login_btn_submit","Sign In","సైన్ ఇన్ చేయి",true
+"login_email_label","Email Address","ఇమెయిల్ చిరునామా",true
+"login_email_placeholder","name@examos.com","name@examos.com",true
+"login_heading","Sign in to ExamOS","ExamOS లోకి సైన్ ఇన్ చేయండి",true
+"login_invalid_credentials","Invalid email or password","చెల్లని ఇమెయిల్ లేదా పాస్‌వర్డ్",true
+"login_password_label","Password","పాస్‌వర్డ్",true
+"login_quick_demo","QUICK DEMO ACCOUNTS (ONE-CLICK)","త్వరిత డెమో ఖాతాలు (వన్-క్లిక్)",true
+"login_subheading","Enter your credentials or choose a quick demo account","మీ వివరాలను నమోదు చేయండి లేదా త్వరిత డెమో ఖాతాను ఎంచుకోండి",true
+"logout","Log Out","లాగ్ అవుట్",true
+"logout_locked_tooltip","Exam in progress - complete assessment first","పరీక్ష జరుగుతోంది - ముందుగా మూల్యాంకనం పూర్తి చేయండి",true
+"logout_tooltip","Sign out from ExamOS","ExamOS నుండి సైన్ అవుట్ చేయండి",true
+"nav_analytics","Student Analytics & Mastery","విద్యార్థి విశ్లేషణలు & నైపుణ్యం",true
+"nav_archive","Published Archive","ప్రచురించిన ఆర్కైవ్",true
+"nav_courses","Academic Structure","అకాడమిక్ నిర్మాణం",true
+"nav_dashboard","Dashboard","డాష్‌బోర్డ్",true
+"nav_exam_patterns","Exam Patterns","పరీక్ష విధానాలు",true
+"nav_exams","Exam Generator & Papers","పరీక్ష జనరేటర్ & పేపర్లు",true
+"nav_interview","AI Interview & Viva","AI ఇంటర్వ్యూ & వైవా",true
+"nav_listening_practice","Listening Practice","శ్రవణ అభ్యాసం",true
+"nav_locked_tooltip","Navigation locked during active exam session","క్రియాశీల పరీక్ష సెషన్ సమయంలో నావిగేషన్ లాక్ చేయబడింది",true
+"nav_practice","Practice & Training","అభ్యాసం & శిక్షణ",true
+"nav_question_bank","Question Bank","ప్రశ్నల నిధి",true
+"nav_settings","Settings","సెట్టింగ్‌లు",true
+"nav_student_exams","My Assessments & Tests","నా మూల్యాంకనాలు & పరీక్షలు",true
+"nav_subscription","Subscription & Credits","సబ్‌స్క్రిప్షన్ & క్రెడిట్‌లు",true
+"nav_users","User Management","వినియోగదారు నిర్వహణ",true
+"nav_vocabulary","Vocabulary Training","పదజాల శిక్షణ",true
+"nav_writing_practice","Writing Practice","రచన అభ్యాసం",true
+"no_active_exams","No assessments available right now","ప్రస్తుతం మూల్యాంకనాలు అందుబాటులో లేవు",true
+"no_active_exams_desc","You do not have any pending tests scheduled for your enrolled curriculum.","మీ నమోదిత పాఠ్యప్రణాళిక కోసం పెండింగ్‌లో ఉన్న పరీక్షలు షెడ్యూల్ చేయబడలేదు.",true
+"no_listening_drills","No listening drills found for selected filter.","ఎంచుకున్న ఫిల్టర్ కోసం శ్రవణ వ్యాయామాలు ఏవీ కనుగొనబడలేదు.",true
+"offline_badge","Offline","ఆఫ్‌లైన్",true
+"preview_as_student","Preview as Student","విద్యార్థిగా ప్రివ్యూ చేయండి",true
+"priority_weaknesses","Priority Weaknesses","ప్రాధాన్యత బలహీనతలు",true
+"qb_add_question","+ New Question","+ కొత్త ప్రశ్న",true
+"qb_desc","Author, version, tag, review, and organize curriculum question assets","పాఠ్యప్రణాళిక ప్రశ్న ఆస్తులను రచించండి, వెర్షన్ చేయండి, ట్యాగ్ చేయండి, సమీక్షించండి మరియు నిర్వహించండి",true
+"qb_filter_difficulty","All Difficulties","అన్ని కష్టతా స్థాయిలు",true
+"qb_filter_subject","Filter by Subject","సబ్జెక్ట్ ద్వారా ఫిల్టర్ చేయండి",true
+"qb_no_questions","No questions match the current filter criteria.","ప్రస్తుత ఫిల్టర్ ప్రమాణాలకు ఏ ప్రశ్న సరిపోలలేదు.",true
+"qb_search_placeholder","Search questions by statement, formula, or tag...","ప్రకటన, సూత్రం లేదా ట్యాగ్ ద్వారా ప్రశ్నలను శోధించండి...",true
+"qb_title","Question Bank Workbench","ప్రశ్నల నిధి వర్క్‌బెంచ్",true
+"question_bank","Question Bank","ప్రశ్నల నిధి",true
+"question_palette","Question Palette","ప్రశ్న పాలెట్",true
+"recalculate_mastery","Recalculate Mastery","నైపుణ్యాన్ని తిరిగి లెక్కించండి",true
+"refresh","Refresh","రిఫ్రెష్ చేయండి",true
+"resume_exam","Resume Active Session","క్రియాశీల సెషన్‌ను తిరిగి ప్రారంభించండి",true
+"role_main_admin","Main Admin","ప్రధాన నిర్వాహకుడు",true
+"role_student","Student","విద్యార్థి",true
+"role_sub_admin","Sub Admin","ఉప-నిర్వాహకుడు",true
+"role_teacher","Teacher","ఉపాధ్యాయుడు",true
+"save","Save","సేవ్ చేయి",true
+"saved","Saved ✓","సేవ్ చేయబడింది ✓",true
+"saving","Saving...","సేవ్ అవుతోంది...",true
+"scorecard_solution_analysis","Solution & Answer Key Analysis","పరిష్కారం & జవాబు కీ విశ్లేషణ",true
+"search","Search","శోధించు",true
+"select_your_answer","Select your answer:","మీ సమాధానాన్ని ఎంచుకోండి:",true
+"settings_header_desc","Configure AI model providers, gateway cascade routing, appearance preferences, and exam theme styling","AI మోడల్ ప్రొవైడర్లు, గేట్‌వే క్యాస్కేడ్ రూటింగ్, రూపం ప్రాధాన్యతలు & పరీక్ష థీమ్ స్టైలింగ్‌ను కాన్ఫిగర్ చేయండి",true
+"settings_header_title","System Settings & Administration","సిస్టమ్ సెట్టింగ్‌లు & నిర్వహణ",true
+"settings_tab_ai","AI & Model Configuration","AI & మోడల్ కాన్ఫిగరేషన్",true
+"settings_tab_appearance","Appearance & Theme","రూపం & థీమ్",true
+"settings_tab_entitlements","Feature Matrix & Entitlements","ఫీచర్ మ్యాట్రిక్స్ & హక్కులు",true
+"settings_tab_exam_themes","Exam Paper Themes","పరీక్ష పేపర్ థీమ్‌లు",true
+"settings_tab_languages","Language Management","భాషా నిర్వహణ",true
+"settings_tab_maintenance","System Maintenance","సిస్టమ్ నిర్వహణ",true
+"sidebar_modules","Modules","మాడ్యూళ్లు",true
+"status","Status","స్థితి",true
+"student_analytics_accuracy","Accuracy Rate","ఖచ్చితత్వం రేటు",true
+"student_analytics_avg_score","Weighted Score","బరువైన స్కోరు",true
+"student_analytics_subtitle","Track performance trends, syllabus coverage, and priority areas across all test sessions","అన్ని పరీక్ష సెషన్లలో పనితీరు ధోరణులు, పాఠ్యప్రణాళిక కవరేజ్ & ప్రాధాన్యతా ప్రాంతాలను ట్రాక్ చేయండి",true
+"student_analytics_title","Student Analytics & Mastery","విద్యార్థి విశ్లేషణలు & నైపుణ్యం",true
+"student_analytics_total_tests","Tests Completed","పూర్తయిన పరీక్షలు",true
+"student_exams_available","Available Assessments","అందుబాటులో ఉన్న మూల్యాంకనాలు",true
+"student_exams_completed","Evaluated Attempts","మూల్యాంకనం చేసిన ప్రయత్నాలు",true
+"student_exams_start_exam","Enter Exam Hall","పరీక్షా హాల్‌లోకి ప్రవేశించండి",true
+"student_exams_subtitle","Assigned curriculum examinations, mock papers, and historical test sessions","కేటాయించిన పాఠ్యప్రణాళిక పరీక్షలు, మాక్ పేపర్లు & చారిత్రక పరీక్ష సెషన్లు",true
+"student_exams_title","My Assessments & Tests","నా మూల్యాంకనాలు & పరీక్షలు",true
+"student_exams_view_result","View Scorecard","స్కోర్‌కార్డ్ చూడండి",true
+"submit_listening_drill","Submit Drill Evaluation","అభ్యాస మూల్యాంకనాన్ని సమర్పించండి",true
+"success","Success","విజయం",true
+"theme_dark","Dark","డార్క్",true
+"theme_light","Light","లైట్",true
+"theme_slate","Slate","స్లేట్",true
+"top_strengths","Top Mastery Strengths","అగ్రస్థాయి నైపుణ్య బలాలు",true
+"users","User Management","వినియోగదారు నిర్వహణ",true
+"users_add_user","+ Create User","+ వినియోగదారుని సృష్టించండి",true
+"users_desc","Manage institutional accounts, role assignments, and authentication permissions","సంస్థాగత ఖాతాలు, పాత్ర కేటాయింపులు & ప్రామాణీకరణ అనుమతులను నిర్వహించండి",true
+"users_no_users","No users found matching query.","క్వెరీకి సరిపోలే వినియోగదారులు ఎవరూ కనుగొనబడలేదు.",true
+"users_role_filter","All Roles","అన్ని పాత్రలు",true
+"users_search_placeholder","Search users by name, email, or role...","పేరు, ఇమెయిల్ లేదా పాత్ర ద్వారా వినియోగదారులను శోధించండి...",true
+"users_title","User & Identity Management","వినియోగదారు & గుర్తింపు నిర్వహణ",true
+"verifying_session","Verifying ExamOS session...","ExamOS సెషన్ ధృవీకరించబడుతోంది...",true
+"welcome","Welcome to ExamOS Platform","ExamOS వేదికకు స్వాగతం",true
+"writing_practice_desc","AI-evaluated essay submissions across task achievement, coherence, lexical resource, and grammatical accuracy","పని సాధన, పొందిక, పదజాల వనరు & వ్యాకరణ ఖచ్చితత్వం అంతటా AI-మూల్యాంకనం చేసిన వ్యాస సమర్పణలు",true
+"writing_practice_submit","Submit for AI Evaluation","AI మూల్యాంకనం కోసం సమర్పించండి",true
+"writing_practice_title","Writing Assessment & Essay Lab","రచన మూల్యాంకనం & వ్యాస ప్రయోగశాల",true
+"writing_practice_word_count","Word Count","పద గణన",true
+"your_choice_label","Your Response","మీ సమాధానం",true
