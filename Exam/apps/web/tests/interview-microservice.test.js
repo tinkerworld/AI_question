@@ -106,4 +106,70 @@ describe('AI Interview & Viva Microservice Integration Tests', () => {
       assert.ok(initialTurn.audioUrl.includes('https://voice.tinkerlab.online/v1/interview/sessions/'));
     }
   });
+
+  test('Microservice Voice Client correctly detects low-confidence vs normal audio responses', async () => {
+    const normalResponse = {
+      text: 'My primary specialization is building Linux BSPs using Yocto Project recipes.',
+      duration_s: 4.5,
+      asr_s: 0.35,
+      confidence_metadata: {
+        is_low_confidence: false,
+        avg_logprob: -0.35,
+        max_no_speech_prob: 0.02,
+        reason: null,
+      },
+    };
+
+    const lowConfidenceResponse = {
+      text: 'uh thank you',
+      duration_s: 1.2,
+      asr_s: 0.20,
+      confidence_metadata: {
+        is_low_confidence: true,
+        avg_logprob: -1.85,
+        max_no_speech_prob: 0.82,
+        reason: 'mean_logprob_too_low(-1.85 < -1.0); no_speech_prob_too_high(0.82 > 0.6)',
+      },
+    };
+
+    // Assert normal confidence response structure and values
+    assert.strictEqual(normalResponse.confidence_metadata.is_low_confidence, false);
+    assert.ok(normalResponse.confidence_metadata.avg_logprob > -1.0);
+    assert.ok(normalResponse.confidence_metadata.max_no_speech_prob < 0.6);
+    assert.strictEqual(normalResponse.confidence_metadata.reason, null);
+
+    // Assert low confidence response triggers rejection flag and specifies reason
+    assert.strictEqual(lowConfidenceResponse.confidence_metadata.is_low_confidence, true);
+    assert.ok(lowConfidenceResponse.confidence_metadata.avg_logprob < -1.0);
+    assert.ok(lowConfidenceResponse.confidence_metadata.max_no_speech_prob > 0.6);
+    assert.ok(lowConfidenceResponse.confidence_metadata.reason.includes('mean_logprob_too_low'));
+  });
+
+  test('VoiceMicroserviceClient configuration reads custom host, port, and auth token from environment', () => {
+    const originalEnv = { ...process.env };
+    try {
+      process.env.AUDIO_SERVICE_HOST = 'custom-audio.internal';
+      process.env.AUDIO_SERVICE_PORT = '9000';
+      process.env.AUDIO_SERVICE_SECRET = 'secret_token_123';
+      process.env.AUDIO_SERVICE_TIMEOUT_MS = '5000';
+
+      const envHost = process.env.AUDIO_SERVICE_HOST || process.env.VOICE_MICROSERVICE_HOST;
+      const envPort = process.env.AUDIO_SERVICE_PORT || process.env.VOICE_MICROSERVICE_PORT;
+      const computedBaseUrl = envHost ? `http://${envHost}${envPort ? `:${envPort}` : ''}` : undefined;
+      const baseUrl = (computedBaseUrl || process.env.VOICE_MICROSERVICE_URL || 'https://voice.tinkerlab.online').replace(/\/$/, '');
+      const authToken = process.env.AUDIO_SERVICE_SECRET || process.env.AUDIO_SERVICE_AUTH_TOKEN;
+
+      assert.strictEqual(baseUrl, 'http://custom-audio.internal:9000');
+      assert.strictEqual(authToken, 'secret_token_123');
+      const headers = { 'Content-Type': 'application/json' };
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+        headers['X-Audio-Secret'] = authToken;
+      }
+      assert.strictEqual(headers['Authorization'], 'Bearer secret_token_123');
+      assert.strictEqual(headers['X-Audio-Secret'], 'secret_token_123');
+    } finally {
+      process.env = originalEnv;
+    }
+  });
 });

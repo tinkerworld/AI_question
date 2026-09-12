@@ -83,13 +83,30 @@ export interface RemoteSessionState {
 export class VoiceMicroserviceClient {
   private static instance: VoiceMicroserviceClient;
   private baseUrl: string;
+  private authToken?: string;
+  private timeoutMs: number;
 
-  constructor(baseUrl?: string) {
+  constructor(options?: { baseUrl?: string; host?: string; port?: number; authToken?: string; timeoutMs?: number }) {
+    const envHost = process.env.AUDIO_SERVICE_HOST || process.env.VOICE_MICROSERVICE_HOST;
+    const envPort = process.env.AUDIO_SERVICE_PORT || process.env.VOICE_MICROSERVICE_PORT;
+    const computedBaseUrl = envHost ? `http://${envHost}${envPort ? `:${envPort}` : ''}` : undefined;
+
     this.baseUrl = (
-      baseUrl ||
+      options?.baseUrl ||
+      computedBaseUrl ||
       process.env.VOICE_MICROSERVICE_URL ||
       'https://voice.tinkerlab.online'
     ).replace(/\/$/, '');
+
+    this.authToken =
+      options?.authToken ||
+      process.env.AUDIO_SERVICE_SECRET ||
+      process.env.AUDIO_SERVICE_AUTH_TOKEN ||
+      process.env.VOICE_MICROSERVICE_AUTH_TOKEN;
+
+    this.timeoutMs =
+      options?.timeoutMs ||
+      Number(process.env.AUDIO_SERVICE_TIMEOUT_MS || process.env.VOICE_MICROSERVICE_TIMEOUT_MS || 10000);
   }
 
   static getInstance(): VoiceMicroserviceClient {
@@ -103,6 +120,15 @@ export class VoiceMicroserviceClient {
     return this.baseUrl;
   }
 
+  getHeaders(contentType: string = 'application/json'): Record<string, string> {
+    const headers: Record<string, string> = { 'Content-Type': contentType };
+    if (this.authToken) {
+      headers['Authorization'] = `Bearer ${this.authToken}`;
+      headers['X-Audio-Secret'] = this.authToken;
+    }
+    return headers;
+  }
+
   getVoicePersonas(): VoicePersonaDefinition[] {
     return VOICE_PERSONAS;
   }
@@ -113,6 +139,7 @@ export class VoiceMicroserviceClient {
       const timeoutId = setTimeout(() => controller.abort(), 3500);
       const res = await fetch(`${this.baseUrl}/v1/health`, {
         signal: controller.signal,
+        headers: this.getHeaders(),
       });
       clearTimeout(timeoutId);
       if (!res.ok) return false;
@@ -120,6 +147,22 @@ export class VoiceMicroserviceClient {
       return data.status === 'healthy';
     } catch {
       return false;
+    }
+  }
+
+  async getAudioHealth(): Promise<{ status: string; service?: string; whisper_model?: string; active_device?: string }> {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3500);
+      const res = await fetch(`${this.baseUrl}/v1/audio/health`, {
+        signal: controller.signal,
+        headers: this.getHeaders(),
+      });
+      clearTimeout(timeoutId);
+      if (!res.ok) throw new Error(`Health check returned status ${res.status}`);
+      return (await res.json()) as any;
+    } catch (e: any) {
+      return { status: 'error', service: e.message };
     }
   }
 
@@ -213,7 +256,7 @@ export class VoiceMicroserviceClient {
       audio_base64?: string;
       audio_format?: string;
     }
-  ): Promise<{ status: string; session_id: string; transcription?: string }> {
+  ): Promise<{ status: string; session_id: string; transcription?: string; confidence_metadata?: any }> {
     const body: any = {};
     if (params.answer !== undefined) body.answer = params.answer;
     if (params.audio_base64 !== undefined) {
@@ -223,7 +266,7 @@ export class VoiceMicroserviceClient {
 
     const res = await fetch(`${this.baseUrl}/v1/interview/sessions/${sessionId}/answer`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: this.getHeaders('application/json'),
       body: JSON.stringify(body),
     });
 
@@ -233,6 +276,65 @@ export class VoiceMicroserviceClient {
     }
 
     return (await res.json()) as any;
+  }
+
+  async transcribeAudio(params: {
+    audio_base64: string;
+    audio_format?: string;
+    language?: string;
+    min_words?: number;
+  }): Promise<{
+    text: string;
+    duration_s: number;
+    asr_s: number;
+    confidence_metadata?: {
+      is_low_confidence: boolean;
+      avg_logprob: number;
+      max_no_speech_prob: number;
+      reason?: string | null;
+    };
+    error?: string;
+  }> {
+    const res = await fetch(`${this.baseUrl}/v1/audio/transcribe`, {
+      method: 'POST',
+      headers: this.getHeaders('application/json'),
+      body: JSON.stringify({
+        audio_base64: params.audio_base64,
+        audio_format: params.audio_format || 'webm',
+        language: params.language || 'en',
+        min_words: params.min_words || 1,
+      }),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Failed to transcribe audio via microservice (${res.status}): ${text}`);
+    }
+
+    return (await res.json()) as any;
+  }
+
+  async synthesizeAudio(params: {
+    text: string;
+    voice?: string;
+    rate?: number;
+  }): Promise<ArrayBuffer> {
+    const res = await fetch(`${this.baseUrl}/v1/audio/synthesize`, {
+      method: 'POST',
+      headers: this.getHeaders('application/json'),
+      body: JSON.stringify({
+        text: params.text,
+        voice: params.voice || 'emma',
+        rate: params.rate || 1.0,
+      }),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Failed to synthesize audio via microservice (${res.status}): ${text}`);
+    }
+
+    return await res.arrayBuffer();
   }
 
   async skipQuestion(sessionId: string): Promise<{ status: string; session_id: string }> {

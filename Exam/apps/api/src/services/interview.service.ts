@@ -459,6 +459,7 @@ export class InterviewService {
       await db.query(`ALTER TABLE "interview_turns" ADD COLUMN IF NOT EXISTS "evidenceCites" JSONB`);
       await db.query(`ALTER TABLE "interview_turns" ADD COLUMN IF NOT EXISTS "expectedConcepts" JSONB`);
       await db.query(`ALTER TABLE "interview_turns" ADD COLUMN IF NOT EXISTS "evaluationData" JSONB`);
+      await db.query(`ALTER TABLE "interview_turns" ADD COLUMN IF NOT EXISTS "confidenceMetadata" JSONB`);
     } catch {}
     this.schemaInitialized = true;
   }
@@ -3369,11 +3370,23 @@ Output JSON only.`;
       };
 
       try {
-        await microserviceClient.submitAnswer(sessionRow.remoteSessionId, {
+        const answerResp = await microserviceClient.submitAnswer(sessionRow.remoteSessionId, {
           answer: trimmedMessage,
           audio_base64: dto.audioBase64,
           audio_format: dto.audioFormat || 'webm',
         });
+
+        const confidenceMetadata = answerResp?.confidence_metadata || null;
+        if (confidenceMetadata) {
+          (candidateTurn as any).confidenceMetadata = confidenceMetadata;
+          if (confidenceMetadata.is_low_confidence) {
+            console.warn(`[InterviewService] Turn ${currentTurnNumber}: Low confidence audio detected (avg_logprob=${confidenceMetadata.avg_logprob}, no_speech=${confidenceMetadata.max_no_speech_prob}, reason=${confidenceMetadata.reason})`);
+          }
+          await db.query(
+            `UPDATE "interview_turns" SET "confidenceMetadata" = $1 WHERE "id" = $2`,
+            [JSON.stringify(confidenceMetadata), candidateTurnId]
+          );
+        }
 
         const lastAiTurn = [...existingTurns].reverse().find((t) => t.speaker === 'AI');
         const previousQuestion = lastAiTurn?.message;
