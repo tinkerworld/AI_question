@@ -436,6 +436,20 @@ export class InterviewService {
       await db.query(`UPDATE "entitlement_rules" SET "entitlementValue" = '2' WHERE "entitlementKey" = 'ai_interview_daily' AND "planCode" = 'PREMIUM'`);
       await db.query(`UPDATE "entitlement_rules" SET "entitlementValue" = '100' WHERE "entitlementKey" = 'ai_interview_daily' AND "planCode" = 'PREMIUM_PLUS'`);
     } catch {}
+    try {
+      await db.query(`
+        CREATE TABLE IF NOT EXISTS "user_voice_profiles" (
+          "id" TEXT PRIMARY KEY,
+          "userId" TEXT NOT NULL UNIQUE REFERENCES "users"("id") ON DELETE CASCADE,
+          "voiceProfile" JSONB NOT NULL,
+          "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+          "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+    } catch {}
+    try {
+      await db.query(`ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "voiceProfile" JSONB`);
+    } catch {}
     this.schemaInitialized = true;
   }
 
@@ -1282,6 +1296,77 @@ Output JSON only.`;
     await this.ensureSchema();
     const db = pgDb;
     await db.query(`DELETE FROM "candidate_interview_profiles" WHERE "userId" = $1`, [userId]);
+  }
+
+  /**
+   * Retrieves the persisted VoiceProfile for a given student userId (Sprint 3)
+   */
+  static async getVoiceProfile(userId: string): Promise<{ profile: any; updatedAt: string } | null> {
+    await InterviewService.ensureSchema();
+    const db = pgDb;
+    try {
+      const res = await db.query(
+        `SELECT "voiceProfile", "updatedAt" FROM "user_voice_profiles" WHERE "userId" = $1`,
+        [userId]
+      );
+      if (res.rows && res.rows.length > 0) {
+        const row = res.rows[0] as any;
+        return {
+          profile: row.voiceProfile,
+          updatedAt: row.updatedAt,
+        };
+      }
+      // Fallback check on users table column if present
+      const userRes = await db.query(
+        `SELECT "voiceProfile", "updatedAt" FROM "users" WHERE "id" = $1`,
+        [userId]
+      );
+      if (userRes.rows && userRes.rows.length > 0) {
+        const uRow = userRes.rows[0] as any;
+        if (uRow.voiceProfile) {
+          return {
+            profile: uRow.voiceProfile,
+            updatedAt: uRow.updatedAt || new Date().toISOString(),
+          };
+        }
+      }
+      return null;
+    } catch (err) {
+      console.error('getVoiceProfile error:', err);
+      return null;
+    }
+  }
+
+  /**
+   * Persists or updates the VoiceProfile against the student user profile (Sprint 3)
+   */
+  static async saveVoiceProfile(userId: string, voiceProfile: any): Promise<{ profile: any; updatedAt: string }> {
+    await InterviewService.ensureSchema();
+    const db = pgDb;
+    const id = `vp_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    const now = new Date().toISOString();
+
+    // 1. Upsert into user_voice_profiles table
+    await db.query(
+      `INSERT INTO "user_voice_profiles" ("id", "userId", "voiceProfile", "createdAt", "updatedAt")
+       VALUES ($1, $2, $3, $4, $4)
+       ON CONFLICT ("userId")
+       DO UPDATE SET "voiceProfile" = EXCLUDED."voiceProfile", "updatedAt" = EXCLUDED."updatedAt"`,
+      [id, userId, JSON.stringify(voiceProfile), now]
+    );
+
+    // 2. Also keep users.voiceProfile in sync for direct user record persistence
+    try {
+      await db.query(
+        `UPDATE "users" SET "voiceProfile" = $1, "updatedAt" = CURRENT_TIMESTAMP WHERE "id" = $2`,
+        [JSON.stringify(voiceProfile), userId]
+      );
+    } catch {}
+
+    return {
+      profile: voiceProfile,
+      updatedAt: now,
+    };
   }
 
   /**
