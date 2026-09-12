@@ -391,4 +391,58 @@ router.post(
   }
 );
 
+/**
+ * GET /api/v1/interview/workspaces
+ * Lists available knowledge workspaces from the microservice.
+ */
+router.get(
+  '/workspaces',
+  requirePermission(PERMISSIONS.INTERVIEW_ATTEMPT),
+  async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+      const workspaces = await InterviewService.getWorkspaces();
+      res.json({ success: true, data: workspaces });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+/**
+ * GET /api/v1/interview/voice-personas
+ * Lists available examiner voice personas.
+ */
+router.get(
+  '/voice-personas',
+  requirePermission(PERMISSIONS.INTERVIEW_ATTEMPT),
+  async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+      const personas = InterviewService.getVoicePersonas();
+      res.json({ success: true, data: personas });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+/**
+ * POST /api/v1/interview/sessions/:id/skip
+ * Skips current question turn in the interview.
+ */
+router.post(
+  '/sessions/:id/skip',
+  requirePermission(PERMISSIONS.INTERVIEW_ATTEMPT),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const result = await InterviewService.skipTurn(req.params.id, {
+        userId: (req as any).user.userId,
+        roles: (req as any).user.roles || [],
+      });
+      res.json({ success: true, data: result });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 export default router;

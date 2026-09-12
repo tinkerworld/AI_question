@@ -98,6 +98,19 @@ const getSafeArray = (val: any, fallback: string[] = []): string[] => {
   return fallback;
 };
 
+// 9 High-Fidelity Examiner Voice Personas (AI Interview Microservice)
+const DEFAULT_VOICE_PERSONAS = [
+  { id: 'emma', name: 'Emma', gender: 'Female', accent: 'British (UK)', tone: 'Professional & Warm', flag: '🇬🇧' },
+  { id: 'pooja', name: 'Pooja', gender: 'Female', accent: 'Indian (IN)', tone: 'Academic & Precise', flag: '🇮🇳' },
+  { id: 'sarah', name: 'Sarah', gender: 'Female', accent: 'American (US)', tone: 'Clear & Corporate', flag: '🇺🇸' },
+  { id: 'chloe', name: 'Chloe', gender: 'Female', accent: 'Australian (AU)', tone: 'Engaging & Natural', flag: '🇦🇺' },
+  { id: 'james', name: 'James', gender: 'Male', accent: 'American (US)', tone: 'Direct & Confident', flag: '🇺🇸' },
+  { id: 'liam', name: 'Liam', gender: 'Male', accent: 'British (UK)', tone: 'Technical & Steady', flag: '🇬🇧' },
+  { id: 'rohan', name: 'Rohan', gender: 'Male', accent: 'Indian (IN)', tone: 'Dynamic & Focused', flag: '🇮🇳' },
+  { id: 'arthur', name: 'Arthur', gender: 'Male', accent: 'British (UK)', tone: 'Formal & Thoughtful', flag: '🇬🇧' },
+  { id: 'david', name: 'David', gender: 'Male', accent: 'Australian (AU)', tone: 'Relaxed & Encouraging', flag: '🇦🇺' },
+];
+
 export const InterviewPage: React.FC = () => {
   const { user, token } = useAuth();
 
@@ -105,6 +118,11 @@ export const InterviewPage: React.FC = () => {
   const [activeView, setActiveView] = useState<'CATALOG' | 'ROOM' | 'EVALUATION' | 'HISTORY' | 'GROWTH'>('CATALOG');
   const [selectedMode, setSelectedMode] = useState<InterviewMode>('PRACTICE');
   const [selectedCourseFilter, setSelectedCourseFilter] = useState<string>('');
+
+  // Voice Persona & Streaming States (Microservice Integration)
+  const [selectedVoicePersona, setSelectedVoicePersona] = useState<string>('emma');
+  const [isAiSpeaking, setIsAiSpeaking] = useState<boolean>(false);
+  const currentAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // Eligibility & Data States
   const [eligibility, setEligibility] = useState<InterviewEligibilityDTO | null>(null);
@@ -450,13 +468,53 @@ export const InterviewPage: React.FC = () => {
     }
   }, [activeSession?.turns]);
 
-  // Speak AI message using Text-to-Speech
-  const speakMessage = (text: string) => {
-    if (!ttsEnabled || typeof window === 'undefined' || !window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
+  // Speak AI message using Native Streaming Audio or SpeechSynthesis fallback
+  const speakMessage = (text: string, audioUrl?: string | null) => {
+    if (!ttsEnabled) return;
+
+    if (currentAudioRef.current) {
+      try {
+        currentAudioRef.current.pause();
+        currentAudioRef.current = null;
+      } catch {}
+    }
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+
+    if (audioUrl) {
+      try {
+        setIsAiSpeaking(true);
+        const audio = new Audio(audioUrl);
+        currentAudioRef.current = audio;
+        audio.onended = () => {
+          setIsAiSpeaking(false);
+          currentAudioRef.current = null;
+        };
+        audio.onerror = () => {
+          setIsAiSpeaking(false);
+          currentAudioRef.current = null;
+          if (typeof window !== 'undefined' && window.speechSynthesis) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 1.0;
+            utterance.pitch = 1.0;
+            window.speechSynthesis.speak(utterance);
+          }
+        };
+        audio.play().catch(() => {
+          setIsAiSpeaking(false);
+        });
+        return;
+      } catch {}
+    }
+
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+    setIsAiSpeaking(true);
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.rate = 1.0;
     utterance.pitch = 1.0;
+    utterance.onend = () => setIsAiSpeaking(false);
+    utterance.onerror = () => setIsAiSpeaking(false);
     window.speechSynthesis.speak(utterance);
   };
 
@@ -510,6 +568,7 @@ export const InterviewPage: React.FC = () => {
         body: JSON.stringify({
           questionId,
           mode: selectedMode,
+          voicePersona: selectedVoicePersona,
         }),
       });
 
@@ -519,7 +578,7 @@ export const InterviewPage: React.FC = () => {
         setActiveView('ROOM');
         setCandidateInput('');
         if (data.data.initialTurn?.message) {
-          speakMessage(data.data.initialTurn.message);
+          speakMessage(data.data.initialTurn.message, data.data.initialTurn.audioUrl);
         }
       } else {
         setError(data.message || 'Failed to start interview session');
@@ -604,7 +663,7 @@ export const InterviewPage: React.FC = () => {
       if (data.success) {
         setActiveSession(data.data.session);
         if (data.data.aiTurn?.message) {
-          speakMessage(data.data.aiTurn.message);
+          speakMessage(data.data.aiTurn.message, data.data.aiTurn.audioUrl);
         }
 
         // Automatic transition to results/scorecard view when session concludes
@@ -621,7 +680,37 @@ export const InterviewPage: React.FC = () => {
       setIsSubmittingTurn(false);
       setTimeout(() => {
         isSubmittingRef.current = false;
-      }, 300);
+      }, 500);
+    }
+  };
+
+  // Skip Question Turn
+  const handleSkipTurn = async () => {
+    if (!activeSession || isSubmittingTurn) return;
+    try {
+      setIsSubmittingTurn(true);
+      setError(null);
+      const res = await fetch(`${API_BASE}/interview/sessions/${activeSession.id}/skip`, {
+        method: 'POST',
+        headers: getAuthHeaders(token),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setActiveSession(data.data);
+        const latestAi = [...(data.data.turns || [])].reverse().find((t: any) => t.speaker === 'AI');
+        if (latestAi?.message) {
+          speakMessage(latestAi.message, latestAi.audioUrl);
+        }
+        if (data.data.status === 'COMPLETED') {
+          await handleCompleteInterview(data.data.id);
+        }
+      } else {
+        setError(data.message || 'Failed to skip question');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Error skipping question');
+    } finally {
+      setIsSubmittingTurn(false);
     }
   };
 
@@ -990,6 +1079,50 @@ export const InterviewPage: React.FC = () => {
               onCalibrationReset={handleCalibrationReset}
             />
 
+            {/* 3.1 Examiner Voice Persona Selection */}
+            <div style={{ margin: '16px 0', padding: '14px', background: 'rgba(255, 255, 255, 0.02)', borderRadius: '8px', border: '1px solid var(--border-color, #2d333b)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                <h4 style={{ margin: 0, color: 'var(--text-main, #e6edf3)', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span>🎙️</span> Choose Examiner Voice Persona:
+                </h4>
+                <span style={{ fontSize: '11px', color: '#06b6d4', fontWeight: 600 }}>9 Accents Available</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '8px' }}>
+                {DEFAULT_VOICE_PERSONAS.map((p) => {
+                  const isSelected = selectedVoicePersona === p.id;
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      id={`btn-persona-${p.id}`}
+                      onClick={() => setSelectedVoicePersona(p.id)}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'flex-start',
+                        padding: '10px 12px',
+                        borderRadius: '6px',
+                        border: isSelected ? '2px solid #06b6d4' : '1px solid var(--border-color, #2d333b)',
+                        background: isSelected ? 'rgba(6, 182, 212, 0.12)' : 'rgba(255, 255, 255, 0.02)',
+                        color: 'var(--text-main, #e6edf3)',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', width: '100%', marginBottom: '4px' }}>
+                        <span style={{ fontSize: '16px' }}>{p.flag}</span>
+                        <strong style={{ fontSize: '12px', color: isSelected ? '#38bdf8' : 'inherit' }}>{p.name}</strong>
+                        <span style={{ fontSize: '10px', color: 'var(--text-muted, #8b949e)', marginLeft: 'auto' }}>{p.gender}</span>
+                      </div>
+                      <div style={{ fontSize: '10px', color: 'var(--text-muted, #8b949e)' }}>{p.accent}</div>
+                      <div style={{ fontSize: '9px', color: '#a5f3fc', marginTop: '2px' }}>{p.tone}</div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* 4. Evaluation & Rubrics */}
             <h4 style={{ margin: '14px 0 8px', color: 'var(--text-main, #e6edf3)', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span>📊</span> Assessment Format & Rubric Criteria:
@@ -1119,6 +1252,35 @@ export const InterviewPage: React.FC = () => {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+              {/* Persona & Speaking Badge */}
+              {activeSession.voicePersona && (
+                <div
+                  id="voice-persona-badge"
+                  data-testid="voice-persona-badge"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '11px',
+                    padding: '3px 10px',
+                    borderRadius: '6px',
+                    background: isAiSpeaking ? 'rgba(236, 72, 153, 0.2)' : 'rgba(168, 85, 247, 0.15)',
+                    border: `1px solid ${isAiSpeaking ? '#ec4899' : '#a855f7'}`,
+                    color: isAiSpeaking ? '#ec4899' : '#a855f7',
+                    fontWeight: 600,
+                  }}
+                  title={`Examiner Voice Persona: ${activeSession.voicePersona}`}
+                >
+                  <span>{isAiSpeaking ? '🔊' : '🎙️'}</span>
+                  <span>{activeSession.voicePersona}</span>
+                  {isAiSpeaking && (
+                    <span style={{ fontSize: '10px', color: '#ec4899', fontWeight: 700 }}>
+                      [Speaking...]
+                    </span>
+                  )}
+                </div>
+              )}
+
               {/* Unobtrusive Live Provider Indicator */}
               <div
                 id="active-provider-badge"
@@ -1451,7 +1613,7 @@ export const InterviewPage: React.FC = () => {
 
                     {isAi && (
                       <button
-                        onClick={() => speakMessage(turn.message)}
+                        onClick={() => speakMessage(turn.message, turn.audioUrl)}
                         title="Replay Audio"
                         style={{
                           background: 'none',
@@ -1465,6 +1627,37 @@ export const InterviewPage: React.FC = () => {
                       >
                         🔊
                       </button>
+                    )}
+
+                    {isAi && turn.evidenceCites && turn.evidenceCites.length > 0 && (
+                      <div
+                        style={{
+                          marginTop: '8px',
+                          paddingTop: '6px',
+                          borderTop: '1px dashed rgba(6, 182, 212, 0.3)',
+                          fontSize: '11px',
+                          color: '#06b6d4',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          flexWrap: 'wrap',
+                        }}
+                      >
+                        <span style={{ fontWeight: 600 }}>📚 Sources:</span>
+                        {turn.evidenceCites.map((cite, cIdx) => (
+                          <span
+                            key={cIdx}
+                            style={{
+                              background: 'rgba(6, 182, 212, 0.15)',
+                              padding: '1px 6px',
+                              borderRadius: '3px',
+                              fontSize: '10px',
+                            }}
+                          >
+                            {cite}
+                          </span>
+                        ))}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -1657,6 +1850,28 @@ export const InterviewPage: React.FC = () => {
                 >
                   Submit Turn →
                 </button>
+
+                {activeSession.remoteSessionId && (
+                  <button
+                    type="button"
+                    id="btn-skip-turn"
+                    onClick={handleSkipTurn}
+                    disabled={isSubmittingTurn}
+                    title="Skip current question (advance to next topic)"
+                    style={{
+                      padding: '10px 14px',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-secondary)',
+                      color: 'var(--text-muted)',
+                      fontWeight: 600,
+                      fontSize: '13px',
+                      cursor: isSubmittingTurn ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    ⏭️ Skip
+                  </button>
+                )}
 
                 {activeSession.turns && activeSession.turns.filter((t) => t.speaker === 'CANDIDATE').length >= 1 && (
                   <button

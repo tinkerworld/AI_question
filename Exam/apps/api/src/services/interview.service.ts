@@ -19,6 +19,7 @@ import { AIGatewayService } from './ai-gateway.service';
 import { AIUsageService } from './ai-usage.service';
 import { DocumentExtractionService } from './document-extraction.service';
 import { AppError } from '../middleware/error';
+import { VoiceMicroserviceClient, VOICE_PERSONAS, VoicePersonaDefinition } from './voice-microservice.client';
 
 export function detectScoreTrend(scores: number[]): { trend: 'IMPROVING' | 'PLATEAU' | 'DEGRADING'; trendDelta: number } {
   if (!scores || scores.length < 2) {
@@ -449,6 +450,15 @@ export class InterviewService {
     } catch {}
     try {
       await db.query(`ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "voiceProfile" JSONB`);
+    } catch {}
+    try {
+      await db.query(`ALTER TABLE "interview_sessions" ADD COLUMN IF NOT EXISTS "remoteSessionId" TEXT`);
+      await db.query(`ALTER TABLE "interview_sessions" ADD COLUMN IF NOT EXISTS "voicePersona" TEXT`);
+      await db.query(`ALTER TABLE "interview_sessions" ADD COLUMN IF NOT EXISTS "remoteWorkspaceId" TEXT`);
+      await db.query(`ALTER TABLE "interview_turns" ADD COLUMN IF NOT EXISTS "audioUrl" TEXT`);
+      await db.query(`ALTER TABLE "interview_turns" ADD COLUMN IF NOT EXISTS "evidenceCites" JSONB`);
+      await db.query(`ALTER TABLE "interview_turns" ADD COLUMN IF NOT EXISTS "expectedConcepts" JSONB`);
+      await db.query(`ALTER TABLE "interview_turns" ADD COLUMN IF NOT EXISTS "evaluationData" JSONB`);
     } catch {}
     this.schemaInitialized = true;
   }
@@ -1370,6 +1380,109 @@ Output JSON only.`;
   }
 
   /**
+   * Resolves appropriate microservice knowledge workspace for the interview question.
+   */
+  static resolveWorkspaceId(dto: StartInterviewDTO, qData: any, qRow: any): string {
+    if (dto.workspaceId) return dto.workspaceId;
+    if (qData?.workspaceId) return qData.workspaceId;
+
+    const isIelts =
+      qData?.examStyle === 'IELTS_SPEAKING' ||
+      qData?.preset === 'IELTS_SPEAKING' ||
+      (qRow?.courseName && /ielts|english|speaking/i.test(qRow.courseName)) ||
+      (qRow?.content && /ielts/i.test(qRow.content));
+    if (isIelts) return 'ws_ielts';
+
+    const isVideoAi =
+      (qRow?.courseName && /video|generative|diffusion/i.test(qRow.courseName)) ||
+      (qRow?.content && /hunyuan|video ai/i.test(qRow.content));
+    if (isVideoAi) return 'ws_video_ai';
+
+    const isTechnical =
+      (qRow?.courseName && /yocto|embedded|linux|c\+\+|kernel|systems/i.test(qRow.courseName)) ||
+      (qRow?.content && /bitbake|recipe|kernel|linux/i.test(qRow.content));
+    if (isTechnical) return 'ws_yocto';
+
+    return qRow?.type === 'INTERVIEW' ? 'ws_yocto' : 'ws_ielts';
+  }
+
+  /**
+   * Retrieves available knowledge workspaces from the microservice.
+   */
+  static async getWorkspaces(): Promise<any[]> {
+    return await VoiceMicroserviceClient.getInstance().listWorkspaces();
+  }
+
+  /**
+   * Retrieves available voice personas.
+   */
+  static getVoicePersonas(): VoicePersonaDefinition[] {
+    return VoiceMicroserviceClient.getInstance().getVoicePersonas();
+  }
+
+  /**
+   * Skips the current turn in the microservice interview session.
+   */
+  static async skipTurn(
+    sessionId: string,
+    user: { userId: string; roles?: string[] }
+  ): Promise<InterviewSessionDTO> {
+    await InterviewService.ensureSchema();
+    const db = pgDb;
+    const sessRes = await db.query(`SELECT * FROM "interview_sessions" WHERE "id" = $1`, [sessionId]);
+    if (sessRes.rows.length === 0) throw new AppError(404, 'NOT_FOUND', 'Session not found');
+    const sessionRow = sessRes.rows[0] as any;
+
+    if (sessionRow.remoteSessionId) {
+      const client = VoiceMicroserviceClient.getInstance();
+      try {
+        await client.skipQuestion(sessionRow.remoteSessionId);
+        const state = await client.waitForQuestion(sessionRow.remoteSessionId, 12, 1000);
+
+        if (state.status === 'completed') {
+          await db.query(`UPDATE "interview_sessions" SET "status" = 'COMPLETED', "updatedAt" = CURRENT_TIMESTAMP WHERE "id" = $1`, [sessionId]);
+          return await InterviewService.completeAndEvaluateInterview(sessionId, user);
+        }
+
+        if (state.current_turn) {
+          const turnsRes = await db.query(`SELECT COUNT(*) as count FROM "interview_turns" WHERE "sessionId" = $1`, [sessionId]);
+          const nextTurnNum = Number((turnsRes.rows[0] as any)?.count || 0) + 1;
+          const aiTurnId = `int_turn_${crypto.randomBytes(8).toString('hex')}`;
+          const aiMessage = state.current_turn.question || state.current_turn.spoken_text;
+          const audioUrl = client.getAudioStreamUrl(sessionRow.remoteSessionId, 'question');
+          const evidenceCites = state.current_turn.evidence_cites || [];
+          const expectedConcepts = state.current_turn.expected_concepts || [];
+
+          await db.query(
+            `INSERT INTO "interview_turns" (
+              "id", "sessionId", "turnNumber", "speaker", "message",
+              "audioUrl", "evidenceCites", "expectedConcepts",
+              "providerId", "modelUsed", "providerType", "createdAt"
+            ) VALUES ($1, $2, $3, 'AI', $4, $5, $6, $7, 'prov_voice_microservice', 'qwen3.5:latest', 'CLOUD', CURRENT_TIMESTAMP)`,
+            [
+              aiTurnId,
+              sessionId,
+              nextTurnNum,
+              aiMessage,
+              audioUrl,
+              JSON.stringify(evidenceCites),
+              JSON.stringify(expectedConcepts),
+            ]
+          );
+
+          await db.query(
+            `UPDATE "interview_sessions" SET "currentTurn" = $1, "updatedAt" = CURRENT_TIMESTAMP WHERE "id" = $2`,
+            [nextTurnNum, sessionId]
+          );
+        }
+      } catch (err) {
+        console.error('Failed to skip turn via microservice:', err);
+      }
+    }
+    return await InterviewService.getSession(sessionId, user);
+  }
+
+  /**
    * Code-driven heuristic to select single-purpose interview prompt templates (Requirement 2).
    * Do not let the LLM decide whether to clarify, follow up, or advance.
    */
@@ -1905,6 +2018,138 @@ Output JSON only.`;
     let courseId = dto.courseId || qRow.courseId || null;
     if (courseId === 'general') {
       courseId = null;
+    }
+
+    const voicePersona = dto.voicePersona || 'emma';
+    const workspaceId = InterviewService.resolveWorkspaceId(dto, qData, qRow);
+    const microserviceClient = VoiceMicroserviceClient.getInstance();
+
+    let remoteSessionId: string | null = null;
+    let remoteInitialTurn: any = null;
+
+    try {
+      const isHealthy = await microserviceClient.isHealthy();
+      if (isHealthy) {
+        const userRes = await db.query(`SELECT "firstName", "lastName" FROM "users" WHERE "id" = $1`, [user.userId]);
+        const uRow = userRes.rows[0] as any;
+        const candidateName = uRow?.firstName ? `${uRow.firstName} ${uRow.lastName || ''}`.trim() : 'Candidate';
+
+        const remoteSession = await microserviceClient.startSession({
+          workspace_id: workspaceId,
+          topic: 'all',
+          candidate_name: candidateName,
+          questions: 5,
+          voice_profile: voicePersona,
+          speed_rate: 1.0,
+          use_graph: true,
+          include_intro: true,
+        });
+
+        if (remoteSession?.session_id) {
+          remoteSessionId = remoteSession.session_id;
+          const readyState = await microserviceClient.waitForQuestion(remoteSessionId, 12, 1000);
+          if (readyState?.current_turn) {
+            remoteInitialTurn = readyState.current_turn;
+          }
+        }
+      }
+    } catch (remoteErr) {
+      console.warn('Voice microservice session start failed, falling back to local engine:', remoteErr);
+    }
+
+    if (remoteSessionId && remoteInitialTurn) {
+      const initialTurnId = `int_turn_${crypto.randomBytes(8).toString('hex')}`;
+      const openingMessage = remoteInitialTurn.question || remoteInitialTurn.spoken_text;
+      const audioUrl = microserviceClient.getAudioStreamUrl(remoteSessionId, 'question');
+      const evidenceCites = remoteInitialTurn.evidence_cites || [];
+      const expectedConcepts = remoteInitialTurn.expected_concepts || [];
+
+      await db.query(
+        `INSERT INTO "interview_sessions" (
+          "id", "userId", "questionId", "courseId", "mode", "status",
+          "currentTurn", "maxTurns", "mainQuestionIndex", "followUpCountForCurrentMain", "totalMainQuestions",
+          "remoteSessionId", "voicePersona", "remoteWorkspaceId",
+          "lastSelectedTemplate", "debugInfo",
+          "startedAt", "createdAt", "updatedAt"
+        ) VALUES ($1, $2, $3, $4, $5, 'IN_PROGRESS', 1, $6, 1, 0, 5, $7, $8, $9, NULL, '{"templateHistory":[]}'::jsonb, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+        [sessionId, user.userId, dto.questionId, courseId, mode, maxTurns, remoteSessionId, voicePersona, workspaceId]
+      );
+
+      await db.query(
+        `INSERT INTO "interview_turns" (
+          "id", "sessionId", "turnNumber", "speaker", "message",
+          "mainQuestionIndex", "followUpIndex", "isMainQuestion", "isScored",
+          "audioUrl", "evidenceCites", "expectedConcepts",
+          "providerId", "modelUsed", "providerType", "isFallback", "createdAt"
+        ) VALUES ($1, $2, 1, 'AI', $3, 1, 0, true, false, $4, $5, $6, 'prov_voice_microservice', 'qwen3.5:latest', 'CLOUD', false, CURRENT_TIMESTAMP)`,
+        [
+          initialTurnId,
+          sessionId,
+          openingMessage,
+          audioUrl,
+          JSON.stringify(evidenceCites),
+          JSON.stringify(expectedConcepts),
+        ]
+      );
+
+      const initialTurn: InterviewTurnDTO = {
+        id: initialTurnId,
+        sessionId,
+        turnNumber: 1,
+        speaker: 'AI',
+        message: openingMessage,
+        audioUrl,
+        evidenceCites,
+        expectedConcepts,
+        mainQuestionIndex: 1,
+        followUpIndex: 0,
+        isMainQuestion: true,
+        isScored: false,
+        providerId: 'prov_voice_microservice',
+        modelUsed: 'qwen3.5:latest',
+        providerType: 'CLOUD',
+        isFallback: false,
+        createdAt: new Date().toISOString(),
+      };
+
+      const session: InterviewSessionDTO = {
+        id: sessionId,
+        userId: user.userId,
+        questionId: dto.questionId,
+        courseId,
+        mode,
+        status: 'IN_PROGRESS',
+        currentTurn: 1,
+        maxTurns,
+        mainQuestionIndex: 1,
+        followUpCountForCurrentMain: 0,
+        totalMainQuestions: 5,
+        remoteSessionId,
+        voicePersona,
+        remoteWorkspaceId: workspaceId,
+        lastSelectedTemplate: null,
+        debugInfo: { templateHistory: [] },
+        activeProviderId: 'prov_voice_microservice',
+        activeModelUsed: 'qwen3.5:latest',
+        activeProviderType: 'CLOUD',
+        isFallback: false,
+        startedAt: new Date().toISOString(),
+        turns: [initialTurn],
+        question: {
+          id: qRow.id,
+          content: qRow.content,
+          type: qRow.type,
+          data: qData,
+          courseId: qRow.courseId || 'general',
+          subjectId: qRow.subjectId || undefined,
+          courseName: qRow.courseName || 'General Assessment & Document Viva',
+          subjectName: qRow.subjectName || 'Technical Assessment',
+        },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      return { ...session, session, initialTurn };
     }
 
     const isIeltsSpeaking = qData?.examStyle === 'IELTS_SPEAKING';
@@ -3095,6 +3340,109 @@ Output JSON only.`;
       ? JSON.parse(sessionRow.questionData)
       : sessionRow.questionData;
 
+    if (sessionRow.remoteSessionId) {
+      const microserviceClient = VoiceMicroserviceClient.getInstance();
+
+      // 1. Record candidate turn in DB
+      await db.query(
+        `INSERT INTO "interview_turns" (
+          "id", "sessionId", "turnNumber", "speaker", "message", "durationSeconds", "audioUrl", "createdAt"
+        ) VALUES ($1, $2, $3, 'CANDIDATE', $4, $5, $6, CURRENT_TIMESTAMP)`,
+        [candidateTurnId, sessionId, currentTurnNumber, trimmedMessage, dto.durationSeconds || null, dto.audioUrl || null]
+      );
+
+      const candidateTurn: InterviewTurnDTO = {
+        id: candidateTurnId,
+        sessionId,
+        turnNumber: currentTurnNumber,
+        speaker: 'CANDIDATE',
+        message: trimmedMessage,
+        durationSeconds: dto.durationSeconds || null,
+        audioUrl: dto.audioUrl || null,
+        createdAt: new Date().toISOString(),
+      };
+
+      try {
+        await microserviceClient.submitAnswer(sessionRow.remoteSessionId, {
+          answer: trimmedMessage,
+          audio_base64: dto.audioBase64,
+          audio_format: dto.audioFormat || 'webm',
+        });
+
+        const remoteState = await microserviceClient.waitForQuestion(sessionRow.remoteSessionId, 15, 1200);
+
+        if (remoteState.status === 'completed') {
+          await db.query(`UPDATE "interview_sessions" SET "status" = 'COMPLETED', "updatedAt" = CURRENT_TIMESTAMP WHERE "id" = $1`, [sessionId]);
+          const completedSession = await InterviewService.completeAndEvaluateInterview(sessionId, user);
+          return {
+            session: completedSession,
+            candidateTurn,
+            isCompleted: true,
+          };
+        }
+
+        if (remoteState.current_turn) {
+          const aiTurnId = `int_turn_${crypto.randomBytes(8).toString('hex')}`;
+          const aiTurnNumber = currentTurnNumber + 1;
+          const aiMessage = remoteState.current_turn.question || remoteState.current_turn.spoken_text;
+          const audioUrl = microserviceClient.getAudioStreamUrl(sessionRow.remoteSessionId, 'question');
+          const evidenceCites = remoteState.current_turn.evidence_cites || [];
+          const expectedConcepts = remoteState.current_turn.expected_concepts || [];
+          const evaluationData = remoteState.latest_eval || null;
+
+          await db.query(
+            `INSERT INTO "interview_turns" (
+              "id", "sessionId", "turnNumber", "speaker", "message",
+              "audioUrl", "evidenceCites", "expectedConcepts", "evaluationData",
+              "providerId", "modelUsed", "providerType", "createdAt"
+            ) VALUES ($1, $2, $3, 'AI', $4, $5, $6, $7, $8, 'prov_voice_microservice', 'qwen3.5:latest', 'CLOUD', CURRENT_TIMESTAMP)`,
+            [
+              aiTurnId,
+              sessionId,
+              aiTurnNumber,
+              aiMessage,
+              audioUrl,
+              JSON.stringify(evidenceCites),
+              JSON.stringify(expectedConcepts),
+              evaluationData ? JSON.stringify(evaluationData) : null,
+            ]
+          );
+
+          await db.query(
+            `UPDATE "interview_sessions" SET "currentTurn" = $1, "updatedAt" = CURRENT_TIMESTAMP WHERE "id" = $2`,
+            [aiTurnNumber, sessionId]
+          );
+
+          const aiTurn: InterviewTurnDTO = {
+            id: aiTurnId,
+            sessionId,
+            turnNumber: aiTurnNumber,
+            speaker: 'AI',
+            message: aiMessage,
+            audioUrl,
+            evidenceCites,
+            expectedConcepts,
+            evaluationData,
+            providerId: 'prov_voice_microservice',
+            modelUsed: 'qwen3.5:latest',
+            providerType: 'CLOUD',
+            createdAt: new Date().toISOString(),
+          };
+
+          const updatedSession = await InterviewService.getSession(sessionId, user);
+          return {
+            session: updatedSession,
+            candidateTurn,
+            aiTurn,
+            aiResponse: aiTurn,
+            isCompleted: false,
+          };
+        }
+      } catch (microErr) {
+        console.error('Microservice submitAnswer error, falling back to local turn handling:', microErr);
+      }
+    }
+
     if (qData?.examStyle === 'IELTS_SPEAKING') {
       return await InterviewService.submitIeltsTurn({
         sessionId,
@@ -3835,6 +4183,18 @@ Return valid JSON with finalScore, maxScore, percentage, gradeBand, rubricScores
       recommendations = Array.isArray(aiEvalRes.parsedJson?.recommendations) ? aiEvalRes.parsedJson.recommendations : ['Practice concrete examples in opening turn'];
     }
 
+    if (sessionRow.remoteSessionId) {
+      try {
+        const client = VoiceMicroserviceClient.getInstance();
+        const remoteReport = await client.getReport(sessionRow.remoteSessionId);
+        if (remoteReport?.report_markdown && remoteReport.report_markdown.trim().length > 0) {
+          feedback = `${remoteReport.report_markdown}\n\n---\n${feedback}`;
+        }
+      } catch (err) {
+        console.warn('Microservice report retrieval error:', err);
+      }
+    }
+
     // 3. Update interview_sessions record to COMPLETED
     await db.query(
       `UPDATE "interview_sessions" SET
@@ -4133,6 +4493,9 @@ Return valid JSON with finalScore, maxScore, percentage, gradeBand, rubricScores
       audioUrl: t.audioUrl,
       durationSeconds: t.durationSeconds,
       evaluationNotes: t.evaluationNotes,
+      evidenceCites: typeof t.evidenceCites === 'string' ? JSON.parse(t.evidenceCites) : (t.evidenceCites || null),
+      expectedConcepts: typeof t.expectedConcepts === 'string' ? JSON.parse(t.expectedConcepts) : (t.expectedConcepts || null),
+      evaluationData: typeof t.evaluationData === 'string' ? JSON.parse(t.evaluationData) : (t.evaluationData || null),
       mainQuestionIndex: Number(t.mainQuestionIndex || 1),
       followUpIndex: Number(t.followUpIndex || 0),
       isMainQuestion: Boolean(t.isMainQuestion),
@@ -4177,6 +4540,9 @@ Return valid JSON with finalScore, maxScore, percentage, gradeBand, rubricScores
       speculativeBank: typeof row.speculativeBank === 'string' ? JSON.parse(row.speculativeBank) : (row.speculativeBank || null),
       treePath: typeof row.treePath === 'string' ? JSON.parse(row.treePath) : (row.treePath || null),
       offScriptRedirectCount: Number(row.offScriptRedirectCount || 0),
+      remoteSessionId: row.remoteSessionId || null,
+      voicePersona: row.voicePersona || null,
+      remoteWorkspaceId: row.remoteWorkspaceId || null,
       lastSelectedTemplate: row.lastSelectedTemplate || null,
       debugInfo: typeof row.debugInfo === 'string' ? JSON.parse(row.debugInfo) : (row.debugInfo || null),
       facetFollowUpBank: typeof row.facetFollowUpBank === 'string' ? JSON.parse(row.facetFollowUpBank) : (row.facetFollowUpBank || null),

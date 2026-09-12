@@ -1,0 +1,254 @@
+/**
+ * Voice & AI Interview Microservice Client
+ * Connects Exam platform to the high-fidelity AI interview and viva microservice (https://voice.tinkerlab.online).
+ */
+
+export interface VoicePersonaDefinition {
+  id: string;
+  name: string;
+  gender: 'Female' | 'Male';
+  accent: string;
+  locale: string;
+  tone: string;
+  flag: string;
+}
+
+export const VOICE_PERSONAS: VoicePersonaDefinition[] = [
+  { id: 'emma', name: 'Emma', gender: 'Female', accent: 'British (UK)', locale: 'en-GB', tone: 'Professional, warm, structured', flag: '🇬🇧' },
+  { id: 'pooja', name: 'Pooja', gender: 'Female', accent: 'Indian (IN)', locale: 'en-IN', tone: 'Articulate, precise, academic', flag: '🇮🇳' },
+  { id: 'sarah', name: 'Sarah', gender: 'Female', accent: 'American (US)', locale: 'en-US', tone: 'Clear, conversational, corporate', flag: '🇺🇸' },
+  { id: 'chloe', name: 'Chloe', gender: 'Female', accent: 'Australian (AU)', locale: 'en-AU', tone: 'Engaging, natural, supportive', flag: '🇦🇺' },
+  { id: 'liam', name: 'Liam', gender: 'Male', accent: 'British (UK)', locale: 'en-GB', tone: 'Authoritative, technical, steady', flag: '🇬🇧' },
+  { id: 'james', name: 'James', gender: 'Male', accent: 'American (US)', locale: 'en-US', tone: 'Confident, direct, conversational', flag: '🇺🇸' },
+  { id: 'arthur', name: 'Arthur', gender: 'Male', accent: 'British (UK)', locale: 'en-GB', tone: 'Formal, thoughtful, deep', flag: '🇬🇧' },
+  { id: 'david', name: 'David', gender: 'Male', accent: 'Australian (AU)', locale: 'en-AU', tone: 'Relaxed, encouraging, clear', flag: '🇦🇺' },
+  { id: 'rohan', name: 'Rohan', gender: 'Male', accent: 'Indian (IN)', locale: 'en-IN', tone: 'Dynamic, articulate, focused', flag: '🇮🇳' },
+];
+
+export interface RemoteSessionCreateOptions {
+  workspace_id?: string;
+  topic?: string;
+  candidate_name?: string;
+  questions?: number;
+  minutes?: number;
+  use_graph?: boolean;
+  include_intro?: boolean;
+  voice_profile?: string;
+  speed_rate?: number;
+}
+
+export interface RemoteTurnData {
+  index: number;
+  topic: string;
+  difficulty: number;
+  question: string;
+  spoken_text: string;
+  feedback_intro?: string;
+  question_type?: string;
+  is_followup?: boolean;
+  is_intro?: boolean;
+  evidence_cites?: string[];
+  expected_concepts?: string[];
+  conversational_prompt?: string | null;
+}
+
+export interface RemoteEvalData {
+  mean: number;
+  correctness: number;
+  technical_depth: number;
+  reasoning: number;
+  completeness: number;
+  human_feedback?: string;
+  missing_concepts?: string[];
+  justification?: string;
+  needs_followup?: boolean;
+}
+
+export interface RemoteSessionState {
+  session_id: string;
+  status: 'waiting_for_question' | 'question_ready' | 'evaluating' | 'completed' | 'error';
+  workspace_id?: string;
+  candidate_name?: string;
+  interviewer_name?: string;
+  voice_profile?: string;
+  max_questions: number;
+  current_turn?: RemoteTurnData | null;
+  latest_eval?: RemoteEvalData | null;
+  last_candidate_answer?: string;
+  report_markdown?: string | null;
+  error?: string | null;
+  duration_s?: number;
+}
+
+export class VoiceMicroserviceClient {
+  private static instance: VoiceMicroserviceClient;
+  private baseUrl: string;
+
+  constructor(baseUrl?: string) {
+    this.baseUrl = (
+      baseUrl ||
+      process.env.VOICE_MICROSERVICE_URL ||
+      'https://voice.tinkerlab.online'
+    ).replace(/\/$/, '');
+  }
+
+  static getInstance(): VoiceMicroserviceClient {
+    if (!VoiceMicroserviceClient.instance) {
+      VoiceMicroserviceClient.instance = new VoiceMicroserviceClient();
+    }
+    return VoiceMicroserviceClient.instance;
+  }
+
+  getBaseUrl(): string {
+    return this.baseUrl;
+  }
+
+  getVoicePersonas(): VoicePersonaDefinition[] {
+    return VOICE_PERSONAS;
+  }
+
+  async isHealthy(): Promise<boolean> {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3500);
+      const res = await fetch(`${this.baseUrl}/v1/health`, {
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      if (!res.ok) return false;
+      const data = (await res.json()) as any;
+      return data.status === 'healthy';
+    } catch {
+      return false;
+    }
+  }
+
+  async listWorkspaces(): Promise<any[]> {
+    try {
+      const res = await fetch(`${this.baseUrl}/v1/workspaces`);
+      if (!res.ok) return [];
+      const data = (await res.json()) as any;
+      return data.workspaces || [];
+    } catch (err) {
+      console.warn('VoiceMicroserviceClient: listWorkspaces error:', err);
+      return [];
+    }
+  }
+
+  async startSession(options: RemoteSessionCreateOptions = {}): Promise<{
+    session_id: string;
+    status: string;
+    candidate_name?: string;
+    interviewer_name?: string;
+    created_at?: number;
+  }> {
+    const res = await fetch(`${this.baseUrl}/v1/interview/sessions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        workspace_id: options.workspace_id || 'ws_ielts',
+        topic: options.topic || 'all',
+        candidate_name: options.candidate_name || 'Candidate',
+        questions: options.questions || 5,
+        minutes: options.minutes || 30,
+        use_graph: options.use_graph !== false,
+        include_intro: options.include_intro !== false,
+        voice_profile: options.voice_profile || 'emma',
+        speed_rate: options.speed_rate || 1.0,
+      }),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Failed to start microservice interview session (${res.status}): ${text}`);
+    }
+
+    return (await res.json()) as any;
+  }
+
+  async pollSession(sessionId: string): Promise<RemoteSessionState> {
+    const res = await fetch(`${this.baseUrl}/v1/interview/sessions/${sessionId}`);
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Failed to poll microservice session ${sessionId} (${res.status}): ${text}`);
+    }
+    return (await res.json()) as RemoteSessionState;
+  }
+
+  async waitForQuestion(sessionId: string, maxAttempts = 15, intervalMs = 1200): Promise<RemoteSessionState> {
+    let state = await this.pollSession(sessionId);
+    for (let i = 0; i < maxAttempts; i++) {
+      if (state.status === 'question_ready' || state.status === 'completed' || state.status === 'error') {
+        return state;
+      }
+      await new Promise((resolve) => setTimeout(resolve, intervalMs));
+      state = await this.pollSession(sessionId);
+    }
+    return state;
+  }
+
+  async submitAnswer(
+    sessionId: string,
+    params: {
+      answer?: string;
+      audio_base64?: string;
+      audio_format?: string;
+    }
+  ): Promise<{ status: string; session_id: string; transcription?: string }> {
+    const body: any = {};
+    if (params.answer !== undefined) body.answer = params.answer;
+    if (params.audio_base64 !== undefined) {
+      body.audio_base64 = params.audio_base64;
+      body.audio_format = params.audio_format || 'webm';
+    }
+
+    const res = await fetch(`${this.baseUrl}/v1/interview/sessions/${sessionId}/answer`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Failed to submit answer to microservice (${res.status}): ${text}`);
+    }
+
+    return (await res.json()) as any;
+  }
+
+  async skipQuestion(sessionId: string): Promise<{ status: string; session_id: string }> {
+    const res = await fetch(`${this.baseUrl}/v1/interview/sessions/${sessionId}/skip`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Failed to skip question in microservice (${res.status}): ${text}`);
+    }
+
+    return (await res.json()) as any;
+  }
+
+  async getReport(sessionId: string): Promise<{
+    session_id: string;
+    status: string;
+    report_markdown?: string | null;
+    candidate_name?: string;
+    interviewer_name?: string;
+    turns_completed?: number;
+    evaluations?: any[];
+  }> {
+    const res = await fetch(`${this.baseUrl}/v1/interview/sessions/${sessionId}/report`);
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Failed to retrieve report from microservice (${res.status}): ${text}`);
+    }
+    return (await res.json()) as any;
+  }
+
+  getAudioStreamUrl(sessionId: string, target: 'question' | 'feedback' | 'conversational' = 'question'): string {
+    return `${this.baseUrl}/v1/interview/sessions/${sessionId}/audio?target=${target}`;
+  }
+}
