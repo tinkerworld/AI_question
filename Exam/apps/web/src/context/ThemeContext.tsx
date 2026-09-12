@@ -122,7 +122,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     reducedMotion: boolean;
   }>) => {
     if (typeof window === 'undefined') return;
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token') || localStorage.getItem('token');
     if (!token) return;
 
     try {
@@ -142,7 +142,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   // Hydrate from user preferences on login
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token') || localStorage.getItem('token');
     if (!token) return;
 
     fetch(`${API_BASE}/users/me/preferences`, {

@@ -102,7 +102,7 @@ const extractApiErrorMessage = (data: any, fallback: string = 'Operation failed'
 export const QuestionBankPage: React.FC = () => {
   const { t } = useTranslation();
   const { token: authToken, logout } = useAuth();
-  const token = authToken || (typeof window !== 'undefined' ? localStorage.getItem('token') : '') || '';
+  const token = authToken || (typeof window !== 'undefined' ? (sessionStorage.getItem('token') || localStorage.getItem('token')) : '') || '';
   const [questions, setQuestions] = useState<Question[]>([]);
   const [analytics, setAnalytics] = useState<AnalyticsSummary | null>(null);
   const [availableTags, setAvailableTags] = useState<Tag[]>([]);

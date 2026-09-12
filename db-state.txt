@@ -1,10 +1,14 @@
 ================================================================================
  ExamOS Database State Snapshot
 <<<<<<< HEAD
+<<<<<<< HEAD
  Generated at: 2026-09-10T01:05:22.318Z
 =======
  Generated at: 2026-09-12T18:36:48.959Z
 >>>>>>> 47e9821 (feat(themes): implement platform themes, curated accent palettes, and accessibility mode (15.13))
+=======
+ Generated at: 2026-09-12T19:14:59.818Z
+>>>>>>> fe2fb1d (fix(auth): isolate session tokens to sessionStorage for concurrent multi-role browser tabs (Task 3a))
  Target file:  db-state.txt
  Notice:       Read-only diagnostic snapshot. Contains no PII, secrets, or content.
 ================================================================================

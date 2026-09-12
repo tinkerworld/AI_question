@@ -82,7 +82,7 @@ export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const setLanguage = async (code: string) => {
     setCurrentLanguageState(code);
     // Sync user preference to Database API if token exists
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token') || localStorage.getItem('token');
     if (token) {
       try {
         await fetch(`${API_BASE}/users/me/preferences`, {
@@ -103,7 +103,7 @@ export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     lang: LanguageInfo,
     initialKeys?: Record<string, string>
   ): Promise<boolean> => {
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token') || localStorage.getItem('token');
     try {
       // 1. Call Database API to persist new language entry in PostgreSQL DB
       const resLang = await fetch(`${API_BASE}/i18n/languages`, {

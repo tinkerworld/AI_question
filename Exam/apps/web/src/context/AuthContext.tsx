@@ -59,8 +59,14 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
-  const [refreshToken, setRefreshToken] = useState<string | null>(localStorage.getItem('refreshToken'));
+  const [token, setToken] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    return sessionStorage.getItem('token') || localStorage.getItem('token');
+  });
+  const [refreshToken, setRefreshToken] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    return sessionStorage.getItem('refreshToken') || localStorage.getItem('refreshToken');
+  });
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<string>('exams');
   const [previewTargetExamId, setPreviewTargetExamId] = useState<string | null>(null);
@@ -68,8 +74,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [previewReturnExamId, setPreviewReturnExamId] = useState<string | null>(null);
 
   const verifyAndLoadSession = async () => {
-    const savedToken = localStorage.getItem('token');
-    const savedRefresh = localStorage.getItem('refreshToken');
+    const savedToken = typeof window !== 'undefined' ? (sessionStorage.getItem('token') || localStorage.getItem('token')) : null;
+    const savedRefresh = typeof window !== 'undefined' ? (sessionStorage.getItem('refreshToken') || localStorage.getItem('refreshToken')) : null;
 
     if (!savedToken) {
       setUser(null);
@@ -89,6 +95,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const body = await res.json();
         setUser(body.data);
         setToken(savedToken);
+        // Ensure active tab's token is in sessionStorage
+        sessionStorage.setItem('token', savedToken);
       } else if (res.status === 401 && savedRefresh) {
         // Try refresh token rotation
         const refRes = await fetch(`${API_BASE}/auth/refresh`, {
@@ -101,8 +109,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const refBody = await refRes.json();
           const newAccess = refBody.data.accessToken;
           const newRefresh = refBody.data.refreshToken;
-          localStorage.setItem('token', newAccess);
-          localStorage.setItem('refreshToken', newRefresh);
+          sessionStorage.setItem('token', newAccess);
+          sessionStorage.setItem('refreshToken', newRefresh);
+          localStorage.removeItem('token');
+          localStorage.removeItem('refreshToken');
           setToken(newAccess);
           setRefreshToken(newRefresh);
 
@@ -116,6 +126,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         } else {
           // Refresh failed -> clear session
+          sessionStorage.removeItem('token');
+          sessionStorage.removeItem('refreshToken');
           localStorage.removeItem('token');
           localStorage.removeItem('refreshToken');
           setUser(null);
@@ -123,6 +135,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setRefreshToken(null);
         }
       } else {
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('refreshToken');
         localStorage.removeItem('token');
         localStorage.removeItem('refreshToken');
         setUser(null);
@@ -150,8 +164,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const body = await res.json();
       if (res.ok && body.success) {
         const { accessToken, refreshToken: newRefresh, user: loggedInUser } = body.data;
-        localStorage.setItem('token', accessToken);
-        localStorage.setItem('refreshToken', newRefresh);
+        sessionStorage.setItem('token', accessToken);
+        sessionStorage.setItem('refreshToken', newRefresh);
+        localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
         setToken(accessToken);
         setRefreshToken(newRefresh);
         setUser(loggedInUser);
@@ -166,7 +182,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const [impersonationSession, setImpersonationSession] = useState<ImpersonationSession | null>(() => {
     try {
-      const saved = localStorage.getItem('impersonationSession');
+      if (typeof window === 'undefined') return null;
+      const saved = sessionStorage.getItem('impersonationSession') || localStorage.getItem('impersonationSession');
       return saved ? JSON.parse(saved) : null;
     } catch {
       return null;
@@ -176,7 +193,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isImpersonating = !!impersonationSession && !!token;
 
   const startPreview = async (config: any): Promise<{ success: boolean; message?: string }> => {
-    const currentStaffToken = sessionStorage.getItem('staffToken') || token || localStorage.getItem('token');
+    const currentStaffToken = sessionStorage.getItem('staffToken') || token || (typeof window !== 'undefined' ? (sessionStorage.getItem('token') || localStorage.getItem('token')) : null);
     if (!currentStaffToken) return { success: false, message: 'Authentication required' };
 
     try {
@@ -196,8 +213,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (!sessionStorage.getItem('staffToken')) {
           sessionStorage.setItem('staffToken', currentStaffToken);
         }
-        localStorage.setItem('token', sessionToken);
-        localStorage.setItem('impersonationSession', JSON.stringify(session));
+        sessionStorage.setItem('token', sessionToken);
+        sessionStorage.setItem('impersonationSession', JSON.stringify(session));
+        localStorage.removeItem('token');
+        localStorage.removeItem('impersonationSession');
         setToken(sessionToken);
         setImpersonationSession(session);
 
@@ -231,7 +250,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const startImpersonation = async (targetUserId: string, reason: string): Promise<{ success: boolean; message?: string }> => {
-    const currentStaffToken = sessionStorage.getItem('staffToken') || token || localStorage.getItem('token');
+    const currentStaffToken = sessionStorage.getItem('staffToken') || token || (typeof window !== 'undefined' ? (sessionStorage.getItem('token') || localStorage.getItem('token')) : null);
     if (!currentStaffToken) return { success: false, message: 'Authentication required' };
 
     try {
@@ -250,8 +269,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (!sessionStorage.getItem('staffToken')) {
           sessionStorage.setItem('staffToken', currentStaffToken);
         }
-        localStorage.setItem('token', sessionToken);
-        localStorage.setItem('impersonationSession', JSON.stringify(session));
+        sessionStorage.setItem('token', sessionToken);
+        sessionStorage.setItem('impersonationSession', JSON.stringify(session));
+        localStorage.removeItem('token');
+        localStorage.removeItem('impersonationSession');
         setToken(sessionToken);
         setImpersonationSession(session);
 
@@ -291,8 +312,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }
 
-    localStorage.removeItem('impersonationSession');
+    sessionStorage.removeItem('impersonationSession');
     sessionStorage.removeItem('staffToken');
+    localStorage.removeItem('impersonationSession');
     setImpersonationSession(null);
     setPreviewTargetExamId(null);
 
@@ -300,7 +322,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setPreviewReturnTab(null);
 
     if (staffToken) {
-      localStorage.setItem('token', staffToken);
+      sessionStorage.setItem('token', staffToken);
+      localStorage.removeItem('token');
       setToken(staffToken);
       try {
         const meRes = await fetch(`${API_BASE}/auth/me`, {
@@ -318,8 +341,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
-    const savedRefresh = localStorage.getItem('refreshToken');
-    const savedToken = localStorage.getItem('token');
+    const savedRefresh = typeof window !== 'undefined' ? (sessionStorage.getItem('refreshToken') || localStorage.getItem('refreshToken')) : null;
+    const savedToken = typeof window !== 'undefined' ? (sessionStorage.getItem('token') || localStorage.getItem('token')) : null;
     try {
       if (savedToken) {
         await fetch(`${API_BASE}/auth/logout`, {
@@ -334,10 +357,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (e) {
       console.warn('Logout API call error');
     } finally {
+      // Clear tab-specific sessionStorage
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('refreshToken');
+      sessionStorage.removeItem('impersonationSession');
+      sessionStorage.removeItem('staffToken');
+      // Also clear legacy localStorage
       localStorage.removeItem('token');
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('impersonationSession');
-      sessionStorage.removeItem('staffToken');
       setUser(null);
       setToken(null);
       setRefreshToken(null);
