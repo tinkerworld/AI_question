@@ -1449,7 +1449,7 @@ Output JSON only.`;
           const nextTurnNum = Number((turnsRes.rows[0] as any)?.count || 0) + 1;
           const aiTurnId = `int_turn_${crypto.randomBytes(8).toString('hex')}`;
           const aiMessage = state.current_turn.question || state.current_turn.spoken_text;
-          const audioUrl = client.getAudioStreamUrl(sessionRow.remoteSessionId, 'question');
+          const audioUrl = client.getAudioStreamUrl(sessionRow.remoteSessionId, 'question', aiMessage, nextTurnNum);
           const evidenceCites = state.current_turn.evidence_cites || [];
           const expectedConcepts = state.current_turn.expected_concepts || [];
 
@@ -2060,7 +2060,7 @@ Output JSON only.`;
     if (remoteSessionId && remoteInitialTurn) {
       const initialTurnId = `int_turn_${crypto.randomBytes(8).toString('hex')}`;
       const openingMessage = remoteInitialTurn.question || remoteInitialTurn.spoken_text;
-      const audioUrl = microserviceClient.getAudioStreamUrl(remoteSessionId, 'question');
+      const audioUrl = microserviceClient.getAudioStreamUrl(remoteSessionId, 'question', openingMessage, 1);
       const evidenceCites = remoteInitialTurn.evidence_cites || [];
       const expectedConcepts = remoteInitialTurn.expected_concepts || [];
 
@@ -3385,7 +3385,7 @@ Output JSON only.`;
           const aiTurnId = `int_turn_${crypto.randomBytes(8).toString('hex')}`;
           const aiTurnNumber = currentTurnNumber + 1;
           const aiMessage = remoteState.current_turn.question || remoteState.current_turn.spoken_text;
-          const audioUrl = microserviceClient.getAudioStreamUrl(sessionRow.remoteSessionId, 'question');
+          const audioUrl = microserviceClient.getAudioStreamUrl(sessionRow.remoteSessionId, 'question', aiMessage, aiTurnNumber);
           const evidenceCites = remoteState.current_turn.evidence_cites || [];
           const expectedConcepts = remoteState.current_turn.expected_concepts || [];
           const evaluationData = remoteState.latest_eval || null;

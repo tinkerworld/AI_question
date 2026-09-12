@@ -248,7 +248,20 @@ export class VoiceMicroserviceClient {
     return (await res.json()) as any;
   }
 
-  getAudioStreamUrl(sessionId: string, target: 'question' | 'feedback' | 'conversational' = 'question'): string {
-    return `${this.baseUrl}/v1/interview/sessions/${sessionId}/audio?target=${target}`;
+  getAudioStreamUrl(
+    sessionId: string,
+    target: 'question' | 'feedback' | 'conversational' = 'question',
+    text?: string,
+    turnNumber?: number
+  ): string {
+    const params = new URLSearchParams();
+    params.set('target', target);
+    if (turnNumber !== undefined) {
+      params.set('turn', String(turnNumber));
+    }
+    if (text) {
+      params.set('text', text);
+    }
+    return `${this.baseUrl}/v1/interview/sessions/${sessionId}/audio?${params.toString()}`;
   }
 }

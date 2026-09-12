@@ -485,7 +485,10 @@ export const InterviewPage: React.FC = () => {
     if (audioUrl) {
       try {
         setIsAiSpeaking(true);
-        const audio = new Audio(audioUrl);
+        // Ensure browser never plays stale cached audio from previous turn
+        const separator = audioUrl.includes('?') ? '&' : '?';
+        const freshAudioUrl = `${audioUrl}${separator}_t=${Date.now()}`;
+        const audio = new Audio(freshAudioUrl);
         currentAudioRef.current = audio;
         audio.onended = () => {
           setIsAiSpeaking(false);
@@ -498,11 +501,21 @@ export const InterviewPage: React.FC = () => {
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.rate = 1.0;
             utterance.pitch = 1.0;
+            utterance.onend = () => setIsAiSpeaking(false);
+            utterance.onerror = () => setIsAiSpeaking(false);
             window.speechSynthesis.speak(utterance);
           }
         };
         audio.play().catch(() => {
           setIsAiSpeaking(false);
+          if (typeof window !== 'undefined' && window.speechSynthesis) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 1.0;
+            utterance.pitch = 1.0;
+            utterance.onend = () => setIsAiSpeaking(false);
+            utterance.onerror = () => setIsAiSpeaking(false);
+            window.speechSynthesis.speak(utterance);
+          }
         });
         return;
       } catch {}
