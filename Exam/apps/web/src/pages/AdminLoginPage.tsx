@@ -23,7 +23,9 @@ export const AdminLoginPage: React.FC = () => {
 
     try {
       const res = await login(email, password);
-      if (!res.success) {
+      if (res.success) {
+        navigate('/');
+      } else {
         setError(res.message || t('login_error_fallback'));
       }
     } catch (err: any) {

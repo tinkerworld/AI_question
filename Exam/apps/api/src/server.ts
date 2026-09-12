@@ -60,9 +60,25 @@ app.get('/health', (req, res) => {
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/users', preferenceRoutes); // /me/preferences
+app.use('/api/v1/preferences', preferenceRoutes);
+app.use('/api/preferences', preferenceRoutes);
 app.use('/api/v1/roles', roleRoutes);
 app.use('/api/v1/audit', auditRoutes);
 app.use('/api/v1/i18n', i18nRoutes);
+
+// Platform Branding & Institutional Theme Presets (docs/v2/features/platform-themes.md)
+app.get('/api/v1/platform/branding', (req, res) => {
+  res.json({
+    success: true,
+    data: {
+      institutionName: 'ExamOS Academy',
+      logoUrl: null,
+      primaryAccent: 'cyan',
+      defaultTheme: 'DARK',
+      highContrastAvailable: true,
+    },
+  });
+});
 
 // Phase 15 Routes (V2: Maintenance, Audio, Writing & Vocabulary)
 app.use('/api/v1/maintenance', maintenanceRouter);

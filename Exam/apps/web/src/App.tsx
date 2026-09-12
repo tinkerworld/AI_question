@@ -192,6 +192,12 @@ const MainLayout: React.FC = () => {
     }
   }, [user, activeTab]);
 
+  useEffect(() => {
+    if (isAuthenticated && (path.startsWith('/login') || path.startsWith('/register'))) {
+      navigate('/', true);
+    }
+  }, [isAuthenticated, path, navigate]);
+
   if (isLoading) {
     return (
       <div
@@ -376,7 +382,7 @@ const MainLayout: React.FC = () => {
                 triggerExitWarning();
               } else {
                 logout();
-                navigate('/login/student');
+                navigate('/');
               }
             }}
             style={{

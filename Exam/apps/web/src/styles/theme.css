@@ -6,6 +6,7 @@
   --text-muted: #94a3b8;
   --border-color: #2e3d5a;
   --accent-color: #06b6d4;
+  --accent-rgb: 6, 182, 212;
 }
 
 [data-theme="gray"] {
@@ -16,6 +17,7 @@
   --text-muted: #cbd5e1;
   --border-color: #64748b;
   --accent-color: #38bdf8;
+  --accent-rgb: 56, 189, 248;
 }
 
 [data-theme="light"] {
@@ -26,6 +28,101 @@
   --text-muted: #64748b;
   --border-color: #cbd5e1;
   --accent-color: #0284c7;
+  --accent-rgb: 2, 132, 199;
+}
+
+/* Curated Accent Palette Overrides */
+[data-accent="cyan"] {
+  --accent-color: #06b6d4;
+  --accent-rgb: 6, 182, 212;
+}
+[data-accent="purple"], [data-accent="violet"] {
+  --accent-color: #8b5cf6;
+  --accent-rgb: 139, 92, 246;
+}
+[data-accent="emerald"] {
+  --accent-color: #10b981;
+  --accent-rgb: 16, 185, 129;
+}
+[data-accent="amber"] {
+  --accent-color: #f59e0b;
+  --accent-rgb: 245, 158, 11;
+}
+[data-accent="rose"], [data-accent="crimson"] {
+  --accent-color: #f43f5e;
+  --accent-rgb: 244, 63, 94;
+}
+[data-accent="blue"], [data-accent="indigo"], [data-accent="royal_blue"] {
+  --accent-color: #3b82f6;
+  --accent-rgb: 59, 130, 246;
+}
+
+/* High-Contrast (AA) Accessibility Mode */
+[data-high-contrast="true"], [data-contrast="high"] {
+  --border-color: rgba(255, 255, 255, 0.4) !important;
+  --text-muted: #e2e8f0 !important;
+}
+
+[data-theme="dark"][data-high-contrast="true"],
+[data-theme="dark"][data-contrast="high"] {
+  --bg-color: #000000 !important;
+  --panel-bg: #090d16 !important;
+  --card-bg: #111827 !important;
+  --border-color: #ffffff !important;
+  --text-main: #ffffff !important;
+  --text-muted: #e2e8f0 !important;
+}
+
+[data-theme="gray"][data-high-contrast="true"],
+[data-theme="gray"][data-contrast="high"] {
+  --bg-color: #0b1120 !important;
+  --panel-bg: #1e293b !important;
+  --card-bg: #334155 !important;
+  --border-color: #ffffff !important;
+  --text-main: #ffffff !important;
+  --text-muted: #e2e8f0 !important;
+}
+
+[data-theme="light"][data-high-contrast="true"],
+[data-theme="light"][data-contrast="high"] {
+  --bg-color: #ffffff !important;
+  --panel-bg: #f8fafc !important;
+  --card-bg: #ffffff !important;
+  --border-color: #000000 !important;
+  --text-main: #000000 !important;
+  --text-muted: #1e293b !important;
+}
+
+/* Font Scale Adjustments */
+html[data-font-scale="small"] {
+  font-size: 14px;
+}
+html[data-font-scale="normal"] {
+  font-size: 16px;
+}
+html[data-font-scale="large"] {
+  font-size: 18px;
+}
+html[data-font-scale="xlarge"] {
+  font-size: 20px;
+}
+
+/* Reduced Motion Controls */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+[data-reduced-motion="true"] *,
+[data-reduced-motion="true"] *::before,
+[data-reduced-motion="true"] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
 }
 
 body {

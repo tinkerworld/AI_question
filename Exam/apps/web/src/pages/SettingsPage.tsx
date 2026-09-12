@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getAuthHeaders } from '../utils/api';
-import { useTheme } from '../context/ThemeContext';
+import { useTheme, ACCENT_PALETTES, AccentColor, FontScale } from '../context/ThemeContext';
 import { ThemeMode } from '@repo/types';
 import { API_BASE } from '../config/api';
 import { MaintenanceControlPanel } from '../components/maintenance/MaintenanceControlPanel';
@@ -24,7 +24,18 @@ interface AIProvider {
 }
 
 export const SettingsPage: React.FC = () => {
-  const { theme, setTheme } = useTheme();
+  const {
+    theme,
+    setTheme,
+    accentColor,
+    setAccentColor,
+    highContrast,
+    setHighContrast,
+    fontScale,
+    setFontScale,
+    reducedMotion,
+    setReducedMotion,
+  } = useTheme();
   const { user } = useAuth();
   const { t } = useTranslation();
   const userPermissions = user?.permissions || [];
@@ -1031,6 +1042,158 @@ export const SettingsPage: React.FC = () => {
                   </div>
                 );
               })}
+            </div>
+          </div>
+
+          {/* SECTION: PRIMARY ACCENT PALETTE */}
+          <div style={{ background: 'var(--panel-bg)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '20px' }}>
+            <h3 style={{ margin: '0 0 8px 0', fontSize: '15px' }}>Primary Accent Palette</h3>
+            <p style={{ margin: '0 0 16px 0', fontSize: '13px', color: 'var(--text-muted)' }}>
+              Choose your personal or institutional accent color for buttons, tabs, interactive highlights, and focus borders.
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px' }}>
+              {ACCENT_PALETTES.map((p) => {
+                const isActive = accentColor === p.key;
+                return (
+                  <div
+                    key={p.key}
+                    id={`settings-accent-${p.key}`}
+                    data-testid={`accent-${p.key}`}
+                    onClick={() => setAccentColor(p.key as AccentColor)}
+                    style={{
+                      padding: '14px',
+                      borderRadius: '8px',
+                      border: isActive ? `2px solid ${p.hex}` : '1px solid var(--border-color)',
+                      background: isActive ? `${p.hex}22` : 'rgba(255,255,255,0.02)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: '22px',
+                        height: '22px',
+                        borderRadius: '50%',
+                        backgroundColor: p.hex,
+                        display: 'inline-block',
+                        boxShadow: isActive ? `0 0 8px ${p.hex}` : 'none',
+                        border: '2px solid rgba(255,255,255,0.7)',
+                        flexShrink: 0,
+                      }}
+                    />
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span style={{ fontWeight: 'bold', fontSize: '13px', color: isActive ? p.hex : 'inherit' }}>
+                        {p.label}
+                      </span>
+                      <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                        {isActive ? 'Active Accent' : p.hex}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* SECTION: ACCESSIBILITY ACCOMMODATIONS */}
+          <div style={{ background: 'var(--panel-bg)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '20px' }}>
+            <h3 style={{ margin: '0 0 8px 0', fontSize: '15px' }}>Accessibility Accommodations (WCAG 2.1 AA)</h3>
+            <p style={{ margin: '0 0 16px 0', fontSize: '13px', color: 'var(--text-muted)' }}>
+              Configure contrast ratios, typography scaling, and motion suppression to accommodate visual and vestibular requirements.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {/* High Contrast Mode Toggle */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', borderRadius: '6px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)' }}>
+                <div>
+                  <div style={{ fontWeight: 'bold', fontSize: '13px' }}>High-Contrast Mode (AA)</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                    Forces maximum contrast ratios (&ge; 7:1) with solid white borders and pure black background.
+                  </div>
+                </div>
+                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '8px' }}>
+                  <input
+                    type="checkbox"
+                    id="settings-toggle-high-contrast"
+                    data-testid="toggle-high-contrast"
+                    checked={highContrast}
+                    onChange={(e) => setHighContrast(e.target.checked)}
+                    style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                  />
+                  <span style={{ fontSize: '12px', fontWeight: highContrast ? 'bold' : 'normal' }}>
+                    {highContrast ? 'Enabled' : 'Disabled'}
+                  </span>
+                </label>
+              </div>
+
+              {/* Reduced Motion Toggle */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', borderRadius: '6px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)' }}>
+                <div>
+                  <div style={{ fontWeight: 'bold', fontSize: '13px' }}>Reduced Motion</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                    Disables smooth animations, page transitions, and pulsating indicators to prevent vestibular motion sickness.
+                  </div>
+                </div>
+                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '8px' }}>
+                  <input
+                    type="checkbox"
+                    id="settings-toggle-reduced-motion"
+                    data-testid="toggle-reduced-motion"
+                    checked={reducedMotion}
+                    onChange={(e) => setReducedMotion(e.target.checked)}
+                    style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                  />
+                  <span style={{ fontSize: '12px', fontWeight: reducedMotion ? 'bold' : 'normal' }}>
+                    {reducedMotion ? 'Enabled' : 'Disabled'}
+                  </span>
+                </label>
+              </div>
+
+              {/* Font Scale Selector */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', borderRadius: '6px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)' }}>
+                <div>
+                  <div style={{ fontWeight: 'bold', fontSize: '13px' }}>Base Typography Scaling</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                    Scales root typography across all dashboard modules, exam players, and question editors.
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  {(
+                    [
+                      { scale: 'small', label: 'Small (14px)', symbol: 'Small' },
+                      { scale: 'normal', label: 'Normal (16px)', symbol: 'Normal' },
+                      { scale: 'large', label: 'Large (18px)', symbol: 'Large' },
+                    ] as const
+                  ).map(({ scale, label, symbol }) => {
+                    const isSelected = fontScale === scale;
+                    return (
+                      <button
+                        key={scale}
+                        id={`settings-font-scale-${scale}`}
+                        data-testid={`font-scale-${scale}`}
+                        onClick={() => setFontScale(scale as FontScale)}
+                        title={label}
+                        aria-label={label}
+                        style={{
+                          padding: '6px 12px',
+                          borderRadius: '6px',
+                          border: isSelected ? '1px solid var(--accent-color, #06b6d4)' : '1px solid var(--border-color)',
+                          background: isSelected ? 'var(--accent-color, #06b6d4)' : 'transparent',
+                          color: isSelected ? '#000' : 'var(--text-main)',
+                          fontSize: '12px',
+                          fontWeight: isSelected ? 'bold' : 'normal',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        {symbol}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -1,59 +1,63 @@
 ================================================================================
  ExamOS Database State Snapshot
+<<<<<<< HEAD
  Generated at: 2026-09-10T01:05:22.318Z
+=======
+ Generated at: 2026-09-12T18:36:48.959Z
+>>>>>>> 47e9821 (feat(themes): implement platform themes, curated accent palettes, and accessibility mode (15.13))
  Target file:  db-state.txt
  Notice:       Read-only diagnostic snapshot. Contains no PII, secrets, or content.
 ================================================================================
 
 [LANGUAGES] Total: 23
-  - as    | Assamese             | active: true  | default: false | updated: 2026-09-09T23:02:28.204Z
-  - bn    | Bengali              | active: true  | default: false | updated: 2026-09-09T23:02:28.183Z
-  - br    | Bodo                 | active: true  | default: false | updated: 2026-09-09T23:02:28.214Z
-  - doi   | Dogri                | active: true  | default: false | updated: 2026-09-09T23:02:28.216Z
-  - en    | English              | active: true  | default: true  | updated: 2026-09-09T23:02:28.169Z
-  - gu    | Gujarati             | active: true  | default: false | updated: 2026-09-09T23:02:28.194Z
-  - hi    | Hindi                | active: true  | default: false | updated: 2026-09-09T23:02:28.181Z
-  - kn    | Kannada              | active: true  | default: false | updated: 2026-09-09T23:02:28.196Z
-  - ks    | Kashmiri             | active: true  | default: false | updated: 2026-09-09T23:02:28.209Z
-  - lus   | Mizo                 | active: true  | default: false | updated: 2026-09-09T23:02:28.221Z
-  - ma    | Maithili             | active: true  | default: false | updated: 2026-09-09T23:02:28.206Z
-  - ml    | Malayalam            | active: true  | default: false | updated: 2026-09-09T23:02:28.198Z
-  - mni   | Manipuri             | active: true  | default: false | updated: 2026-09-09T23:02:28.218Z
-  - mr    | Marathi              | active: true  | default: false | updated: 2026-09-09T23:02:28.188Z
-  - ne    | Nepali               | active: true  | default: false | updated: 2026-09-09T23:02:28.211Z
-  - or    | Odia                 | active: true  | default: false | updated: 2026-09-09T23:02:28.200Z
-  - pa    | Punjabi              | active: true  | default: false | updated: 2026-09-09T23:02:28.202Z
-  - sa    | Sanskrit             | active: true  | default: false | updated: 2026-09-09T23:02:28.208Z
-  - sat   | Santhali             | active: false | default: false | updated: 2026-09-09T23:47:38.647Z
-  - sd    | Sindhi               | active: true  | default: false | updated: 2026-09-09T23:02:28.212Z
-  - ta    | Tamil                | active: true  | default: false | updated: 2026-09-09T23:02:28.190Z
-  - te    | Telugu               | active: true  | default: false | updated: 2026-09-09T23:02:28.186Z
-  - ur    | Urdu                 | active: true  | default: false | updated: 2026-09-09T23:02:28.192Z
+  - as    | Assamese             | active: true  | default: false | updated: 2026-09-12T17:28:09.573Z
+  - bn    | Bengali              | active: true  | default: false | updated: 2026-09-12T17:28:09.561Z
+  - br    | Bodo                 | active: true  | default: false | updated: 2026-09-12T17:28:09.581Z
+  - doi   | Dogri                | active: true  | default: false | updated: 2026-09-12T17:28:09.582Z
+  - en    | English              | active: true  | default: true  | updated: 2026-09-12T17:28:09.550Z
+  - gu    | Gujarati             | active: true  | default: false | updated: 2026-09-12T17:28:09.566Z
+  - hi    | Hindi                | active: true  | default: false | updated: 2026-09-12T17:28:09.559Z
+  - kn    | Kannada              | active: true  | default: false | updated: 2026-09-12T17:28:09.568Z
+  - ks    | Kashmiri             | active: true  | default: false | updated: 2026-09-12T17:28:09.577Z
+  - lus   | Mizo                 | active: true  | default: false | updated: 2026-09-12T17:28:09.587Z
+  - ma    | Maithili             | active: true  | default: false | updated: 2026-09-12T17:28:09.574Z
+  - ml    | Malayalam            | active: true  | default: false | updated: 2026-09-12T17:28:09.569Z
+  - mni   | Manipuri             | active: true  | default: false | updated: 2026-09-12T17:28:09.583Z
+  - mr    | Marathi              | active: true  | default: false | updated: 2026-09-12T17:28:09.563Z
+  - ne    | Nepali               | active: true  | default: false | updated: 2026-09-12T17:28:09.578Z
+  - or    | Odia                 | active: true  | default: false | updated: 2026-09-12T17:28:09.570Z
+  - pa    | Punjabi              | active: true  | default: false | updated: 2026-09-12T17:28:09.572Z
+  - sa    | Sanskrit             | active: true  | default: false | updated: 2026-09-12T17:28:09.575Z
+  - sat   | Santhali             | active: true  | default: false | updated: 2026-09-12T17:28:09.585Z
+  - sd    | Sindhi               | active: true  | default: false | updated: 2026-09-12T17:28:09.579Z
+  - ta    | Tamil                | active: true  | default: false | updated: 2026-09-12T17:28:09.564Z
+  - te    | Telugu               | active: true  | default: false | updated: 2026-09-12T17:28:09.562Z
+  - ur    | Urdu                 | active: true  | default: false | updated: 2026-09-12T17:28:09.565Z
 
-[TRANSLATIONS BY LANGUAGE] Total rows: 3956
-  - as    | Assamese             : 172 rows
+[TRANSLATIONS BY LANGUAGE] Total rows: 3932
+  - as    | Assamese             : 171 rows
   - bn    | Bengali              : 172 rows
-  - br    | Bodo                 : 172 rows
-  - doi   | Dogri                : 172 rows
+  - br    | Bodo                 : 171 rows
+  - doi   | Dogri                : 171 rows
   - en    | English              : 172 rows
-  - gu    | Gujarati             : 172 rows
+  - gu    | Gujarati             : 171 rows
   - hi    | Hindi                : 172 rows
-  - kn    | Kannada              : 172 rows
-  - ks    | Kashmiri             : 172 rows
-  - lus   | Mizo                 : 172 rows
-  - ma    | Maithili             : 172 rows
-  - ml    | Malayalam            : 172 rows
-  - mni   | Manipuri             : 172 rows
-  - mr    | Marathi              : 172 rows
-  - ne    | Nepali               : 172 rows
-  - or    | Odia                 : 172 rows
-  - pa    | Punjabi              : 172 rows
-  - sa    | Sanskrit             : 172 rows
-  - sat   | Santhali             : 172 rows
-  - sd    | Sindhi               : 172 rows
-  - ta    | Tamil                : 172 rows
-  - te    | Telugu               : 172 rows
-  - ur    | Urdu                 : 172 rows
+  - kn    | Kannada              : 171 rows
+  - ks    | Kashmiri             : 171 rows
+  - lus   | Mizo                 : 171 rows
+  - ma    | Maithili             : 171 rows
+  - ml    | Malayalam            : 171 rows
+  - mni   | Manipuri             : 171 rows
+  - mr    | Marathi              : 170 rows
+  - ne    | Nepali               : 171 rows
+  - or    | Odia                 : 171 rows
+  - pa    | Punjabi              : 171 rows
+  - sa    | Sanskrit             : 171 rows
+  - sat   | Santhali             : 171 rows
+  - sd    | Sindhi               : 171 rows
+  - ta    | Tamil                : 170 rows
+  - te    | Telugu               : 170 rows
+  - ur    | Urdu                 : 170 rows
 
 [TRANSLATION KEYS] Total registered keys: 172 (baseline target: 172)
 
@@ -161,6 +165,6 @@
   (No interview sessions currently recorded)
 
 [SCHEMA MIGRATION MARKERS & RECENT PHASE TABLE COUNTS]
-plans: 3 | entitlement_rules: 27 | subscriptions: 2 | ai_credit_packages: 3 | audio_voice_profiles: 10 | vocabulary_words: 8 | interview_sessions: 0 | candidate_interview_profiles: 0 | languages: 23 | translation_keys: 172 | translations: 3956 | feature_registry: 8 | maintenance_configs: 0
+plans: 3 | entitlement_rules: 27 | subscriptions: 2 | ai_credit_packages: 3 | audio_voice_profiles: 10 | vocabulary_words: 160 | interview_sessions: 0 | candidate_interview_profiles: 0 | languages: 23 | translation_keys: 172 | translations: 3932 | feature_registry: 8 | maintenance_configs: 0
 
 ================================================================================

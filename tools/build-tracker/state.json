@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-09-09T17:07:06.597Z",
+  "lastUpdated": "2026-09-12T18:36:25.047Z",
   "activePhase": 7,
   "phases": [
     {
@@ -1309,7 +1309,8 @@
           "phase": 15,
           "title": "THEMES-01 — Extended Platform Themes, Accent Palettes & Accessibility Mode (docs/v2/features/platform-themes.md)",
           "source": "plan",
-          "state": "pending",
+          "state": "tested",
+          "testedAt": "2026-09-13T00:34:00.000Z",
           "addedAt": "2026-08-31T00:00:00.000Z"
         },
         {
@@ -1337,7 +1338,7 @@
           "phase": 15,
           "title": "IMPORT-01 — Schema-Validated JSON Import & Export with Dry-Run Validation (docs/v2/features/json-import-export.md)",
           "source": "plan",
-          "state": "pending",
+          "state": "approved",
           "addedAt": "2026-08-31T00:00:00.000Z"
         },
         {

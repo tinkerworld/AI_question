@@ -107,6 +107,11 @@ export async function initV2Tables(): Promise<void> {
       CREATE INDEX IF NOT EXISTS "idx_vocab_words_course" ON "vocabulary_words"("courseId");
       CREATE INDEX IF NOT EXISTS "idx_student_vocab_due" ON "student_vocabulary_progress"("userId", "nextReviewDue");
       CREATE INDEX IF NOT EXISTS "idx_promotional_rules_key" ON "promotional_entitlement_rules"("featureKey");
+
+      ALTER TABLE "user_preferences" ADD COLUMN IF NOT EXISTS "accentColor" TEXT DEFAULT 'cyan';
+      ALTER TABLE "user_preferences" ADD COLUMN IF NOT EXISTS "highContrast" BOOLEAN DEFAULT false;
+      ALTER TABLE "user_preferences" ADD COLUMN IF NOT EXISTS "fontScale" TEXT DEFAULT 'normal';
+      ALTER TABLE "user_preferences" ADD COLUMN IF NOT EXISTS "reducedMotion" BOOLEAN DEFAULT false;
     `);
 
     // Seed default feature registry if empty
