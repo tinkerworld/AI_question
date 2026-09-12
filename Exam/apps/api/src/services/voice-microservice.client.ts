@@ -175,11 +175,30 @@ export class VoiceMicroserviceClient {
     return (await res.json()) as RemoteSessionState;
   }
 
-  async waitForQuestion(sessionId: string, maxAttempts = 15, intervalMs = 1200): Promise<RemoteSessionState> {
+  async waitForQuestion(
+    sessionId: string,
+    maxAttempts = 20,
+    intervalMs = 1000,
+    previousQuestion?: string
+  ): Promise<RemoteSessionState> {
+    // Initial delay so microservice background worker starts LLM generation
+    await new Promise((resolve) => setTimeout(resolve, 800));
+
     let state = await this.pollSession(sessionId);
     for (let i = 0; i < maxAttempts; i++) {
-      if (state.status === 'question_ready' || state.status === 'completed' || state.status === 'error') {
+      if (state.status === 'completed' || state.status === 'error') {
         return state;
+      }
+      if (state.status === 'question_ready') {
+        const currentQ = state.current_turn?.question;
+        const currentSpoken = state.current_turn?.spoken_text;
+        const isStale =
+          previousQuestion &&
+          (currentQ === previousQuestion || currentSpoken === previousQuestion);
+
+        if (!isStale && (currentQ || currentSpoken)) {
+          return state;
+        }
       }
       await new Promise((resolve) => setTimeout(resolve, intervalMs));
       state = await this.pollSession(sessionId);

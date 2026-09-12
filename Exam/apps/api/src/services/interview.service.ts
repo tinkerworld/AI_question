@@ -1436,8 +1436,14 @@ Output JSON only.`;
     if (sessionRow.remoteSessionId) {
       const client = VoiceMicroserviceClient.getInstance();
       try {
+        const lastTurnsRes = await db.query(
+          `SELECT message FROM "interview_turns" WHERE "sessionId" = $1 AND "speaker" = 'AI' ORDER BY "turnNumber" DESC LIMIT 1`,
+          [sessionId]
+        );
+        const previousQuestion = (lastTurnsRes.rows[0] as any)?.message;
+
         await client.skipQuestion(sessionRow.remoteSessionId);
-        const state = await client.waitForQuestion(sessionRow.remoteSessionId, 12, 1000);
+        const state = await client.waitForQuestion(sessionRow.remoteSessionId, 20, 1000, previousQuestion);
 
         if (state.status === 'completed') {
           await db.query(`UPDATE "interview_sessions" SET "status" = 'COMPLETED', "updatedAt" = CURRENT_TIMESTAMP WHERE "id" = $1`, [sessionId]);
@@ -3369,7 +3375,15 @@ Output JSON only.`;
           audio_format: dto.audioFormat || 'webm',
         });
 
-        const remoteState = await microserviceClient.waitForQuestion(sessionRow.remoteSessionId, 15, 1200);
+        const lastAiTurn = [...existingTurns].reverse().find((t) => t.speaker === 'AI');
+        const previousQuestion = lastAiTurn?.message;
+
+        const remoteState = await microserviceClient.waitForQuestion(
+          sessionRow.remoteSessionId,
+          20,
+          1000,
+          previousQuestion
+        );
 
         if (remoteState.status === 'completed') {
           await db.query(`UPDATE "interview_sessions" SET "status" = 'COMPLETED', "updatedAt" = CURRENT_TIMESTAMP WHERE "id" = $1`, [sessionId]);
