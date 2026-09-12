@@ -17,6 +17,9 @@ Welcome to the **AI Interview & Knowledge Microservice API**. This guide provide
 | **OpenAPI 3.0.3 Spec** | [`/openapi.json`](https://voice.tinkerlab.online/openapi.json) | Machine-readable OpenAPI schema to generate client SDKs in any language. |
 | **System Health Check** | [`/v1/health`](https://voice.tinkerlab.online/v1/health) | Ping endpoint to monitor service and LLM availability. |
 | **System Status** | [`/v1/status`](https://voice.tinkerlab.online/v1/status) | Returns active model, database info, and indexed corpus size. |
+| **Audio Service Health** | [`/v1/audio/health`](https://voice.tinkerlab.online/v1/audio/health) | Real-time Whisper ASR and Piper TTS engine / device status. |
+| **Speech-to-Text (ASR)** | `/v1/audio/transcribe` | Transcribes speech audio with acoustic confidence metadata. |
+| **Text-to-Speech (TTS)** | `/v1/audio/synthesize` | Direct audio voice synthesis with 9 examiner personas. |
 
 ---
 
@@ -589,6 +592,145 @@ Returns the knowledge version audit trail and checkpoint changelog.
     }
   ]
 }
+```
+
+---
+
+### 4.4 Audio Microservice Endpoints (`/v1/audio/*`)
+
+The Audio Microservice operates as an independent, domain-neutral audio processing subsystem for Speech-to-Text (ASR) via Whisper and Text-to-Speech (TTS) via Piper. It contains zero assumptions about interview types, rubrics, or exams.
+
+#### Authentication (Optional Shared Secret)
+If `AUDIO_SERVICE_SECRET` or `AUDIO_AUTH_TOKEN` is set on the server, clients must pass the shared token in either of the following headers:
+```http
+Authorization: Bearer <SECRET_TOKEN>
+```
+or
+```http
+X-Audio-Secret: <SECRET_TOKEN>
+```
+
+---
+
+#### `GET /v1/audio/health`
+Checks the live status of the Whisper ASR model, Piper TTS engine, and active hardware device (`cuda` or `cpu`).
+
+**Response (`200 OK`):**
+```json
+{
+  "status": "healthy",
+  "service": "audio_microservice",
+  "whisper_model": "small",
+  "whisper_device_configured": "cuda",
+  "whisper_model_loaded": true,
+  "active_device": "cuda",
+  "cuda_available": true,
+  "tts_provider": "piper",
+  "timestamp": 1789255200.123
+}
+```
+
+**cURL Example:**
+```bash
+curl -k -X GET "https://voice.tinkerlab.online/v1/audio/health" \
+  -H "Authorization: Bearer my_shared_secret"
+```
+
+---
+
+#### `POST /v1/audio/transcribe`
+Transcribes input speech audio into text and computes acoustic confidence statistics (`avg_logprob` and `no_speech_prob`).
+
+**Request Body (JSON Base64 Payload):**
+```json
+{
+  "audio_base64": "GkXfo59ChoEBQveBAULygQ8UA85Glc8VLZWdgIIA9H+VhNW1Znd...",
+  "audio_format": "webm",
+  "language": "en",
+  "min_words": 1
+}
+```
+
+**Binary Audio Upload:**
+You may alternatively upload raw binary audio bytes directly with `Content-Type: audio/webm`, `audio/wav`, or `audio/ogg`. Query parameters `?lang=en&min_words=1` are supported.
+
+**Success Response (`200 OK`):**
+```json
+{
+  "text": "Hello from the candidate.",
+  "duration_s": 2.14,
+  "asr_s": 0.32,
+  "confidence_metadata": {
+    "is_low_confidence": false,
+    "avg_logprob": -0.342,
+    "max_no_speech_prob": 0.015,
+    "reason": null
+  }
+}
+```
+
+**Low-Confidence Audio Response (`200 OK`):**
+```json
+{
+  "text": "",
+  "duration_s": 0.0,
+  "asr_s": 0.0,
+  "confidence_metadata": {
+    "is_low_confidence": true,
+    "avg_logprob": -999.0,
+    "max_no_speech_prob": 1.0,
+    "reason": "no usable speech (junk or hallucination: 'Thank you.')"
+  },
+  "error": "no usable speech (junk or hallucination: 'Thank you.')"
+}
+```
+
+**cURL Example:**
+```bash
+curl -k -X POST "https://voice.tinkerlab.online/v1/audio/transcribe" \
+  -H "Authorization: Bearer my_shared_secret" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "audio_base64": "'$(base64 -w 0 answer.webm)'",
+    "audio_format": "webm",
+    "language": "en"
+  }'
+```
+
+---
+
+#### `POST /v1/audio/synthesize` (and `GET /v1/audio/synthesize`)
+Synthesizes speech audio from raw text using any available voice persona.
+
+**Request Body (`POST`):**
+```json
+{
+  "text": "Could you describe your architectural approach to state management?",
+  "voice": "emma",
+  "rate": 1.0
+}
+```
+
+**Query Parameters (`GET`):**
+- `text`: Text string to synthesize (required)
+- `voice`: Voice profile ID (`emma`, `pooja`, `sarah`, `liam`, `james`, `arthur`, `david`, `rohan`)
+- `rate`: Speech rate multiplier (`1.0` is normal speed)
+
+**Response (`200 OK`):**
+- `Content-Type`: `audio/x-wav` (or `audio/mpeg`)
+- `Content-Length`: `<byte_count>`
+- `X-TTS-Provider`: `piper`
+- `X-TTS-Voice`: `emma`
+- `X-Audio-Duration`: `<duration_seconds>`
+- Body: Binary audio stream.
+
+**cURL Example:**
+```bash
+curl -k -X POST "https://voice.tinkerlab.online/v1/audio/synthesize" \
+  -H "Authorization: Bearer my_shared_secret" \
+  -H "Content-Type: application/json" \
+  -d '{"text": "Hello world", "voice": "emma", "rate": 1.0}' \
+  --output hello.wav
 ```
 
 ---

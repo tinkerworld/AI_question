@@ -445,4 +445,104 @@ router.post(
   }
 );
 
+/**
+ * GET /api/v1/interview/audio/health
+ * Checks health of Whisper ASR & Piper TTS audio microservice.
+ */
+router.get(
+  '/audio/health',
+  async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+      const health = await InterviewService.getAudioHealth();
+      res.json({ success: true, data: health });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+/**
+ * POST /api/v1/interview/audio/transcribe
+ * Direct Whisper speech-to-text transcription proxy.
+ */
+router.post(
+  '/audio/transcribe',
+  express.json({ limit: '50mb' }),
+  requirePermission(PERMISSIONS.INTERVIEW_ATTEMPT),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { audio_base64, audioBase64, audio_format, audioFormat, language, min_words, minWords } = req.body || {};
+      const base64Data = audio_base64 || audioBase64;
+      if (!base64Data) {
+        throw new AppError(400, 'BAD_REQUEST', 'audio_base64 or audioBase64 is required');
+      }
+
+      const result = await InterviewService.transcribeAudio({
+        audio_base64: base64Data,
+        audio_format: audio_format || audioFormat || 'webm',
+        language: language || 'en',
+        min_words: min_words ?? minWords ?? 1,
+      });
+
+      res.json({ success: true, data: result });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+/**
+ * GET & POST /api/v1/interview/audio/synthesize
+ * Direct Piper text-to-speech audio synthesis proxy.
+ */
+router.all(
+  '/audio/synthesize',
+  express.json({ limit: '10mb' }),
+  requirePermission(PERMISSIONS.INTERVIEW_ATTEMPT),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const text = (req.method === 'GET' ? req.query.text : req.body?.text) as string;
+      const voice = ((req.method === 'GET' ? req.query.voice : req.body?.voice) as string) || 'emma';
+      const rate = Number(req.method === 'GET' ? req.query.rate : req.body?.rate) || 1.0;
+
+      if (!text) {
+        throw new AppError(400, 'BAD_REQUEST', 'text parameter is required');
+      }
+
+      const audioBuffer = await InterviewService.synthesizeAudio({ text, voice, rate });
+      res.setHeader('Content-Type', 'audio/mpeg');
+      res.setHeader('X-TTS-Voice', voice);
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+      res.send(Buffer.from(audioBuffer));
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+/**
+ * GET & POST /api/v1/interview/workspaces/:id/search
+ * Cosine similarity vector search in specified knowledge workspace.
+ */
+router.all(
+  '/workspaces/:id/search',
+  requirePermission(PERMISSIONS.INTERVIEW_ATTEMPT),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const workspaceId = req.params.id;
+      const query = (req.method === 'GET' ? req.query.q || req.query.query : req.body?.query || req.body?.q) as string;
+      const k = Number(req.method === 'GET' ? req.query.k : req.body?.k) || 3;
+
+      if (!query) {
+        throw new AppError(400, 'BAD_REQUEST', 'query parameter is required');
+      }
+
+      const results = await InterviewService.searchWorkspace(workspaceId, query, k);
+      res.json({ success: true, data: results });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 export default router;

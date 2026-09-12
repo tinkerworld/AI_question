@@ -172,4 +172,70 @@ describe('AI Interview & Viva Microservice Integration Tests', () => {
       process.env = originalEnv;
     }
   });
+
+  test('GET /api/v1/interview/audio/health returns audio microservice status', async () => {
+    assert.ok(adminToken, 'Token required');
+    const res = await apiRequest('GET', '/interview/audio/health', null, adminToken);
+    assert.strictEqual(res.status, 200);
+    assert.strictEqual(res.body.success, true);
+    assert.ok(res.body.data);
+    assert.strictEqual(res.body.data.status, 'healthy');
+    assert.strictEqual(res.body.data.whisper_model, 'small');
+    assert.strictEqual(res.body.data.tts_provider, 'piper');
+  });
+
+  test('POST /api/v1/interview/workspaces/:id/search performs vector search', async () => {
+    assert.ok(adminToken, 'Token required');
+    const res = await apiRequest(
+      'POST',
+      '/interview/workspaces/ws_yocto/search',
+      { query: 'BitBake', k: 2 },
+      adminToken
+    );
+    assert.strictEqual(res.status, 200);
+    assert.strictEqual(res.body.success, true);
+    assert.strictEqual(res.body.data.workspace_id, 'ws_yocto');
+    assert.ok(Array.isArray(res.body.data.results));
+    assert.ok(res.body.data.results.length >= 1);
+    assert.ok(res.body.data.results[0].text);
+    assert.ok(res.body.data.results[0].similarity > 0);
+  });
+
+  test('POST /api/v1/interview/audio/transcribe transcribes audio and produces acoustic confidence', async () => {
+    assert.ok(adminToken, 'Token required');
+    // First synthesize audio sample via microservice
+    const synthRes = await fetch(`${API_BASE}/interview/audio/synthesize`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${adminToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        text: 'ExamOS automated interview testing pipeline',
+        voice: 'emma',
+      }),
+    });
+    assert.strictEqual(synthRes.status, 200);
+    const audioBuffer = await synthRes.arrayBuffer();
+    const base64Audio = Buffer.from(audioBuffer).toString('base64');
+
+    // Transcribe synthesized sample through Whisper ASR proxy
+    const transcribeRes = await apiRequest(
+      'POST',
+      '/interview/audio/transcribe',
+      {
+        audio_base64: base64Audio,
+        audio_format: 'mp3',
+        language: 'en',
+      },
+      adminToken
+    );
+
+    assert.strictEqual(transcribeRes.status, 200);
+    assert.strictEqual(transcribeRes.body.success, true);
+    assert.ok(transcribeRes.body.data.text, 'Must produce transcribed text');
+    assert.ok(transcribeRes.body.data.confidence_metadata, 'Must contain confidence metadata');
+    assert.strictEqual(transcribeRes.body.data.confidence_metadata.is_low_confidence, false);
+    assert.ok(typeof transcribeRes.body.data.confidence_metadata.avg_logprob === 'number');
+  });
 });

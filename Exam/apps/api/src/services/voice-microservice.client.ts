@@ -178,6 +178,36 @@ export class VoiceMicroserviceClient {
     }
   }
 
+  async searchWorkspace(
+    workspaceId: string,
+    query: string,
+    k: number = 3
+  ): Promise<{
+    workspace_id: string;
+    query: string;
+    results: Array<{
+      id: string;
+      similarity: number;
+      cite: string;
+      chunk_ids: number[];
+      text: string;
+      modality: string;
+    }>;
+  }> {
+    const res = await fetch(`${this.baseUrl}/v1/workspaces/${workspaceId}/search`, {
+      method: 'POST',
+      headers: this.getHeaders('application/json'),
+      body: JSON.stringify({ query, k }),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Failed to search workspace (${res.status}): ${text}`);
+    }
+
+    return (await res.json()) as any;
+  }
+
   async startSession(options: RemoteSessionCreateOptions = {}): Promise<{
     session_id: string;
     status: string;

@@ -1422,6 +1422,43 @@ Output JSON only.`;
   }
 
   /**
+   * Checks health of the audio microservice (Whisper ASR, Piper TTS).
+   */
+  static async getAudioHealth() {
+    return await VoiceMicroserviceClient.getInstance().getAudioHealth();
+  }
+
+  /**
+   * Transcribes candidate audio through Whisper microservice.
+   */
+  static async transcribeAudio(params: {
+    audio_base64: string;
+    audio_format?: string;
+    language?: string;
+    min_words?: number;
+  }) {
+    return await VoiceMicroserviceClient.getInstance().transcribeAudio(params);
+  }
+
+  /**
+   * Synthesizes examiner spoken audio via Piper microservice.
+   */
+  static async synthesizeAudio(params: {
+    text: string;
+    voice?: string;
+    rate?: number;
+  }) {
+    return await VoiceMicroserviceClient.getInstance().synthesizeAudio(params);
+  }
+
+  /**
+   * Vector search in a microservice knowledge workspace.
+   */
+  static async searchWorkspace(workspaceId: string, query: string, k: number = 3) {
+    return await VoiceMicroserviceClient.getInstance().searchWorkspace(workspaceId, query, k);
+  }
+
+  /**
    * Skips the current turn in the microservice interview session.
    */
   static async skipTurn(

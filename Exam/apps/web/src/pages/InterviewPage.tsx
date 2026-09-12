@@ -176,6 +176,16 @@ export const InterviewPage: React.FC = () => {
   const liveStreamRef = useRef<MediaStream | null>(null);
   const liveAnimFrameRef = useRef<number | null>(null);
 
+  // Multimodal MediaRecorder & Whisper ASR refs
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recordedAudioBase64Ref = useRef<string | null>(null);
+  const candidateInputRef = useRef<string>(candidateInput);
+
+  useEffect(() => {
+    candidateInputRef.current = candidateInput;
+  }, [candidateInput]);
+
   const stopLiveAudioMonitoring = () => {
     if (liveAnimFrameRef.current) {
       cancelAnimationFrame(liveAnimFrameRef.current);
@@ -194,6 +204,26 @@ export const InterviewPage: React.FC = () => {
         liveStreamRef.current.getTracks().forEach((t) => t.stop());
       } catch {}
       liveStreamRef.current = null;
+    }
+  };
+
+  const stopAudioRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      try {
+        mediaRecorderRef.current.stop();
+      } catch {}
+    }
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.onresult = null;
+        recognitionRef.current.stop();
+      } catch {}
+    }
+    setIsRecording(false);
+    stopLiveAudioMonitoring();
+    if (recordingTimeoutRef.current) {
+      clearTimeout(recordingTimeoutRef.current);
+      recordingTimeoutRef.current = null;
     }
   };
 
@@ -232,13 +262,7 @@ export const InterviewPage: React.FC = () => {
               clearTimeout(recordingTimeoutRef.current);
             }
             recordingTimeoutRef.current = setTimeout(() => {
-              if (recognitionRef.current) {
-                try {
-                  recognitionRef.current.stop();
-                } catch {}
-                setIsRecording(false);
-                stopLiveAudioMonitoring();
-              }
+              stopAudioRecording();
             }, activeAcousticsRef.current.pauseTimeoutMs);
           }
         }
@@ -306,16 +330,91 @@ export const InterviewPage: React.FC = () => {
     setAgreedToInterviewTerms(false);
   };
 
-  // Speech-to-Text (STT) & Text-to-Speech (TTS) States
+  // Speech-to-Text (STT), MediaRecorder & Text-to-Speech (TTS) States
   const [isRecording, setIsRecording] = useState<boolean>(false);
   const [speechSupported, setSpeechSupported] = useState<boolean>(false);
   const [ttsEnabled, setTtsEnabled] = useState<boolean>(true);
+  const [isTranscribingAudio, setIsTranscribingAudio] = useState<boolean>(false);
   const recognitionRef = useRef<any>(null);
   const recordingTimeoutRef = useRef<any>(null);
   const chatScrollRef = useRef<HTMLDivElement>(null);
 
   // History State
   const [pastSessions, setPastSessions] = useState<InterviewSessionDTO[]>([]);
+
+  // Start MediaRecorder audio capture with automatic Whisper transcription fallback
+  const startAudioRecording = async () => {
+    try {
+      let stream = liveStreamRef.current;
+      if (!stream || !stream.active) {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: false },
+        });
+        liveStreamRef.current = stream;
+      }
+
+      if (typeof MediaRecorder !== 'undefined' && stream) {
+        let mimeType = '';
+        if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+          mimeType = 'audio/webm;codecs=opus';
+        } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+          mimeType = 'audio/webm';
+        }
+
+        const options: MediaRecorderOptions = mimeType ? { mimeType } : {};
+        const recorder = new MediaRecorder(stream, options);
+        audioChunksRef.current = [];
+
+        recorder.ondataavailable = (event: BlobEvent) => {
+          if (event.data && event.data.size > 0) {
+            audioChunksRef.current.push(event.data);
+          }
+        };
+
+        recorder.onstop = () => {
+          if (audioChunksRef.current.length > 0) {
+            const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+            const reader = new FileReader();
+            reader.onloadend = async () => {
+              const resultStr = reader.result as string;
+              const base64Data = resultStr?.includes(',') ? resultStr.split(',')[1] : resultStr;
+              recordedAudioBase64Ref.current = base64Data;
+
+              // If candidateInput is empty, auto-transcribe through Whisper microservice
+              if (!candidateInputRef.current?.trim() && !isSubmittingRef.current && base64Data) {
+                try {
+                  setIsTranscribingAudio(true);
+                  const res = await fetch(`${API_BASE}/interview/audio/transcribe`, {
+                    method: 'POST',
+                    headers: getAuthHeaders(token),
+                    body: JSON.stringify({
+                      audio_base64: base64Data,
+                      audio_format: 'webm',
+                      language: 'en',
+                    }),
+                  });
+                  const data = await res.json();
+                  if (data?.success && data?.data?.text && !isSubmittingRef.current) {
+                    setCandidateInput(data.data.text);
+                  }
+                } catch (asrErr) {
+                  console.warn('Whisper ASR auto-transcribe fallback error:', asrErr);
+                } finally {
+                  setIsTranscribingAudio(false);
+                }
+              }
+            };
+            reader.readAsDataURL(blob);
+          }
+        };
+
+        mediaRecorderRef.current = recorder;
+        recorder.start(250);
+      }
+    } catch (err) {
+      console.warn('startAudioRecording error:', err);
+    }
+  };
 
   // Helper to bind continuous onresult handler safely with personalized pause tolerance
   const bindRecognitionHandlers = (recog: any) => {
@@ -335,32 +434,16 @@ export const InterviewPage: React.FC = () => {
         clearTimeout(recordingTimeoutRef.current);
       }
       recordingTimeoutRef.current = setTimeout(() => {
-        if (recog) {
-          try {
-            recog.stop();
-          } catch {}
-          setIsRecording(false);
-          stopLiveAudioMonitoring();
-        }
+        stopAudioRecording();
       }, activeAcousticsRef.current.pauseTimeoutMs);
     };
 
     recog.onend = () => {
-      setIsRecording(false);
-      stopLiveAudioMonitoring();
-      if (recordingTimeoutRef.current) {
-        clearTimeout(recordingTimeoutRef.current);
-        recordingTimeoutRef.current = null;
-      }
+      stopAudioRecording();
     };
 
     recog.onerror = () => {
-      setIsRecording(false);
-      stopLiveAudioMonitoring();
-      if (recordingTimeoutRef.current) {
-        clearTimeout(recordingTimeoutRef.current);
-        recordingTimeoutRef.current = null;
-      }
+      stopAudioRecording();
     };
   };
 
@@ -425,12 +508,15 @@ export const InterviewPage: React.FC = () => {
     fetchLongitudinalProgress();
     fetchVoiceProfile();
 
-    // Check Speech Recognition support in browser
+    // Check Speech Recognition or MediaRecorder support in browser
     if (typeof window !== 'undefined') {
       const SpeechRecognition =
         (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      if (SpeechRecognition) {
+      const hasMediaRecorder = typeof MediaRecorder !== 'undefined' && !!navigator.mediaDevices?.getUserMedia;
+      if (SpeechRecognition || hasMediaRecorder) {
         setSpeechSupported(true);
+      }
+      if (SpeechRecognition) {
         const recog = new SpeechRecognition();
         recog.continuous = true; // Continuous listening across natural speech pauses
         recog.interimResults = true; // Real-time progressive transcription
@@ -531,41 +617,31 @@ export const InterviewPage: React.FC = () => {
     window.speechSynthesis.speak(utterance);
   };
 
-  // Toggle Speech Recognition (Press-to-start / Press-to-stop across natural pauses)
-  const toggleSpeechRecognition = () => {
-    if (!recognitionRef.current) return;
+  // Toggle Speech & Audio Recording (Press-to-start / Press-to-stop across natural pauses)
+  const toggleSpeechRecognition = async () => {
     if (isRecording) {
-      try {
-        recognitionRef.current.onresult = null;
-        recognitionRef.current.stop();
-      } catch {}
-      setIsRecording(false);
-      stopLiveAudioMonitoring();
-      if (recordingTimeoutRef.current) {
-        clearTimeout(recordingTimeoutRef.current);
-        recordingTimeoutRef.current = null;
-      }
+      stopAudioRecording();
     } else {
       try {
         isSubmittingRef.current = false;
-        bindRecognitionHandlers(recognitionRef.current);
-        recognitionRef.current.start();
         setIsRecording(true);
         startLiveAudioMonitoring();
+        await startAudioRecording();
+
+        if (recognitionRef.current) {
+          try {
+            bindRecognitionHandlers(recognitionRef.current);
+            recognitionRef.current.start();
+          } catch {}
+        }
+
         if (recordingTimeoutRef.current) clearTimeout(recordingTimeoutRef.current);
         // Candidate personalized pause tolerance duration (Sprint 4)
         recordingTimeoutRef.current = setTimeout(() => {
-          if (recognitionRef.current) {
-            try {
-              recognitionRef.current.stop();
-            } catch {}
-            setIsRecording(false);
-            stopLiveAudioMonitoring();
-          }
+          stopAudioRecording();
         }, activeAcousticsRef.current.pauseTimeoutMs);
       } catch {
-        setIsRecording(false);
-        stopLiveAudioMonitoring();
+        stopAudioRecording();
       }
     }
   };
@@ -638,24 +714,20 @@ export const InterviewPage: React.FC = () => {
     e.preventDefault();
     if (!activeSession || !candidateInput.trim() || isSubmittingTurn) return;
 
-    // 1. Guard against speech recognition race conditions:
-    // Null out onresult and mark submission flag BEFORE stopping recognition
+    // 1. Guard against speech recognition and MediaRecorder race conditions:
     isSubmittingRef.current = true;
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.onresult = null;
-        recognitionRef.current.stop();
-      } catch {}
-    }
-    setIsRecording(false);
-    stopLiveAudioMonitoring();
-    if (recordingTimeoutRef.current) {
-      clearTimeout(recordingTimeoutRef.current);
-      recordingTimeoutRef.current = null;
+    stopAudioRecording();
+
+    // If MediaRecorder was active, allow brief 150ms delay for FileReader onstop to populate base64
+    if (audioChunksRef.current.length > 0 && !recordedAudioBase64Ref.current) {
+      await new Promise((resolve) => setTimeout(resolve, 150));
     }
 
     const currentMessage = candidateInput.trim();
     setCandidateInput('');
+    const audioPayload = recordedAudioBase64Ref.current;
+    recordedAudioBase64Ref.current = null;
+    audioChunksRef.current = [];
 
     try {
       setIsSubmittingTurn(true);
@@ -668,6 +740,8 @@ export const InterviewPage: React.FC = () => {
           headers: getAuthHeaders(token),
           body: JSON.stringify({
             message: currentMessage,
+            audioBase64: audioPayload || undefined,
+            audioFormat: audioPayload ? 'webm' : undefined,
           }),
         }
       );
@@ -1570,9 +1644,32 @@ export const InterviewPage: React.FC = () => {
                         </span>
                       )
                     ) : (
-                      <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
-                        Response to Q{turn.mainQuestionIndex || 1}{(turn.followUpIndex || 0) > 0 ? ` (Follow-up ${turn.followUpIndex})` : ''}
-                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                          Response to Q{turn.mainQuestionIndex || 1}{(turn.followUpIndex || 0) > 0 ? ` (Follow-up ${turn.followUpIndex})` : ''}
+                        </span>
+                        {(turn as any).confidenceMetadata && (
+                          <span
+                            style={{
+                              padding: '1px 6px',
+                              borderRadius: '4px',
+                              fontSize: '10px',
+                              fontFamily: 'JetBrains Mono, monospace',
+                              background: (turn as any).confidenceMetadata.is_low_confidence
+                                ? 'rgba(239, 68, 68, 0.15)'
+                                : 'rgba(16, 185, 129, 0.15)',
+                              color: (turn as any).confidenceMetadata.is_low_confidence ? '#ef4444' : '#10b981',
+                              border: `1px solid ${
+                                (turn as any).confidenceMetadata.is_low_confidence
+                                  ? 'rgba(239, 68, 68, 0.3)'
+                                  : 'rgba(16, 185, 129, 0.3)'
+                              }`,
+                            }}
+                          >
+                            {(turn as any).confidenceMetadata.is_low_confidence ? '⚠️ Low ASR Conf' : '🎙️ High ASR Conf'}
+                          </span>
+                        )}
+                      </div>
                     )}
 
                     {isAi && (
@@ -1670,6 +1767,121 @@ export const InterviewPage: React.FC = () => {
                             {cite}
                           </span>
                         ))}
+                      </div>
+                    )}
+
+                    {isAi && turn.evaluationData && (
+                      <div
+                        style={{
+                          marginTop: '10px',
+                          padding: '10px 12px',
+                          borderRadius: '8px',
+                          background: 'rgba(16, 185, 129, 0.08)',
+                          border: '1px solid rgba(16, 185, 129, 0.25)',
+                          fontSize: '12px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '6px',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '6px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ fontWeight: 700, color: '#10b981' }}>📊 Response Evaluation</span>
+                            {turn.evaluationData.mean !== undefined && (
+                              <span
+                                style={{
+                                  background: '#10b981',
+                                  color: '#fff',
+                                  padding: '1px 7px',
+                                  borderRadius: '10px',
+                                  fontWeight: 700,
+                                  fontSize: '11px',
+                                }}
+                              >
+                                ★ {Number(turn.evaluationData.mean).toFixed(1)} / 5.0
+                              </span>
+                            )}
+                          </div>
+
+                          {turn.audioUrl && (turn.evaluationData.human_feedback || turn.evaluationData.justification) && (
+                            <button
+                              onClick={() => {
+                                const feedbackText = turn.evaluationData.human_feedback || turn.evaluationData.justification;
+                                const feedbackAudioUrl = turn.audioUrl?.replace('target=question', 'target=feedback');
+                                speakMessage(feedbackText, feedbackAudioUrl);
+                              }}
+                              title="Play Examiner Spoken Feedback"
+                              style={{
+                                background: 'rgba(16, 185, 129, 0.15)',
+                                border: '1px solid rgba(16, 185, 129, 0.4)',
+                                color: '#10b981',
+                                borderRadius: '4px',
+                                padding: '2px 8px',
+                                cursor: 'pointer',
+                                fontSize: '11px',
+                                fontWeight: 600,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                              }}
+                            >
+                              🔊 Feedback Audio
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Criteria Metric Badges */}
+                        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', fontSize: '10px' }}>
+                          {turn.evaluationData.correctness !== undefined && (
+                            <span style={{ padding: '2px 6px', borderRadius: '4px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-main)' }}>
+                              Accuracy: <strong>{turn.evaluationData.correctness}/5</strong>
+                            </span>
+                          )}
+                          {turn.evaluationData.technical_depth !== undefined && (
+                            <span style={{ padding: '2px 6px', borderRadius: '4px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-main)' }}>
+                              Depth: <strong>{turn.evaluationData.technical_depth}/5</strong>
+                            </span>
+                          )}
+                          {turn.evaluationData.reasoning !== undefined && (
+                            <span style={{ padding: '2px 6px', borderRadius: '4px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-main)' }}>
+                              Reasoning: <strong>{turn.evaluationData.reasoning}/5</strong>
+                            </span>
+                          )}
+                          {turn.evaluationData.completeness !== undefined && (
+                            <span style={{ padding: '2px 6px', borderRadius: '4px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-main)' }}>
+                              Completeness: <strong>{turn.evaluationData.completeness}/5</strong>
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Qualitative examiner feedback */}
+                        {turn.evaluationData.human_feedback && (
+                          <div style={{ color: 'var(--text-main)', fontStyle: 'italic', marginTop: '2px' }}>
+                            💡 &ldquo;{turn.evaluationData.human_feedback}&rdquo;
+                          </div>
+                        )}
+
+                        {/* Missing concepts pills if any */}
+                        {Array.isArray(turn.evaluationData.missing_concepts) && turn.evaluationData.missing_concepts.length > 0 && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap', marginTop: '4px' }}>
+                            <span style={{ color: '#f59e0b', fontWeight: 600, fontSize: '11px' }}>⚠️ Missing Concepts:</span>
+                            {turn.evaluationData.missing_concepts.map((concept: string, idx: number) => (
+                              <span
+                                key={idx}
+                                style={{
+                                  padding: '1px 6px',
+                                  borderRadius: '3px',
+                                  background: 'rgba(245, 158, 11, 0.15)',
+                                  color: '#f59e0b',
+                                  fontSize: '10px',
+                                  border: '1px solid rgba(245, 158, 11, 0.3)',
+                                }}
+                              >
+                                {concept}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -1802,6 +2014,7 @@ export const InterviewPage: React.FC = () => {
                     type="button"
                     id="btn-mic-toggle"
                     onClick={toggleSpeechRecognition}
+                    disabled={isTranscribingAudio || isSubmittingTurn}
                     title={isRecording ? 'Stop Recording' : 'Speak with Microphone'}
                     style={{
                       padding: '10px 14px',
@@ -1811,13 +2024,13 @@ export const InterviewPage: React.FC = () => {
                       color: isRecording ? '#ef4444' : 'var(--text-main)',
                       fontWeight: 600,
                       fontSize: '13px',
-                      cursor: 'pointer',
+                      cursor: isTranscribingAudio || isSubmittingTurn ? 'not-allowed' : 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '6px',
                     }}
                   >
-                    {isRecording ? '🔴 Listening...' : '🎙️ Mic'}
+                    {isTranscribingAudio ? '⏳ Whisper...' : isRecording ? '🔴 Listening...' : '🎙️ Mic'}
                   </button>
                 )}
 
@@ -1827,13 +2040,15 @@ export const InterviewPage: React.FC = () => {
                   value={candidateInput}
                   onChange={(e) => setCandidateInput(e.target.value)}
                   placeholder={
-                    speechSupported
+                    isTranscribingAudio
+                      ? "⏳ Transcribing your speech via Whisper..."
+                      : speechSupported
                       ? isRecording
                         ? "🔴 Listening... Speak your answer clearly into the microphone"
                         : "🎙️ Spoken response will appear here (click 'Mic' to speak)..."
                       : "Spoken response will appear here..."
                   }
-                  disabled={isSubmittingTurn}
+                  disabled={isSubmittingTurn || isTranscribingAudio}
                   style={{
                     flex: 1,
                     padding: '10px 14px',
@@ -1849,16 +2064,16 @@ export const InterviewPage: React.FC = () => {
                 <button
                   type="submit"
                   id="btn-submit-turn"
-                  disabled={!candidateInput.trim() || isSubmittingTurn}
+                  disabled={!candidateInput.trim() || isSubmittingTurn || isTranscribingAudio}
                   style={{
                     padding: '10px 20px',
                     borderRadius: '6px',
                     border: 'none',
-                    background: candidateInput.trim() && !isSubmittingTurn ? 'linear-gradient(135deg, #06b6d4, #3b82f6)' : 'var(--border-color)',
+                    background: candidateInput.trim() && !isSubmittingTurn && !isTranscribingAudio ? 'linear-gradient(135deg, #06b6d4, #3b82f6)' : 'var(--border-color)',
                     color: '#fff',
                     fontWeight: 600,
                     fontSize: '13px',
-                    cursor: candidateInput.trim() && !isSubmittingTurn ? 'pointer' : 'not-allowed',
+                    cursor: candidateInput.trim() && !isSubmittingTurn && !isTranscribingAudio ? 'pointer' : 'not-allowed',
                   }}
                 >
                   Submit Turn →
