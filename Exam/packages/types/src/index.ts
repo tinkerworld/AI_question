@@ -1,5 +1,15 @@
 export type ThemeMode = 'LIGHT' | 'GRAY' | 'DARK';
 
+export type FestivalKey =
+  | 'HOLI'
+  | 'DIWALI'
+  | 'NEW_YEAR'
+  | 'GUDI_PADWA'
+  | 'CHRISTMAS'
+  | 'EID'
+  | 'INDEPENDENCE_DAY'
+  | 'REPUBLIC_DAY';
+
 export type LanguageCode =
   | 'en' | 'hi' | 'bn' | 'te' | 'mr' | 'ta' | 'ur' | 'gu'
   | 'kn' | 'ml' | 'or' | 'pa' | 'as' | 'ma' | 'sa' | 'ks'

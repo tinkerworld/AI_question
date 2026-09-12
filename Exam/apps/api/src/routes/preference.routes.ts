@@ -36,6 +36,7 @@ const getPreferencesHandler = async (req: Request, res: Response, next: NextFunc
         highContrast: Boolean(row.highContrast),
         fontScale: row.fontScale || 'normal',
         reducedMotion: Boolean(row.reducedMotion),
+        festivalTheme: row.festivalTheme || null,
       },
     });
   } catch (err) {
@@ -53,7 +54,7 @@ router.get('/', getPreferencesHandler);
 const updatePreferencesHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.user!.userId;
-    let { themeMode, languageCode, accentColor, accentPalette, highContrast, fontScale, reducedMotion } = req.body;
+    let { themeMode, languageCode, accentColor, accentPalette, highContrast, fontScale, reducedMotion, festivalTheme } = req.body;
 
     // Support accentPalette alias if accentColor not explicitly passed
     if (!accentColor && accentPalette) {
@@ -107,9 +108,32 @@ const updatePreferencesHandler = async (req: Request, res: Response, next: NextF
 
     const finalReducedMotion = typeof reducedMotion === 'boolean' ? reducedMotion : Boolean(current.reducedMotion);
 
+    // Normalize festival theme
+    let finalFestival: string | null = current.festivalTheme || null;
+    if (festivalTheme !== undefined) {
+      if (festivalTheme === null || festivalTheme === 'none' || festivalTheme === '') {
+        finalFestival = null;
+      } else if (typeof festivalTheme === 'string') {
+        const upperFest = festivalTheme.toUpperCase();
+        const validFestivals = [
+          'HOLI',
+          'DIWALI',
+          'NEW_YEAR',
+          'GUDI_PADWA',
+          'CHRISTMAS',
+          'EID',
+          'INDEPENDENCE_DAY',
+          'REPUBLIC_DAY',
+        ];
+        if (validFestivals.includes(upperFest)) {
+          finalFestival = upperFest;
+        }
+      }
+    }
+
     await pgDb.query(
-      `INSERT INTO "user_preferences" ("id", "userId", "themeMode", "languageCode", "accentColor", "highContrast", "fontScale", "reducedMotion", "updatedAt")
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP)
+      `INSERT INTO "user_preferences" ("id", "userId", "themeMode", "languageCode", "accentColor", "highContrast", "fontScale", "reducedMotion", "festivalTheme", "updatedAt")
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, CURRENT_TIMESTAMP)
        ON CONFLICT ("userId") DO UPDATE
        SET "themeMode" = EXCLUDED."themeMode",
            "languageCode" = EXCLUDED."languageCode",
@@ -117,8 +141,9 @@ const updatePreferencesHandler = async (req: Request, res: Response, next: NextF
            "highContrast" = EXCLUDED."highContrast",
            "fontScale" = EXCLUDED."fontScale",
            "reducedMotion" = EXCLUDED."reducedMotion",
+           "festivalTheme" = EXCLUDED."festivalTheme",
            "updatedAt" = CURRENT_TIMESTAMP`,
-      [prefId, userId, finalTheme, finalLang, finalAccent, finalHighContrast, finalFontScale, finalReducedMotion]
+      [prefId, userId, finalTheme, finalLang, finalAccent, finalHighContrast, finalFontScale, finalReducedMotion, finalFestival]
     );
 
     const updatedRes = await pgDb.query(`SELECT * FROM "user_preferences" WHERE "userId" = $1`, [userId]);
@@ -132,6 +157,7 @@ const updatePreferencesHandler = async (req: Request, res: Response, next: NextF
         highContrast: Boolean(row.highContrast),
         fontScale: row.fontScale || 'normal',
         reducedMotion: Boolean(row.reducedMotion),
+        festivalTheme: row.festivalTheme || null,
       },
     });
   } catch (err) {

@@ -32,6 +32,7 @@ import { PreviewConfigurationModal } from './components/PreviewConfigurationModa
 import { MaintenanceBanner } from './components/maintenance/MaintenanceBanner';
 import { FeatureMaintenanceWrapper } from './components/maintenance/FeatureMaintenanceWrapper';
 import { PromotionalBanner } from './components/entitlements/PromotionalBanner';
+import { FestivalBanner } from './components/festivals/FestivalBanner';
 import { API_BASE } from './config/api';
 import './styles/theme.css';
 
@@ -253,9 +254,10 @@ const MainLayout: React.FC = () => {
       {/* Phase 10: Global Persistent Preview & Impersonation Banner */}
       <PreviewBanner onOpenConfig={() => setShowPreviewConfig(true)} />
 
-      {/* Phase 15: Global Maintenance Banner & Promotional Window Banner */}
+      {/* Phase 15: Global Maintenance Banner & Promotional Window Banner & Seasonal Festival Banner */}
       <MaintenanceBanner />
       <PromotionalBanner />
+      <FestivalBanner />
 
       {/* Header Bar */}
       <header

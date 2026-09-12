@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTheme, ACCENT_PALETTES, AccentColor, FontScale } from '../context/ThemeContext';
 import { useTranslation } from '../context/I18nContext';
+import { FESTIVALS } from '../config/festivals';
 import { ThemeMode } from '@repo/types';
 
 export const ThemeSwitcher: React.FC = () => {
@@ -9,6 +10,9 @@ export const ThemeSwitcher: React.FC = () => {
     setTheme,
     accentColor,
     setAccentColor,
+    festivalTheme,
+    setFestivalTheme,
+    activeFestivalConfig,
     highContrast,
     setHighContrast,
     fontScale,
@@ -36,7 +40,9 @@ export const ThemeSwitcher: React.FC = () => {
     { mode: 'DARK', labelKey: 'theme_dark', icon: '🌙' },
   ];
 
-  const currentAccentHex = ACCENT_PALETTES.find((p) => p.key === accentColor)?.hex || '#06b6d4';
+  const currentAccentHex = activeFestivalConfig
+    ? activeFestivalConfig.primaryColor
+    : ACCENT_PALETTES.find((p) => p.key === accentColor)?.hex || '#06b6d4';
 
   return (
     <div ref={containerRef} style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
@@ -87,8 +93,8 @@ export const ThemeSwitcher: React.FC = () => {
           id="theme-customizer-toggle"
           data-testid="theme-customizer-toggle"
           onClick={() => setIsOpen((prev) => !prev)}
-          title="Theme Accents & Accessibility Settings"
-          aria-label="Theme Accents & Accessibility Settings"
+          title="Theme Accents, Seasonal Festivals & Accessibility Settings"
+          aria-label="Theme Accents, Seasonal Festivals & Accessibility Settings"
           aria-expanded={isOpen}
           style={{
             padding: '6px 10px',
@@ -104,6 +110,11 @@ export const ThemeSwitcher: React.FC = () => {
             transition: 'all 0.2s ease',
           }}
         >
+          {activeFestivalConfig && (
+            <span style={{ fontSize: '13px', lineHeight: 1 }} title={`${activeFestivalConfig.name} Theme Active`}>
+              {activeFestivalConfig.badge}
+            </span>
+          )}
           <span
             style={{
               width: '12px',
@@ -128,7 +139,7 @@ export const ThemeSwitcher: React.FC = () => {
             position: 'absolute',
             top: 'calc(100% + 8px)',
             right: 0,
-            width: '280px',
+            width: '320px',
             background: 'var(--panel-bg, #131b2e)',
             border: '1px solid var(--border-color, #2e3d5a)',
             borderRadius: '10px',
@@ -142,7 +153,7 @@ export const ThemeSwitcher: React.FC = () => {
             gap: '14px',
           }}
         >
-          {/* Section: Accent Color Palette */}
+          {/* Section 1: Base Accent Color Palette */}
           <div>
             <div
               style={{
@@ -154,17 +165,20 @@ export const ThemeSwitcher: React.FC = () => {
                 letterSpacing: '0.5px',
               }}
             >
-              Accent Color Palette
+              Base Accent Palette
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '8px' }}>
               {ACCENT_PALETTES.map((p) => {
-                const isCurrent = accentColor === p.key;
+                const isCurrent = !festivalTheme && accentColor === p.key;
                 return (
                   <button
                     key={p.key}
                     id={`accent-${p.key}`}
                     data-testid={`accent-${p.key}`}
-                    onClick={() => setAccentColor(p.key as AccentColor)}
+                    onClick={() => {
+                      setFestivalTheme(null);
+                      setAccentColor(p.key as AccentColor);
+                    }}
                     title={p.label}
                     aria-label={`Select ${p.label} accent color`}
                     style={{
@@ -189,7 +203,105 @@ export const ThemeSwitcher: React.FC = () => {
           {/* Divider */}
           <div style={{ height: '1px', background: 'var(--border-color, rgba(255,255,255,0.1))' }} />
 
-          {/* Section: Accessibility Controls */}
+          {/* Section 2: Seasonal Festival Themes Layer (Task 5) */}
+          <div>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: '8px',
+              }}
+            >
+              <div
+                style={{
+                  fontWeight: 600,
+                  color: 'var(--text-muted, #94a3b8)',
+                  fontSize: '11px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                }}
+              >
+                Seasonal Festival Themes
+              </div>
+              {festivalTheme && (
+                <button
+                  id="btn-clear-festival-theme"
+                  data-testid="btn-clear-festival-theme"
+                  onClick={() => setFestivalTheme(null)}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'var(--accent-color)',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    padding: '0 4px',
+                  }}
+                >
+                  Clear (Reset)
+                </button>
+              )}
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
+              {FESTIVALS.map((fest) => {
+                const isCurrent = festivalTheme === fest.key;
+                return (
+                  <button
+                    key={fest.key}
+                    id={`festival-theme-${fest.key.toLowerCase()}`}
+                    data-testid={`festival-theme-${fest.key.toLowerCase()}`}
+                    onClick={() => setFestivalTheme(fest.key)}
+                    title={`${fest.name} (${fest.title})`}
+                    aria-label={`Select ${fest.name} festival theme`}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      padding: '6px 4px',
+                      borderRadius: '8px',
+                      border: isCurrent
+                        ? `2px solid ${fest.primaryColor}`
+                        : '1px solid var(--border-color, rgba(255,255,255,0.1))',
+                      background: isCurrent
+                        ? 'rgba(255,255,255,0.12)'
+                        : 'rgba(255,255,255,0.02)',
+                      cursor: 'pointer',
+                      gap: '3px',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <span style={{ fontSize: '15px' }}>{fest.badge}</span>
+                    <span
+                      style={{
+                        fontSize: '9px',
+                        fontWeight: isCurrent ? 700 : 500,
+                        color: isCurrent ? fest.primaryColor : 'var(--text-main)',
+                        textAlign: 'center',
+                        lineHeight: 1.1,
+                      }}
+                    >
+                      {fest.name}
+                    </span>
+                    <span
+                      style={{
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        backgroundColor: fest.primaryColor,
+                      }}
+                    />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div style={{ height: '1px', background: 'var(--border-color, rgba(255,255,255,0.1))' }} />
+
+          {/* Section 3: Accessibility Controls */}
           <div>
             <div
               style={{
@@ -214,7 +326,10 @@ export const ThemeSwitcher: React.FC = () => {
                 cursor: 'pointer',
               }}
             >
-              <span style={{ fontSize: '12px' }}>High Contrast (AA)</span>
+              <div>
+                <div style={{ fontSize: '12px' }}>High Contrast (AA)</div>
+                <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Overrides all themes & festivals</div>
+              </div>
               <input
                 type="checkbox"
                 id="toggle-high-contrast"

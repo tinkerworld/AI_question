@@ -112,6 +112,7 @@ export async function initV2Tables(): Promise<void> {
       ALTER TABLE "user_preferences" ADD COLUMN IF NOT EXISTS "highContrast" BOOLEAN DEFAULT false;
       ALTER TABLE "user_preferences" ADD COLUMN IF NOT EXISTS "fontScale" TEXT DEFAULT 'normal';
       ALTER TABLE "user_preferences" ADD COLUMN IF NOT EXISTS "reducedMotion" BOOLEAN DEFAULT false;
+      ALTER TABLE "user_preferences" ADD COLUMN IF NOT EXISTS "festivalTheme" TEXT DEFAULT NULL;
     `);
 
     // Seed default feature registry if empty

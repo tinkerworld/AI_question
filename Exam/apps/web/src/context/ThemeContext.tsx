@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { ThemeMode } from '@repo/types';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
+import { ThemeMode, FestivalKey } from '@repo/types';
 import { API_BASE } from '../config/api';
+import { FestivalThemeConfig, getCurrentFestivalSuggestion, getFestivalConfig } from '../config/festivals';
 
 export type AccentColor = 'cyan' | 'purple' | 'emerald' | 'amber' | 'rose' | 'blue';
 export type AccentPalette = AccentColor;
@@ -13,6 +14,12 @@ export interface ThemeContextType {
   setAccentColor: (color: AccentColor) => void;
   accentPalette: AccentColor;
   setAccentPalette: (color: AccentColor) => void;
+  festivalTheme: FestivalKey | null;
+  setFestivalTheme: (festival: FestivalKey | null) => void;
+  suggestedFestival: FestivalThemeConfig | null;
+  dismissedFestival: string | null;
+  dismissFestivalSuggestion: (key: FestivalKey) => void;
+  activeFestivalConfig: FestivalThemeConfig | undefined;
   highContrast: boolean;
   setHighContrast: (enabled: boolean) => void;
   fontScale: FontScale;
@@ -39,7 +46,7 @@ export const ACCENT_PALETTES: { key: AccentColor; label: string; hex: string }[]
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  // Theme Mode
+  // Base Theme Mode (Light / Slate / Dark)
   const [theme, setThemeState] = useState<ThemeMode>(() => {
     try {
       const saved = localStorage.getItem('examos_theme');
@@ -49,7 +56,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   });
 
-  // Curated Accent Color
+  // Base Curated Accent Color
   const [accentColor, setAccentColorState] = useState<AccentColor>(() => {
     try {
       const saved = localStorage.getItem('examos_accent');
@@ -59,7 +66,29 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   });
 
-  // High Contrast AA Mode
+  // Seasonal Festival Theme Layer (Phase 1: Curated Palette + Badge)
+  const [festivalTheme, setFestivalThemeState] = useState<FestivalKey | null>(() => {
+    try {
+      const saved = localStorage.getItem('examos_festival_theme');
+      if (saved && saved !== 'none') {
+        return saved as FestivalKey;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  });
+
+  // Dismissed Festival Suggestion
+  const [dismissedFestival, setDismissedFestival] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem('examos_dismissed_festival') || null;
+    } catch {
+      return null;
+    }
+  });
+
+  // High Contrast AA Mode (Strict Precedence Over Everything)
   const [highContrast, setHighContrastState] = useState<boolean>(() => {
     try {
       return localStorage.getItem('examos_high_contrast') === 'true';
@@ -92,13 +121,25 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   });
 
+  // Compute active festival config
+  const activeFestivalConfig = useMemo(() => {
+    return getFestivalConfig(festivalTheme);
+  }, [festivalTheme]);
+
+  // Compute suggested festival for today's date
+  const suggestedFestival = useMemo(() => {
+    return getCurrentFestivalSuggestion();
+  }, []);
+
   // Synchronize DOM attributes whenever settings change
   useEffect(() => {
     if (typeof document === 'undefined') return;
     const root = document.documentElement;
 
     root.setAttribute('data-theme', (theme || 'DARK').toLowerCase());
-    root.setAttribute('data-accent', accentColor || 'cyan');
+    root.setAttribute('data-festival', festivalTheme ? festivalTheme.toLowerCase() : 'none');
+    // If festival is active, festival color drives data-accent; otherwise user's curated base accent
+    root.setAttribute('data-accent', festivalTheme ? festivalTheme.toLowerCase() : (accentColor || 'cyan'));
     root.setAttribute('data-high-contrast', highContrast ? 'true' : 'false');
     root.setAttribute('data-contrast', highContrast ? 'high' : 'normal');
     root.setAttribute('data-font-scale', fontScale || 'normal');
@@ -107,16 +148,18 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     try {
       localStorage.setItem('examos_theme', theme);
       localStorage.setItem('examos_accent', accentColor);
+      localStorage.setItem('examos_festival_theme', festivalTheme || 'none');
       localStorage.setItem('examos_high_contrast', String(highContrast));
       localStorage.setItem('examos_font_scale', fontScale);
       localStorage.setItem('examos_reduced_motion', String(reducedMotion));
     } catch {}
-  }, [theme, accentColor, highContrast, fontScale, reducedMotion]);
+  }, [theme, accentColor, festivalTheme, highContrast, fontScale, reducedMotion]);
 
   // Sync to database
   const syncPreference = useCallback(async (payload: Partial<{
     themeMode: ThemeMode;
     accentColor: AccentColor;
+    festivalTheme: FestivalKey | null;
     highContrast: boolean;
     fontScale: FontScale;
     reducedMotion: boolean;
@@ -153,6 +196,9 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         if (d.success && d.data) {
           if (d.data.themeMode) setThemeState(d.data.themeMode);
           if (d.data.accentColor) setAccentColorState(d.data.accentColor);
+          if (d.data.festivalTheme !== undefined) {
+            setFestivalThemeState(d.data.festivalTheme || null);
+          }
           if (typeof d.data.highContrast === 'boolean') setHighContrastState(d.data.highContrast);
           if (d.data.fontScale) setFontScaleState(d.data.fontScale);
           if (typeof d.data.reducedMotion === 'boolean') setReducedMotionState(d.data.reducedMotion);
@@ -172,6 +218,18 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   };
 
   const setAccentPalette = (color: AccentColor) => setAccentColor(color);
+
+  const setFestivalTheme = (festival: FestivalKey | null) => {
+    setFestivalThemeState(festival);
+    syncPreference({ festivalTheme: festival });
+  };
+
+  const dismissFestivalSuggestion = (key: FestivalKey) => {
+    try {
+      localStorage.setItem('examos_dismissed_festival', key);
+    } catch {}
+    setDismissedFestival(key);
+  };
 
   const setHighContrast = (enabled: boolean) => {
     setHighContrastState(enabled);
@@ -203,6 +261,12 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         setAccentColor,
         accentPalette: accentColor,
         setAccentPalette,
+        festivalTheme,
+        setFestivalTheme,
+        suggestedFestival,
+        dismissedFestival,
+        dismissFestivalSuggestion,
+        activeFestivalConfig,
         highContrast,
         setHighContrast,
         fontScale,
