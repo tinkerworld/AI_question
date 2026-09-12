@@ -30,6 +30,7 @@ import { audioRouter } from './routes/audio.routes';
 import { writingRouter } from './routes/writing.routes';
 import { vocabularyRouter } from './routes/vocabulary.routes';
 import { listeningRouter } from './routes/listening.routes';
+import { importExportRouter } from './routes/import-export.routes';
 import { initV2Tables } from './db/init-v2-tables';
 import { errorHandler } from './middleware/error';
 
@@ -154,6 +155,12 @@ app.use('/api/v1/credits', aiCreditsRouter);
 app.use('/api/credits', aiCreditsRouter);
 app.use('/api/v1/billing', billingRouter);
 app.use('/api/billing', billingRouter);
+
+// Feature 15.16 (Schema-Validated JSON Import & Export)
+app.use('/api/v1/import-export', importExportRouter);
+app.use('/api/import-export', importExportRouter);
+app.use('/api/v1/import', importExportRouter);
+app.use('/api/v1/export', importExportRouter);
 
 // Error Handling Middleware (Must be last)
 app.use(errorHandler);

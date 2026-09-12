@@ -8,6 +8,7 @@ import { AIUsageModal } from '../components/ai/AIUsageModal';
 import { ListeningAuthoringPanel, ListeningQuestionConfig } from '../components/listening/ListeningAuthoringPanel';
 import { WritingAuthoringPanel, WritingQuestionConfig } from '../components/writing/WritingAuthoringPanel';
 import { ExamAudioPlayer } from '../components/listening/ExamAudioPlayer';
+import { ImportExportModal } from '../components/import-export/ImportExportModal';
 import { API_BASE } from '../config/api';
 import { getAuthHeaders } from '../utils/api';
 
@@ -123,6 +124,7 @@ export const QuestionBankPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   // Modals & Drawers
+  const [showImportExportModal, setShowImportExportModal] = useState<boolean>(false);
   const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
   const [previewQuestion, setPreviewQuestion] = useState<Question | null>(null);
@@ -1133,6 +1135,25 @@ export const QuestionBankPage: React.FC = () => {
             }}
           >
             <span>✨</span> AI Generator
+          </button>
+          <button
+            id="open-import-export-btn"
+            onClick={() => setShowImportExportModal(true)}
+            style={{
+              background: 'rgba(255,255,255,0.06)',
+              border: '1px solid var(--border-color)',
+              color: 'var(--text-main)',
+              padding: '8px 14px',
+              borderRadius: '6px',
+              fontWeight: '600',
+              fontSize: '12px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+          >
+            <span>📁</span> Import / Export
           </button>
           <button
             onClick={openCreateModal}
@@ -4540,6 +4561,19 @@ export const QuestionBankPage: React.FC = () => {
         isOpen={showAIUsageModal}
         onClose={() => setShowAIUsageModal(false)}
       />
+
+      {/* FEATURE 15.16: SCHEMA-VALIDATED JSON IMPORT & EXPORT MODAL */}
+      {showImportExportModal && (
+        <ImportExportModal
+          isOpen={showImportExportModal}
+          onClose={() => setShowImportExportModal(false)}
+          defaultEntityType="QUESTIONS"
+          onSuccess={() => {
+            fetchQuestions();
+            fetchMetadata();
+          }}
+        />
+      )}
     </div>
   );
 };

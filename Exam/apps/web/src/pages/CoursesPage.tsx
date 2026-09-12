@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from '../context/I18nContext';
+import { ImportExportModal } from '../components/import-export/ImportExportModal';
 import { API_BASE } from '../config/api';
 
 interface Course {
@@ -97,6 +98,7 @@ export const CoursesPage: React.FC = () => {
   const [nodeMinutes, setNodeMinutes] = useState<number>(60);
   const [nodeObjectives, setNodeObjectives] = useState<string>('');
   const [nodeStatus, setNodeStatus] = useState<'DRAFT' | 'PUBLISHED' | 'ARCHIVED'>('PUBLISHED');
+  const [showImportExportModal, setShowImportExportModal] = useState<boolean>(false);
 
   const token = (typeof window !== 'undefined' ? sessionStorage.getItem('token') : '') || '';
 
@@ -742,21 +744,42 @@ export const CoursesPage: React.FC = () => {
 
         <div style={{ display: 'flex', gap: '10px' }}>
           {!selectedCourse ? (
-            <button
-              onClick={openCreateCourseModal}
-              style={{
-                background: 'linear-gradient(135deg, #06b6d4, #3b82f6)',
-                border: 'none',
-                color: '#fff',
-                padding: '8px 18px',
-                borderRadius: '6px',
-                fontWeight: 'bold',
-                fontSize: '13px',
-                cursor: 'pointer',
-              }}
-            >
-              {t('courses_add_course')}
-            </button>
+            <>
+              <button
+                id="open-courses-import-export-btn"
+                onClick={() => setShowImportExportModal(true)}
+                style={{
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid var(--border-color)',
+                  color: 'var(--text-main)',
+                  padding: '8px 14px',
+                  borderRadius: '6px',
+                  fontWeight: '600',
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <span>📁</span> Import / Export
+              </button>
+              <button
+                onClick={openCreateCourseModal}
+                style={{
+                  background: 'linear-gradient(135deg, #06b6d4, #3b82f6)',
+                  border: 'none',
+                  color: '#fff',
+                  padding: '8px 18px',
+                  borderRadius: '6px',
+                  fontWeight: 'bold',
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                }}
+              >
+                {t('courses_add_course')}
+              </button>
+            </>
           ) : selectedSubject ? (
             <button
               onClick={() => openCreateNodeModal()}
@@ -1620,6 +1643,18 @@ export const CoursesPage: React.FC = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* FEATURE 15.16: SCHEMA-VALIDATED JSON IMPORT & EXPORT MODAL */}
+      {showImportExportModal && (
+        <ImportExportModal
+          isOpen={showImportExportModal}
+          onClose={() => setShowImportExportModal(false)}
+          defaultEntityType="COURSES"
+          onSuccess={() => {
+            fetchCourses();
+          }}
+        />
       )}
     </div>
   );
