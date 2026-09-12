@@ -3,9 +3,15 @@ import { ThemeProvider } from './context/ThemeContext';
 import { I18nProvider, useTranslation } from './context/I18nContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ExamLockProvider, useExamLock } from './context/ExamLockContext';
+import { RouterProvider, useRouter } from './context/RouterContext';
 import { ThemeSwitcher } from './components/ThemeSwitcher';
 import { LanguageSelector } from './components/LanguageSelector';
 import { LoginPage } from './pages/LoginPage';
+import { LandingPage } from './pages/LandingPage';
+import { StudentLoginPage } from './pages/StudentLoginPage';
+import { TeacherLoginPage } from './pages/TeacherLoginPage';
+import { AdminLoginPage } from './pages/AdminLoginPage';
+import { StudentRegisterPage } from './pages/StudentRegisterPage';
 import { ExamPatternsPage } from './pages/ExamPatternsPage';
 import { ExamsPage } from './pages/ExamsPage';
 import { QuestionBankPage } from './pages/QuestionBankPage';
@@ -62,6 +68,7 @@ const hasPermission = (userPermissions: string[] | undefined, requiredPermission
 };
 
 const MainLayout: React.FC = () => {
+  const { path, navigate } = useRouter();
   const { t } = useTranslation();
   const { user, token, isAuthenticated, isLoading, logout, isImpersonating, activeTab, setActiveTab } = useAuth();
   const { isExamLocked, triggerExitWarning } = useExamLock();
@@ -215,9 +222,22 @@ const MainLayout: React.FC = () => {
     );
   }
 
-  // Route Guard: If not authenticated, render Login Screen
+  // Pre-auth Route Guard: strictly conditionally render ONLY the matched route component
   if (!isAuthenticated) {
-    return <LoginPage />;
+    if (path === '/login/teacher') {
+      return <TeacherLoginPage />;
+    }
+    if (path === '/login/admin') {
+      return <AdminLoginPage />;
+    }
+    if (path === '/register' || path === '/register/student') {
+      return <StudentRegisterPage />;
+    }
+    if (path === '/login' || path === '/login/student') {
+      return <StudentLoginPage />;
+    }
+    // Default root / and any unmatched pre-auth route: Public Landing Page
+    return <LandingPage />;
   }
 
   const canUsePreview = hasPermission(userPermissions, 'preview.use') || user?.roles?.includes('MAIN_ADMIN') || user?.roles?.includes('SUB_ADMIN') || user?.roles?.includes('TEACHER');
@@ -356,6 +376,7 @@ const MainLayout: React.FC = () => {
                 triggerExitWarning();
               } else {
                 logout();
+                navigate('/login/student');
               }
             }}
             style={{
@@ -593,7 +614,9 @@ export const App: React.FC = () => {
       <I18nProvider>
         <AuthProvider>
           <ExamLockProvider>
-            <MainLayout />
+            <RouterProvider>
+              <MainLayout />
+            </RouterProvider>
           </ExamLockProvider>
         </AuthProvider>
       </I18nProvider>
