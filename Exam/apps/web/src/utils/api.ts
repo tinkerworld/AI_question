@@ -1,6 +1,6 @@
 export function getAuthToken(): string | null {
   if (typeof window === 'undefined') return null;
-  return sessionStorage.getItem('token') || localStorage.getItem('token');
+  return sessionStorage.getItem('token');
 }
 
 export function getAuthHeaders(token?: string | null): HeadersInit {

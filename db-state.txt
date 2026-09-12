@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ================================================================================
  ExamOS Database State Snapshot
 <<<<<<< HEAD
@@ -172,3 +173,6 @@
 plans: 3 | entitlement_rules: 27 | subscriptions: 2 | ai_credit_packages: 3 | audio_voice_profiles: 10 | vocabulary_words: 160 | interview_sessions: 0 | candidate_interview_profiles: 0 | languages: 23 | translation_keys: 172 | translations: 3932 | feature_registry: 8 | maintenance_configs: 0
 
 ================================================================================
+=======
+DB snapshot unavailable: [ExamOS Database Lock Error] Could not open database directory "D:\Download\Company\Software\Test os\Exam\postgres-data" because it is currently locked by another active ExamOS process (likely the API server on port 4043). Please stop existing processes using "stop_all.bat", or set PG_DATA_DIR=memory:// for an isolated instance.
+>>>>>>> 5637219 (fix(auth): harden multi-login with auto-cleanup of legacy localStorage tokens)

@@ -154,7 +154,7 @@ export const ExamsPage: React.FC = () => {
   const [pickerSearch, setPickerSearch] = useState<string>('');
   const [pickerError, setPickerError] = useState<string | null>(null);
 
-  const token = typeof window !== 'undefined' ? (sessionStorage.getItem('token') || localStorage.getItem('token')) : null;
+  const token = typeof window !== 'undefined' ? sessionStorage.getItem('token') : null;
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),

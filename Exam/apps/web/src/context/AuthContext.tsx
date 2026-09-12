@@ -55,17 +55,44 @@ interface AuthContextType {
   exitImpersonation: () => Promise<void>;
 }
 
+// Explicit one-time cleanup / migration of legacy localStorage tokens on app load
+if (typeof window !== 'undefined') {
+  try {
+    const legacyToken = localStorage.getItem('token');
+    const legacyRefresh = localStorage.getItem('refreshToken');
+    const legacyImpersonation = localStorage.getItem('impersonationSession');
+    if (legacyToken || legacyRefresh || legacyImpersonation) {
+      // If current tab has no sessionStorage token yet, migrate legacy token into this single tab
+      if (legacyToken && !sessionStorage.getItem('token')) {
+        sessionStorage.setItem('token', legacyToken);
+      }
+      if (legacyRefresh && !sessionStorage.getItem('refreshToken')) {
+        sessionStorage.setItem('refreshToken', legacyRefresh);
+      }
+      if (legacyImpersonation && !sessionStorage.getItem('impersonationSession')) {
+        sessionStorage.setItem('impersonationSession', legacyImpersonation);
+      }
+      // Purge from localStorage so it never leaks across tabs again
+      localStorage.removeItem('token');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('impersonationSession');
+    }
+  } catch {
+    // Ignore storage access errors
+  }
+}
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [token, setToken] = useState<string | null>(() => {
     if (typeof window === 'undefined') return null;
-    return sessionStorage.getItem('token') || localStorage.getItem('token');
+    return sessionStorage.getItem('token');
   });
   const [refreshToken, setRefreshToken] = useState<string | null>(() => {
     if (typeof window === 'undefined') return null;
-    return sessionStorage.getItem('refreshToken') || localStorage.getItem('refreshToken');
+    return sessionStorage.getItem('refreshToken');
   });
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<string>('exams');
@@ -74,8 +101,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [previewReturnExamId, setPreviewReturnExamId] = useState<string | null>(null);
 
   const verifyAndLoadSession = async () => {
-    const savedToken = typeof window !== 'undefined' ? (sessionStorage.getItem('token') || localStorage.getItem('token')) : null;
-    const savedRefresh = typeof window !== 'undefined' ? (sessionStorage.getItem('refreshToken') || localStorage.getItem('refreshToken')) : null;
+    const savedToken = typeof window !== 'undefined' ? sessionStorage.getItem('token') : null;
+    const savedRefresh = typeof window !== 'undefined' ? sessionStorage.getItem('refreshToken') : null;
 
     if (!savedToken) {
       setUser(null);
@@ -183,7 +210,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [impersonationSession, setImpersonationSession] = useState<ImpersonationSession | null>(() => {
     try {
       if (typeof window === 'undefined') return null;
-      const saved = sessionStorage.getItem('impersonationSession') || localStorage.getItem('impersonationSession');
+      const saved = sessionStorage.getItem('impersonationSession');
       return saved ? JSON.parse(saved) : null;
     } catch {
       return null;
@@ -193,7 +220,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isImpersonating = !!impersonationSession && !!token;
 
   const startPreview = async (config: any): Promise<{ success: boolean; message?: string }> => {
-    const currentStaffToken = sessionStorage.getItem('staffToken') || token || (typeof window !== 'undefined' ? (sessionStorage.getItem('token') || localStorage.getItem('token')) : null);
+    const currentStaffToken = sessionStorage.getItem('staffToken') || token || (typeof window !== 'undefined' ? sessionStorage.getItem('token') : null);
     if (!currentStaffToken) return { success: false, message: 'Authentication required' };
 
     try {
@@ -250,7 +277,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const startImpersonation = async (targetUserId: string, reason: string): Promise<{ success: boolean; message?: string }> => {
-    const currentStaffToken = sessionStorage.getItem('staffToken') || token || (typeof window !== 'undefined' ? (sessionStorage.getItem('token') || localStorage.getItem('token')) : null);
+    const currentStaffToken = sessionStorage.getItem('staffToken') || token || (typeof window !== 'undefined' ? sessionStorage.getItem('token') : null);
     if (!currentStaffToken) return { success: false, message: 'Authentication required' };
 
     try {
@@ -341,8 +368,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
-    const savedRefresh = typeof window !== 'undefined' ? (sessionStorage.getItem('refreshToken') || localStorage.getItem('refreshToken')) : null;
-    const savedToken = typeof window !== 'undefined' ? (sessionStorage.getItem('token') || localStorage.getItem('token')) : null;
+    const savedRefresh = typeof window !== 'undefined' ? sessionStorage.getItem('refreshToken') : null;
+    const savedToken = typeof window !== 'undefined' ? sessionStorage.getItem('token') : null;
     try {
       if (savedToken) {
         await fetch(`${API_BASE}/auth/logout`, {

@@ -189,7 +189,7 @@ export const ExamPatternsPage: React.FC = () => {
 
   // Auth Helper
   const getAuthHeaders = (): HeadersInit => {
-    const token = typeof window !== 'undefined' ? (sessionStorage.getItem('token') || localStorage.getItem('token')) : null;
+    const token = typeof window !== 'undefined' ? sessionStorage.getItem('token') : null;
     return {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),

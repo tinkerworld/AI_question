@@ -98,7 +98,7 @@ export const CoursesPage: React.FC = () => {
   const [nodeObjectives, setNodeObjectives] = useState<string>('');
   const [nodeStatus, setNodeStatus] = useState<'DRAFT' | 'PUBLISHED' | 'ARCHIVED'>('PUBLISHED');
 
-  const token = (typeof window !== 'undefined' ? (sessionStorage.getItem('token') || localStorage.getItem('token')) : '') || '';
+  const token = (typeof window !== 'undefined' ? sessionStorage.getItem('token') : '') || '';
 
   // 1. Fetch Courses
   const fetchCourses = async () => {

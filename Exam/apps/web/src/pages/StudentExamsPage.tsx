@@ -117,7 +117,7 @@ export const StudentExamsPage: React.FC = () => {
 
   const handleStartExam = async (examId: string) => {
     try {
-      const activeToken = token || (typeof window !== 'undefined' ? (sessionStorage.getItem('token') || localStorage.getItem('token')) : null);
+      const activeToken = token || (typeof window !== 'undefined' ? sessionStorage.getItem('token') : null);
       const res = await fetch(`${API_BASE}/attempts/start`, {
         method: 'POST',
         headers: {

@@ -94,7 +94,7 @@ interface VersionHistory {
 
 export const ExamArchivePage: React.FC = () => {
   const { user, token: authToken } = useAuth();
-  const token = authToken || (typeof window !== 'undefined' ? (sessionStorage.getItem('token') || localStorage.getItem('token')) : '') || '';
+  const token = authToken || (typeof window !== 'undefined' ? sessionStorage.getItem('token') : '') || '';
   const { t } = useTranslation();
 
   const [snapshots, setSnapshots] = useState<ExamSnapshotSummary[]>([]);
