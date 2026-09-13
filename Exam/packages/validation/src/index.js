@@ -406,11 +406,15 @@ exports.startInterviewSchema = zod_1.z.object({
     questionId: zod_1.z.string().min(1, 'Question ID is required'),
     mode: zod_1.z.enum(['PRACTICE', 'EXAM']).default('PRACTICE'),
     courseId: zod_1.z.string().optional(),
+    voicePersona: zod_1.z.string().optional(),
+    workspaceId: zod_1.z.string().optional(),
 });
 exports.submitInterviewTurnSchema = zod_1.z.object({
     message: zod_1.z.string().min(1, 'Response message is required'),
     audioUrl: zod_1.z.string().optional(),
     durationSeconds: zod_1.z.number().optional(),
+    audioBase64: zod_1.z.string().optional(),
+    audioFormat: zod_1.z.string().optional(),
 });
 exports.interviewKnowledgeDatasetSchema = zod_1.z.object({
     summary: zod_1.z.string().optional(),

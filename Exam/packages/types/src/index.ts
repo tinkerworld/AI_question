@@ -1503,6 +1503,9 @@ export interface InterviewTurnDTO {
   selectedTemplate?: 'FOLLOW_UP_PROMPT' | 'NEW_TOPIC_PROMPT' | 'CLARIFY_PROMPT' | string | null;
   isScored?: boolean;
   phase?: 'INTRODUCTION' | 'PART_1' | 'PART_2_PREP' | 'PART_2_LONG_TURN' | 'PART_3' | 'COMPLETE' | string | null;
+  evidenceCites?: string[] | null;
+  expectedConcepts?: string[] | null;
+  evaluationData?: any | null;
   createdAt: string;
 }
 
@@ -1537,6 +1540,9 @@ export interface InterviewSessionDTO {
   speculativeBank?: any | null;
   treePath?: string[] | null;
   offScriptRedirectCount?: number;
+  remoteSessionId?: string | null;
+  voicePersona?: string | null;
+  remoteWorkspaceId?: string | null;
   debugInfo?: {
     lastSelectedTemplate?: string;
     lastWordCount?: number;
@@ -1610,12 +1616,16 @@ export interface StartInterviewDTO {
   mode?: InterviewMode;
   courseId?: string;
   maxTurns?: number;
+  voicePersona?: string;
+  workspaceId?: string;
 }
 
 export interface SubmitInterviewTurnDTO {
   message: string;
   audioUrl?: string;
   durationSeconds?: number;
+  audioBase64?: string;
+  audioFormat?: string;
 }
 
 export interface InterviewEligibilityDTO {

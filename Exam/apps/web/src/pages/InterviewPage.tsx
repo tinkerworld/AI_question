@@ -10,6 +10,15 @@ import {
 } from '@repo/types';
 import { getAuthHeaders } from '../utils/api';
 import { API_BASE } from '../config/api';
+import { VoiceCalibrationPanel } from '../components/VoiceCalibrationPanel';
+import {
+  VoiceProfile,
+  calculateTurnAcousticParameters,
+  getUsePersonalizedVoiceCalibration,
+  setUsePersonalizedVoiceCalibration,
+  computeRms,
+  rmsToDbfs,
+} from '../utils/audioMeasurement';
 
 // Helper to safely extract rubric criteria regardless of backend structure (Array, Object map, or undefined)
 const getSafeRubricScores = (rubricScores: any, defaultRubric: any[] = []): any[] => {
@@ -89,6 +98,19 @@ const getSafeArray = (val: any, fallback: string[] = []): string[] => {
   return fallback;
 };
 
+// 9 High-Fidelity Examiner Voice Personas (AI Interview Microservice)
+const DEFAULT_VOICE_PERSONAS = [
+  { id: 'emma', name: 'Emma', gender: 'Female', accent: 'British (UK)', tone: 'Professional & Warm', flag: '🇬🇧' },
+  { id: 'pooja', name: 'Pooja', gender: 'Female', accent: 'Indian (IN)', tone: 'Academic & Precise', flag: '🇮🇳' },
+  { id: 'sarah', name: 'Sarah', gender: 'Female', accent: 'American (US)', tone: 'Clear & Corporate', flag: '🇺🇸' },
+  { id: 'chloe', name: 'Chloe', gender: 'Female', accent: 'Australian (AU)', tone: 'Engaging & Natural', flag: '🇦🇺' },
+  { id: 'james', name: 'James', gender: 'Male', accent: 'American (US)', tone: 'Direct & Confident', flag: '🇺🇸' },
+  { id: 'liam', name: 'Liam', gender: 'Male', accent: 'British (UK)', tone: 'Technical & Steady', flag: '🇬🇧' },
+  { id: 'rohan', name: 'Rohan', gender: 'Male', accent: 'Indian (IN)', tone: 'Dynamic & Focused', flag: '🇮🇳' },
+  { id: 'arthur', name: 'Arthur', gender: 'Male', accent: 'British (UK)', tone: 'Formal & Thoughtful', flag: '🇬🇧' },
+  { id: 'david', name: 'David', gender: 'Male', accent: 'Australian (AU)', tone: 'Relaxed & Encouraging', flag: '🇦🇺' },
+];
+
 export const InterviewPage: React.FC = () => {
   const { user, token } = useAuth();
 
@@ -96,6 +118,11 @@ export const InterviewPage: React.FC = () => {
   const [activeView, setActiveView] = useState<'CATALOG' | 'ROOM' | 'EVALUATION' | 'HISTORY' | 'GROWTH'>('CATALOG');
   const [selectedMode, setSelectedMode] = useState<InterviewMode>('PRACTICE');
   const [selectedCourseFilter, setSelectedCourseFilter] = useState<string>('');
+
+  // Voice Persona & Streaming States (Microservice Integration)
+  const [selectedVoicePersona, setSelectedVoicePersona] = useState<string>('emma');
+  const [isAiSpeaking, setIsAiSpeaking] = useState<boolean>(false);
+  const currentAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // Eligibility & Data States
   const [eligibility, setEligibility] = useState<InterviewEligibilityDTO | null>(null);
@@ -118,260 +145,196 @@ export const InterviewPage: React.FC = () => {
   const [selectedQuestionForInstructions, setSelectedQuestionForInstructions] = useState<any | null>(null);
   const [agreedToInterviewTerms, setAgreedToInterviewTerms] = useState<boolean>(false);
 
-  // Mandatory Microphone Calibration States
+  // Mandatory Microphone Acoustic Calibration States (Sprint 2 & 3)
   const [calibrationStatus, setCalibrationStatus] = useState<
     'IDLE' | 'REQUESTING' | 'LISTENING' | 'CALIBRATED' | 'FAILED_NO_DEVICE' | 'FAILED_PERMISSION' | 'FAILED_SILENCE'
   >('IDLE');
-  const [calibrationAudioLevel, setCalibrationAudioLevel] = useState<number>(0);
-  const [calibrationErrorMessage, setCalibrationErrorMessage] = useState<string>('');
+  const [voiceCalibrationProfile, setVoiceCalibrationProfile] = useState<VoiceProfile | null>(null);
 
-  const calibrationAudioCtxRef = useRef<AudioContext | null>(null);
-  const calibrationAnalyserRef = useRef<AnalyserNode | null>(null);
-  const calibrationAnimFrameRef = useRef<number | null>(null);
-  const calibrationSilenceTimerRef = useRef<any>(null);
-  const calibrationStreamRef = useRef<MediaStream | null>(null);
+  // Feature Flag: USE_PERSONALIZED_VOICE_CALIBRATION (Sprint 4)
+  const [usePersonalizedCalibration, setUsePersonalizedCalibrationState] = useState<boolean>(() =>
+    getUsePersonalizedVoiceCalibration()
+  );
 
-  // Cleanup audio analysis nodes and silence timer
-  const cleanupCalibration = () => {
-    if (calibrationAnimFrameRef.current) {
-      cancelAnimationFrame(calibrationAnimFrameRef.current);
-      calibrationAnimFrameRef.current = null;
-    }
-    if (calibrationSilenceTimerRef.current) {
-      clearTimeout(calibrationSilenceTimerRef.current);
-      calibrationSilenceTimerRef.current = null;
-    }
-    if (calibrationAudioCtxRef.current) {
-      try {
-        if (calibrationAudioCtxRef.current.state !== 'closed') {
-          calibrationAudioCtxRef.current.close();
-        }
-      } catch {}
-      calibrationAudioCtxRef.current = null;
-    }
-    calibrationAnalyserRef.current = null;
-    setCalibrationAudioLevel(0);
+  const toggleFeatureFlag = (val: boolean) => {
+    setUsePersonalizedVoiceCalibration(val);
+    setUsePersonalizedCalibrationState(val);
   };
 
-  // Full teardown when closing modal
-  const fullStopCalibration = () => {
-    cleanupCalibration();
-    if (calibrationStreamRef.current) {
-      try {
-        calibrationStreamRef.current.getTracks().forEach((track) => track.stop());
-      } catch {}
-      calibrationStreamRef.current = null;
+  // Derive active turn acoustic parameters (Pause timeout & silence threshold)
+  const activeAcoustics = calculateTurnAcousticParameters(
+    voiceCalibrationProfile,
+    usePersonalizedCalibration
+  );
+  const activeAcousticsRef = useRef(activeAcoustics);
+  useEffect(() => {
+    activeAcousticsRef.current = activeAcoustics;
+  }, [activeAcoustics]);
+
+  // Live audio analyser refs for active turn silence detection (Sprint 4)
+  const liveAudioCtxRef = useRef<AudioContext | null>(null);
+  const liveStreamRef = useRef<MediaStream | null>(null);
+  const liveAnimFrameRef = useRef<number | null>(null);
+
+  // Multimodal MediaRecorder & Whisper ASR refs
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recordedAudioBase64Ref = useRef<string | null>(null);
+  const candidateInputRef = useRef<string>(candidateInput);
+
+  useEffect(() => {
+    candidateInputRef.current = candidateInput;
+  }, [candidateInput]);
+
+  const stopLiveAudioMonitoring = () => {
+    if (liveAnimFrameRef.current) {
+      cancelAnimationFrame(liveAnimFrameRef.current);
+      liveAnimFrameRef.current = null;
     }
-    setCalibrationStatus('IDLE');
-    setCalibrationErrorMessage('');
+    if (liveAudioCtxRef.current) {
+      try {
+        if (liveAudioCtxRef.current.state !== 'closed') {
+          liveAudioCtxRef.current.close();
+        }
+      } catch {}
+      liveAudioCtxRef.current = null;
+    }
+    if (liveStreamRef.current) {
+      try {
+        liveStreamRef.current.getTracks().forEach((t) => t.stop());
+      } catch {}
+      liveStreamRef.current = null;
+    }
   };
 
-  // Start real-time microphone calibration
-  const startMicCalibration = async () => {
-    cleanupCalibration();
-    setCalibrationStatus('REQUESTING');
-    setCalibrationErrorMessage('');
-    setCalibrationAudioLevel(0);
-
-    // Automated test runner bypass: in automated browser environments (Playwright/webdriver), auto-calibrate immediately
-    if (typeof navigator !== 'undefined' && (navigator.webdriver || (window as any).__PW_TEST__)) {
-      setCalibrationStatus('CALIBRATED');
-      return;
+  const stopAudioRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      try {
+        mediaRecorderRef.current.stop();
+      } catch {}
     }
-
-    // 1. Check browser mediaDevices support
-    if (
-      typeof navigator === 'undefined' ||
-      !navigator.mediaDevices ||
-      !navigator.mediaDevices.getUserMedia
-    ) {
-      setCalibrationStatus('FAILED_NO_DEVICE');
-      setCalibrationErrorMessage(
-        'Your browser does not support audio recording or media devices. Please use a modern browser (such as Google Chrome, Microsoft Edge, or Mozilla Firefox) and reload.'
-      );
-      return;
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.onresult = null;
+        recognitionRef.current.stop();
+      } catch {}
     }
+    setIsRecording(false);
+    stopLiveAudioMonitoring();
+    if (recordingTimeoutRef.current) {
+      clearTimeout(recordingTimeoutRef.current);
+      recordingTimeoutRef.current = null;
+    }
+  };
 
-    // 2. Hardware existence check via enumerateDevices if available
+  const startLiveAudioMonitoring = async () => {
+    stopLiveAudioMonitoring();
+    if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) return;
     try {
-      if (navigator.mediaDevices.enumerateDevices) {
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const audioInputs = devices.filter((d) => d.kind === 'audioinput');
-        if (devices.length > 0 && audioInputs.length === 0) {
-          setCalibrationStatus('FAILED_NO_DEVICE');
-          setCalibrationErrorMessage(
-            'No microphone device detected on your system. Please connect a microphone, headset, or enable your device audio input in your operating system settings, then click Retry.'
-          );
-          return;
-        }
-      }
-    } catch {
-      // Continue to getUserMedia if enumerateDevices throws before permissions
-    }
-
-    // 3. Request user microphone stream
-    let stream: MediaStream;
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: false },
       });
-      calibrationStreamRef.current = stream;
-    } catch (err: any) {
-      const errorName = err?.name || '';
-      if (
-        errorName === 'NotFoundError' ||
-        errorName === 'DevicesNotFoundError' ||
-        errorName === 'OverconstrainedError'
-      ) {
-        setCalibrationStatus('FAILED_NO_DEVICE');
-        setCalibrationErrorMessage(
-          'No microphone device found. Please connect a working microphone or headset to your machine, ensure it is enabled in your OS sound settings, and click Retry.'
-        );
-        return;
-      }
-
-      if (
-        errorName === 'NotAllowedError' ||
-        errorName === 'PermissionDeniedError' ||
-        errorName === 'SecurityError'
-      ) {
-        setCalibrationStatus('FAILED_PERMISSION');
-        setCalibrationErrorMessage(
-          'Microphone access was blocked by your browser. To participate in this oral viva voce, open your browser site settings (click the lock or camera icon in the URL address bar), set Microphone to "Allow", and click Retry.'
-        );
-        return;
-      }
-
-      // Check device count if error is generic
-      try {
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const audioInputs = devices.filter((d) => d.kind === 'audioinput');
-        if (audioInputs.length === 0) {
-          setCalibrationStatus('FAILED_NO_DEVICE');
-          setCalibrationErrorMessage(
-            'No microphone device detected on your system. Please connect a microphone and click Retry.'
-          );
-          return;
-        }
-      } catch {}
-
-      setCalibrationStatus('FAILED_PERMISSION');
-      setCalibrationErrorMessage(
-        `Unable to access microphone: ${err?.message || 'Permission denied or device unavailable'}. Please verify browser permissions and click Retry.`
-      );
-      return;
-    }
-
-    // 4. Setup Web Audio API AnalyserNode for real-time volume energy analysis
-    try {
+      liveStreamRef.current = stream;
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioContextClass) {
-        setCalibrationStatus('CALIBRATED');
-        return;
-      }
-
+      if (!AudioContextClass) return;
       const audioCtx = new AudioContextClass();
-      calibrationAudioCtxRef.current = audioCtx;
-      if (audioCtx.state === 'suspended') {
-        await audioCtx.resume();
-      }
-
-      const analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 256;
-      analyser.smoothingTimeConstant = 0.25;
-      calibrationAnalyserRef.current = analyser;
-
+      liveAudioCtxRef.current = audioCtx;
       const source = audioCtx.createMediaStreamSource(stream);
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 1024;
       source.connect(analyser);
 
-      setCalibrationStatus('LISTENING');
+      const pcmBuffer = new Float32Array(analyser.fftSize);
+      let lastResetTime = Date.now();
 
-      // 5. Silence detection timer: fails if no voice detected within 6 seconds
-      const silenceDurationMs = 6000;
-      let voiceDetected = false;
-      let speechHits = 0;
+      const monitorLoop = () => {
+        if (!liveAudioCtxRef.current) return;
+        analyser.getFloatTimeDomainData(pcmBuffer);
+        const rms = computeRms(pcmBuffer);
+        const dbfs = rmsToDbfs(rms);
 
-      calibrationSilenceTimerRef.current = setTimeout(() => {
-        if (!voiceDetected) {
-          cleanupCalibration();
-          setCalibrationStatus('FAILED_SILENCE');
-          setCalibrationErrorMessage(
-            'Microphone is connected and permitted, but no audio was detected after 6 seconds of silence. Please check that your microphone is not muted (check physical switches & software volume) and ensure the correct input device is selected as default in your OS sound settings.'
-          );
-        }
-      }, silenceDurationMs);
-
-      // 6. Real-time audio energy sampling loop
-      const bufferLength = analyser.frequencyBinCount;
-      const dataArray = new Uint8Array(bufferLength);
-
-      const sampleAudio = () => {
-        if (!calibrationAnalyserRef.current) return;
-
-        calibrationAnalyserRef.current.getByteFrequencyData(dataArray);
-
-        let sum = 0;
-        for (let i = 0; i < bufferLength; i++) {
-          sum += dataArray[i];
-        }
-        const avg = sum / bufferLength;
-
-        // Map 0..60 average amplitude to 0..100% display level
-        const level = Math.min(100, Math.round((avg / 40) * 100));
-        setCalibrationAudioLevel(level);
-
-        // Human speech energy threshold: 12%
-        if (level >= 12) {
-          speechHits++;
-          if (speechHits >= 3) {
-            voiceDetected = true;
-            if (calibrationSilenceTimerRef.current) {
-              clearTimeout(calibrationSilenceTimerRef.current);
-              calibrationSilenceTimerRef.current = null;
+        // If audio energy exceeds candidate's personalized silence threshold: candidate is actively speaking
+        if (dbfs > activeAcousticsRef.current.silenceThresholdDbfs) {
+          const now = Date.now();
+          if (now - lastResetTime > 200) {
+            lastResetTime = now;
+            if (recordingTimeoutRef.current) {
+              clearTimeout(recordingTimeoutRef.current);
             }
-            setCalibrationStatus('CALIBRATED');
+            recordingTimeoutRef.current = setTimeout(() => {
+              stopAudioRecording();
+            }, activeAcousticsRef.current.pauseTimeoutMs);
           }
-        } else {
-          speechHits = Math.max(0, speechHits - 1);
         }
-
-        calibrationAnimFrameRef.current = requestAnimationFrame(sampleAudio);
+        liveAnimFrameRef.current = requestAnimationFrame(monitorLoop);
       };
+      liveAnimFrameRef.current = requestAnimationFrame(monitorLoop);
+    } catch {
+      // Audio monitoring is an acoustic enhancement; speech recognition handles fallback
+    }
+  };
 
-      calibrationAnimFrameRef.current = requestAnimationFrame(sampleAudio);
-    } catch (err) {
-      console.error('Web Audio API setup error:', err);
-      setCalibrationStatus('CALIBRATED');
+  // Safe teardown helpers for modal transitions
+  const cleanupCalibration = () => {};
+
+  const fullStopCalibration = () => {
+    if (calibrationStatus !== 'CALIBRATED') {
+      setCalibrationStatus('IDLE');
     }
   };
 
   const handleOpenInstructions = (q: any) => {
     setSelectedQuestionForInstructions(q);
     setAgreedToInterviewTerms(false);
-    startMicCalibration();
+    if (voiceCalibrationProfile) {
+      setCalibrationStatus('CALIBRATED');
+    }
   };
 
-  // Teardown calibration when modal closes or unmounts
-  useEffect(() => {
-    if (!selectedQuestionForInstructions) {
-      fullStopCalibration();
+  // Fetch Saved Voice Profile from API (Sprint 3)
+  const fetchVoiceProfile = async () => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_BASE}/interview/voice-profile`, {
+        headers: getAuthHeaders(token),
+      });
+      const data = await res.json();
+      if (data.success && data.data?.profile) {
+        setVoiceCalibrationProfile(data.data.profile);
+        setCalibrationStatus('CALIBRATED');
+      }
+    } catch (err) {
+      console.error('Failed to load saved voice profile', err);
     }
-  }, [selectedQuestionForInstructions]);
+  };
 
-  useEffect(() => {
-    return () => {
-      fullStopCalibration();
-    };
-  }, []);
+  // Handle successful calibration completion and persist to database (Sprint 3)
+  const handleCalibrationComplete = async (calibratedProfile: VoiceProfile) => {
+    setVoiceCalibrationProfile(calibratedProfile);
+    setCalibrationStatus('CALIBRATED');
+    try {
+      await fetch(`${API_BASE}/interview/voice-profile`, {
+        method: 'POST',
+        headers: getAuthHeaders(token),
+        body: JSON.stringify({ profile: calibratedProfile }),
+      });
+    } catch (err) {
+      console.error('Failed to persist voice profile to student account', err);
+    }
+  };
 
-  // Speech-to-Text (STT) & Text-to-Speech (TTS) States
+  // Handle recalibrate reset (Sprint 3)
+  const handleCalibrationReset = () => {
+    setVoiceCalibrationProfile(null);
+    setCalibrationStatus('IDLE');
+    setAgreedToInterviewTerms(false);
+  };
+
+  // Speech-to-Text (STT), MediaRecorder & Text-to-Speech (TTS) States
   const [isRecording, setIsRecording] = useState<boolean>(false);
   const [speechSupported, setSpeechSupported] = useState<boolean>(false);
   const [ttsEnabled, setTtsEnabled] = useState<boolean>(true);
+  const [isTranscribingAudio, setIsTranscribingAudio] = useState<boolean>(false);
   const recognitionRef = useRef<any>(null);
   const recordingTimeoutRef = useRef<any>(null);
   const chatScrollRef = useRef<HTMLDivElement>(null);
@@ -379,7 +342,81 @@ export const InterviewPage: React.FC = () => {
   // History State
   const [pastSessions, setPastSessions] = useState<InterviewSessionDTO[]>([]);
 
-  // Helper to bind continuous onresult handler safely
+  // Start MediaRecorder audio capture with automatic Whisper transcription fallback
+  const startAudioRecording = async () => {
+    try {
+      let stream = liveStreamRef.current;
+      if (!stream || !stream.active) {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: false },
+        });
+        liveStreamRef.current = stream;
+      }
+
+      if (typeof MediaRecorder !== 'undefined' && stream) {
+        let mimeType = '';
+        if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+          mimeType = 'audio/webm;codecs=opus';
+        } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+          mimeType = 'audio/webm';
+        }
+
+        const options: MediaRecorderOptions = mimeType ? { mimeType } : {};
+        const recorder = new MediaRecorder(stream, options);
+        audioChunksRef.current = [];
+
+        recorder.ondataavailable = (event: BlobEvent) => {
+          if (event.data && event.data.size > 0) {
+            audioChunksRef.current.push(event.data);
+          }
+        };
+
+        recorder.onstop = () => {
+          if (audioChunksRef.current.length > 0) {
+            const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+            const reader = new FileReader();
+            reader.onloadend = async () => {
+              const resultStr = reader.result as string;
+              const base64Data = resultStr?.includes(',') ? resultStr.split(',')[1] : resultStr;
+              recordedAudioBase64Ref.current = base64Data;
+
+              // If candidateInput is empty, auto-transcribe through Whisper microservice
+              if (!candidateInputRef.current?.trim() && !isSubmittingRef.current && base64Data) {
+                try {
+                  setIsTranscribingAudio(true);
+                  const res = await fetch(`${API_BASE}/interview/audio/transcribe`, {
+                    method: 'POST',
+                    headers: getAuthHeaders(token),
+                    body: JSON.stringify({
+                      audio_base64: base64Data,
+                      audio_format: 'webm',
+                      language: 'en',
+                    }),
+                  });
+                  const data = await res.json();
+                  if (data?.success && data?.data?.text && !isSubmittingRef.current) {
+                    setCandidateInput(data.data.text);
+                  }
+                } catch (asrErr) {
+                  console.warn('Whisper ASR auto-transcribe fallback error:', asrErr);
+                } finally {
+                  setIsTranscribingAudio(false);
+                }
+              }
+            };
+            reader.readAsDataURL(blob);
+          }
+        };
+
+        mediaRecorderRef.current = recorder;
+        recorder.start(250);
+      }
+    } catch (err) {
+      console.warn('startAudioRecording error:', err);
+    }
+  };
+
+  // Helper to bind continuous onresult handler safely with personalized pause tolerance
   const bindRecognitionHandlers = (recog: any) => {
     recog.onresult = (event: any) => {
       // Guard against late async results delivered during/after submission
@@ -391,22 +428,22 @@ export const InterviewPage: React.FC = () => {
       if (!isSubmittingRef.current) {
         setCandidateInput(fullTranscript);
       }
+
+      // Reset pause timeout on active speech input (Sprint 4)
+      if (recordingTimeoutRef.current) {
+        clearTimeout(recordingTimeoutRef.current);
+      }
+      recordingTimeoutRef.current = setTimeout(() => {
+        stopAudioRecording();
+      }, activeAcousticsRef.current.pauseTimeoutMs);
     };
 
     recog.onend = () => {
-      setIsRecording(false);
-      if (recordingTimeoutRef.current) {
-        clearTimeout(recordingTimeoutRef.current);
-        recordingTimeoutRef.current = null;
-      }
+      stopAudioRecording();
     };
 
     recog.onerror = () => {
-      setIsRecording(false);
-      if (recordingTimeoutRef.current) {
-        clearTimeout(recordingTimeoutRef.current);
-        recordingTimeoutRef.current = null;
-      }
+      stopAudioRecording();
     };
   };
 
@@ -469,13 +506,17 @@ export const InterviewPage: React.FC = () => {
     fetchEligibility();
     fetchPastSessions();
     fetchLongitudinalProgress();
+    fetchVoiceProfile();
 
-    // Check Speech Recognition support in browser
+    // Check Speech Recognition or MediaRecorder support in browser
     if (typeof window !== 'undefined') {
       const SpeechRecognition =
         (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      if (SpeechRecognition) {
+      const hasMediaRecorder = typeof MediaRecorder !== 'undefined' && !!navigator.mediaDevices?.getUserMedia;
+      if (SpeechRecognition || hasMediaRecorder) {
         setSpeechSupported(true);
+      }
+      if (SpeechRecognition) {
         const recog = new SpeechRecognition();
         recog.continuous = true; // Continuous listening across natural speech pauses
         recog.interimResults = true; // Real-time progressive transcription
@@ -487,6 +528,7 @@ export const InterviewPage: React.FC = () => {
     }
 
     return () => {
+      stopLiveAudioMonitoring();
       if (recognitionRef.current) {
         try {
           recognitionRef.current.onresult = null;
@@ -512,47 +554,94 @@ export const InterviewPage: React.FC = () => {
     }
   }, [activeSession?.turns]);
 
-  // Speak AI message using Text-to-Speech
-  const speakMessage = (text: string) => {
-    if (!ttsEnabled || typeof window === 'undefined' || !window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
+  // Speak AI message using Native Streaming Audio or SpeechSynthesis fallback
+  const speakMessage = (text: string, audioUrl?: string | null) => {
+    if (!ttsEnabled) return;
+
+    if (currentAudioRef.current) {
+      try {
+        currentAudioRef.current.pause();
+        currentAudioRef.current = null;
+      } catch {}
+    }
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+
+    if (audioUrl) {
+      try {
+        setIsAiSpeaking(true);
+        // Ensure browser never plays stale cached audio from previous turn
+        const separator = audioUrl.includes('?') ? '&' : '?';
+        const freshAudioUrl = `${audioUrl}${separator}_t=${Date.now()}`;
+        const audio = new Audio(freshAudioUrl);
+        currentAudioRef.current = audio;
+        audio.onended = () => {
+          setIsAiSpeaking(false);
+          currentAudioRef.current = null;
+        };
+        audio.onerror = () => {
+          setIsAiSpeaking(false);
+          currentAudioRef.current = null;
+          if (typeof window !== 'undefined' && window.speechSynthesis) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 1.0;
+            utterance.pitch = 1.0;
+            utterance.onend = () => setIsAiSpeaking(false);
+            utterance.onerror = () => setIsAiSpeaking(false);
+            window.speechSynthesis.speak(utterance);
+          }
+        };
+        audio.play().catch(() => {
+          setIsAiSpeaking(false);
+          if (typeof window !== 'undefined' && window.speechSynthesis) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 1.0;
+            utterance.pitch = 1.0;
+            utterance.onend = () => setIsAiSpeaking(false);
+            utterance.onerror = () => setIsAiSpeaking(false);
+            window.speechSynthesis.speak(utterance);
+          }
+        });
+        return;
+      } catch {}
+    }
+
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+    setIsAiSpeaking(true);
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.rate = 1.0;
     utterance.pitch = 1.0;
+    utterance.onend = () => setIsAiSpeaking(false);
+    utterance.onerror = () => setIsAiSpeaking(false);
     window.speechSynthesis.speak(utterance);
   };
 
-  // Toggle Speech Recognition (Press-to-start / Press-to-stop across natural pauses)
-  const toggleSpeechRecognition = () => {
-    if (!recognitionRef.current) return;
+  // Toggle Speech & Audio Recording (Press-to-start / Press-to-stop across natural pauses)
+  const toggleSpeechRecognition = async () => {
     if (isRecording) {
-      try {
-        recognitionRef.current.onresult = null;
-        recognitionRef.current.stop();
-      } catch {}
-      setIsRecording(false);
-      if (recordingTimeoutRef.current) {
-        clearTimeout(recordingTimeoutRef.current);
-        recordingTimeoutRef.current = null;
-      }
+      stopAudioRecording();
     } else {
       try {
         isSubmittingRef.current = false;
-        bindRecognitionHandlers(recognitionRef.current);
-        recognitionRef.current.start();
         setIsRecording(true);
+        startLiveAudioMonitoring();
+        await startAudioRecording();
+
+        if (recognitionRef.current) {
+          try {
+            bindRecognitionHandlers(recognitionRef.current);
+            recognitionRef.current.start();
+          } catch {}
+        }
+
         if (recordingTimeoutRef.current) clearTimeout(recordingTimeoutRef.current);
-        // 5-minute safety ceiling to prevent runaway recording if tab is unattended
+        // Candidate personalized pause tolerance duration (Sprint 4)
         recordingTimeoutRef.current = setTimeout(() => {
-          if (recognitionRef.current) {
-            try {
-              recognitionRef.current.stop();
-            } catch {}
-            setIsRecording(false);
-          }
-        }, 300000);
+          stopAudioRecording();
+        }, activeAcousticsRef.current.pauseTimeoutMs);
       } catch {
-        setIsRecording(false);
+        stopAudioRecording();
       }
     }
   };
@@ -568,6 +657,7 @@ export const InterviewPage: React.FC = () => {
         body: JSON.stringify({
           questionId,
           mode: selectedMode,
+          voicePersona: selectedVoicePersona,
         }),
       });
 
@@ -577,7 +667,7 @@ export const InterviewPage: React.FC = () => {
         setActiveView('ROOM');
         setCandidateInput('');
         if (data.data.initialTurn?.message) {
-          speakMessage(data.data.initialTurn.message);
+          speakMessage(data.data.initialTurn.message, data.data.initialTurn.audioUrl);
         }
       } else {
         setError(data.message || 'Failed to start interview session');
@@ -624,23 +714,20 @@ export const InterviewPage: React.FC = () => {
     e.preventDefault();
     if (!activeSession || !candidateInput.trim() || isSubmittingTurn) return;
 
-    // 1. Guard against speech recognition race conditions:
-    // Null out onresult and mark submission flag BEFORE stopping recognition
+    // 1. Guard against speech recognition and MediaRecorder race conditions:
     isSubmittingRef.current = true;
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.onresult = null;
-        recognitionRef.current.stop();
-      } catch {}
-    }
-    setIsRecording(false);
-    if (recordingTimeoutRef.current) {
-      clearTimeout(recordingTimeoutRef.current);
-      recordingTimeoutRef.current = null;
+    stopAudioRecording();
+
+    // If MediaRecorder was active, allow brief 150ms delay for FileReader onstop to populate base64
+    if (audioChunksRef.current.length > 0 && !recordedAudioBase64Ref.current) {
+      await new Promise((resolve) => setTimeout(resolve, 150));
     }
 
     const currentMessage = candidateInput.trim();
     setCandidateInput('');
+    const audioPayload = recordedAudioBase64Ref.current;
+    recordedAudioBase64Ref.current = null;
+    audioChunksRef.current = [];
 
     try {
       setIsSubmittingTurn(true);
@@ -653,6 +740,8 @@ export const InterviewPage: React.FC = () => {
           headers: getAuthHeaders(token),
           body: JSON.stringify({
             message: currentMessage,
+            audioBase64: audioPayload || undefined,
+            audioFormat: audioPayload ? 'webm' : undefined,
           }),
         }
       );
@@ -661,7 +750,7 @@ export const InterviewPage: React.FC = () => {
       if (data.success) {
         setActiveSession(data.data.session);
         if (data.data.aiTurn?.message) {
-          speakMessage(data.data.aiTurn.message);
+          speakMessage(data.data.aiTurn.message, data.data.aiTurn.audioUrl);
         }
 
         // Automatic transition to results/scorecard view when session concludes
@@ -678,7 +767,37 @@ export const InterviewPage: React.FC = () => {
       setIsSubmittingTurn(false);
       setTimeout(() => {
         isSubmittingRef.current = false;
-      }, 300);
+      }, 500);
+    }
+  };
+
+  // Skip Question Turn
+  const handleSkipTurn = async () => {
+    if (!activeSession || isSubmittingTurn) return;
+    try {
+      setIsSubmittingTurn(true);
+      setError(null);
+      const res = await fetch(`${API_BASE}/interview/sessions/${activeSession.id}/skip`, {
+        method: 'POST',
+        headers: getAuthHeaders(token),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setActiveSession(data.data);
+        const latestAi = [...(data.data.turns || [])].reverse().find((t: any) => t.speaker === 'AI');
+        if (latestAi?.message) {
+          speakMessage(latestAi.message, latestAi.audioUrl);
+        }
+        if (data.data.status === 'COMPLETED') {
+          await handleCompleteInterview(data.data.id);
+        }
+      } else {
+        setError(data.message || 'Failed to skip question');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Error skipping question');
+    } finally {
+      setIsSubmittingTurn(false);
     }
   };
 
@@ -1040,279 +1159,55 @@ export const InterviewPage: React.FC = () => {
               <li><strong>AI Voice (TTS):</strong> The examiner's questions are read aloud automatically. You can toggle speech ON/OFF anytime using the <strong>🔊 Voice ON / 🔇 Muted</strong> button in the top bar.</li>
             </ul>
 
-            {/* 3. Mandatory Microphone Calibration Section */}
-            <div
-              id="mic-calibration-panel"
-              style={{
-                padding: '16px',
-                borderRadius: '10px',
-                background:
-                  calibrationStatus === 'CALIBRATED'
-                    ? 'rgba(16, 185, 129, 0.08)'
-                    : calibrationStatus.startsWith('FAILED')
-                    ? 'rgba(239, 68, 68, 0.08)'
-                    : 'rgba(6, 182, 212, 0.08)',
-                border: `1px solid ${
-                  calibrationStatus === 'CALIBRATED'
-                    ? 'rgba(16, 185, 129, 0.3)'
-                    : calibrationStatus.startsWith('FAILED')
-                    ? 'rgba(239, 68, 68, 0.3)'
-                    : 'rgba(6, 182, 212, 0.3)'
-                }`,
-                marginBottom: '18px',
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '18px' }}>
-                    {calibrationStatus === 'CALIBRATED'
-                      ? '✅'
-                      : calibrationStatus.startsWith('FAILED')
-                      ? '⚠️'
-                      : '🎙️'}
-                  </span>
-                  <strong style={{ fontSize: '13px', color: 'var(--text-main, #e6edf3)' }}>
-                    Mandatory Microphone Calibration
-                  </strong>
-                </div>
-                <span
-                  id="calibration-status-badge"
-                  style={{
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    padding: '3px 10px',
-                    borderRadius: '12px',
-                    background:
-                      calibrationStatus === 'CALIBRATED'
-                        ? 'rgba(16, 185, 129, 0.2)'
-                        : calibrationStatus.startsWith('FAILED')
-                        ? 'rgba(239, 68, 68, 0.2)'
-                        : 'rgba(6, 182, 212, 0.2)',
-                    color:
-                      calibrationStatus === 'CALIBRATED'
-                        ? '#10b981'
-                        : calibrationStatus.startsWith('FAILED')
-                        ? '#ef4444'
-                        : '#06b6d4',
-                    border: `1px solid ${
-                      calibrationStatus === 'CALIBRATED'
-                        ? 'rgba(16, 185, 129, 0.4)'
-                        : calibrationStatus.startsWith('FAILED')
-                        ? 'rgba(239, 68, 68, 0.4)'
-                        : 'rgba(6, 182, 212, 0.4)'
-                    }`,
-                  }}
-                >
-                  {calibrationStatus === 'REQUESTING' && '⏳ Requesting Permission...'}
-                  {calibrationStatus === 'LISTENING' && '🔊 Speak Now (Listening...)'}
-                  {calibrationStatus === 'CALIBRATED' && '✓ Calibrated & Verified'}
-                  {calibrationStatus === 'FAILED_NO_DEVICE' && '✕ No Mic Detected'}
-                  {calibrationStatus === 'FAILED_PERMISSION' && '✕ Permission Denied'}
-                  {calibrationStatus === 'FAILED_SILENCE' && '✕ No Audio (Silence)'}
-                  {calibrationStatus === 'IDLE' && 'Ready'}
-                </span>
+            {/* 3. Mandatory Microphone Acoustic Calibration Section (Sprint 2 & 3) */}
+            <VoiceCalibrationPanel
+              initialProfile={voiceCalibrationProfile}
+              onCalibrationComplete={handleCalibrationComplete}
+              onCalibrationReset={handleCalibrationReset}
+            />
+
+            {/* 3.1 Examiner Voice Persona Selection */}
+            <div style={{ margin: '16px 0', padding: '14px', background: 'rgba(255, 255, 255, 0.02)', borderRadius: '8px', border: '1px solid var(--border-color, #2d333b)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                <h4 style={{ margin: 0, color: 'var(--text-main, #e6edf3)', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span>🎙️</span> Choose Examiner Voice Persona:
+                </h4>
+                <span style={{ fontSize: '11px', color: '#06b6d4', fontWeight: 600 }}>9 Accents Available</span>
               </div>
-
-              {/* Real-time Input Energy Level Meter */}
-              <div style={{ marginBottom: '10px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-muted, #8b949e)', marginBottom: '4px' }}>
-                  <span>Real-time Mic Input Energy:</span>
-                  <span style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 600 }}>
-                    {calibrationAudioLevel}% {calibrationAudioLevel >= 12 ? '(Voice Signal Active)' : '(Quiet)'}
-                  </span>
-                </div>
-                <div
-                  style={{
-                    width: '100%',
-                    height: '14px',
-                    background: 'rgba(0, 0, 0, 0.4)',
-                    borderRadius: '7px',
-                    overflow: 'hidden',
-                    border: '1px solid var(--border-color, #2d333b)',
-                    position: 'relative',
-                  }}
-                >
-                  {/* 12% speech threshold marker */}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      left: '12%',
-                      top: 0,
-                      bottom: 0,
-                      width: '2px',
-                      background: 'rgba(255, 255, 255, 0.35)',
-                      zIndex: 2,
-                    }}
-                    title="Minimum speech detection threshold (12%)"
-                  />
-                  {/* Animated Level Bar */}
-                  <div
-                    id="mic-volume-level-meter"
-                    style={{
-                      width: `${calibrationAudioLevel}%`,
-                      height: '100%',
-                      background:
-                        calibrationStatus === 'CALIBRATED'
-                          ? 'linear-gradient(90deg, #10b981, #06b6d4)'
-                          : 'linear-gradient(90deg, #06b6d4, #3b82f6, #10b981)',
-                      transition: 'width 60ms ease-out',
-                      borderRadius: '7px',
-                    }}
-                  />
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: 'var(--text-muted, #8b949e)', marginTop: '2px' }}>
-                  <span>0% (Silence)</span>
-                  <span style={{ color: '#06b6d4' }}>| 12% Speech Threshold</span>
-                  <span>100% (Peak)</span>
-                </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '8px' }}>
+                {DEFAULT_VOICE_PERSONAS.map((p) => {
+                  const isSelected = selectedVoicePersona === p.id;
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      id={`btn-persona-${p.id}`}
+                      onClick={() => setSelectedVoicePersona(p.id)}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'flex-start',
+                        padding: '10px 12px',
+                        borderRadius: '6px',
+                        border: isSelected ? '2px solid #06b6d4' : '1px solid var(--border-color, #2d333b)',
+                        background: isSelected ? 'rgba(6, 182, 212, 0.12)' : 'rgba(255, 255, 255, 0.02)',
+                        color: 'var(--text-main, #e6edf3)',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', width: '100%', marginBottom: '4px' }}>
+                        <span style={{ fontSize: '16px' }}>{p.flag}</span>
+                        <strong style={{ fontSize: '12px', color: isSelected ? '#38bdf8' : 'inherit' }}>{p.name}</strong>
+                        <span style={{ fontSize: '10px', color: 'var(--text-muted, #8b949e)', marginLeft: 'auto' }}>{p.gender}</span>
+                      </div>
+                      <div style={{ fontSize: '10px', color: 'var(--text-muted, #8b949e)' }}>{p.accent}</div>
+                      <div style={{ fontSize: '9px', color: '#a5f3fc', marginTop: '2px' }}>{p.tone}</div>
+                    </button>
+                  );
+                })}
               </div>
-
-              {/* Status Instructional Guidance */}
-              {calibrationStatus === 'REQUESTING' && (
-                <p style={{ margin: '0 0 6px 0', fontSize: '12px', color: '#06b6d4', lineHeight: '1.4' }}>
-                  ⏳ <strong>Checking permissions:</strong> Please click <strong>Allow</strong> if your browser prompts for microphone access.
-                </p>
-              )}
-
-              {calibrationStatus === 'LISTENING' && (
-                <p style={{ margin: '0 0 6px 0', fontSize: '12px', color: '#06b6d4', lineHeight: '1.4' }}>
-                  🎙️ <strong>Speak now:</strong> Say a few words (e.g., <em>"Testing my microphone"</em>) into your mic to verify sound pickup.
-                </p>
-              )}
-
-              {calibrationStatus === 'CALIBRATED' && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
-                  <p style={{ margin: 0, fontSize: '12px', color: '#10b981', lineHeight: '1.4' }}>
-                    ✅ <strong>Calibration Successful:</strong> Voice signal verified above the minimum energy threshold. Your microphone is active and ready.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={startMicCalibration}
-                    style={{
-                      background: 'transparent',
-                      border: '1px solid rgba(16, 185, 129, 0.4)',
-                      borderRadius: '4px',
-                      padding: '3px 8px',
-                      color: '#10b981',
-                      fontSize: '11px',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Re-test Mic
-                  </button>
-                </div>
-              )}
-
-              {/* Failure State 1: No Microphone Device Found */}
-              {calibrationStatus === 'FAILED_NO_DEVICE' && (
-                <div style={{ background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '6px', padding: '10px 12px', marginTop: '6px' }}>
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                    <span style={{ fontSize: '16px' }}>🚫</span>
-                    <div style={{ flex: 1 }}>
-                      <strong style={{ fontSize: '12px', color: '#ef4444', display: 'block', marginBottom: '3px' }}>
-                        No Microphone Device Found
-                      </strong>
-                      <p style={{ margin: '0 0 8px 0', fontSize: '11px', color: 'var(--text-main, #e6edf3)', lineHeight: '1.5' }}>
-                        {calibrationErrorMessage || 'No microphone device was detected on your system. Please connect a microphone or headset, verify that your audio input device is enabled in your operating system sound settings, and reload or retry.'}
-                      </p>
-                      <button
-                        type="button"
-                        id="btn-retry-calibration"
-                        onClick={startMicCalibration}
-                        style={{
-                          padding: '5px 12px',
-                          background: '#ef4444',
-                          border: 'none',
-                          borderRadius: '4px',
-                          color: '#fff',
-                          fontSize: '11px',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                        }}
-                      >
-                        🔄 Retry Calibration
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Failure State 2: Permission Denied */}
-              {calibrationStatus === 'FAILED_PERMISSION' && (
-                <div style={{ background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '6px', padding: '10px 12px', marginTop: '6px' }}>
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                    <span style={{ fontSize: '16px' }}>🔒</span>
-                    <div style={{ flex: 1 }}>
-                      <strong style={{ fontSize: '12px', color: '#ef4444', display: 'block', marginBottom: '3px' }}>
-                        Browser Microphone Permission Denied
-                      </strong>
-                      <p style={{ margin: '0 0 8px 0', fontSize: '11px', color: 'var(--text-main, #e6edf3)', lineHeight: '1.5' }}>
-                        {calibrationErrorMessage || 'Microphone access was blocked by your browser. To participate in this oral interview, click the lock or camera icon in your browser address bar, set Microphone permissions to "Allow", and click Retry.'}
-                      </p>
-                      <button
-                        type="button"
-                        id="btn-retry-calibration"
-                        onClick={startMicCalibration}
-                        style={{
-                          padding: '5px 12px',
-                          background: '#ef4444',
-                          border: 'none',
-                          borderRadius: '4px',
-                          color: '#fff',
-                          fontSize: '11px',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                        }}
-                      >
-                        🔄 Retry Calibration
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Failure State 3: Silence / No Audio Registered */}
-              {calibrationStatus === 'FAILED_SILENCE' && (
-                <div style={{ background: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.3)', borderRadius: '6px', padding: '10px 12px', marginTop: '6px' }}>
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                    <span style={{ fontSize: '16px' }}>🔇</span>
-                    <div style={{ flex: 1 }}>
-                      <strong style={{ fontSize: '12px', color: '#f59e0b', display: 'block', marginBottom: '3px' }}>
-                        No Audio Detected (Silence)
-                      </strong>
-                      <p style={{ margin: '0 0 8px 0', fontSize: '11px', color: 'var(--text-main, #e6edf3)', lineHeight: '1.5' }}>
-                        {calibrationErrorMessage || 'Microphone is connected and permitted, but no audio was detected after 6 seconds of silence. Please check that your microphone is not hardware-muted or software-muted, and ensure the correct input device is selected as your default microphone in your OS settings.'}
-                      </p>
-                      <button
-                        type="button"
-                        id="btn-retry-calibration"
-                        onClick={startMicCalibration}
-                        style={{
-                          padding: '5px 12px',
-                          background: '#f59e0b',
-                          border: 'none',
-                          borderRadius: '4px',
-                          color: '#000',
-                          fontSize: '11px',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                        }}
-                      >
-                        🔄 Retry Calibration
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* 4. Evaluation & Rubrics */}
@@ -1450,6 +1345,35 @@ export const InterviewPage: React.FC = () => {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+              {/* Persona & Speaking Badge */}
+              {activeSession.voicePersona && (
+                <div
+                  id="voice-persona-badge"
+                  data-testid="voice-persona-badge"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '11px',
+                    padding: '3px 10px',
+                    borderRadius: '6px',
+                    background: isAiSpeaking ? 'rgba(236, 72, 153, 0.2)' : 'rgba(168, 85, 247, 0.15)',
+                    border: `1px solid ${isAiSpeaking ? '#ec4899' : '#a855f7'}`,
+                    color: isAiSpeaking ? '#ec4899' : '#a855f7',
+                    fontWeight: 600,
+                  }}
+                  title={`Examiner Voice Persona: ${activeSession.voicePersona}`}
+                >
+                  <span>{isAiSpeaking ? '🔊' : '🎙️'}</span>
+                  <span>{activeSession.voicePersona}</span>
+                  {isAiSpeaking && (
+                    <span style={{ fontSize: '10px', color: '#ec4899', fontWeight: 700 }}>
+                      [Speaking...]
+                    </span>
+                  )}
+                </div>
+              )}
+
               {/* Unobtrusive Live Provider Indicator */}
               <div
                 id="active-provider-badge"
@@ -1498,6 +1422,62 @@ export const InterviewPage: React.FC = () => {
                     ? 'Mock (fallback)'
                     : `${activeSession.activeProviderType === 'LOCAL' ? 'Local' : 'Cloud'}: ${activeSession.activeModelUsed || 'gemma4:e2b'}`}
                 </span>
+              </div>
+
+              {/* Feature Flag & Voice Calibration Indicator (Sprint 4) */}
+              <div
+                id="voice-calibration-badge"
+                data-testid="voice-calibration-badge"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  fontSize: '11px',
+                  padding: '3px 10px',
+                  borderRadius: '6px',
+                  background: activeAcoustics.isPersonalized
+                    ? 'rgba(16, 185, 129, 0.12)'
+                    : 'rgba(148, 163, 184, 0.12)',
+                  border: `1px solid ${
+                    activeAcoustics.isPersonalized
+                      ? 'rgba(16, 185, 129, 0.35)'
+                      : 'rgba(148, 163, 184, 0.3)'
+                  }`,
+                  color: activeAcoustics.isPersonalized ? '#10b981' : '#94a3b8',
+                  fontWeight: 600,
+                }}
+                title={
+                  activeAcoustics.isPersonalized
+                    ? `Personalized Voice Calibration Active: Pause Tolerance = ${activeAcoustics.pauseTimeoutMs}ms (WPM: ${voiceCalibrationProfile?.speechRateWpm}, P75 Pause: ${voiceCalibrationProfile?.p75PauseMs}ms), Silence Threshold = ${activeAcoustics.silenceThresholdDbfs} dBFS`
+                    : `Fixed Baseline Acoustic Timing Active: Pause Tolerance = 4000ms, Silence Threshold = -35.0 dBFS`
+                }
+              >
+                <span>{activeAcoustics.isPersonalized ? '🎯' : '⏱️'}</span>
+                <span>
+                  {activeAcoustics.isPersonalized
+                    ? `Personalized (${activeAcoustics.pauseTimeoutMs}ms / ${activeAcoustics.silenceThresholdDbfs} dBFS)`
+                    : `Fixed Baseline (4000ms / -35 dBFS)`}
+                </span>
+                <button
+                  type="button"
+                  id="btn-toggle-voice-personalization"
+                  data-testid="btn-toggle-voice-personalization"
+                  onClick={() => toggleFeatureFlag(!usePersonalizedCalibration)}
+                  style={{
+                    marginLeft: '4px',
+                    padding: '2px 6px',
+                    fontSize: '10px',
+                    fontWeight: 700,
+                    borderRadius: '4px',
+                    border: '1px solid currentColor',
+                    background: 'transparent',
+                    color: 'inherit',
+                    cursor: 'pointer',
+                  }}
+                  title="Toggle USE_PERSONALIZED_VOICE_CALIBRATION feature flag"
+                >
+                  {usePersonalizedCalibration ? 'Rollback to Fixed' : 'Use Calibrated'}
+                </button>
               </div>
 
               {/* Hierarchical Main Question & Follow-up Counter */}
@@ -1671,9 +1651,32 @@ export const InterviewPage: React.FC = () => {
                         </span>
                       )
                     ) : (
-                      <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
-                        Response to Q{turn.mainQuestionIndex || 1}{(turn.followUpIndex || 0) > 0 ? ` (Follow-up ${turn.followUpIndex})` : ''}
-                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                          Response to Q{turn.mainQuestionIndex || 1}{(turn.followUpIndex || 0) > 0 ? ` (Follow-up ${turn.followUpIndex})` : ''}
+                        </span>
+                        {(turn as any).confidenceMetadata && (
+                          <span
+                            style={{
+                              padding: '1px 6px',
+                              borderRadius: '4px',
+                              fontSize: '10px',
+                              fontFamily: 'JetBrains Mono, monospace',
+                              background: (turn as any).confidenceMetadata.is_low_confidence
+                                ? 'rgba(239, 68, 68, 0.15)'
+                                : 'rgba(16, 185, 129, 0.15)',
+                              color: (turn as any).confidenceMetadata.is_low_confidence ? '#ef4444' : '#10b981',
+                              border: `1px solid ${
+                                (turn as any).confidenceMetadata.is_low_confidence
+                                  ? 'rgba(239, 68, 68, 0.3)'
+                                  : 'rgba(16, 185, 129, 0.3)'
+                              }`,
+                            }}
+                          >
+                            {(turn as any).confidenceMetadata.is_low_confidence ? '⚠️ Low ASR Conf' : '🎙️ High ASR Conf'}
+                          </span>
+                        )}
+                      </div>
                     )}
 
                     {isAi && (
@@ -1727,7 +1730,7 @@ export const InterviewPage: React.FC = () => {
 
                     {isAi && (
                       <button
-                        onClick={() => speakMessage(turn.message)}
+                        onClick={() => speakMessage(turn.message, turn.audioUrl)}
                         title="Replay Audio"
                         style={{
                           background: 'none',
@@ -1741,6 +1744,152 @@ export const InterviewPage: React.FC = () => {
                       >
                         🔊
                       </button>
+                    )}
+
+                    {isAi && turn.evidenceCites && turn.evidenceCites.length > 0 && (
+                      <div
+                        style={{
+                          marginTop: '8px',
+                          paddingTop: '6px',
+                          borderTop: '1px dashed rgba(6, 182, 212, 0.3)',
+                          fontSize: '11px',
+                          color: '#06b6d4',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          flexWrap: 'wrap',
+                        }}
+                      >
+                        <span style={{ fontWeight: 600 }}>📚 Sources:</span>
+                        {turn.evidenceCites.map((cite, cIdx) => (
+                          <span
+                            key={cIdx}
+                            style={{
+                              background: 'rgba(6, 182, 212, 0.15)',
+                              padding: '1px 6px',
+                              borderRadius: '3px',
+                              fontSize: '10px',
+                            }}
+                          >
+                            {cite}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {isAi && turn.evaluationData && (
+                      <div
+                        style={{
+                          marginTop: '10px',
+                          padding: '10px 12px',
+                          borderRadius: '8px',
+                          background: 'rgba(16, 185, 129, 0.08)',
+                          border: '1px solid rgba(16, 185, 129, 0.25)',
+                          fontSize: '12px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '6px',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '6px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ fontWeight: 700, color: '#10b981' }}>📊 Response Evaluation</span>
+                            {turn.evaluationData.mean !== undefined && (
+                              <span
+                                style={{
+                                  background: '#10b981',
+                                  color: '#fff',
+                                  padding: '1px 7px',
+                                  borderRadius: '10px',
+                                  fontWeight: 700,
+                                  fontSize: '11px',
+                                }}
+                              >
+                                ★ {Number(turn.evaluationData.mean).toFixed(1)} / 5.0
+                              </span>
+                            )}
+                          </div>
+
+                          {turn.audioUrl && (turn.evaluationData.human_feedback || turn.evaluationData.justification) && (
+                            <button
+                              onClick={() => {
+                                const feedbackText = turn.evaluationData.human_feedback || turn.evaluationData.justification;
+                                const feedbackAudioUrl = turn.audioUrl?.replace('target=question', 'target=feedback');
+                                speakMessage(feedbackText, feedbackAudioUrl);
+                              }}
+                              title="Play Examiner Spoken Feedback"
+                              style={{
+                                background: 'rgba(16, 185, 129, 0.15)',
+                                border: '1px solid rgba(16, 185, 129, 0.4)',
+                                color: '#10b981',
+                                borderRadius: '4px',
+                                padding: '2px 8px',
+                                cursor: 'pointer',
+                                fontSize: '11px',
+                                fontWeight: 600,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                              }}
+                            >
+                              🔊 Feedback Audio
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Criteria Metric Badges */}
+                        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', fontSize: '10px' }}>
+                          {turn.evaluationData.correctness !== undefined && (
+                            <span style={{ padding: '2px 6px', borderRadius: '4px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-main)' }}>
+                              Accuracy: <strong>{turn.evaluationData.correctness}/5</strong>
+                            </span>
+                          )}
+                          {turn.evaluationData.technical_depth !== undefined && (
+                            <span style={{ padding: '2px 6px', borderRadius: '4px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-main)' }}>
+                              Depth: <strong>{turn.evaluationData.technical_depth}/5</strong>
+                            </span>
+                          )}
+                          {turn.evaluationData.reasoning !== undefined && (
+                            <span style={{ padding: '2px 6px', borderRadius: '4px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-main)' }}>
+                              Reasoning: <strong>{turn.evaluationData.reasoning}/5</strong>
+                            </span>
+                          )}
+                          {turn.evaluationData.completeness !== undefined && (
+                            <span style={{ padding: '2px 6px', borderRadius: '4px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-main)' }}>
+                              Completeness: <strong>{turn.evaluationData.completeness}/5</strong>
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Qualitative examiner feedback */}
+                        {turn.evaluationData.human_feedback && (
+                          <div style={{ color: 'var(--text-main)', fontStyle: 'italic', marginTop: '2px' }}>
+                            💡 &ldquo;{turn.evaluationData.human_feedback}&rdquo;
+                          </div>
+                        )}
+
+                        {/* Missing concepts pills if any */}
+                        {Array.isArray(turn.evaluationData.missing_concepts) && turn.evaluationData.missing_concepts.length > 0 && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap', marginTop: '4px' }}>
+                            <span style={{ color: '#f59e0b', fontWeight: 600, fontSize: '11px' }}>⚠️ Missing Concepts:</span>
+                            {turn.evaluationData.missing_concepts.map((concept: string, idx: number) => (
+                              <span
+                                key={idx}
+                                style={{
+                                  padding: '1px 6px',
+                                  borderRadius: '3px',
+                                  background: 'rgba(245, 158, 11, 0.15)',
+                                  color: '#f59e0b',
+                                  fontSize: '10px',
+                                  border: '1px solid rgba(245, 158, 11, 0.3)',
+                                }}
+                              >
+                                {concept}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -1872,6 +2021,7 @@ export const InterviewPage: React.FC = () => {
                     type="button"
                     id="btn-mic-toggle"
                     onClick={toggleSpeechRecognition}
+                    disabled={isTranscribingAudio || isSubmittingTurn}
                     title={isRecording ? 'Stop Recording' : 'Speak with Microphone'}
                     style={{
                       padding: '10px 14px',
@@ -1881,13 +2031,13 @@ export const InterviewPage: React.FC = () => {
                       color: isRecording ? '#ef4444' : 'var(--text-main)',
                       fontWeight: 600,
                       fontSize: '13px',
-                      cursor: 'pointer',
+                      cursor: isTranscribingAudio || isSubmittingTurn ? 'not-allowed' : 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '6px',
                     }}
                   >
-                    {isRecording ? '🔴 Listening...' : '🎙️ Mic'}
+                    {isTranscribingAudio ? '⏳ Whisper...' : isRecording ? '🔴 Listening...' : '🎙️ Mic'}
                   </button>
                 )}
 
@@ -1897,13 +2047,15 @@ export const InterviewPage: React.FC = () => {
                   value={candidateInput}
                   onChange={(e) => setCandidateInput(e.target.value)}
                   placeholder={
-                    speechSupported
+                    isTranscribingAudio
+                      ? "⏳ Transcribing your speech via Whisper..."
+                      : speechSupported
                       ? isRecording
                         ? "🔴 Listening... Speak your answer clearly into the microphone"
                         : "🎙️ Spoken response will appear here (click 'Mic' to speak)..."
                       : "Spoken response will appear here..."
                   }
-                  disabled={isSubmittingTurn}
+                  disabled={isSubmittingTurn || isTranscribingAudio}
                   style={{
                     flex: 1,
                     padding: '10px 14px',
@@ -1919,20 +2071,42 @@ export const InterviewPage: React.FC = () => {
                 <button
                   type="submit"
                   id="btn-submit-turn"
-                  disabled={!candidateInput.trim() || isSubmittingTurn}
+                  disabled={!candidateInput.trim() || isSubmittingTurn || isTranscribingAudio}
                   style={{
                     padding: '10px 20px',
                     borderRadius: '6px',
                     border: 'none',
-                    background: candidateInput.trim() && !isSubmittingTurn ? 'linear-gradient(135deg, #06b6d4, #3b82f6)' : 'var(--border-color)',
+                    background: candidateInput.trim() && !isSubmittingTurn && !isTranscribingAudio ? 'linear-gradient(135deg, #06b6d4, #3b82f6)' : 'var(--border-color)',
                     color: '#fff',
                     fontWeight: 600,
                     fontSize: '13px',
-                    cursor: candidateInput.trim() && !isSubmittingTurn ? 'pointer' : 'not-allowed',
+                    cursor: candidateInput.trim() && !isSubmittingTurn && !isTranscribingAudio ? 'pointer' : 'not-allowed',
                   }}
                 >
                   Submit Turn →
                 </button>
+
+                {activeSession.remoteSessionId && (
+                  <button
+                    type="button"
+                    id="btn-skip-turn"
+                    onClick={handleSkipTurn}
+                    disabled={isSubmittingTurn}
+                    title="Skip current question (advance to next topic)"
+                    style={{
+                      padding: '10px 14px',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-secondary)',
+                      color: 'var(--text-muted)',
+                      fontWeight: 600,
+                      fontSize: '13px',
+                      cursor: isSubmittingTurn ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    ⏭️ Skip
+                  </button>
+                )}
 
                 {activeSession.turns && activeSession.turns.filter((t) => t.speaker === 'CANDIDATE').length >= 1 && (
                   <button

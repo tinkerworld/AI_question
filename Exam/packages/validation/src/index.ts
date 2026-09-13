@@ -473,12 +473,16 @@ export const startInterviewSchema = z.object({
   questionId: z.string().min(1, 'Question ID is required'),
   mode: z.enum(['PRACTICE', 'EXAM']).default('PRACTICE'),
   courseId: z.string().optional(),
+  voicePersona: z.string().optional(),
+  workspaceId: z.string().optional(),
 });
 
 export const submitInterviewTurnSchema = z.object({
   message: z.string().min(1, 'Response message is required'),
   audioUrl: z.string().optional(),
   durationSeconds: z.number().optional(),
+  audioBase64: z.string().optional(),
+  audioFormat: z.string().optional(),
 });
 
 export const interviewKnowledgeDatasetSchema = z.object({

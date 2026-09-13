@@ -33,7 +33,9 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.pgDb = exports.setTestDb = exports.getDbPath = void 0;
+exports.pgDb = void 0;
+exports.getDbPath = getDbPath;
+exports.setTestDb = setTestDb;
 const pglite_1 = require("@electric-sql/pglite");
 const path = __importStar(require("path"));
 const fs = __importStar(require("fs"));
@@ -46,6 +48,7 @@ function getDbPath() {
         }
         return path.resolve(process.env.PG_DATA_DIR);
     }
+    // Default to in-memory for unit and integration tests if no explicit PG_DATA_DIR is provided
     if (process.env.NODE_ENV === 'test') {
         return 'memory://';
     }
@@ -69,14 +72,12 @@ function getDbPath() {
     }
     return fallback;
 }
-exports.getDbPath = getDbPath;
 let _pgDbInstance = null;
 let _initPromise = null;
 function setTestDb(db) {
     _pgDbInstance = db;
     _initPromise = db ? Promise.resolve(db) : null;
 }
-exports.setTestDb = setTestDb;
 async function getOrInitReadyDb() {
     if (_pgDbInstance) {
         if (_pgDbInstance.waitReady) {
@@ -100,13 +101,14 @@ async function getOrInitReadyDb() {
     }
     try {
         const diskDb = new pglite_1.PGlite(dbPath);
-        diskDb.waitReady.catch(() => {});
+        // Attach noop catch to suppress raw unhandled rejection from Node.js
+        diskDb.waitReady.catch(() => { });
         await diskDb.waitReady;
         _pgDbInstance = diskDb;
         return diskDb;
     }
     catch (err) {
-        const isAbort = String((err === null || err === void 0 ? void 0 : err.message) || err).includes('Aborted') || (err === null || err === void 0 ? void 0 : err.name) === 'RuntimeError';
+        const isAbort = String(err?.message || err).includes('Aborted') || err?.name === 'RuntimeError';
         if (isAbort) {
             if (process.env.NODE_ENV === 'test' || process.env.PG_ALLOW_MEMORY_FALLBACK === 'true') {
                 console.warn(`[ExamOS Database] Warning: Database directory at "${dbPath}" is locked by another running ExamOS process. Falling back to isolated in-memory database.`);
