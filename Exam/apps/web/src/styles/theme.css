@@ -57,46 +57,70 @@
   --accent-rgb: 59, 130, 246;
 }
 
-/* Seasonal Festival Themes (Phase 1: Curated Palette + Badge) */
+/* Seasonal Festival Themes (Researched Visual Palettes) */
 [data-festival="holi"] {
-  --accent-color: #ec4899;
-  --accent-rgb: 236, 72, 153;
-  --festival-gradient: linear-gradient(135deg, #ec4899, #f97316);
+  --accent-color: #FF69B4;
+  --accent-rgb: 255, 105, 180;
+  --festival-gradient: linear-gradient(135deg, #FF69B4 0%, #1E90FF 50%, #FFD700 100%);
 }
 [data-festival="diwali"] {
-  --accent-color: #eab308;
-  --accent-rgb: 234, 179, 8;
-  --festival-gradient: linear-gradient(135deg, #eab308, #ea580c);
+  --accent-color: #D4AF37;
+  --accent-rgb: 212, 175, 55;
+  --festival-gradient: linear-gradient(135deg, #7B1F1F 0%, #D4AF37 50%, #E8A33D 100%);
 }
 [data-festival="new_year"] {
-  --accent-color: #8b5cf6;
-  --accent-rgb: 139, 92, 246;
-  --festival-gradient: linear-gradient(135deg, #8b5cf6, #3b82f6);
+  --accent-color: #F3C623;
+  --accent-rgb: 243, 198, 35;
+  --festival-gradient: linear-gradient(135deg, #0B132B 0%, #1C2541 60%, #D4AF37 100%);
 }
 [data-festival="gudi_padwa"] {
-  --accent-color: #f97316;
-  --accent-rgb: 249, 115, 22;
-  --festival-gradient: linear-gradient(135deg, #f97316, #10b981);
+  --accent-color: #FF9933;
+  --accent-rgb: 255, 153, 51;
+  --festival-gradient: linear-gradient(135deg, #FF9933 0%, #FFC107 50%, #DC2626 100%);
 }
 [data-festival="christmas"] {
-  --accent-color: #ef4444;
-  --accent-rgb: 239, 68, 68;
-  --festival-gradient: linear-gradient(135deg, #ef4444, #10b981);
+  --accent-color: #BB2528;
+  --accent-rgb: 187, 37, 40;
+  --festival-gradient: linear-gradient(135deg, #165B33 0%, #BB2528 70%, #D4AF37 100%);
 }
 [data-festival="eid"] {
-  --accent-color: #059669;
-  --accent-rgb: 5, 150, 105;
-  --festival-gradient: linear-gradient(135deg, #059669, #34d399);
+  --accent-color: #0F5C4A;
+  --accent-rgb: 15, 92, 74;
+  --festival-gradient: linear-gradient(135deg, #0F5C4A 0%, #1B4D3E 50%, #D4AF37 100%);
 }
 [data-festival="independence_day"] {
-  --accent-color: #ea580c;
-  --accent-rgb: 234, 88, 12;
-  --festival-gradient: linear-gradient(135deg, #ea580c, #16a34a);
+  --accent-color: #FF9933;
+  --accent-rgb: 255, 153, 51;
+  --festival-gradient: linear-gradient(90deg, #FF9933 0%, #FFFFFF 50%, #138808 100%);
 }
 [data-festival="republic_day"] {
-  --accent-color: #2563eb;
-  --accent-rgb: 37, 99, 235;
-  --festival-gradient: linear-gradient(135deg, #2563eb, #ea580c);
+  --accent-color: #000080;
+  --accent-rgb: 0, 0, 128;
+  --festival-gradient: linear-gradient(135deg, #000080 0%, #1e3a8a 50%, #FF9933 100%);
+}
+
+@keyframes diyaFlamePulse {
+  0% {
+    opacity: 0.75;
+    transform: scaleY(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scaleY(1.08);
+  }
+}
+
+/* STRICT EXCLUSION: Exam Player & Live Interview Room Neutrality */
+.undecorated-assessment-env,
+[data-testid="exam-player-page"],
+[data-testid="live-interview-room"] {
+  --accent-color: #06b6d4 !important;
+  --festival-gradient: none !important;
+  background-image: none !important;
+}
+
+.undecorated-assessment-env * {
+  --festival-gradient: none !important;
 }
 
 /* High-Contrast (AA) Accessibility Mode — Strict Precedence Over All Themes & Festivals */

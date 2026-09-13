@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { getAuthHeaders } from '../utils/api';
 import { useTheme, ACCENT_PALETTES, AccentColor, FontScale } from '../context/ThemeContext';
-import { ThemeMode } from '@repo/types';
+import { FESTIVALS } from '../config/festivals';
+import { ThemeMode, FestivalKey } from '@repo/types';
 import { API_BASE } from '../config/api';
 import { MaintenanceControlPanel } from '../components/maintenance/MaintenanceControlPanel';
 import { FeatureMatrixEditor } from '../components/entitlements/FeatureMatrixEditor';
@@ -29,6 +30,9 @@ export const SettingsPage: React.FC = () => {
     setTheme,
     accentColor,
     setAccentColor,
+    festivalTheme,
+    setSiteWideFestivalTheme,
+    activeFestivalConfig,
     highContrast,
     setHighContrast,
     fontScale,
@@ -1092,6 +1096,238 @@ export const SettingsPage: React.FC = () => {
                         {isActive ? 'Active Accent' : p.hex}
                       </span>
                     </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* SECTION: FESTIVE THEMES (ADMIN-CONTROLLED) */}
+          <div
+            id="settings-festive-themes-section"
+            data-testid="settings-festive-themes-section"
+            style={{
+              background: 'var(--panel-bg)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '8px',
+              padding: '20px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                  <span style={{ fontSize: '18px' }}>🎉</span>
+                  <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 'bold' }}>
+                    Festive Themes (Admin-Controlled Site-Wide Theme)
+                  </h3>
+                  <span
+                    style={{
+                      background: 'rgba(217, 119, 6, 0.15)',
+                      color: '#d97706',
+                      border: '1px solid #d97706',
+                      padding: '2px 8px',
+                      borderRadius: '4px',
+                      fontSize: '10px',
+                      fontWeight: 'bold',
+                      fontFamily: 'JetBrains Mono',
+                    }}
+                  >
+                    ADMIN ONLY
+                  </span>
+                </div>
+                <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-muted)', maxWidth: '720px', lineHeight: '1.5' }}>
+                  Activate an authentic cultural festival theme site-wide across ExamOS. Applies researched color palettes,
+                  traditional motifs, and customized header styling to the dashboard, landing page, and navigation chrome.
+                  Regular users retain their own Light/Slate/Dark preference underneath. High-stakes assessment environments
+                  (Exam Player and Live Interview Room) remain strictly undecorated.
+                </p>
+              </div>
+
+              {/* Reset to Default Standard Theme Button */}
+              {festivalTheme && (
+                <button
+                  id="btn-deactivate-festival-theme"
+                  data-testid="btn-deactivate-festival-theme"
+                  onClick={() => setSiteWideFestivalTheme(null)}
+                  style={{
+                    padding: '8px 14px',
+                    borderRadius: '6px',
+                    border: '1px solid rgba(239, 68, 68, 0.5)',
+                    background: 'rgba(239, 68, 68, 0.1)',
+                    color: '#ef4444',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <span>✕</span>
+                  <span>Deactivate (Reset to Standard)</span>
+                </button>
+              )}
+            </div>
+
+            {/* Current Active Status Banner */}
+            <div
+              id="festive-theme-status-strip"
+              data-testid="festive-theme-status-strip"
+              style={{
+                padding: '12px 16px',
+                borderRadius: '6px',
+                background: festivalTheme ? 'rgba(255, 255, 255, 0.04)' : 'rgba(255, 255, 255, 0.02)',
+                border: festivalTheme ? `1px solid var(--accent-color)` : '1px dashed var(--border-color)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                fontSize: '13px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '20px' }}>{activeFestivalConfig ? activeFestivalConfig.badge : '🏛️'}</span>
+                <div>
+                  <div style={{ fontWeight: 600 }}>
+                    {activeFestivalConfig
+                      ? `Active Site-Wide: ${activeFestivalConfig.name} (${activeFestivalConfig.title})`
+                      : 'Standard Theme Active (No Festive Overlay Active)'}
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                    {activeFestivalConfig
+                      ? activeFestivalConfig.signature
+                      : 'Platform running in neutral institutional presentation. Click any festival below to activate site-wide.'}
+                  </div>
+                </div>
+              </div>
+              {activeFestivalConfig && (
+                <span
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 'bold',
+                    fontFamily: 'JetBrains Mono',
+                    color: 'var(--accent-color)',
+                    background: 'rgba(255,255,255,0.06)',
+                    padding: '3px 8px',
+                    borderRadius: '4px',
+                  }}
+                >
+                  SITE-WIDE ACTIVE
+                </span>
+              )}
+            </div>
+
+            {/* 8 Festivals Grid */}
+            <div
+              id="festive-themes-admin-grid"
+              data-testid="festive-themes-admin-grid"
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                gap: '14px',
+              }}
+            >
+              {FESTIVALS.map((fest) => {
+                const isActive = festivalTheme === fest.key;
+                return (
+                  <div
+                    key={fest.key}
+                    id={`festive-theme-card-${fest.key.toLowerCase()}`}
+                    data-testid={`festive-card-${fest.key.toLowerCase()}`}
+                    style={{
+                      padding: '16px',
+                      borderRadius: '8px',
+                      border: isActive ? `2px solid ${fest.primaryColor}` : '1px solid var(--border-color)',
+                      background: isActive ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.015)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '12px',
+                      transition: 'all 0.15s ease',
+                      position: 'relative',
+                    }}
+                  >
+                    {/* Header: Badge, Name, Title & Status */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '22px' }}>{fest.badge}</span>
+                        <div>
+                          <div style={{ fontWeight: 'bold', fontSize: '14px' }}>{fest.name}</div>
+                          <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{fest.title}</div>
+                        </div>
+                      </div>
+                      {isActive && (
+                        <span
+                          style={{
+                            fontSize: '10px',
+                            fontWeight: 'bold',
+                            fontFamily: 'JetBrains Mono',
+                            color: fest.primaryColor,
+                            background: 'rgba(255,255,255,0.08)',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                          }}
+                        >
+                          ACTIVE
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Signature & Description */}
+                    <div style={{ fontSize: '11px', color: 'var(--text-main)', lineHeight: '1.4' }}>
+                      <strong style={{ color: fest.primaryColor }}>Signature: </strong>
+                      {fest.signature}
+                    </div>
+
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', lineHeight: '1.4' }}>
+                      {fest.description}
+                    </div>
+
+                    {/* Researched Palette Swatches */}
+                    <div>
+                      <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        Researched Palette
+                      </div>
+                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                        {fest.palette.map((color, cIdx) => (
+                          <span
+                            key={cIdx}
+                            title={color}
+                            style={{
+                              width: '18px',
+                              height: '18px',
+                              borderRadius: '4px',
+                              backgroundColor: color,
+                              border: color === '#FFFFFF' ? '1px solid #94a3b8' : '1px solid rgba(255,255,255,0.2)',
+                              display: 'inline-block',
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Action Button */}
+                    <button
+                      id={`btn-activate-${fest.key.toLowerCase()}`}
+                      data-testid={`btn-activate-${fest.key.toLowerCase()}`}
+                      onClick={() => setSiteWideFestivalTheme(fest.key)}
+                      style={{
+                        marginTop: 'auto',
+                        padding: '8px 12px',
+                        borderRadius: '6px',
+                        border: isActive ? `1px solid ${fest.primaryColor}` : '1px solid var(--border-color)',
+                        background: isActive ? `${fest.primaryColor}22` : 'rgba(255,255,255,0.04)',
+                        color: isActive ? fest.primaryColor : 'var(--text-main)',
+                        fontWeight: isActive ? 'bold' : 'normal',
+                        fontSize: '12px',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      {isActive ? '✓ Site-Wide Active' : `Activate ${fest.name}`}
+                    </button>
                   </div>
                 );
               })}

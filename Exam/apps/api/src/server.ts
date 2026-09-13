@@ -31,6 +31,7 @@ import { writingRouter } from './routes/writing.routes';
 import { vocabularyRouter } from './routes/vocabulary.routes';
 import { listeningRouter } from './routes/listening.routes';
 import { importExportRouter } from './routes/import-export.routes';
+import { systemRouter } from './routes/system.routes';
 import { initV2Tables } from './db/init-v2-tables';
 import { errorHandler } from './middleware/error';
 
@@ -68,6 +69,9 @@ app.use('/api/v1/audit', auditRoutes);
 app.use('/api/v1/i18n', i18nRoutes);
 
 // Platform Branding & Institutional Theme Presets (docs/v2/features/platform-themes.md)
+app.use('/api/v1/system', systemRouter);
+app.use('/api/system', systemRouter);
+
 app.get('/api/v1/platform/branding', (req, res) => {
   res.json({
     success: true,

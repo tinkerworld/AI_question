@@ -16,6 +16,7 @@ export interface ThemeContextType {
   setAccentPalette: (color: AccentColor) => void;
   festivalTheme: FestivalKey | null;
   setFestivalTheme: (festival: FestivalKey | null) => void;
+  setSiteWideFestivalTheme: (festival: FestivalKey | null) => Promise<boolean>;
   suggestedFestival: FestivalThemeConfig | null;
   dismissedFestival: string | null;
   dismissFestivalSuggestion: (key: FestivalKey) => void;
@@ -66,7 +67,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   });
 
-  // Seasonal Festival Theme Layer (Phase 1: Curated Palette + Badge)
+  // Seasonal Festival Theme Layer (Site-Wide Active Theme)
   const [festivalTheme, setFestivalThemeState] = useState<FestivalKey | null>(() => {
     try {
       const saved = localStorage.getItem('examos_festival_theme');
@@ -131,6 +132,24 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     return getCurrentFestivalSuggestion();
   }, []);
 
+  // Fetch site-wide festival theme on initial boot (public endpoint)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    fetch(`${API_BASE}/system/festival-theme`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success && d.data) {
+          const serverFest = d.data.festival as FestivalKey | null;
+          setFestivalThemeState(serverFest || null);
+          try {
+            localStorage.setItem('examos_festival_theme', serverFest || 'none');
+          } catch {}
+        }
+      })
+      .catch((e) => console.warn('Could not fetch site-wide festival theme:', e));
+  }, []);
+
   // Synchronize DOM attributes whenever settings change
   useEffect(() => {
     if (typeof document === 'undefined') return;
@@ -138,8 +157,11 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
     root.setAttribute('data-theme', (theme || 'DARK').toLowerCase());
     root.setAttribute('data-festival', festivalTheme ? festivalTheme.toLowerCase() : 'none');
-    // If festival is active, festival color drives data-accent; otherwise user's curated base accent
-    root.setAttribute('data-accent', festivalTheme ? festivalTheme.toLowerCase() : (accentColor || 'cyan'));
+    // If festival is active and high-contrast is NOT on, festival color drives data-accent; otherwise user's curated base accent
+    root.setAttribute(
+      'data-accent',
+      festivalTheme && !highContrast ? festivalTheme.toLowerCase() : (accentColor || 'cyan')
+    );
     root.setAttribute('data-high-contrast', highContrast ? 'true' : 'false');
     root.setAttribute('data-contrast', highContrast ? 'high' : 'normal');
     root.setAttribute('data-font-scale', fontScale || 'normal');
@@ -155,11 +177,26 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     } catch {}
   }, [theme, accentColor, festivalTheme, highContrast, fontScale, reducedMotion]);
 
-  // Sync to database
+  // Synchronize browser tab title with festival emoji prefix while active (and not high contrast)
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const baseTitle = 'ExamOS - Assessment Platform';
+    // If user is currently in a live exam or interview, skip prefixing
+    if (document.querySelector('.undecorated-assessment-env') || document.querySelector('[data-testid="exam-player-page"]')) {
+      return;
+    }
+
+    if (activeFestivalConfig && !highContrast) {
+      document.title = `${activeFestivalConfig.tabEmoji} ${baseTitle}`;
+    } else {
+      document.title = baseTitle;
+    }
+  }, [activeFestivalConfig, highContrast]);
+
+  // Sync user-specific preference to database (excluding festival theme which is admin/site-wide)
   const syncPreference = useCallback(async (payload: Partial<{
     themeMode: ThemeMode;
     accentColor: AccentColor;
-    festivalTheme: FestivalKey | null;
     highContrast: boolean;
     fontScale: FontScale;
     reducedMotion: boolean;
@@ -182,7 +219,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   }, []);
 
-  // Hydrate from user preferences on login
+  // Hydrate user-specific preferences on login
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const token = sessionStorage.getItem('token');
@@ -196,9 +233,6 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         if (d.success && d.data) {
           if (d.data.themeMode) setThemeState(d.data.themeMode);
           if (d.data.accentColor) setAccentColorState(d.data.accentColor);
-          if (d.data.festivalTheme !== undefined) {
-            setFestivalThemeState(d.data.festivalTheme || null);
-          }
           if (typeof d.data.highContrast === 'boolean') setHighContrastState(d.data.highContrast);
           if (d.data.fontScale) setFontScaleState(d.data.fontScale);
           if (typeof d.data.reducedMotion === 'boolean') setReducedMotionState(d.data.reducedMotion);
@@ -219,9 +253,35 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   const setAccentPalette = (color: AccentColor) => setAccentColor(color);
 
-  const setFestivalTheme = (festival: FestivalKey | null) => {
+  // Site-wide admin activation
+  const setSiteWideFestivalTheme = useCallback(async (festival: FestivalKey | null): Promise<boolean> => {
     setFestivalThemeState(festival);
-    syncPreference({ festivalTheme: festival });
+    try {
+      localStorage.setItem('examos_festival_theme', festival || 'none');
+    } catch {}
+
+    const token = sessionStorage.getItem('token');
+    if (!token) return true; // Local change if offline
+
+    try {
+      const res = await fetch(`${API_BASE}/system/festival-theme`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ festival }),
+      });
+      const data = await res.json();
+      return Boolean(data.success);
+    } catch (e) {
+      console.error('Failed to update site-wide festival theme:', e);
+      return false;
+    }
+  }, []);
+
+  const setFestivalTheme = (festival: FestivalKey | null) => {
+    setSiteWideFestivalTheme(festival);
   };
 
   const dismissFestivalSuggestion = (key: FestivalKey) => {
@@ -263,6 +323,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         setAccentPalette,
         festivalTheme,
         setFestivalTheme,
+        setSiteWideFestivalTheme,
         suggestedFestival,
         dismissedFestival,
         dismissFestivalSuggestion,

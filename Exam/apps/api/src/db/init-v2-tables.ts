@@ -113,6 +113,17 @@ export async function initV2Tables(): Promise<void> {
       ALTER TABLE "user_preferences" ADD COLUMN IF NOT EXISTS "fontScale" TEXT DEFAULT 'normal';
       ALTER TABLE "user_preferences" ADD COLUMN IF NOT EXISTS "reducedMotion" BOOLEAN DEFAULT false;
       ALTER TABLE "user_preferences" ADD COLUMN IF NOT EXISTS "festivalTheme" TEXT DEFAULT NULL;
+
+      CREATE TABLE IF NOT EXISTS "system_settings" (
+        "key" TEXT PRIMARY KEY,
+        "value" JSONB NOT NULL,
+        "updatedBy" TEXT,
+        "updatedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+
+      INSERT INTO "system_settings" ("key", "value", "updatedAt")
+      VALUES ('active_festival_theme', '{"festival": null}'::jsonb, CURRENT_TIMESTAMP)
+      ON CONFLICT ("key") DO NOTHING;
     `);
 
     // Seed default feature registry if empty

@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
+import { useExamLock } from '../../context/ExamLockContext';
 import { X, Sparkles, RotateCcw } from 'lucide-react';
 
 export const FestivalBanner: React.FC = () => {
   const {
     festivalTheme,
-    setFestivalTheme,
+    setSiteWideFestivalTheme,
     suggestedFestival,
     dismissedFestival,
     dismissFestivalSuggestion,
@@ -13,7 +15,18 @@ export const FestivalBanner: React.FC = () => {
     highContrast,
   } = useTheme();
 
+  const { user } = useAuth();
+  const { isExamLocked } = useExamLock();
   const [activeBannerCollapsed, setActiveBannerCollapsed] = useState(false);
+
+  // STRICT EXCLUSION: Never render festival banner during live exams or assessments
+  if (isExamLocked) return null;
+
+  const isAdmin =
+    user?.roles?.includes('MAIN_ADMIN') ||
+    user?.roles?.includes('SUB_ADMIN') ||
+    user?.permissions?.includes('*') ||
+    user?.permissions?.includes('system.maintenance');
 
   // Case 1: An active festival theme is currently selected
   if (activeFestivalConfig && !activeBannerCollapsed) {
@@ -59,27 +72,29 @@ export const FestivalBanner: React.FC = () => {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <button
-            id="btn-reset-festival"
-            data-testid="btn-reset-festival"
-            onClick={() => setFestivalTheme(null)}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: 'var(--text-muted)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              fontSize: '11px',
-              padding: '2px 6px',
-              borderRadius: '4px',
-            }}
-            title="Revert to standard base accent palette"
-          >
-            <RotateCcw style={{ width: '12px', height: '12px' }} />
-            <span>Reset to Standard</span>
-          </button>
+          {isAdmin && (
+            <button
+              id="btn-reset-festival"
+              data-testid="btn-reset-festival"
+              onClick={() => setSiteWideFestivalTheme(null)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--text-muted)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                fontSize: '11px',
+                padding: '2px 6px',
+                borderRadius: '4px',
+              }}
+              title="Revert to standard base accent palette"
+            >
+              <RotateCcw style={{ width: '12px', height: '12px' }} />
+              <span>Reset to Standard</span>
+            </button>
+          )}
           <button
             onClick={() => setActiveBannerCollapsed(true)}
             style={{
@@ -98,8 +113,9 @@ export const FestivalBanner: React.FC = () => {
     );
   }
 
-  // Case 2: Today's date falls within a festival window, and user has not dismissed or applied it
+  // Case 2: Today's date falls within a festival window, and admin has not dismissed or applied it
   if (
+    isAdmin &&
     suggestedFestival &&
     festivalTheme !== suggestedFestival.key &&
     dismissedFestival !== suggestedFestival.key
@@ -127,7 +143,7 @@ export const FestivalBanner: React.FC = () => {
               {suggestedFestival.name} Season Detected:
             </span>{' '}
             <span style={{ color: 'var(--text-main)' }}>
-              Celebrate with our curated {suggestedFestival.name} ({suggestedFestival.title}) palette.
+              Celebrate with our authentic {suggestedFestival.name} ({suggestedFestival.title}) palette.
             </span>
           </div>
         </div>
@@ -136,7 +152,7 @@ export const FestivalBanner: React.FC = () => {
           <button
             id="btn-apply-suggested-festival"
             data-testid="btn-apply-suggested-festival"
-            onClick={() => setFestivalTheme(suggestedFestival.key)}
+            onClick={() => setSiteWideFestivalTheme(suggestedFestival.key)}
             style={{
               background: '#f59e0b',
               color: '#000',
@@ -153,7 +169,7 @@ export const FestivalBanner: React.FC = () => {
             }}
           >
             <Sparkles style={{ width: '13px', height: '13px' }} />
-            <span>Apply {suggestedFestival.name} Theme</span>
+            <span>Apply {suggestedFestival.name} Theme Site-Wide</span>
           </button>
 
           <button

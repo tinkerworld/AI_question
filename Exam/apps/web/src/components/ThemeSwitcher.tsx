@@ -203,100 +203,32 @@ export const ThemeSwitcher: React.FC = () => {
           {/* Divider */}
           <div style={{ height: '1px', background: 'var(--border-color, rgba(255,255,255,0.1))' }} />
 
-          {/* Section 2: Seasonal Festival Themes Layer (Task 5) */}
-          <div>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: '8px',
-              }}
-            >
+          {/* Section 2: Active Festive Theme Indicator (If Admin-Activated Site-Wide) */}
+          {activeFestivalConfig && (
+            <div>
               <div
                 style={{
-                  fontWeight: 600,
-                  color: 'var(--text-muted, #94a3b8)',
-                  fontSize: '11px',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px 10px',
+                  borderRadius: '6px',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: `1px solid ${activeFestivalConfig.primaryColor}55`,
                 }}
               >
-                Seasonal Festival Themes
+                <span style={{ fontSize: '18px' }}>{activeFestivalConfig.badge}</span>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontWeight: 600, fontSize: '12px', color: activeFestivalConfig.primaryColor }}>
+                    {activeFestivalConfig.name} Theme Active
+                  </span>
+                  <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                    Site-wide cultural theme managed by administrators
+                  </span>
+                </div>
               </div>
-              {festivalTheme && (
-                <button
-                  id="btn-clear-festival-theme"
-                  data-testid="btn-clear-festival-theme"
-                  onClick={() => setFestivalTheme(null)}
-                  style={{
-                    background: 'transparent',
-                    border: 'none',
-                    color: 'var(--accent-color)',
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    padding: '0 4px',
-                  }}
-                >
-                  Clear (Reset)
-                </button>
-              )}
             </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
-              {FESTIVALS.map((fest) => {
-                const isCurrent = festivalTheme === fest.key;
-                return (
-                  <button
-                    key={fest.key}
-                    id={`festival-theme-${fest.key.toLowerCase()}`}
-                    data-testid={`festival-theme-${fest.key.toLowerCase()}`}
-                    onClick={() => setFestivalTheme(fest.key)}
-                    title={`${fest.name} (${fest.title})`}
-                    aria-label={`Select ${fest.name} festival theme`}
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      padding: '6px 4px',
-                      borderRadius: '8px',
-                      border: isCurrent
-                        ? `2px solid ${fest.primaryColor}`
-                        : '1px solid var(--border-color, rgba(255,255,255,0.1))',
-                      background: isCurrent
-                        ? 'rgba(255,255,255,0.12)'
-                        : 'rgba(255,255,255,0.02)',
-                      cursor: 'pointer',
-                      gap: '3px',
-                      transition: 'all 0.15s ease',
-                    }}
-                  >
-                    <span style={{ fontSize: '15px' }}>{fest.badge}</span>
-                    <span
-                      style={{
-                        fontSize: '9px',
-                        fontWeight: isCurrent ? 700 : 500,
-                        color: isCurrent ? fest.primaryColor : 'var(--text-main)',
-                        textAlign: 'center',
-                        lineHeight: 1.1,
-                      }}
-                    >
-                      {fest.name}
-                    </span>
-                    <span
-                      style={{
-                        width: '8px',
-                        height: '8px',
-                        borderRadius: '50%',
-                        backgroundColor: fest.primaryColor,
-                      }}
-                    />
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          )}
 
           {/* Divider */}
           <div style={{ height: '1px', background: 'var(--border-color, rgba(255,255,255,0.1))' }} />

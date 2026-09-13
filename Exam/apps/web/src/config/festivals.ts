@@ -5,10 +5,16 @@ export interface FestivalThemeConfig {
   name: string;
   badge: string;
   title: string;
+  signature: string;
   description: string;
   primaryColor: string;
   accentRgb: string;
+  secondaryColor: string;
+  palette: string[];
   gradient: string;
+  headerBackground: string;
+  headerBorder: string;
+  tabEmoji: string;
   dateWindow: {
     startMonth: number; // 1-12
     startDay: number;   // 1-31
@@ -23,10 +29,16 @@ export const FESTIVALS: FestivalThemeConfig[] = [
     name: 'Holi',
     badge: '🎨',
     title: 'Festival of Colors',
-    description: 'Vibrant gulal magenta and joyful warm celebrations',
-    primaryColor: '#ec4899',
-    accentRgb: '236, 72, 153',
-    gradient: 'linear-gradient(135deg, #ec4899, #f97316)',
+    signature: 'Color-splash & Gulal powder aura with soft multi-hue splashes',
+    description: 'Vibrant overlapping gulal powder splashes blending azure, yellow, crimson, pink, and emerald.',
+    primaryColor: '#FF69B4',
+    secondaryColor: '#1E90FF',
+    accentRgb: '255, 105, 180',
+    palette: ['#1E90FF', '#FFD700', '#E63946', '#FF69B4', '#4CAF50'],
+    gradient: 'linear-gradient(135deg, #FF69B4 0%, #1E90FF 50%, #FFD700 100%)',
+    headerBackground: 'radial-gradient(circle at 15% 50%, rgba(255,105,180,0.22) 0%, transparent 45%), radial-gradient(circle at 50% 30%, rgba(30,144,255,0.20) 0%, transparent 50%), radial-gradient(circle at 85% 60%, rgba(255,215,0,0.18) 0%, transparent 45%)',
+    headerBorder: '1px solid rgba(255, 105, 180, 0.35)',
+    tabEmoji: '🎨',
     dateWindow: {
       startMonth: 3,
       startDay: 1,
@@ -39,10 +51,16 @@ export const FESTIVALS: FestivalThemeConfig[] = [
     name: 'Diwali',
     badge: '🪔',
     title: 'Festival of Lights',
-    description: 'Golden radiance, diya brilliance, and warm celebrations',
-    primaryColor: '#eab308',
-    accentRgb: '234, 179, 8',
-    gradient: 'linear-gradient(135deg, #eab308, #ea580c)',
+    signature: 'Warm oil lamps (diyas), deep maroon ambience, and golden sparkle light',
+    description: 'Golden radiance and warm diya silhouettes against dark maroon darkness with gentle flicker glow.',
+    primaryColor: '#D4AF37',
+    secondaryColor: '#7B1F1F',
+    accentRgb: '212, 175, 55',
+    palette: ['#7B1F1F', '#D4AF37', '#E8A33D', '#F97316', '#2A0808'],
+    gradient: 'linear-gradient(135deg, #7B1F1F 0%, #D4AF37 50%, #E8A33D 100%)',
+    headerBackground: 'linear-gradient(135deg, #3d0c0c 0%, #1a0505 50%, #2e1202 100%)',
+    headerBorder: '1px solid rgba(212, 175, 55, 0.4)',
+    tabEmoji: '🪔',
     dateWindow: {
       startMonth: 10,
       startDay: 15,
@@ -53,12 +71,18 @@ export const FESTIVALS: FestivalThemeConfig[] = [
   {
     key: 'NEW_YEAR',
     name: 'New Year',
-    badge: '✨',
+    badge: '🎆',
     title: 'New Year Sparkle',
-    description: 'Electric violet and midnight frost celebration',
-    primaryColor: '#8b5cf6',
-    accentRgb: '139, 92, 246',
-    gradient: 'linear-gradient(135deg, #8b5cf6, #3b82f6)',
+    signature: 'Midnight countdown, gold & black elegance, and celebratory constellation stars',
+    description: 'Midnight navy minimalism adorned with gleaming gold typography and subtle celebratory sparkle motifs.',
+    primaryColor: '#F3C623',
+    secondaryColor: '#0B132B',
+    accentRgb: '243, 198, 35',
+    palette: ['#0B132B', '#1C2541', '#D4AF37', '#F3C623', '#48CAE4'],
+    gradient: 'linear-gradient(135deg, #0B132B 0%, #1C2541 60%, #D4AF37 100%)',
+    headerBackground: 'linear-gradient(135deg, #070d1e 0%, #0d1b38 50%, #141b2d 100%)',
+    headerBorder: '1px solid rgba(243, 198, 35, 0.35)',
+    tabEmoji: '🎆',
     dateWindow: {
       startMonth: 12,
       startDay: 28,
@@ -71,10 +95,16 @@ export const FESTIVALS: FestivalThemeConfig[] = [
     name: 'Gudi Padwa',
     badge: '🚩',
     title: 'Spring Renewal',
-    description: 'Marigold saffron and spring renewal prosperity',
-    primaryColor: '#f97316',
-    accentRgb: '249, 115, 22',
-    gradient: 'linear-gradient(135deg, #f97316, #10b981)',
+    signature: 'The sacred Gudi banner with kalash silhouette, saffron silk, and geometric rangoli border',
+    description: 'Saffron prosperity, silver kalash insignia, and geometric rangoli diamond trim celebrating the new year.',
+    primaryColor: '#FF9933',
+    secondaryColor: '#DC2626',
+    accentRgb: '255, 153, 51',
+    palette: ['#FF9933', '#FFC107', '#DC2626', '#15803D', '#7C2D12'],
+    gradient: 'linear-gradient(135deg, #FF9933 0%, #FFC107 50%, #DC2626 100%)',
+    headerBackground: 'linear-gradient(135deg, #381500 0%, #1a0800 60%, #2b0b00 100%)',
+    headerBorder: '1px solid rgba(255, 153, 51, 0.4)',
+    tabEmoji: '🚩',
     dateWindow: {
       startMonth: 3,
       startDay: 20,
@@ -87,10 +117,16 @@ export const FESTIVALS: FestivalThemeConfig[] = [
     name: 'Christmas',
     badge: '🎄',
     title: 'Holiday Cheer',
-    description: 'Holly crimson and evergreen festive spirit',
-    primaryColor: '#ef4444',
-    accentRgb: '239, 68, 68',
-    gradient: 'linear-gradient(135deg, #ef4444, #10b981)',
+    signature: 'Evergreen pine, holly berry crimson, golden highlights, and delicate snowflakes',
+    description: 'Deep pine forest greens paired with warm holiday crimson, gold highlights, and delicate crystalline snowflakes.',
+    primaryColor: '#BB2528',
+    secondaryColor: '#165B33',
+    accentRgb: '187, 37, 40',
+    palette: ['#165B33', '#BB2528', '#D4AF37', '#107C41', '#E5E7EB'],
+    gradient: 'linear-gradient(135deg, #165B33 0%, #BB2528 70%, #D4AF37 100%)',
+    headerBackground: 'linear-gradient(135deg, #0a2414 0%, #163622 55%, #2a1114 100%)',
+    headerBorder: '1px solid rgba(187, 37, 40, 0.4)',
+    tabEmoji: '🎄',
     dateWindow: {
       startMonth: 12,
       startDay: 15,
@@ -103,10 +139,16 @@ export const FESTIVALS: FestivalThemeConfig[] = [
     name: 'Eid',
     badge: '🌙',
     title: 'Crescent Peace',
-    description: 'Crescent emerald tranquility and shared harmony',
-    primaryColor: '#059669',
-    accentRgb: '5, 150, 105',
-    gradient: 'linear-gradient(135deg, #059669, #34d399)',
+    signature: 'Crescent moon, authentic fanous lanterns, and 8-pointed star lattice geometry',
+    description: 'Deep emerald and teal tranquility illuminated with gold crescent moons, lanterns, and Islamic star motifs.',
+    primaryColor: '#0F5C4A',
+    secondaryColor: '#D4AF37',
+    accentRgb: '15, 92, 74',
+    palette: ['#0F5C4A', '#1B4D3E', '#D4AF37', '#4A154B', '#10B981'],
+    gradient: 'linear-gradient(135deg, #0F5C4A 0%, #1B4D3E 50%, #D4AF37 100%)',
+    headerBackground: 'linear-gradient(135deg, #05261e 0%, #0d3b30 55%, #18221b 100%)',
+    headerBorder: '1px solid rgba(212, 175, 55, 0.35)',
+    tabEmoji: '🌙',
     dateWindow: {
       startMonth: 3,
       startDay: 25,
@@ -119,10 +161,16 @@ export const FESTIVALS: FestivalThemeConfig[] = [
     name: 'Independence Day',
     badge: '🇮🇳',
     title: 'Tiranga Pride',
-    description: 'Patriotic saffron, white, and green unity',
-    primaryColor: '#ea580c',
-    accentRgb: '234, 88, 12',
-    gradient: 'linear-gradient(135deg, #ea580c, #16a34a)',
+    signature: 'National horizontal tricolor flag stripe with stylized 24-spoke Ashok Chakra wheel motif',
+    description: 'Patriotic horizontal saffron, white, and green band with a navy blue stylized Ashoka Chakra wheel.',
+    primaryColor: '#FF9933',
+    secondaryColor: '#138808',
+    accentRgb: '255, 153, 51',
+    palette: ['#FF9933', '#FFFFFF', '#138808', '#000080'],
+    gradient: 'linear-gradient(90deg, #FF9933 0%, #FF9933 33.3%, #FFFFFF 33.3%, #FFFFFF 66.6%, #138808 66.6%, #138808 100%)',
+    headerBackground: 'linear-gradient(180deg, rgba(255, 153, 51, 0.12) 0%, rgba(19, 136, 8, 0.08) 100%)',
+    headerBorder: '1px solid rgba(255, 153, 51, 0.5)',
+    tabEmoji: '🇮🇳',
     dateWindow: {
       startMonth: 8,
       startDay: 10,
@@ -134,11 +182,17 @@ export const FESTIVALS: FestivalThemeConfig[] = [
     key: 'REPUBLIC_DAY',
     name: 'Republic Day',
     badge: '🇮🇳',
-    title: 'Ashok Chakra Azure',
-    description: 'Constitution Day royal chakra blue and tricolor honor',
-    primaryColor: '#2563eb',
-    accentRgb: '37, 99, 235',
-    gradient: 'linear-gradient(135deg, #2563eb, #ea580c)',
+    title: 'Constitution Honor',
+    signature: 'Formal constitutional structured framing with stepped tricolor chevron borders and formal chakra roundels',
+    description: 'Structured formal sovereignty composition with navy chrome, formal tricolor chevron borders, and framed chakra emblems.',
+    primaryColor: '#000080',
+    secondaryColor: '#FF9933',
+    accentRgb: '0, 0, 128',
+    palette: ['#000080', '#FF9933', '#FFFFFF', '#138808', '#2563EB'],
+    gradient: 'linear-gradient(135deg, #000080 0%, #1e3a8a 50%, #FF9933 100%)',
+    headerBackground: 'linear-gradient(135deg, #040d21 0%, #0c1a3b 60%, #172554 100%)',
+    headerBorder: '2px solid #000080',
+    tabEmoji: '🇮🇳',
     dateWindow: {
       startMonth: 1,
       startDay: 20,
@@ -161,7 +215,7 @@ export const getCurrentFestivalSuggestion = (now: Date = new Date()): FestivalTh
   for (const fest of FESTIVALS) {
     const { startMonth, startDay, endMonth, endDay } = fest.dateWindow;
 
-    // Standard single-year window (e.g., Oct 15 - Nov 15 or Aug 10 - Aug 18)
+    // Standard single-year window
     if (startMonth <= endMonth) {
       const isAfterStart = currentMonth > startMonth || (currentMonth === startMonth && currentDay >= startDay);
       const isBeforeEnd = currentMonth < endMonth || (currentMonth === endMonth && currentDay <= endDay);

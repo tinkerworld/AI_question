@@ -81,6 +81,7 @@ router.post(
       const parsed = startInterviewSchema.parse(req.body);
       const result = await InterviewService.startInterviewSession(parsed, {
         userId: (req as any).user.userId,
+        email: (req as any).user.email,
         roles: (req as any).user.roles || [],
       });
       res.status(201).json({ success: true, data: result });
