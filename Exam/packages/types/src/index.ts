@@ -1,5 +1,15 @@
 export type ThemeMode = 'LIGHT' | 'GRAY' | 'DARK';
 
+export type FestivalKey =
+  | 'HOLI'
+  | 'DIWALI'
+  | 'NEW_YEAR'
+  | 'GUDI_PADWA'
+  | 'CHRISTMAS'
+  | 'EID'
+  | 'INDEPENDENCE_DAY'
+  | 'REPUBLIC_DAY';
+
 export type LanguageCode =
   | 'en' | 'hi' | 'bn' | 'te' | 'mr' | 'ta' | 'ur' | 'gu'
   | 'kn' | 'ml' | 'or' | 'pa' | 'as' | 'ma' | 'sa' | 'ks'
@@ -1967,5 +1977,106 @@ export interface WritingEvaluationResultDTO {
   overallFeedback: string;
 }
 
+// ==========================================
+// Feature 15.16: Schema-Validated JSON Import & Export
+// ==========================================
+export type ImportExportEntityType = 'QUESTIONS' | 'COURSES';
 
+export type ConflictResolutionStrategy = 'SKIP_EXISTING' | 'OVERWRITE' | 'CREATE_COPY';
 
+export interface ExportMetadata {
+  schemaVersion: '2.0';
+  exportedAt: string;
+  exportedBy?: string;
+  institution?: string;
+  entityType: ImportExportEntityType;
+  itemCount: number;
+}
+
+export interface QuestionExportItem {
+  id?: string;
+  type: string;
+  content: string;
+  data: Record<string, any>;
+  difficulty: 'EASY' | 'MEDIUM' | 'HARD';
+  marks: number;
+  status: 'DRAFT' | 'REVIEW' | 'PUBLISHED' | 'ARCHIVED';
+  courseCode?: string;
+  subjectCode?: string;
+  syllabusNodeTitle?: string;
+  tags?: string[];
+  examUsages?: Array<{
+    examName: string;
+    year: number;
+    shift?: string;
+  }>;
+}
+
+export interface SyllabusNodeExportItem {
+  id?: string;
+  title: string;
+  type: 'UNIT' | 'TOPIC' | 'SUBTOPIC' | 'CONCEPT';
+  orderIndex: number;
+  description?: string;
+  estimatedMinutes?: number;
+  learningObjectives?: string[];
+  status?: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+  tags?: string[];
+  parentTitle?: string;
+  children?: SyllabusNodeExportItem[];
+}
+
+export interface SubjectExportItem {
+  id?: string;
+  code: string;
+  name: string;
+  description?: string;
+  credits?: number;
+  order?: number;
+  syllabusNodes?: SyllabusNodeExportItem[];
+}
+
+export interface CourseExportItem {
+  id?: string;
+  code: string;
+  name: string;
+  description?: string;
+  status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+  durationMonths?: number;
+  thumbnailUrl?: string;
+  subjects?: SubjectExportItem[];
+}
+
+export interface ExportPackage<T> {
+  metadata: ExportMetadata;
+  items: T[];
+}
+
+export interface ImportValidationError {
+  index: number;
+  itemIdentifier?: string;
+  path: string;
+  message: string;
+  code?: string;
+}
+
+export interface ImportDryRunResult {
+  valid: boolean;
+  entityType: ImportExportEntityType;
+  totalCount: number;
+  validCount: number;
+  invalidCount: number;
+  collisionCount: number;
+  errors: ImportValidationError[];
+  previewItems: any[];
+}
+
+export interface ImportExecutionResult {
+  success: boolean;
+  entityType: ImportExportEntityType;
+  totalProcessed: number;
+  importedCount: number;
+  updatedCount: number;
+  skippedCount: number;
+  errors: ImportValidationError[];
+}

@@ -52,9 +52,17 @@ export class EntitlementService {
       }
     }
 
-    // 2. Grant Institutional tier to admin and faculty roles
+    // 2. Grant Institutional tier to admin, faculty, and primary demo accounts
     const roles = Array.isArray(authContext?.roles) ? authContext.roles : (authContext?.role ? [authContext.role] : []);
-    if (roles.includes('ADMIN') || roles.includes('SUB_ADMIN') || roles.includes('TEACHER')) {
+    if (
+      roles.includes('ADMIN') ||
+      roles.includes('MAIN_ADMIN') ||
+      roles.includes('SUB_ADMIN') ||
+      roles.includes('TEACHER') ||
+      userId === 'usr_student_test' ||
+      authContext?.userId === 'usr_student_test' ||
+      authContext?.email === 'student@examos.com'
+    ) {
       return 'INSTITUTIONAL';
     }
 

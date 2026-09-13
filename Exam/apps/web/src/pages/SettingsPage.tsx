@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { getAuthHeaders } from '../utils/api';
-import { useTheme } from '../context/ThemeContext';
-import { ThemeMode } from '@repo/types';
+import { useTheme, ACCENT_PALETTES, AccentColor, FontScale } from '../context/ThemeContext';
+import { FESTIVALS } from '../config/festivals';
+import { ThemeMode, FestivalKey } from '@repo/types';
 import { API_BASE } from '../config/api';
 import { MaintenanceControlPanel } from '../components/maintenance/MaintenanceControlPanel';
 import { FeatureMatrixEditor } from '../components/entitlements/FeatureMatrixEditor';
@@ -24,7 +25,21 @@ interface AIProvider {
 }
 
 export const SettingsPage: React.FC = () => {
-  const { theme, setTheme } = useTheme();
+  const {
+    theme,
+    setTheme,
+    accentColor,
+    setAccentColor,
+    festivalTheme,
+    setSiteWideFestivalTheme,
+    activeFestivalConfig,
+    highContrast,
+    setHighContrast,
+    fontScale,
+    setFontScale,
+    reducedMotion,
+    setReducedMotion,
+  } = useTheme();
   const { user } = useAuth();
   const { t } = useTranslation();
   const userPermissions = user?.permissions || [];
@@ -1031,6 +1046,390 @@ export const SettingsPage: React.FC = () => {
                   </div>
                 );
               })}
+            </div>
+          </div>
+
+          {/* SECTION: PRIMARY ACCENT PALETTE */}
+          <div style={{ background: 'var(--panel-bg)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '20px' }}>
+            <h3 style={{ margin: '0 0 8px 0', fontSize: '15px' }}>Primary Accent Palette</h3>
+            <p style={{ margin: '0 0 16px 0', fontSize: '13px', color: 'var(--text-muted)' }}>
+              Choose your personal or institutional accent color for buttons, tabs, interactive highlights, and focus borders.
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px' }}>
+              {ACCENT_PALETTES.map((p) => {
+                const isActive = accentColor === p.key;
+                return (
+                  <div
+                    key={p.key}
+                    id={`settings-accent-${p.key}`}
+                    data-testid={`accent-${p.key}`}
+                    onClick={() => setAccentColor(p.key as AccentColor)}
+                    style={{
+                      padding: '14px',
+                      borderRadius: '8px',
+                      border: isActive ? `2px solid ${p.hex}` : '1px solid var(--border-color)',
+                      background: isActive ? `${p.hex}22` : 'rgba(255,255,255,0.02)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: '22px',
+                        height: '22px',
+                        borderRadius: '50%',
+                        backgroundColor: p.hex,
+                        display: 'inline-block',
+                        boxShadow: isActive ? `0 0 8px ${p.hex}` : 'none',
+                        border: '2px solid rgba(255,255,255,0.7)',
+                        flexShrink: 0,
+                      }}
+                    />
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span style={{ fontWeight: 'bold', fontSize: '13px', color: isActive ? p.hex : 'inherit' }}>
+                        {p.label}
+                      </span>
+                      <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                        {isActive ? 'Active Accent' : p.hex}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* SECTION: FESTIVE THEMES (ADMIN-CONTROLLED) */}
+          <div
+            id="settings-festive-themes-section"
+            data-testid="settings-festive-themes-section"
+            style={{
+              background: 'var(--panel-bg)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '8px',
+              padding: '20px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                  <span style={{ fontSize: '18px' }}>🎉</span>
+                  <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 'bold' }}>
+                    Festive Themes (Admin-Controlled Site-Wide Theme)
+                  </h3>
+                  <span
+                    style={{
+                      background: 'rgba(217, 119, 6, 0.15)',
+                      color: '#d97706',
+                      border: '1px solid #d97706',
+                      padding: '2px 8px',
+                      borderRadius: '4px',
+                      fontSize: '10px',
+                      fontWeight: 'bold',
+                      fontFamily: 'JetBrains Mono',
+                    }}
+                  >
+                    ADMIN ONLY
+                  </span>
+                </div>
+                <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-muted)', maxWidth: '720px', lineHeight: '1.5' }}>
+                  Activate an authentic cultural festival theme site-wide across ExamOS. Applies researched color palettes,
+                  traditional motifs, and customized header styling to the dashboard, landing page, and navigation chrome.
+                  Regular users retain their own Light/Slate/Dark preference underneath. High-stakes assessment environments
+                  (Exam Player and Live Interview Room) remain strictly undecorated.
+                </p>
+              </div>
+
+              {/* Reset to Default Standard Theme Button */}
+              {festivalTheme && (
+                <button
+                  id="btn-deactivate-festival-theme"
+                  data-testid="btn-deactivate-festival-theme"
+                  onClick={() => setSiteWideFestivalTheme(null)}
+                  style={{
+                    padding: '8px 14px',
+                    borderRadius: '6px',
+                    border: '1px solid rgba(239, 68, 68, 0.5)',
+                    background: 'rgba(239, 68, 68, 0.1)',
+                    color: '#ef4444',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <span>✕</span>
+                  <span>Deactivate (Reset to Standard)</span>
+                </button>
+              )}
+            </div>
+
+            {/* Current Active Status Banner */}
+            <div
+              id="festive-theme-status-strip"
+              data-testid="festive-theme-status-strip"
+              style={{
+                padding: '12px 16px',
+                borderRadius: '6px',
+                background: festivalTheme ? 'rgba(255, 255, 255, 0.04)' : 'rgba(255, 255, 255, 0.02)',
+                border: festivalTheme ? `1px solid var(--accent-color)` : '1px dashed var(--border-color)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                fontSize: '13px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '20px' }}>{activeFestivalConfig ? activeFestivalConfig.badge : '🏛️'}</span>
+                <div>
+                  <div style={{ fontWeight: 600 }}>
+                    {activeFestivalConfig
+                      ? `Active Site-Wide: ${activeFestivalConfig.name} (${activeFestivalConfig.title})`
+                      : 'Standard Theme Active (No Festive Overlay Active)'}
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                    {activeFestivalConfig
+                      ? activeFestivalConfig.signature
+                      : 'Platform running in neutral institutional presentation. Click any festival below to activate site-wide.'}
+                  </div>
+                </div>
+              </div>
+              {activeFestivalConfig && (
+                <span
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 'bold',
+                    fontFamily: 'JetBrains Mono',
+                    color: 'var(--accent-color)',
+                    background: 'rgba(255,255,255,0.06)',
+                    padding: '3px 8px',
+                    borderRadius: '4px',
+                  }}
+                >
+                  SITE-WIDE ACTIVE
+                </span>
+              )}
+            </div>
+
+            {/* 8 Festivals Grid */}
+            <div
+              id="festive-themes-admin-grid"
+              data-testid="festive-themes-admin-grid"
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                gap: '14px',
+              }}
+            >
+              {FESTIVALS.map((fest) => {
+                const isActive = festivalTheme === fest.key;
+                return (
+                  <div
+                    key={fest.key}
+                    id={`festive-theme-card-${fest.key.toLowerCase()}`}
+                    data-testid={`festive-card-${fest.key.toLowerCase()}`}
+                    style={{
+                      padding: '16px',
+                      borderRadius: '8px',
+                      border: isActive ? `2px solid ${fest.primaryColor}` : '1px solid var(--border-color)',
+                      background: isActive ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.015)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '12px',
+                      transition: 'all 0.15s ease',
+                      position: 'relative',
+                    }}
+                  >
+                    {/* Header: Badge, Name, Title & Status */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '22px' }}>{fest.badge}</span>
+                        <div>
+                          <div style={{ fontWeight: 'bold', fontSize: '14px' }}>{fest.name}</div>
+                          <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{fest.title}</div>
+                        </div>
+                      </div>
+                      {isActive && (
+                        <span
+                          style={{
+                            fontSize: '10px',
+                            fontWeight: 'bold',
+                            fontFamily: 'JetBrains Mono',
+                            color: fest.primaryColor,
+                            background: 'rgba(255,255,255,0.08)',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                          }}
+                        >
+                          ACTIVE
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Signature & Description */}
+                    <div style={{ fontSize: '11px', color: 'var(--text-main)', lineHeight: '1.4' }}>
+                      <strong style={{ color: fest.primaryColor }}>Signature: </strong>
+                      {fest.signature}
+                    </div>
+
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', lineHeight: '1.4' }}>
+                      {fest.description}
+                    </div>
+
+                    {/* Researched Palette Swatches */}
+                    <div>
+                      <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        Researched Palette
+                      </div>
+                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                        {fest.palette.map((color, cIdx) => (
+                          <span
+                            key={cIdx}
+                            title={color}
+                            style={{
+                              width: '18px',
+                              height: '18px',
+                              borderRadius: '4px',
+                              backgroundColor: color,
+                              border: color === '#FFFFFF' ? '1px solid #94a3b8' : '1px solid rgba(255,255,255,0.2)',
+                              display: 'inline-block',
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Action Button */}
+                    <button
+                      id={`btn-activate-${fest.key.toLowerCase()}`}
+                      data-testid={`btn-activate-${fest.key.toLowerCase()}`}
+                      onClick={() => setSiteWideFestivalTheme(fest.key)}
+                      style={{
+                        marginTop: 'auto',
+                        padding: '8px 12px',
+                        borderRadius: '6px',
+                        border: isActive ? `1px solid ${fest.primaryColor}` : '1px solid var(--border-color)',
+                        background: isActive ? `${fest.primaryColor}22` : 'rgba(255,255,255,0.04)',
+                        color: isActive ? fest.primaryColor : 'var(--text-main)',
+                        fontWeight: isActive ? 'bold' : 'normal',
+                        fontSize: '12px',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      {isActive ? '✓ Site-Wide Active' : `Activate ${fest.name}`}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* SECTION: ACCESSIBILITY ACCOMMODATIONS */}
+          <div style={{ background: 'var(--panel-bg)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '20px' }}>
+            <h3 style={{ margin: '0 0 8px 0', fontSize: '15px' }}>Accessibility Accommodations (WCAG 2.1 AA)</h3>
+            <p style={{ margin: '0 0 16px 0', fontSize: '13px', color: 'var(--text-muted)' }}>
+              Configure contrast ratios, typography scaling, and motion suppression to accommodate visual and vestibular requirements.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {/* High Contrast Mode Toggle */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', borderRadius: '6px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)' }}>
+                <div>
+                  <div style={{ fontWeight: 'bold', fontSize: '13px' }}>High-Contrast Mode (AA)</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                    Forces maximum contrast ratios (&ge; 7:1) with solid white borders and pure black background.
+                  </div>
+                </div>
+                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '8px' }}>
+                  <input
+                    type="checkbox"
+                    id="settings-toggle-high-contrast"
+                    data-testid="toggle-high-contrast"
+                    checked={highContrast}
+                    onChange={(e) => setHighContrast(e.target.checked)}
+                    style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                  />
+                  <span style={{ fontSize: '12px', fontWeight: highContrast ? 'bold' : 'normal' }}>
+                    {highContrast ? 'Enabled' : 'Disabled'}
+                  </span>
+                </label>
+              </div>
+
+              {/* Reduced Motion Toggle */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', borderRadius: '6px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)' }}>
+                <div>
+                  <div style={{ fontWeight: 'bold', fontSize: '13px' }}>Reduced Motion</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                    Disables smooth animations, page transitions, and pulsating indicators to prevent vestibular motion sickness.
+                  </div>
+                </div>
+                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '8px' }}>
+                  <input
+                    type="checkbox"
+                    id="settings-toggle-reduced-motion"
+                    data-testid="toggle-reduced-motion"
+                    checked={reducedMotion}
+                    onChange={(e) => setReducedMotion(e.target.checked)}
+                    style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                  />
+                  <span style={{ fontSize: '12px', fontWeight: reducedMotion ? 'bold' : 'normal' }}>
+                    {reducedMotion ? 'Enabled' : 'Disabled'}
+                  </span>
+                </label>
+              </div>
+
+              {/* Font Scale Selector */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', borderRadius: '6px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)' }}>
+                <div>
+                  <div style={{ fontWeight: 'bold', fontSize: '13px' }}>Base Typography Scaling</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                    Scales root typography across all dashboard modules, exam players, and question editors.
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  {(
+                    [
+                      { scale: 'small', label: 'Small (14px)', symbol: 'Small' },
+                      { scale: 'normal', label: 'Normal (16px)', symbol: 'Normal' },
+                      { scale: 'large', label: 'Large (18px)', symbol: 'Large' },
+                    ] as const
+                  ).map(({ scale, label, symbol }) => {
+                    const isSelected = fontScale === scale;
+                    return (
+                      <button
+                        key={scale}
+                        id={`settings-font-scale-${scale}`}
+                        data-testid={`font-scale-${scale}`}
+                        onClick={() => setFontScale(scale as FontScale)}
+                        title={label}
+                        aria-label={label}
+                        style={{
+                          padding: '6px 12px',
+                          borderRadius: '6px',
+                          border: isSelected ? '1px solid var(--accent-color, #06b6d4)' : '1px solid var(--border-color)',
+                          background: isSelected ? 'var(--accent-color, #06b6d4)' : 'transparent',
+                          color: isSelected ? '#000' : 'var(--text-main)',
+                          fontSize: '12px',
+                          fontWeight: isSelected ? 'bold' : 'normal',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        {symbol}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -1420,7 +1420,13 @@ export const InterviewPage: React.FC = () => {
       {/* 2. LIVE INTERVIEW ROOM / PLAYER                                           */}
       {/* ========================================================================= */}
       {activeView === 'ROOM' && activeSession && (
-        <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100% - 60px)', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border-color)', overflow: 'hidden' }}>
+        <div
+          id="live-interview-room"
+          data-testid="live-interview-room"
+          data-festival="none"
+          className="undecorated-assessment-env"
+          style={{ display: 'flex', flexDirection: 'column', height: 'calc(100% - 60px)', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border-color)', overflow: 'hidden' }}
+        >
           {/* Room Top Bar */}
           <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-color)' }}>
             <div>
@@ -1564,6 +1570,7 @@ export const InterviewPage: React.FC = () => {
               </button>
 
               <button
+                id="btn-exit-interview-room"
                 onClick={() => setActiveView('CATALOG')}
                 style={{
                   background: 'none',

@@ -117,7 +117,7 @@ export const StudentExamsPage: React.FC = () => {
 
   const handleStartExam = async (examId: string) => {
     try {
-      const activeToken = token || localStorage.getItem('token');
+      const activeToken = token || (typeof window !== 'undefined' ? sessionStorage.getItem('token') : null);
       const res = await fetch(`${API_BASE}/attempts/start`, {
         method: 'POST',
         headers: {
@@ -530,6 +530,7 @@ export const StudentExamsPage: React.FC = () => {
                   <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: 'var(--text-main)', cursor: 'pointer' }}>
                     <input
                       type="checkbox"
+                      id="chk-agree-exam-instructions"
                       checked={agreedToTerms}
                       onChange={(e) => setAgreedToTerms(e.target.checked)}
                       style={{ width: '16px', height: '16px', cursor: 'pointer' }}
@@ -554,6 +555,7 @@ export const StudentExamsPage: React.FC = () => {
                     {t('cancel')}
                   </button>
                   <button
+                    id="btn-enter-exam-hall"
                     disabled={!agreedToTerms}
                     onClick={() => handleStartExam(selectedExamForInstructions.id)}
                     style={{

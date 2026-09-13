@@ -481,7 +481,13 @@ export const ExamPlayerPage: React.FC<ExamPlayerPageProps> = ({
   });
 
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#0b0f19', color: '#f3f4f6', fontFamily: 'system-ui, -apple-system, sans-serif', overflow: 'hidden' }}>
+    <div
+      id="exam-player-page"
+      data-testid="exam-player-page"
+      data-festival="none"
+      className="undecorated-assessment-env"
+      style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#0b0f19', color: '#f3f4f6', fontFamily: 'system-ui, -apple-system, sans-serif', overflow: 'hidden' }}
+    >
       {/* Top Exam Header (Fixed 56px) */}
       <header
         id="exam-header"
@@ -1800,6 +1806,7 @@ export const ExamPlayerPage: React.FC<ExamPlayerPageProps> = ({
                 {t('continue_exam')}
               </button>
               <button
+                id="btn-leave-exam"
                 onClick={handleConfirmExit}
                 style={{
                   padding: '10px 16px',

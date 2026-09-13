@@ -1,8 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { pgDb } from '@repo/database';
 import { authenticate } from '../middleware/auth';
-import { requirePermission } from '../middleware/permission';
-import { PERMISSIONS } from '@repo/permissions';
 import { auditLog } from '../middleware/audit';
 
 const router = Router();
@@ -10,9 +8,10 @@ const router = Router();
 router.use(authenticate);
 
 // ----------------------------------------------------------------------------
-// GET /api/v1/users/me/preferences — Get current user preferences from DB
+// GET Handler — Retrieve current user preferences from DB
+// Supports GET /api/v1/users/me/preferences and GET /api/v1/preferences
 // ----------------------------------------------------------------------------
-router.get('/me/preferences', async (req: Request, res: Response, next: NextFunction) => {
+const getPreferencesHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.user!.userId;
 
@@ -21,54 +20,154 @@ router.get('/me/preferences', async (req: Request, res: Response, next: NextFunc
     if (resDb.rows.length === 0) {
       const id = `pref_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
       await pgDb.query(
-        `INSERT INTO "user_preferences" ("id", "userId", "themeMode", "languageCode")
-         VALUES ($1, $2, 'DARK', 'en')`,
+        `INSERT INTO "user_preferences" ("id", "userId", "themeMode", "languageCode", "accentColor", "highContrast", "fontScale", "reducedMotion")
+         VALUES ($1, $2, 'DARK', 'en', 'cyan', false, 'normal', false)`,
         [id, userId]
       );
       resDb = await pgDb.query(`SELECT * FROM "user_preferences" WHERE "userId" = $1`, [userId]);
     }
 
-    res.json({ success: true, data: resDb.rows[0] });
+    const row = resDb.rows[0];
+    res.json({
+      success: true,
+      data: {
+        ...row,
+        accentColor: row.accentColor || 'cyan',
+        highContrast: Boolean(row.highContrast),
+        fontScale: row.fontScale || 'normal',
+        reducedMotion: Boolean(row.reducedMotion),
+        festivalTheme: row.festivalTheme || null,
+      },
+    });
   } catch (err) {
     next(err);
   }
-});
+};
+
+router.get('/me/preferences', getPreferencesHandler);
+router.get('/', getPreferencesHandler);
 
 // ----------------------------------------------------------------------------
-// PATCH /api/v1/users/me/preferences — Update user preferences in DB
+// PATCH/PUT Handler — Update current user visual and language preferences in DB
+// Supports PATCH/PUT /api/v1/users/me/preferences and /api/v1/preferences
 // ----------------------------------------------------------------------------
-router.patch(
-  '/me/preferences',
-  requirePermission(PERMISSIONS.PREFERENCES_UPDATE),
-  auditLog('UPDATE', 'user_preference'),
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const userId = req.user!.userId;
-      const { themeMode, languageCode } = req.body;
+const updatePreferencesHandler = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user!.userId;
+    let { themeMode, languageCode, accentColor, accentPalette, highContrast, fontScale, reducedMotion, festivalTheme } = req.body;
 
-      const existingRes = await pgDb.query(`SELECT * FROM "user_preferences" WHERE "userId" = $1`, [userId]);
-      const prefId = existingRes.rows.length > 0 ? existingRes.rows[0].id : `pref_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
-      const currentTheme = existingRes.rows.length > 0 ? existingRes.rows[0].themeMode : 'DARK';
-      const currentLang = existingRes.rows.length > 0 ? existingRes.rows[0].languageCode : 'en';
-
-      const finalTheme = themeMode && ['LIGHT', 'GRAY', 'DARK'].includes(themeMode) ? themeMode : currentTheme;
-      const finalLang = languageCode ? String(languageCode).toLowerCase().trim() : currentLang;
-
-      await pgDb.query(
-        `INSERT INTO "user_preferences" ("id", "userId", "themeMode", "languageCode", "updatedAt")
-         VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
-         ON CONFLICT ("userId") DO UPDATE
-         SET "themeMode" = EXCLUDED."themeMode", "languageCode" = EXCLUDED."languageCode", "updatedAt" = CURRENT_TIMESTAMP`,
-        [prefId, userId, finalTheme, finalLang]
-      );
-
-      const updatedRes = await pgDb.query(`SELECT * FROM "user_preferences" WHERE "userId" = $1`, [userId]);
-
-      res.json({ success: true, data: updatedRes.rows[0] });
-    } catch (err) {
-      next(err);
+    // Support accentPalette alias if accentColor not explicitly passed
+    if (!accentColor && accentPalette) {
+      accentColor = accentPalette;
     }
+
+    const existingRes = await pgDb.query(`SELECT * FROM "user_preferences" WHERE "userId" = $1`, [userId]);
+    const prefId = existingRes.rows.length > 0 ? existingRes.rows[0].id : `pref_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+    const current = existingRes.rows.length > 0 ? existingRes.rows[0] : {};
+
+    // Normalize theme mode
+    let finalTheme = current.themeMode || 'DARK';
+    if (themeMode && typeof themeMode === 'string') {
+      const upperTheme = themeMode.toUpperCase();
+      if (['LIGHT', 'GRAY', 'DARK'].includes(upperTheme)) {
+        finalTheme = upperTheme;
+      }
+    }
+
+    // Normalize language
+    const finalLang = languageCode ? String(languageCode).toLowerCase().trim() : (current.languageCode || 'en');
+
+    // Normalize accent color
+    let finalAccent = current.accentColor || 'cyan';
+    if (accentColor && typeof accentColor === 'string') {
+      const lowerAccent = accentColor.toLowerCase();
+      const validAccents = ['cyan', 'purple', 'emerald', 'amber', 'rose', 'blue'];
+      if (validAccents.includes(lowerAccent)) {
+        finalAccent = lowerAccent;
+      } else if (lowerAccent === 'violet') {
+        finalAccent = 'purple';
+      } else if (lowerAccent === 'crimson') {
+        finalAccent = 'rose';
+      } else if (lowerAccent === 'indigo' || lowerAccent === 'royal_blue') {
+        finalAccent = 'blue';
+      }
+    }
+
+    const finalHighContrast = typeof highContrast === 'boolean' ? highContrast : Boolean(current.highContrast);
+
+    // Normalize font scale
+    let finalFontScale = current.fontScale || 'normal';
+    if (fontScale && typeof fontScale === 'string') {
+      const lowerScale = fontScale.toLowerCase();
+      if (['small', 'normal', 'large'].includes(lowerScale)) {
+        finalFontScale = lowerScale;
+      } else if (lowerScale === 'xlarge') {
+        finalFontScale = 'large';
+      }
+    }
+
+    const finalReducedMotion = typeof reducedMotion === 'boolean' ? reducedMotion : Boolean(current.reducedMotion);
+
+    // Normalize festival theme
+    let finalFestival: string | null = current.festivalTheme || null;
+    if (festivalTheme !== undefined) {
+      if (festivalTheme === null || festivalTheme === 'none' || festivalTheme === '') {
+        finalFestival = null;
+      } else if (typeof festivalTheme === 'string') {
+        const upperFest = festivalTheme.toUpperCase();
+        const validFestivals = [
+          'HOLI',
+          'DIWALI',
+          'NEW_YEAR',
+          'GUDI_PADWA',
+          'CHRISTMAS',
+          'EID',
+          'INDEPENDENCE_DAY',
+          'REPUBLIC_DAY',
+        ];
+        if (validFestivals.includes(upperFest)) {
+          finalFestival = upperFest;
+        }
+      }
+    }
+
+    await pgDb.query(
+      `INSERT INTO "user_preferences" ("id", "userId", "themeMode", "languageCode", "accentColor", "highContrast", "fontScale", "reducedMotion", "festivalTheme", "updatedAt")
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, CURRENT_TIMESTAMP)
+       ON CONFLICT ("userId") DO UPDATE
+       SET "themeMode" = EXCLUDED."themeMode",
+           "languageCode" = EXCLUDED."languageCode",
+           "accentColor" = EXCLUDED."accentColor",
+           "highContrast" = EXCLUDED."highContrast",
+           "fontScale" = EXCLUDED."fontScale",
+           "reducedMotion" = EXCLUDED."reducedMotion",
+           "festivalTheme" = EXCLUDED."festivalTheme",
+           "updatedAt" = CURRENT_TIMESTAMP`,
+      [prefId, userId, finalTheme, finalLang, finalAccent, finalHighContrast, finalFontScale, finalReducedMotion, finalFestival]
+    );
+
+    const updatedRes = await pgDb.query(`SELECT * FROM "user_preferences" WHERE "userId" = $1`, [userId]);
+    const row = updatedRes.rows[0];
+
+    res.json({
+      success: true,
+      data: {
+        ...row,
+        accentColor: row.accentColor || 'cyan',
+        highContrast: Boolean(row.highContrast),
+        fontScale: row.fontScale || 'normal',
+        reducedMotion: Boolean(row.reducedMotion),
+        festivalTheme: row.festivalTheme || null,
+      },
+    });
+  } catch (err) {
+    next(err);
   }
-);
+};
+
+router.patch('/me/preferences', auditLog('UPDATE', 'user_preference'), updatePreferencesHandler);
+router.patch('/', auditLog('UPDATE', 'user_preference'), updatePreferencesHandler);
+router.put('/me/preferences', auditLog('UPDATE', 'user_preference'), updatePreferencesHandler);
+router.put('/', auditLog('UPDATE', 'user_preference'), updatePreferencesHandler);
 
 export default router;

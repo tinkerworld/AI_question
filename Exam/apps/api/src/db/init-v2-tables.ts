@@ -107,6 +107,23 @@ export async function initV2Tables(): Promise<void> {
       CREATE INDEX IF NOT EXISTS "idx_vocab_words_course" ON "vocabulary_words"("courseId");
       CREATE INDEX IF NOT EXISTS "idx_student_vocab_due" ON "student_vocabulary_progress"("userId", "nextReviewDue");
       CREATE INDEX IF NOT EXISTS "idx_promotional_rules_key" ON "promotional_entitlement_rules"("featureKey");
+
+      ALTER TABLE "user_preferences" ADD COLUMN IF NOT EXISTS "accentColor" TEXT DEFAULT 'cyan';
+      ALTER TABLE "user_preferences" ADD COLUMN IF NOT EXISTS "highContrast" BOOLEAN DEFAULT false;
+      ALTER TABLE "user_preferences" ADD COLUMN IF NOT EXISTS "fontScale" TEXT DEFAULT 'normal';
+      ALTER TABLE "user_preferences" ADD COLUMN IF NOT EXISTS "reducedMotion" BOOLEAN DEFAULT false;
+      ALTER TABLE "user_preferences" ADD COLUMN IF NOT EXISTS "festivalTheme" TEXT DEFAULT NULL;
+
+      CREATE TABLE IF NOT EXISTS "system_settings" (
+        "key" TEXT PRIMARY KEY,
+        "value" JSONB NOT NULL,
+        "updatedBy" TEXT,
+        "updatedAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+
+      INSERT INTO "system_settings" ("key", "value", "updatedAt")
+      VALUES ('active_festival_theme', '{"festival": null}'::jsonb, CURRENT_TIMESTAMP)
+      ON CONFLICT ("key") DO NOTHING;
     `);
 
     // Seed default feature registry if empty

@@ -608,4 +608,86 @@ export const processRefundSchema = z.object({
   clawbackCredits: z.boolean().default(true),
 });
 
+// ==========================================
+// Feature 15.16: Schema-Validated JSON Import & Export Schemas
+// ==========================================
+export const conflictResolutionStrategySchema = z.enum(['SKIP_EXISTING', 'OVERWRITE', 'CREATE_COPY']);
 
+export const importExportMetadataSchema = z.object({
+  schemaVersion: z.literal('2.0'),
+  exportedAt: z.string(),
+  exportedBy: z.string().optional(),
+  institution: z.string().optional(),
+  entityType: z.enum(['QUESTIONS', 'COURSES']),
+  itemCount: z.number().int().nonnegative(),
+});
+
+export const questionExportItemSchema = z.object({
+  id: z.string().optional(),
+  type: z.string().min(1, 'Question type is required'),
+  content: z.string().min(3, 'Question content must be at least 3 characters'),
+  data: z.record(z.any()),
+  difficulty: z.enum(['EASY', 'MEDIUM', 'HARD']).default('MEDIUM'),
+  marks: z.number().positive('Marks must be greater than 0').default(1.0),
+  status: z.enum(['DRAFT', 'REVIEW', 'PUBLISHED', 'ARCHIVED']).default('PUBLISHED'),
+  courseCode: z.string().optional(),
+  subjectCode: z.string().optional(),
+  syllabusNodeTitle: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  examUsages: z.array(
+    z.object({
+      examName: z.string().min(1, 'Exam name is required'),
+      year: z.number().int().min(1950).max(2100),
+      shift: z.string().optional(),
+    })
+  ).optional(),
+});
+
+export const syllabusNodeExportItemSchema: z.ZodType<any> = z.lazy(() =>
+  z.object({
+    id: z.string().optional(),
+    title: z.string().min(1, 'Node title is required'),
+    type: z.enum(['UNIT', 'TOPIC', 'SUBTOPIC', 'CONCEPT']).default('UNIT'),
+    orderIndex: z.number().int().default(0),
+    description: z.string().optional(),
+    estimatedMinutes: z.number().int().positive().optional(),
+    learningObjectives: z.array(z.string()).optional(),
+    status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']).optional(),
+    tags: z.array(z.string()).optional(),
+    parentTitle: z.string().optional(),
+    children: z.array(syllabusNodeExportItemSchema).optional(),
+  })
+);
+
+export const subjectExportItemSchema = z.object({
+  id: z.string().optional(),
+  code: z.string().min(1, 'Subject code is required'),
+  name: z.string().min(1, 'Subject name is required'),
+  description: z.string().optional(),
+  credits: z.number().int().positive().optional(),
+  order: z.number().int().default(0),
+  syllabusNodes: z.array(syllabusNodeExportItemSchema).optional(),
+});
+
+export const courseExportItemSchema = z.object({
+  id: z.string().optional(),
+  code: z.string().min(1, 'Course code is required'),
+  name: z.string().min(1, 'Course name is required'),
+  description: z.string().optional(),
+  status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']).default('PUBLISHED'),
+  durationMonths: z.number().int().positive().optional(),
+  thumbnailUrl: z.string().optional(),
+  subjects: z.array(subjectExportItemSchema).optional(),
+});
+
+export const importValidateRequestSchema = z.object({
+  entityType: z.enum(['QUESTIONS', 'COURSES']),
+  items: z.array(z.any()).min(1, 'At least one item is required in the import payload'),
+  metadata: importExportMetadataSchema.optional(),
+});
+
+export const importExecuteRequestSchema = z.object({
+  entityType: z.enum(['QUESTIONS', 'COURSES']),
+  items: z.array(z.any()).min(1, 'At least one item is required in the import payload'),
+  conflictStrategy: conflictResolutionStrategySchema.default('SKIP_EXISTING'),
+});

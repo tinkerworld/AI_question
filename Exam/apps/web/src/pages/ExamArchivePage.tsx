@@ -93,7 +93,8 @@ interface VersionHistory {
 }
 
 export const ExamArchivePage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, token: authToken } = useAuth();
+  const token = authToken || (typeof window !== 'undefined' ? sessionStorage.getItem('token') : '') || '';
   const { t } = useTranslation();
 
   const [snapshots, setSnapshots] = useState<ExamSnapshotSummary[]>([]);
@@ -138,7 +139,7 @@ export const ExamArchivePage: React.FC = () => {
 
       const res = await fetch(url, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
+          Authorization: `Bearer ${token}`,
         },
       });
       const data = await res.json();
@@ -179,7 +180,7 @@ export const ExamArchivePage: React.FC = () => {
     setActiveSnapshot(null);
     try {
       const res = await fetch(`${API_BASE}/archive/exams/${snapId}/snapshot`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token') || ''}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
       if (data.success && data.data) {
@@ -201,7 +202,7 @@ export const ExamArchivePage: React.FC = () => {
     setActiveAnswerKey(null);
     try {
       const res = await fetch(`${API_BASE}/archive/exams/${snapId}/answer-key`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token') || ''}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
       if (data.success && data.data) {
@@ -221,7 +222,7 @@ export const ExamArchivePage: React.FC = () => {
     setActiveHistory(null);
     try {
       const res = await fetch(`${API_BASE}/archive/exams/${examId}/history`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token') || ''}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
       if (data.success && data.data) {
@@ -237,7 +238,7 @@ export const ExamArchivePage: React.FC = () => {
   const startCorrection = async (snapId: string) => {
     try {
       const res = await fetch(`${API_BASE}/archive/exams/${snapId}/snapshot`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token') || ''}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
       if (data.success && data.data) {
@@ -280,7 +281,7 @@ export const ExamArchivePage: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
       });

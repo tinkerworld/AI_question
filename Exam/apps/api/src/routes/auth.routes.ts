@@ -246,4 +246,117 @@ router.get('/me', authenticate, async (req: Request, res: Response, next: NextFu
   }
 });
 
+// Student Self-Registration (AUTH-01)
+router.post('/student-register', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { email, password, firstName, lastName, phone, termsAccepted } = req.body;
+
+    if (!email || !password || !firstName || !lastName) {
+      throw new AppError(400, 'VALIDATION_ERROR', 'Email, password, first name and last name are required');
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      throw new AppError(400, 'INVALID_EMAIL', 'Invalid email address format');
+    }
+
+    if (password.length < 8) {
+      throw new AppError(400, 'WEAK_PASSWORD', 'Password must be at least 8 characters long');
+    }
+
+    if (termsAccepted === false) {
+      throw new AppError(400, 'TERMS_REQUIRED', 'You must accept the terms and conditions to register');
+    }
+
+    const existingRes = await pgDb.query(`SELECT "id" FROM "users" WHERE LOWER("email") = LOWER($1)`, [email.trim()]);
+    if (existingRes.rows.length > 0) {
+      throw new AppError(409, 'EMAIL_ALREADY_EXISTS', 'An account with this email address already exists');
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    const userId = `usr_student_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+
+    const userMetadata = {
+      registeredVia: 'SELF_REGISTRATION',
+      registrationDate: new Date().toISOString(),
+      avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(firstName + '_' + lastName)}`,
+      communicationPreferences: { marketing: true, academic: true, billing: true }
+    };
+
+    await pgDb.query(`
+      INSERT INTO "users" ("id", "email", "passwordHash", "firstName", "lastName", "status", "phone", "metadata", "version")
+      VALUES ($1, $2, $3, $4, $5, 'ACTIVE', $6, $7, 1)
+    `, [
+      userId,
+      email.trim().toLowerCase(),
+      passwordHash,
+      firstName.trim(),
+      lastName.trim(),
+      phone || null,
+      JSON.stringify(userMetadata)
+    ]);
+
+    // Assign STUDENT role
+    const studentRoleRes = await pgDb.query(`SELECT "id" FROM "roles" WHERE "name" = 'STUDENT'`);
+    if (studentRoleRes.rows.length > 0) {
+      const roleId = studentRoleRes.rows[0].id;
+      await pgDb.query(`
+        INSERT INTO "user_roles" ("userId", "roleId")
+        VALUES ($1, $2)
+        ON CONFLICT ("userId", "roleId") DO NOTHING
+      `, [userId, roleId]);
+    }
+
+    // Baseline permissions for STUDENT
+    const permissions = [
+      'exams.attempt',
+      'practice.attempt',
+      'interview.attempt',
+      'analytics.read_own',
+      'results.read_own',
+      'subscriptions.read',
+      'preferences.update'
+    ];
+    const roles = ['STUDENT'];
+
+    const accessToken = jwt.sign(
+      { sub: userId, email: email.trim().toLowerCase(), roles, permissions },
+      JWT_SECRET,
+      { expiresIn: '2h' }
+    );
+
+    const refreshToken = jwt.sign(
+      { sub: userId, email: email.trim().toLowerCase(), jti: `jti_${Date.now()}` },
+      JWT_REFRESH_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    await pgDb.query(`
+      INSERT INTO "refresh_tokens" ("id", "userId", "token", "expiresAt", "revoked", "createdAt")
+      VALUES ($1, $2, $3, $4, false, CURRENT_TIMESTAMP)
+    `, [`rf_${Date.now()}_${Math.random().toString(36).substring(2, 5)}`, userId, refreshToken, new Date(Date.now() + 7 * 86400000)]);
+
+    res.status(201).json({
+      success: true,
+      message: 'Student registration completed successfully',
+      data: {
+        token: accessToken,
+        accessToken,
+        refreshToken,
+        user: {
+          id: userId,
+          email: email.trim().toLowerCase(),
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          status: 'ACTIVE',
+          roles,
+          permissions,
+        }
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default router;

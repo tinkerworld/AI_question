@@ -91,7 +91,7 @@ export const UsersPage: React.FC = () => {
   const [newLastName, setNewLastName] = useState<string>('');
   const [newRole, setNewRole] = useState<string>('TEACHER');
 
-  const token = localStorage.getItem('token');
+  const token = sessionStorage.getItem('token');
 
   const fetchAuditLogs = async () => {
     try {

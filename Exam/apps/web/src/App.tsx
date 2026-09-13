@@ -1,11 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { ThemeProvider } from './context/ThemeContext';
+import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { I18nProvider, useTranslation } from './context/I18nContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ExamLockProvider, useExamLock } from './context/ExamLockContext';
+import { RouterProvider, useRouter } from './context/RouterContext';
+import { FestivalHeaderDecoration } from './components/festivals/FestivalHeaderDecoration';
 import { ThemeSwitcher } from './components/ThemeSwitcher';
 import { LanguageSelector } from './components/LanguageSelector';
 import { LoginPage } from './pages/LoginPage';
+import { LandingPage } from './pages/LandingPage';
+import { StudentLoginPage } from './pages/StudentLoginPage';
+import { TeacherLoginPage } from './pages/TeacherLoginPage';
+import { AdminLoginPage } from './pages/AdminLoginPage';
+import { StudentRegisterPage } from './pages/StudentRegisterPage';
 import { ExamPatternsPage } from './pages/ExamPatternsPage';
 import { ExamsPage } from './pages/ExamsPage';
 import { QuestionBankPage } from './pages/QuestionBankPage';
@@ -26,6 +33,7 @@ import { PreviewConfigurationModal } from './components/PreviewConfigurationModa
 import { MaintenanceBanner } from './components/maintenance/MaintenanceBanner';
 import { FeatureMaintenanceWrapper } from './components/maintenance/FeatureMaintenanceWrapper';
 import { PromotionalBanner } from './components/entitlements/PromotionalBanner';
+import { FestivalBanner } from './components/festivals/FestivalBanner';
 import { API_BASE } from './config/api';
 import './styles/theme.css';
 
@@ -62,6 +70,8 @@ const hasPermission = (userPermissions: string[] | undefined, requiredPermission
 };
 
 const MainLayout: React.FC = () => {
+  const { activeFestivalConfig, highContrast } = useTheme();
+  const { path, navigate } = useRouter();
   const { t } = useTranslation();
   const { user, token, isAuthenticated, isLoading, logout, isImpersonating, activeTab, setActiveTab } = useAuth();
   const { isExamLocked, triggerExitWarning } = useExamLock();
@@ -185,6 +195,12 @@ const MainLayout: React.FC = () => {
     }
   }, [user, activeTab]);
 
+  useEffect(() => {
+    if (isAuthenticated && (path.startsWith('/login') || path.startsWith('/register'))) {
+      navigate('/', true);
+    }
+  }, [isAuthenticated, path, navigate]);
+
   if (isLoading) {
     return (
       <div
@@ -215,9 +231,22 @@ const MainLayout: React.FC = () => {
     );
   }
 
-  // Route Guard: If not authenticated, render Login Screen
+  // Pre-auth Route Guard: strictly conditionally render ONLY the matched route component
   if (!isAuthenticated) {
-    return <LoginPage />;
+    if (path === '/login/teacher') {
+      return <TeacherLoginPage />;
+    }
+    if (path === '/login/admin') {
+      return <AdminLoginPage />;
+    }
+    if (path === '/register' || path === '/register/student') {
+      return <StudentRegisterPage />;
+    }
+    if (path === '/login' || path === '/login/student') {
+      return <StudentLoginPage />;
+    }
+    // Default root / and any unmatched pre-auth route: Public Landing Page
+    return <LandingPage />;
   }
 
   const canUsePreview = hasPermission(userPermissions, 'preview.use') || user?.roles?.includes('MAIN_ADMIN') || user?.roles?.includes('SUB_ADMIN') || user?.roles?.includes('TEACHER');
@@ -227,28 +256,40 @@ const MainLayout: React.FC = () => {
       {/* Phase 10: Global Persistent Preview & Impersonation Banner */}
       <PreviewBanner onOpenConfig={() => setShowPreviewConfig(true)} />
 
-      {/* Phase 15: Global Maintenance Banner & Promotional Window Banner */}
+      {/* Phase 15: Global Maintenance Banner & Promotional Window Banner & Seasonal Festival Banner */}
       <MaintenanceBanner />
       <PromotionalBanner />
+      <FestivalBanner />
 
       {/* Header Bar */}
       <header
         style={{
-          background: 'var(--panel-bg)',
-          borderBottom: '1px solid var(--border-color)',
+          position: 'relative',
+          background: activeFestivalConfig && !highContrast && !isExamLocked
+            ? activeFestivalConfig.headerBackground
+            : 'var(--panel-bg)',
+          borderBottom: activeFestivalConfig && !highContrast && !isExamLocked
+            ? activeFestivalConfig.headerBorder
+            : '1px solid var(--border-color)',
           padding: '12px 28px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        {!isExamLocked && (
+          <FestivalHeaderDecoration festival={activeFestivalConfig} highContrast={highContrast} />
+        )}
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative', zIndex: 1 }}>
           <div
             style={{
               width: '34px',
               height: '34px',
               borderRadius: '8px',
-              background: 'linear-gradient(135deg, #06b6d4, #8b5cf6)',
+              background: activeFestivalConfig && !highContrast
+                ? activeFestivalConfig.gradient
+                : 'linear-gradient(135deg, #06b6d4, #8b5cf6)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -258,7 +299,7 @@ const MainLayout: React.FC = () => {
               fontSize: '14px',
             }}
           >
-            EX
+            {activeFestivalConfig && !highContrast ? activeFestivalConfig.badge : 'EX'}
           </div>
           <div>
             <div
@@ -269,13 +310,13 @@ const MainLayout: React.FC = () => {
               {t('app_title')}
             </div>
             <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-              {t('app_subtitle')}
+              {activeFestivalConfig && !highContrast ? activeFestivalConfig.title : t('app_subtitle')}
             </div>
           </div>
         </div>
 
         {/* User Info & Global Controls */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', position: 'relative', zIndex: 1 }}>
           {/* Preview as Student Launch Button for Staff */}
           {canUsePreview && !isImpersonating && (
             <button
@@ -356,6 +397,7 @@ const MainLayout: React.FC = () => {
                 triggerExitWarning();
               } else {
                 logout();
+                navigate('/');
               }
             }}
             style={{
@@ -384,13 +426,26 @@ const MainLayout: React.FC = () => {
       />
 
       {/* Main Dashboard Layout */}
-      <div id="app-dashboard-row" style={{ flex: 1, minHeight: 0, display: 'flex', overflow: 'hidden' }}>
+      <div
+        id="app-dashboard-row"
+        style={{
+          flex: 1,
+          minHeight: 0,
+          display: 'flex',
+          overflow: 'hidden',
+          background: activeFestivalConfig && !highContrast && !isExamLocked
+            ? `radial-gradient(ellipse at 95% 5%, ${activeFestivalConfig.primaryColor}0d 0%, transparent 45%)`
+            : undefined,
+        }}
+      >
         {/* Sidebar */}
         <aside
           style={{
             width: '240px',
             background: 'var(--panel-bg)',
-            borderRight: '1px solid var(--border-color)',
+            borderRight: activeFestivalConfig && !highContrast && !isExamLocked
+              ? `1px solid ${activeFestivalConfig.primaryColor}33`
+              : '1px solid var(--border-color)',
             padding: '20px 14px',
             overflowY: 'auto',
           }}
@@ -593,7 +648,9 @@ export const App: React.FC = () => {
       <I18nProvider>
         <AuthProvider>
           <ExamLockProvider>
-            <MainLayout />
+            <RouterProvider>
+              <MainLayout />
+            </RouterProvider>
           </ExamLockProvider>
         </AuthProvider>
       </I18nProvider>

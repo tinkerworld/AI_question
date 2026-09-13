@@ -30,6 +30,8 @@ import { audioRouter } from './routes/audio.routes';
 import { writingRouter } from './routes/writing.routes';
 import { vocabularyRouter } from './routes/vocabulary.routes';
 import { listeningRouter } from './routes/listening.routes';
+import { importExportRouter } from './routes/import-export.routes';
+import { systemRouter } from './routes/system.routes';
 import { initV2Tables } from './db/init-v2-tables';
 import { errorHandler } from './middleware/error';
 
@@ -60,9 +62,28 @@ app.get('/health', (req, res) => {
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/users', preferenceRoutes); // /me/preferences
+app.use('/api/v1/preferences', preferenceRoutes);
+app.use('/api/preferences', preferenceRoutes);
 app.use('/api/v1/roles', roleRoutes);
 app.use('/api/v1/audit', auditRoutes);
 app.use('/api/v1/i18n', i18nRoutes);
+
+// Platform Branding & Institutional Theme Presets (docs/v2/features/platform-themes.md)
+app.use('/api/v1/system', systemRouter);
+app.use('/api/system', systemRouter);
+
+app.get('/api/v1/platform/branding', (req, res) => {
+  res.json({
+    success: true,
+    data: {
+      institutionName: 'ExamOS Academy',
+      logoUrl: null,
+      primaryAccent: 'cyan',
+      defaultTheme: 'DARK',
+      highContrastAvailable: true,
+    },
+  });
+});
 
 // Phase 15 Routes (V2: Maintenance, Audio, Writing & Vocabulary)
 app.use('/api/v1/maintenance', maintenanceRouter);
@@ -138,6 +159,12 @@ app.use('/api/v1/credits', aiCreditsRouter);
 app.use('/api/credits', aiCreditsRouter);
 app.use('/api/v1/billing', billingRouter);
 app.use('/api/billing', billingRouter);
+
+// Feature 15.16 (Schema-Validated JSON Import & Export)
+app.use('/api/v1/import-export', importExportRouter);
+app.use('/api/import-export', importExportRouter);
+app.use('/api/v1/import', importExportRouter);
+app.use('/api/v1/export', importExportRouter);
 
 // Error Handling Middleware (Must be last)
 app.use(errorHandler);
