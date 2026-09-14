@@ -151,6 +151,20 @@ export const InterviewPage: React.FC = () => {
   const triggerSilenceCountdownRef = useRef<(text: string) => void>(() => {});
   const cancelInactivityWatchdogRef = useRef<() => void>(() => {});
 
+  // Handsfree Conversational Auto-Listen Mode (mirrors Video_model_train #live-voice-check)
+  const [isHandsfreeMode, setIsHandsfreeMode] = useState<boolean>(true);
+  const isHandsfreeModeRef = useRef<boolean>(true);
+  useEffect(() => {
+    isHandsfreeModeRef.current = isHandsfreeMode;
+  }, [isHandsfreeMode]);
+
+  const isInterviewOnHoldRef = useRef<boolean>(false);
+  useEffect(() => {
+    isInterviewOnHoldRef.current = isInterviewOnHold;
+  }, [isInterviewOnHold]);
+
+  const onQuestionSpeechFinishedRef = useRef<() => void>(() => {});
+
   // Eligibility & Data States
   const [eligibility, setEligibility] = useState<InterviewEligibilityDTO | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -605,7 +619,13 @@ export const InterviewPage: React.FC = () => {
 
   // Speak AI message using Native Streaming Audio or SpeechSynthesis fallback
   const speakMessage = (text: string, audioUrl?: string | null) => {
-    if (!ttsEnabled) return;
+    if (!ttsEnabled) {
+      onQuestionSpeechFinishedRef.current();
+      return;
+    }
+
+    // Stop recording while AI speaks to eliminate microphone echo feedback
+    stopAudioRecording();
 
     if (currentAudioRef.current) {
       try {
@@ -637,7 +657,7 @@ export const InterviewPage: React.FC = () => {
         audio.onended = () => {
           setIsAiSpeaking(false);
           currentAudioRef.current = null;
-          armInactivityWatchdog(24000);
+          onQuestionSpeechFinishedRef.current();
         };
         audio.onerror = () => {
           setIsAiSpeaking(false);
@@ -648,10 +668,15 @@ export const InterviewPage: React.FC = () => {
             utterance.pitch = 1.0;
             utterance.onend = () => {
               setIsAiSpeaking(false);
-              armInactivityWatchdog(24000);
+              onQuestionSpeechFinishedRef.current();
             };
-            utterance.onerror = () => setIsAiSpeaking(false);
+            utterance.onerror = () => {
+              setIsAiSpeaking(false);
+              onQuestionSpeechFinishedRef.current();
+            };
             window.speechSynthesis.speak(utterance);
+          } else {
+            onQuestionSpeechFinishedRef.current();
           }
         };
         audio.play().catch(() => {
@@ -662,31 +687,43 @@ export const InterviewPage: React.FC = () => {
             utterance.pitch = 1.0;
             utterance.onend = () => {
               setIsAiSpeaking(false);
-              armInactivityWatchdog(24000);
+              onQuestionSpeechFinishedRef.current();
             };
-            utterance.onerror = () => setIsAiSpeaking(false);
+            utterance.onerror = () => {
+              setIsAiSpeaking(false);
+              onQuestionSpeechFinishedRef.current();
+            };
             window.speechSynthesis.speak(utterance);
+          } else {
+            onQuestionSpeechFinishedRef.current();
           }
         });
         return;
       } catch {}
     }
 
-    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+    if (typeof window === 'undefined' || !window.speechSynthesis) {
+      onQuestionSpeechFinishedRef.current();
+      return;
+    }
     setIsAiSpeaking(true);
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.rate = pacingRate;
     utterance.pitch = 1.0;
     utterance.onend = () => {
       setIsAiSpeaking(false);
-      armInactivityWatchdog(24000);
+      onQuestionSpeechFinishedRef.current();
     };
-    utterance.onerror = () => setIsAiSpeaking(false);
+    utterance.onerror = () => {
+      setIsAiSpeaking(false);
+      onQuestionSpeechFinishedRef.current();
+    };
     window.speechSynthesis.speak(utterance);
   };
 
   // Play Examiner System / Hold / Nudge Spoken Announcements
   const playNoticeAudio = (text: string, onEnded?: () => void) => {
+    stopAudioRecording(); // Ensure mic is quiet when notice audio plays
     if (!text || !ttsEnabled) {
       if (onEnded) onEnded();
       return;
@@ -949,32 +986,53 @@ export const InterviewPage: React.FC = () => {
     };
   };
 
+  // Start active recording session (used both by manual click and automatic handsfree listen)
+  const startRecordingSession = async () => {
+    if (isRecording || isInterviewOnHoldRef.current || isSubmittingRef.current) return;
+    try {
+      isSubmittingRef.current = false;
+      setIsRecording(true);
+      startLiveAudioMonitoring();
+      await startAudioRecording();
+
+      if (recognitionRef.current) {
+        try {
+          bindRecognitionHandlers(recognitionRef.current);
+          recognitionRef.current.start();
+        } catch {}
+      }
+
+      if (recordingTimeoutRef.current) clearTimeout(recordingTimeoutRef.current);
+      // Candidate personalized pause tolerance duration (Sprint 4)
+      recordingTimeoutRef.current = setTimeout(() => {
+        stopAudioRecording();
+      }, activeAcousticsRef.current.pauseTimeoutMs);
+    } catch (err) {
+      console.warn('startRecordingSession error:', err);
+      stopAudioRecording();
+    }
+  };
+
+  // Triggered when interviewer finishes speaking aloud -> automatically activates microphone in handsfree mode
+  const onQuestionSpeechFinished = () => {
+    if (isHandsfreeModeRef.current && activeSession && !isRecording && !isInterviewOnHoldRef.current && !isSubmittingRef.current) {
+      console.log('Interviewer finished speaking -> Auto-listening to candidate handsfree...');
+      setTimeout(async () => {
+        if (!isInterviewOnHoldRef.current && !isSubmittingRef.current && !isRecording) {
+          await startRecordingSession();
+        }
+      }, 400);
+    }
+    armInactivityWatchdog(24000);
+  };
+  onQuestionSpeechFinishedRef.current = onQuestionSpeechFinished;
+
   // Toggle Speech & Audio Recording (Press-to-start / Press-to-stop across natural pauses)
   const toggleSpeechRecognition = async () => {
     if (isRecording) {
       stopAudioRecording();
     } else {
-      try {
-        isSubmittingRef.current = false;
-        setIsRecording(true);
-        startLiveAudioMonitoring();
-        await startAudioRecording();
-
-        if (recognitionRef.current) {
-          try {
-            bindRecognitionHandlers(recognitionRef.current);
-            recognitionRef.current.start();
-          } catch {}
-        }
-
-        if (recordingTimeoutRef.current) clearTimeout(recordingTimeoutRef.current);
-        // Candidate personalized pause tolerance duration (Sprint 4)
-        recordingTimeoutRef.current = setTimeout(() => {
-          stopAudioRecording();
-        }, activeAcousticsRef.current.pauseTimeoutMs);
-      } catch {
-        stopAudioRecording();
-      }
+      await startRecordingSession();
     }
   };
 
@@ -1797,6 +1855,37 @@ export const InterviewPage: React.FC = () => {
                   <option value="relaxed">🧘 Relaxed (5.0s wait)</option>
                 </select>
               </div>
+
+              {/* Handsfree Conversational Auto-Listen Toggle (mirrors Video_model_train) */}
+              <label
+                id="label-live-voice-check"
+                data-testid="label-live-voice-check"
+                style={{
+                  fontSize: '11px',
+                  color: isHandsfreeMode ? '#38bdf8' : 'var(--text-muted)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  cursor: 'pointer',
+                  userSelect: 'none',
+                  fontWeight: 600,
+                  padding: '3px 8px',
+                  borderRadius: '6px',
+                  background: isHandsfreeMode ? 'rgba(56, 189, 248, 0.12)' : 'transparent',
+                  border: isHandsfreeMode ? '1px solid rgba(56, 189, 248, 0.35)' : '1px solid transparent',
+                }}
+                title="Handsfree mode: Microphone turns on automatically when interviewer finishes speaking"
+              >
+                <input
+                  type="checkbox"
+                  id="live-voice-check"
+                  data-testid="live-voice-check"
+                  checked={isHandsfreeMode}
+                  onChange={(e) => setIsHandsfreeMode(e.target.checked)}
+                  style={{ width: '13px', height: '13px', accentColor: '#06b6d4', cursor: 'pointer' }}
+                />
+                <span>🎙️ Handsfree</span>
+              </label>
 
               {/* Unobtrusive Live Provider Indicator */}
               <div
@@ -2773,6 +2862,26 @@ export const InterviewPage: React.FC = () => {
                   >
                     +5s Thinking
                   </button>
+                </span>
+              </div>
+            )}
+            {/* Handsfree Conversational Mode Hint */}
+            {isHandsfreeMode && (
+              <div
+                id="mic-status-hint"
+                data-testid="mic-status-hint"
+                style={{
+                  fontSize: '11px',
+                  color: 'var(--text-muted)',
+                  marginBottom: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                }}
+              >
+                <span>💬</span>
+                <span>
+                  <strong>Handsfree Mode Active:</strong> Speak naturally. The microphone turns on automatically after each examiner question and sends your response when you pause.
                 </span>
               </div>
             )}

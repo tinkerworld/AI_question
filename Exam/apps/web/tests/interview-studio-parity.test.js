@@ -90,4 +90,14 @@ describe('AI Interview Studio Parity Tests (ExamOS <-> Video_model_train)', () =
     assert.strictEqual(VU_BAR_COLORS[4], '#f59e0b', 'Fifth bar should be amber');
     assert.strictEqual(VU_BAR_COLORS[5], '#ef4444', 'Sixth bar should be red');
   });
+
+  test('PARITY-009: Handsfree Auto-Listen Mode (#live-voice-check & auto-mic) mirrors Video_model_train', () => {
+    const pageContent = fs.readFileSync(interviewPagePath, 'utf8');
+    assert.ok(pageContent.includes('id="live-voice-check"'), 'Must have live-voice-check toggle');
+    assert.ok(pageContent.includes('id="label-live-voice-check"'), 'Must have label-live-voice-check');
+    assert.ok(pageContent.includes('id="mic-status-hint"'), 'Must have mic-status-hint');
+    assert.ok(pageContent.includes('onQuestionSpeechFinished'), 'Must define onQuestionSpeechFinished');
+    assert.ok(pageContent.includes('isHandsfreeMode'), 'Must track isHandsfreeMode state');
+  });
 });
+
