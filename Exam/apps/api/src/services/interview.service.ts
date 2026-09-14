@@ -1527,6 +1527,49 @@ Output JSON only.`;
   }
 
   /**
+   * Updates examiner voice persona and speaking rate mid-interview.
+   */
+  static async updateSessionVoice(
+    sessionId: string,
+    voicePersona: string,
+    speedRate?: number,
+    user?: { userId: string; roles?: string[] }
+  ): Promise<any> {
+    await this.ensureSchema();
+    const db = pgDb;
+    const sessRes = await db.query(`SELECT * FROM "interview_sessions" WHERE "id" = $1`, [sessionId]);
+    if (sessRes.rows.length === 0) throw new AppError(404, 'NOT_FOUND', 'Session not found');
+    await db.query(
+      `UPDATE "interview_sessions" SET "voicePersona" = $1, "updatedAt" = CURRENT_TIMESTAMP WHERE "id" = $2`,
+      [voicePersona, sessionId]
+    );
+    return { success: true, sessionId, voicePersona, speedRate };
+  }
+
+  /**
+   * Updates candidate full name for conversational greetings and evaluation reports.
+   */
+  static async updateSessionCandidateName(
+    sessionId: string,
+    candidateName: string,
+    user?: { userId: string; roles?: string[] }
+  ): Promise<any> {
+    await this.ensureSchema();
+    const db = pgDb;
+    const sessRes = await db.query(`SELECT * FROM "interview_sessions" WHERE "id" = $1`, [sessionId]);
+    if (sessRes.rows.length === 0) throw new AppError(404, 'NOT_FOUND', 'Session not found');
+    const row = sessRes.rows[0] as any;
+    if (row.remoteSessionId) {
+      try {
+        await VoiceMicroserviceClient.getInstance().updateCandidateName(row.remoteSessionId, candidateName);
+      } catch (err) {
+        console.warn('Microservice candidate name update warning:', err);
+      }
+    }
+    return { success: true, sessionId, candidateName };
+  }
+
+  /**
    * Code-driven heuristic to select single-purpose interview prompt templates (Requirement 2).
    * Do not let the LLM decide whether to clarify, follow up, or advance.
    */
@@ -3452,7 +3495,10 @@ Output JSON only.`;
           const audioUrl = microserviceClient.getAudioStreamUrl(sessionRow.remoteSessionId, 'question', aiMessage, aiTurnNumber);
           const evidenceCites = remoteState.current_turn.evidence_cites || [];
           const expectedConcepts = remoteState.current_turn.expected_concepts || [];
-          const evaluationData = remoteState.latest_eval || null;
+          const conversationalPrompt = remoteState.current_turn.conversational_prompt || null;
+          const evaluationData = remoteState.latest_eval
+            ? { ...remoteState.latest_eval, conversational_prompt: conversationalPrompt }
+            : (conversationalPrompt ? { conversational_prompt: conversationalPrompt } : null);
 
           await db.query(
             `INSERT INTO "interview_turns" (
@@ -3492,6 +3538,9 @@ Output JSON only.`;
             providerType: 'CLOUD',
             createdAt: new Date().toISOString(),
           };
+          if (conversationalPrompt) {
+            (aiTurn as any).conversational_prompt = conversationalPrompt;
+          }
 
           const updatedSession = await InterviewService.getSession(sessionId, user);
           return {

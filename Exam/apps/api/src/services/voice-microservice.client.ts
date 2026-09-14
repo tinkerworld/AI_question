@@ -399,6 +399,21 @@ export class VoiceMicroserviceClient {
     return (await res.json()) as any;
   }
 
+  async updateCandidateName(sessionId: string, candidateName: string): Promise<{ status: string; candidate_name: string }> {
+    const res = await fetch(`${this.baseUrl}/v1/interview/sessions/${sessionId}/candidate-name`, {
+      method: 'POST',
+      headers: this.getHeaders('application/json'),
+      body: JSON.stringify({ candidate_name: candidateName }),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Failed to update candidate name in microservice (${res.status}): ${text}`);
+    }
+
+    return (await res.json()) as any;
+  }
+
   getAudioStreamUrl(
     sessionId: string,
     target: 'question' | 'feedback' | 'conversational' = 'question',
