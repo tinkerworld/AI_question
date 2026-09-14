@@ -323,7 +323,7 @@ export async function initV2Tables(): Promise<void> {
       `);
       await pgDb.query(`
         INSERT INTO "ai_providers" ("id", "name", "type", "modelId", "baseUrl", "priority", "scope", "isActive")
-        VALUES ('prov_trans_batch_mock', 'Deterministic Multilingual Batch Translation Engine', 'MOCK', 'mock-translation-v1', 'http://localhost:4043/internal/ai/mock-translation', 1, 'translation_batch', true)
+        VALUES ('prov_trans_batch_mock', 'Deterministic Multilingual Batch Translation Engine', 'MOCK', 'mock-translation-v1', 'http://localhost:' || COALESCE(current_setting('app.port', true), '4044') || '/internal/ai/mock-translation', 1, 'translation_batch', true)
         ON CONFLICT ("id") DO UPDATE SET "name" = EXCLUDED."name", "scope" = EXCLUDED."scope", "isActive" = true;
       `);
     } catch (tErr) {
