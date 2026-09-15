@@ -295,6 +295,8 @@ export const InterviewPage: React.FC = () => {
   const recordedAudioBase64Ref = useRef<string | null>(null);
   const candidateInputRef = useRef<string>(candidateInput);
   const isRecordingRef = useRef<boolean>(false);
+  const isBrowserSpeechDisabledRef = useRef<boolean>(false);
+  const shouldSubmitOnWhisperFinishRef = useRef<boolean>(false);
 
   useEffect(() => {
     candidateInputRef.current = candidateInput;
@@ -560,7 +562,15 @@ export const InterviewPage: React.FC = () => {
                   });
                   const data = await res.json();
                   if (data?.success && data?.data?.text && !isSubmittingRef.current && isInterviewActiveRef.current && activeViewRef.current === 'ROOM' && !isEvaluatingRef.current) {
-                    setCandidateInput(data.data.text);
+                    const text = data.data.text.trim();
+                    if (text) {
+                      setCandidateInput(text);
+                      setLivePreviewText(text);
+                      if ((isHandsfreeModeRef.current || shouldSubmitOnWhisperFinishRef.current) && isMeaningfulCandidateResponse(text)) {
+                        shouldSubmitOnWhisperFinishRef.current = false;
+                        handleSubmitTurn(undefined, text);
+                      }
+                    }
                   }
                 } catch (asrErr) {
                   console.warn('Whisper ASR auto-transcribe fallback error:', asrErr);
@@ -616,6 +626,10 @@ export const InterviewPage: React.FC = () => {
     };
 
     recog.onend = () => {
+      // If browser speech was disabled due to ad-blockers or network restrictions, do not retry
+      if (isBrowserSpeechDisabledRef.current || !recognitionRef.current) {
+        return;
+      }
       // Resilient restart (matching Video_model_train):
       // Browser SpeechRecognition automatically terminates on sentence pauses. If we are still
       // actively recording, restart recognition seamlessly so the candidate is not interrupted.
@@ -629,6 +643,7 @@ export const InterviewPage: React.FC = () => {
         setTimeout(() => {
           if (
             isRecordingRef.current &&
+            !isBrowserSpeechDisabledRef.current &&
             !isSubmittingRef.current &&
             isInterviewActiveRef.current &&
             activeViewRef.current === 'ROOM' &&
@@ -639,24 +654,32 @@ export const InterviewPage: React.FC = () => {
               recognitionRef.current.start();
             } catch {}
           }
-        }, 150);
+        }, 200);
       } else {
         stopAudioRecording();
       }
     };
 
     recog.onerror = (event: any) => {
-      console.warn('Speech recognition notice/error:', event?.error);
       // 'no-speech' is triggered when candidate pauses to think - do NOT kill recording!
       if (event?.error === 'no-speech') {
         return;
       }
       // 'network' or 'not-allowed' triggers when speech.googleapis.com is blocked by ad-blockers or in non-Chrome.
-      // Do NOT kill the recording: keep MediaRecorder running for the Whisper ASR fallback!
+      // Permanently detach browser speech recognition for this session and switch to Whisper ASR.
       if (event?.error === 'network' || event?.error === 'not-allowed' || event?.error === 'service-not-allowed') {
-        console.warn('Speech Recognition endpoint unavailable (' + event?.error + '). Continuing with background audio capture for Whisper.');
+        console.warn(`Browser Speech Recognition endpoint unavailable (${event?.error}); switching to background Whisper ASR mode.`);
+        isBrowserSpeechDisabledRef.current = true;
+        try {
+          recog.onresult = null;
+          recog.onerror = null;
+          recog.onend = null;
+          recog.stop();
+        } catch {}
+        recognitionRef.current = null;
         return;
       }
+      console.warn('Speech recognition error:', event?.error);
       stopAudioRecording();
     };
   };
@@ -1307,6 +1330,9 @@ export const InterviewPage: React.FC = () => {
     const currentText = candidateInputRef.current?.trim();
     if (currentText && !isSubmittingRef.current) {
       handleSubmitTurn(undefined, currentText);
+    } else {
+      // If Whisper is transcribing in the background, submit as soon as it returns
+      shouldSubmitOnWhisperFinishRef.current = true;
     }
   };
 
@@ -1358,11 +1384,14 @@ export const InterviewPage: React.FC = () => {
       startLiveAudioMonitoring();
       await startAudioRecording();
 
-      if (recognitionRef.current) {
+      if (!isBrowserSpeechDisabledRef.current && recognitionRef.current) {
         try {
           bindRecognitionHandlers(recognitionRef.current);
           recognitionRef.current.start();
-        } catch {}
+        } catch {
+          isBrowserSpeechDisabledRef.current = true;
+          recognitionRef.current = null;
+        }
       }
 
       if (recordingTimeoutRef.current) clearTimeout(recordingTimeoutRef.current);
@@ -3444,32 +3473,32 @@ export const InterviewPage: React.FC = () => {
                 )}
 
                 {/* Done Speaking Instant Send Button */}
-                {(isRecording || candidateInput.trim().length > 0) && (
+                {(isRecording || isTranscribingAudio || candidateInput.trim().length > 0) && (
                   <button
                     type="button"
                     id="btn-done-speaking"
                     data-testid="btn-done-speaking"
                     onClick={handleDoneSpeaking}
-                    disabled={isSubmittingTurn || !candidateInput.trim()}
+                    disabled={isSubmittingTurn || isTranscribingAudio}
                     style={{
                       padding: '10px 14px',
                       borderRadius: '6px',
                       border: '1px solid #10b981',
-                      background: candidateInput.trim() ? '#059669' : 'rgba(16, 185, 129, 0.2)',
+                      background: candidateInput.trim() || isRecording ? '#059669' : 'rgba(16, 185, 129, 0.2)',
                       color: '#fff',
                       fontWeight: 600,
                       fontSize: '12px',
-                      cursor: candidateInput.trim() && !isSubmittingTurn ? 'pointer' : 'not-allowed',
+                      cursor: isSubmittingTurn || isTranscribingAudio ? 'not-allowed' : 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '4px',
-                      boxShadow: candidateInput.trim() ? '0 0 10px rgba(16, 185, 129, 0.3)' : 'none',
+                      boxShadow: candidateInput.trim() || isRecording ? '0 0 10px rgba(16, 185, 129, 0.3)' : 'none',
                       whiteSpace: 'nowrap',
                     }}
                     title="Finished speaking? Click to submit your response immediately"
                   >
                     <span>✓</span>
-                    <span id="done-speaking-label">Done Speaking</span>
+                    <span id="done-speaking-label">{isTranscribingAudio ? 'Transcribing...' : 'Done Speaking'}</span>
                   </button>
                 )}
 
@@ -3480,12 +3509,12 @@ export const InterviewPage: React.FC = () => {
                   onChange={(e) => setCandidateInput(e.target.value)}
                   placeholder={
                     isTranscribingAudio
-                      ? "⏳ Transcribing your speech via Whisper..."
-                      : speechSupported
-                      ? isRecording
-                        ? "🔴 Listening... Speak your answer clearly into the microphone"
-                        : "🎙️ Spoken response will appear here (click 'Mic' to speak)..."
-                      : "Spoken response will appear here..."
+                      ? "⏳ Transcribing your speech via Whisper AI..."
+                      : isRecording
+                      ? isBrowserSpeechDisabledRef.current
+                        ? "🔴 Recording via Mic... Click 'Done Speaking' or pause when finished"
+                        : "🔴 Listening... Speak your answer clearly into the microphone"
+                      : "🎙️ Spoken response will appear here (click 'Mic' to speak)..."
                   }
                   disabled={isSubmittingTurn || isTranscribingAudio}
                   style={{
