@@ -294,6 +294,7 @@ export const InterviewPage: React.FC = () => {
   const audioChunksRef = useRef<Blob[]>([]);
   const recordedAudioBase64Ref = useRef<string | null>(null);
   const candidateInputRef = useRef<string>(candidateInput);
+  const isRecordingRef = useRef<boolean>(false);
 
   useEffect(() => {
     candidateInputRef.current = candidateInput;
@@ -322,6 +323,7 @@ export const InterviewPage: React.FC = () => {
   };
 
   const stopAudioRecording = () => {
+    isRecordingRef.current = false;
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       try {
         mediaRecorderRef.current.stop();
@@ -490,8 +492,11 @@ export const InterviewPage: React.FC = () => {
     setAgreedToInterviewTerms(false);
   };
 
-  // Speech-to-Text (STT), MediaRecorder & Text-to-Speech (TTS) States
   const [isRecording, setIsRecording] = useState<boolean>(false);
+
+  useEffect(() => {
+    isRecordingRef.current = isRecording;
+  }, [isRecording]);
   const [speechSupported, setSpeechSupported] = useState<boolean>(false);
   const [ttsEnabled, setTtsEnabled] = useState<boolean>(true);
   const [isTranscribingAudio, setIsTranscribingAudio] = useState<boolean>(false);
@@ -611,10 +616,47 @@ export const InterviewPage: React.FC = () => {
     };
 
     recog.onend = () => {
-      stopAudioRecording();
+      // Resilient restart (matching Video_model_train):
+      // Browser SpeechRecognition automatically terminates on sentence pauses. If we are still
+      // actively recording, restart recognition seamlessly so the candidate is not interrupted.
+      if (
+        isRecordingRef.current &&
+        !isSubmittingRef.current &&
+        isInterviewActiveRef.current &&
+        activeViewRef.current === 'ROOM' &&
+        !isEvaluatingRef.current
+      ) {
+        setTimeout(() => {
+          if (
+            isRecordingRef.current &&
+            !isSubmittingRef.current &&
+            isInterviewActiveRef.current &&
+            activeViewRef.current === 'ROOM' &&
+            !isEvaluatingRef.current &&
+            recognitionRef.current
+          ) {
+            try {
+              recognitionRef.current.start();
+            } catch {}
+          }
+        }, 150);
+      } else {
+        stopAudioRecording();
+      }
     };
 
-    recog.onerror = () => {
+    recog.onerror = (event: any) => {
+      console.warn('Speech recognition notice/error:', event?.error);
+      // 'no-speech' is triggered when candidate pauses to think - do NOT kill recording!
+      if (event?.error === 'no-speech') {
+        return;
+      }
+      // 'network' or 'not-allowed' triggers when speech.googleapis.com is blocked by ad-blockers or in non-Chrome.
+      // Do NOT kill the recording: keep MediaRecorder running for the Whisper ASR fallback!
+      if (event?.error === 'network' || event?.error === 'not-allowed' || event?.error === 'service-not-allowed') {
+        console.warn('Speech Recognition endpoint unavailable (' + event?.error + '). Continuing with background audio capture for Whisper.');
+        return;
+      }
       stopAudioRecording();
     };
   };
@@ -1311,6 +1353,7 @@ export const InterviewPage: React.FC = () => {
       recordingStartTimeRef.current = Date.now();
       lastSpeechActivityTimeRef.current = Date.now();
       silenceExtensionMsRef.current = 0;
+      isRecordingRef.current = true;
       setIsRecording(true);
       startLiveAudioMonitoring();
       await startAudioRecording();
