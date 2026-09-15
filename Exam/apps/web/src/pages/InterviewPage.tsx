@@ -165,6 +165,14 @@ export const InterviewPage: React.FC = () => {
 
   const onQuestionSpeechFinishedRef = useRef<() => void>(() => {});
 
+  // Master Interview Lifecycle Refs & Teardown Guards
+  const isInterviewActiveRef = useRef<boolean>(false);
+  const activeViewRef = useRef<'CATALOG' | 'ROOM' | 'EVALUATION' | 'HISTORY' | 'GROWTH'>('CATALOG');
+  const activeSessionRef = useRef<InterviewSessionDTO | null>(null);
+  const isEvaluatingRef = useRef<boolean>(false);
+  const handsfreeTimerRef = useRef<any>(null);
+  const stopAllInterviewBackgroundProcessesRef = useRef<() => void>(() => {});
+
   // Eligibility & Data States
   const [eligibility, setEligibility] = useState<InterviewEligibilityDTO | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -181,6 +189,30 @@ export const InterviewPage: React.FC = () => {
   const [isEvaluating, setIsEvaluating] = useState<boolean>(false);
   const [showReferenceDrawer, setShowReferenceDrawer] = useState<boolean>(false);
   const isSubmittingRef = useRef<boolean>(false);
+
+  useEffect(() => {
+    activeViewRef.current = activeView;
+    if (activeView === 'ROOM' && activeSession && activeSession.status !== 'COMPLETED') {
+      isInterviewActiveRef.current = true;
+    } else {
+      isInterviewActiveRef.current = false;
+      stopAllInterviewBackgroundProcessesRef.current();
+    }
+  }, [activeView, activeSession?.status]);
+
+  useEffect(() => {
+    activeSessionRef.current = activeSession;
+  }, [activeSession]);
+
+  useEffect(() => {
+    isEvaluatingRef.current = isEvaluating;
+  }, [isEvaluating]);
+
+  useEffect(() => {
+    return () => {
+      stopAllInterviewBackgroundProcessesRef.current();
+    };
+  }, []);
 
   // Instructions Modal State (Modeled on Exam Hall Instructions pattern)
   const [selectedQuestionForInstructions, setSelectedQuestionForInstructions] = useState<any | null>(null);
@@ -291,7 +323,10 @@ export const InterviewPage: React.FC = () => {
       let lastResetTime = Date.now();
 
       const monitorLoop = () => {
-        if (!liveAudioCtxRef.current) return;
+        if (!liveAudioCtxRef.current || !isInterviewActiveRef.current || activeViewRef.current !== 'ROOM' || isEvaluatingRef.current) {
+          stopLiveAudioMonitoring();
+          return;
+        }
         analyser.getFloatTimeDomainData(pcmBuffer);
         const rms = computeRms(pcmBuffer);
         const dbfs = rmsToDbfs(rms);
@@ -437,7 +472,7 @@ export const InterviewPage: React.FC = () => {
               recordedAudioBase64Ref.current = base64Data;
 
               // If candidateInput is empty, auto-transcribe through Whisper microservice
-              if (!candidateInputRef.current?.trim() && !isSubmittingRef.current && base64Data) {
+              if (!candidateInputRef.current?.trim() && !isSubmittingRef.current && isInterviewActiveRef.current && activeViewRef.current === 'ROOM' && !isEvaluatingRef.current && base64Data) {
                 try {
                   setIsTranscribingAudio(true);
                   const res = await fetch(`${API_BASE}/interview/audio/transcribe`, {
@@ -450,7 +485,7 @@ export const InterviewPage: React.FC = () => {
                     }),
                   });
                   const data = await res.json();
-                  if (data?.success && data?.data?.text && !isSubmittingRef.current) {
+                  if (data?.success && data?.data?.text && !isSubmittingRef.current && isInterviewActiveRef.current && activeViewRef.current === 'ROOM' && !isEvaluatingRef.current) {
                     setCandidateInput(data.data.text);
                   }
                 } catch (asrErr) {
@@ -475,8 +510,8 @@ export const InterviewPage: React.FC = () => {
   // Helper to bind continuous onresult handler safely with personalized pause tolerance
   const bindRecognitionHandlers = (recog: any) => {
     recog.onresult = (event: any) => {
-      // Guard against late async results delivered during/after submission
-      if (isSubmittingRef.current) return;
+      // Guard against late async results delivered during/after submission or after session complete
+      if (isSubmittingRef.current || !isInterviewActiveRef.current || activeViewRef.current !== 'ROOM' || isEvaluatingRef.current) return;
       let fullTranscript = '';
       for (let i = 0; i < event.results.length; ++i) {
         fullTranscript += event.results[i][0].transcript;
@@ -619,8 +654,25 @@ export const InterviewPage: React.FC = () => {
 
   // Speak AI message using Native Streaming Audio or SpeechSynthesis fallback
   const speakMessage = (text: string, audioUrl?: string | null) => {
+    // If interview has completed, evaluating, or user is not in room: do not speak or auto-listen
+    if (
+      !isInterviewActiveRef.current ||
+      activeViewRef.current !== 'ROOM' ||
+      isEvaluatingRef.current ||
+      (activeSessionRef.current && activeSessionRef.current.status === 'COMPLETED')
+    ) {
+      return;
+    }
+
     if (!ttsEnabled) {
-      onQuestionSpeechFinishedRef.current();
+      if (
+        isInterviewActiveRef.current &&
+        activeViewRef.current === 'ROOM' &&
+        !isEvaluatingRef.current &&
+        (!activeSessionRef.current || activeSessionRef.current.status !== 'COMPLETED')
+      ) {
+        onQuestionSpeechFinishedRef.current();
+      }
       return;
     }
 
@@ -630,20 +682,35 @@ export const InterviewPage: React.FC = () => {
     if (currentAudioRef.current) {
       try {
         currentAudioRef.current.pause();
-        currentAudioRef.current = null;
+        currentAudioRef.current.src = '';
       } catch {}
+      currentAudioRef.current = null;
     }
     if (noticeAudioRef.current) {
       try {
         noticeAudioRef.current.pause();
-        noticeAudioRef.current = null;
+        noticeAudioRef.current.src = '';
       } catch {}
+      noticeAudioRef.current = null;
     }
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel();
     }
 
     const pacingRate = speechPacing === 'fast' ? 1.1 : speechPacing === 'thoughtful' ? 0.9 : speechPacing === 'relaxed' ? 0.85 : 1.0;
+
+    const handleSpeechFinished = () => {
+      setIsAiSpeaking(false);
+      currentAudioRef.current = null;
+      if (
+        isInterviewActiveRef.current &&
+        activeViewRef.current === 'ROOM' &&
+        !isEvaluatingRef.current &&
+        (!activeSessionRef.current || activeSessionRef.current.status !== 'COMPLETED')
+      ) {
+        onQuestionSpeechFinishedRef.current();
+      }
+    };
 
     if (audioUrl) {
       try {
@@ -654,48 +721,44 @@ export const InterviewPage: React.FC = () => {
         const audio = new Audio(freshAudioUrl);
         audio.playbackRate = pacingRate;
         currentAudioRef.current = audio;
-        audio.onended = () => {
-          setIsAiSpeaking(false);
-          currentAudioRef.current = null;
-          onQuestionSpeechFinishedRef.current();
-        };
+        audio.onended = handleSpeechFinished;
         audio.onerror = () => {
           setIsAiSpeaking(false);
           currentAudioRef.current = null;
-          if (typeof window !== 'undefined' && window.speechSynthesis) {
+          if (
+            isInterviewActiveRef.current &&
+            activeViewRef.current === 'ROOM' &&
+            !isEvaluatingRef.current &&
+            typeof window !== 'undefined' &&
+            window.speechSynthesis
+          ) {
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.rate = pacingRate;
             utterance.pitch = 1.0;
-            utterance.onend = () => {
-              setIsAiSpeaking(false);
-              onQuestionSpeechFinishedRef.current();
-            };
-            utterance.onerror = () => {
-              setIsAiSpeaking(false);
-              onQuestionSpeechFinishedRef.current();
-            };
+            utterance.onend = handleSpeechFinished;
+            utterance.onerror = handleSpeechFinished;
             window.speechSynthesis.speak(utterance);
           } else {
-            onQuestionSpeechFinishedRef.current();
+            handleSpeechFinished();
           }
         };
         audio.play().catch(() => {
           setIsAiSpeaking(false);
-          if (typeof window !== 'undefined' && window.speechSynthesis) {
+          if (
+            isInterviewActiveRef.current &&
+            activeViewRef.current === 'ROOM' &&
+            !isEvaluatingRef.current &&
+            typeof window !== 'undefined' &&
+            window.speechSynthesis
+          ) {
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.rate = pacingRate;
             utterance.pitch = 1.0;
-            utterance.onend = () => {
-              setIsAiSpeaking(false);
-              onQuestionSpeechFinishedRef.current();
-            };
-            utterance.onerror = () => {
-              setIsAiSpeaking(false);
-              onQuestionSpeechFinishedRef.current();
-            };
+            utterance.onend = handleSpeechFinished;
+            utterance.onerror = handleSpeechFinished;
             window.speechSynthesis.speak(utterance);
           } else {
-            onQuestionSpeechFinishedRef.current();
+            handleSpeechFinished();
           }
         });
         return;
@@ -703,37 +766,46 @@ export const InterviewPage: React.FC = () => {
     }
 
     if (typeof window === 'undefined' || !window.speechSynthesis) {
-      onQuestionSpeechFinishedRef.current();
+      handleSpeechFinished();
       return;
     }
     setIsAiSpeaking(true);
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.rate = pacingRate;
     utterance.pitch = 1.0;
-    utterance.onend = () => {
-      setIsAiSpeaking(false);
-      onQuestionSpeechFinishedRef.current();
-    };
-    utterance.onerror = () => {
-      setIsAiSpeaking(false);
-      onQuestionSpeechFinishedRef.current();
-    };
+    utterance.onend = handleSpeechFinished;
+    utterance.onerror = handleSpeechFinished;
     window.speechSynthesis.speak(utterance);
   };
 
   // Play Examiner System / Hold / Nudge Spoken Announcements
   const playNoticeAudio = (text: string, onEnded?: () => void) => {
     stopAudioRecording(); // Ensure mic is quiet when notice audio plays
-    if (!text || !ttsEnabled) {
-      if (onEnded) onEnded();
+    if (
+      !text ||
+      !ttsEnabled ||
+      !isInterviewActiveRef.current ||
+      activeViewRef.current !== 'ROOM' ||
+      isEvaluatingRef.current ||
+      (activeSessionRef.current && activeSessionRef.current.status === 'COMPLETED')
+    ) {
+      if (
+        onEnded &&
+        isInterviewActiveRef.current &&
+        activeViewRef.current === 'ROOM' &&
+        !isEvaluatingRef.current &&
+        (!activeSessionRef.current || activeSessionRef.current.status !== 'COMPLETED')
+      ) {
+        onEnded();
+      }
       return;
     }
     if (currentAudioRef.current) {
-      try { currentAudioRef.current.pause(); } catch {}
+      try { currentAudioRef.current.pause(); currentAudioRef.current.src = ''; } catch {}
       currentAudioRef.current = null;
     }
     if (noticeAudioRef.current) {
-      try { noticeAudioRef.current.pause(); } catch {}
+      try { noticeAudioRef.current.pause(); noticeAudioRef.current.src = ''; } catch {}
       noticeAudioRef.current = null;
     }
     if (typeof window !== 'undefined' && window.speechSynthesis) {
@@ -753,12 +825,26 @@ export const InterviewPage: React.FC = () => {
       finished = true;
       setIsAiSpeaking(false);
       noticeAudioRef.current = null;
-      if (onEnded) onEnded();
+      if (
+        onEnded &&
+        isInterviewActiveRef.current &&
+        activeViewRef.current === 'ROOM' &&
+        !isEvaluatingRef.current &&
+        (!activeSessionRef.current || activeSessionRef.current.status !== 'COMPLETED')
+      ) {
+        onEnded();
+      }
     };
 
     audio.onended = finishNotice;
     audio.onerror = () => {
-      if (typeof window !== 'undefined' && window.speechSynthesis) {
+      if (
+        typeof window !== 'undefined' &&
+        window.speechSynthesis &&
+        isInterviewActiveRef.current &&
+        activeViewRef.current === 'ROOM' &&
+        !isEvaluatingRef.current
+      ) {
         const utt = new SpeechSynthesisUtterance(text);
         utt.rate = pacingRate;
         utt.onend = finishNotice;
@@ -769,7 +855,13 @@ export const InterviewPage: React.FC = () => {
       }
     };
     audio.play().catch(() => {
-      if (typeof window !== 'undefined' && window.speechSynthesis) {
+      if (
+        typeof window !== 'undefined' &&
+        window.speechSynthesis &&
+        isInterviewActiveRef.current &&
+        activeViewRef.current === 'ROOM' &&
+        !isEvaluatingRef.current
+      ) {
         const utt = new SpeechSynthesisUtterance(text);
         utt.rate = pacingRate;
         utt.onend = finishNotice;
@@ -790,8 +882,14 @@ export const InterviewPage: React.FC = () => {
 
   // Hold Mode State Machine
   const startHold = (durationSec = 180, reason = 'Interview paused.') => {
-    if (isInterviewOnHold) return;
+    if (
+      isInterviewOnHold ||
+      !isInterviewActiveRef.current ||
+      activeViewRef.current !== 'ROOM' ||
+      isEvaluatingRef.current
+    ) return;
     setIsInterviewOnHold(true);
+    isInterviewOnHoldRef.current = true;
     setHoldSecondsRemaining(durationSec);
     setHoldReason(reason);
 
@@ -799,7 +897,7 @@ export const InterviewPage: React.FC = () => {
     cancelInactivityWatchdog();
     stopAudioRecording();
     if (currentAudioRef.current) {
-      try { currentAudioRef.current.pause(); } catch {}
+      try { currentAudioRef.current.pause(); currentAudioRef.current.src = ''; } catch {}
       currentAudioRef.current = null;
     }
     setIsAiSpeaking(false);
@@ -809,6 +907,16 @@ export const InterviewPage: React.FC = () => {
     if (holdTimerIntervalRef.current) clearInterval(holdTimerIntervalRef.current);
     holdTimerIntervalRef.current = setInterval(() => {
       setHoldSecondsRemaining((prev) => {
+        if (
+          !isInterviewActiveRef.current ||
+          activeViewRef.current !== 'ROOM' ||
+          isEvaluatingRef.current ||
+          (activeSessionRef.current && activeSessionRef.current.status === 'COMPLETED')
+        ) {
+          clearInterval(holdTimerIntervalRef.current);
+          holdTimerIntervalRef.current = null;
+          return 0;
+        }
         if (prev <= 1) {
           clearInterval(holdTimerIntervalRef.current);
           holdTimerIntervalRef.current = null;
@@ -826,19 +934,38 @@ export const InterviewPage: React.FC = () => {
       holdTimerIntervalRef.current = null;
     }
     setIsInterviewOnHold(false);
+    isInterviewOnHoldRef.current = false;
     setInactivityBanner(null);
     inactivityStageRef.current = 0;
+
+    if (
+      !isInterviewActiveRef.current ||
+      activeViewRef.current !== 'ROOM' ||
+      isEvaluatingRef.current ||
+      !activeSessionRef.current ||
+      activeSessionRef.current.status === 'COMPLETED'
+    ) {
+      return;
+    }
 
     const welcomeMsg = autoFromTimeout
       ? "Your 3-minute break has ended. Let's resume the interview!"
       : "Welcome back! Let's resume your interview.";
 
     playNoticeAudio(welcomeMsg, () => {
-      const lastAiTurn = activeSession?.turns?.filter((t) => t.speaker === 'AI').slice(-1)[0];
-      if (lastAiTurn?.message) {
-        speakMessage(lastAiTurn.message, lastAiTurn.audioUrl);
+      if (
+        isInterviewActiveRef.current &&
+        activeViewRef.current === 'ROOM' &&
+        !isEvaluatingRef.current &&
+        activeSessionRef.current &&
+        activeSessionRef.current.status !== 'COMPLETED'
+      ) {
+        const lastAiTurn = activeSession?.turns?.filter((t) => t.speaker === 'AI').slice(-1)[0];
+        if (lastAiTurn?.message) {
+          speakMessage(lastAiTurn.message, lastAiTurn.audioUrl);
+        }
+        armInactivityWatchdog(24000);
       }
-      armInactivityWatchdog(24000);
     });
   };
 
@@ -860,14 +987,30 @@ export const InterviewPage: React.FC = () => {
 
   const armInactivityWatchdog = (delayMs = 24000) => {
     cancelInactivityWatchdog();
-    if (isInterviewOnHold || !activeSession) return;
+    if (
+      !isInterviewActiveRef.current ||
+      activeViewRef.current !== 'ROOM' ||
+      isEvaluatingRef.current ||
+      isInterviewOnHold ||
+      !activeSession ||
+      activeSession.status === 'COMPLETED'
+    ) return;
     inactivityWatchdogTimerRef.current = setTimeout(() => {
+      inactivityWatchdogTimerRef.current = null;
       triggerInactivityStep();
     }, delayMs);
   };
 
   const triggerInactivityStep = () => {
-    if (isInterviewOnHold || !activeSession || isAiSpeaking) return;
+    if (
+      !isInterviewActiveRef.current ||
+      activeViewRef.current !== 'ROOM' ||
+      isEvaluatingRef.current ||
+      isInterviewOnHold ||
+      !activeSession ||
+      activeSession.status === 'COMPLETED' ||
+      isAiSpeaking
+    ) return;
 
     if (candidateInputRef.current && candidateInputRef.current.trim().length > 10) {
       armInactivityWatchdog(24000);
@@ -932,12 +1075,31 @@ export const InterviewPage: React.FC = () => {
       return;
     }
     if (countdownIntervalRef.current) return;
+    if (
+      !isInterviewActiveRef.current ||
+      activeViewRef.current !== 'ROOM' ||
+      isEvaluatingRef.current ||
+      !activeSession ||
+      activeSession.status === 'COMPLETED'
+    ) {
+      clearSilenceCountdown();
+      return;
+    }
 
     const baseWaitMs = (activeAcousticsRef.current?.pauseTimeoutMs || 3000) + silenceExtensionMsRef.current;
     let secondsLeft = Math.max(1, Math.round(baseWaitMs / 1000));
     setSilenceCountdownSeconds(secondsLeft);
 
     countdownIntervalRef.current = setInterval(() => {
+      if (
+        !isInterviewActiveRef.current ||
+        activeViewRef.current !== 'ROOM' ||
+        isEvaluatingRef.current ||
+        (activeSessionRef.current && activeSessionRef.current.status === 'COMPLETED')
+      ) {
+        clearSilenceCountdown();
+        return;
+      }
       secondsLeft--;
       if (secondsLeft >= 1) {
         setSilenceCountdownSeconds(secondsLeft);
@@ -946,7 +1108,15 @@ export const InterviewPage: React.FC = () => {
 
     silenceTimerRef.current = setTimeout(() => {
       clearSilenceCountdown();
-      handleDoneSpeaking();
+      if (
+        isInterviewActiveRef.current &&
+        activeViewRef.current === 'ROOM' &&
+        !isEvaluatingRef.current &&
+        activeSessionRef.current &&
+        activeSessionRef.current.status !== 'COMPLETED'
+      ) {
+        handleDoneSpeaking();
+      }
     }, baseWaitMs);
   };
   triggerSilenceCountdownRef.current = triggerSilenceCountdown;
@@ -954,6 +1124,13 @@ export const InterviewPage: React.FC = () => {
   const handleDoneSpeaking = () => {
     clearSilenceCountdown();
     stopAudioRecording();
+    if (
+      !isInterviewActiveRef.current ||
+      activeViewRef.current !== 'ROOM' ||
+      isEvaluatingRef.current ||
+      !activeSessionRef.current ||
+      activeSessionRef.current.status === 'COMPLETED'
+    ) return;
     const currentText = candidateInputRef.current?.trim();
     if (currentText && !isSubmittingRef.current) {
       handleSubmitTurn(undefined, currentText);
@@ -988,7 +1165,16 @@ export const InterviewPage: React.FC = () => {
 
   // Start active recording session (used both by manual click and automatic handsfree listen)
   const startRecordingSession = async () => {
-    if (isRecording || isInterviewOnHoldRef.current || isSubmittingRef.current) return;
+    if (
+      !isInterviewActiveRef.current ||
+      activeViewRef.current !== 'ROOM' ||
+      isEvaluatingRef.current ||
+      !activeSessionRef.current ||
+      activeSessionRef.current.status === 'COMPLETED' ||
+      isRecording ||
+      isInterviewOnHoldRef.current ||
+      isSubmittingRef.current
+    ) return;
     try {
       isSubmittingRef.current = false;
       setIsRecording(true);
@@ -1015,10 +1201,38 @@ export const InterviewPage: React.FC = () => {
 
   // Triggered when interviewer finishes speaking aloud -> automatically activates microphone in handsfree mode
   const onQuestionSpeechFinished = () => {
-    if (isHandsfreeModeRef.current && activeSession && !isRecording && !isInterviewOnHoldRef.current && !isSubmittingRef.current) {
+    if (
+      !isInterviewActiveRef.current ||
+      activeViewRef.current !== 'ROOM' ||
+      isEvaluatingRef.current ||
+      !activeSessionRef.current ||
+      activeSessionRef.current.status === 'COMPLETED'
+    ) {
+      return;
+    }
+
+    if (
+      isHandsfreeModeRef.current &&
+      !isRecording &&
+      !isInterviewOnHoldRef.current &&
+      !isSubmittingRef.current
+    ) {
       console.log('Interviewer finished speaking -> Auto-listening to candidate handsfree...');
-      setTimeout(async () => {
-        if (!isInterviewOnHoldRef.current && !isSubmittingRef.current && !isRecording) {
+      if (handsfreeTimerRef.current) {
+        clearTimeout(handsfreeTimerRef.current);
+      }
+      handsfreeTimerRef.current = setTimeout(async () => {
+        handsfreeTimerRef.current = null;
+        if (
+          isInterviewActiveRef.current &&
+          activeViewRef.current === 'ROOM' &&
+          !isEvaluatingRef.current &&
+          !isInterviewOnHoldRef.current &&
+          !isSubmittingRef.current &&
+          !isRecording &&
+          activeSessionRef.current &&
+          activeSessionRef.current.status !== 'COMPLETED'
+        ) {
           await startRecordingSession();
         }
       }, 400);
@@ -1026,6 +1240,68 @@ export const InterviewPage: React.FC = () => {
     armInactivityWatchdog(24000);
   };
   onQuestionSpeechFinishedRef.current = onQuestionSpeechFinished;
+
+  // Master teardown for interview session: stops all audio playback, recognition, recording, timers, and watchdogs
+  const stopAllInterviewBackgroundProcesses = () => {
+    isInterviewActiveRef.current = false;
+
+    // 1. Clear handsfree auto-listen timer
+    if (handsfreeTimerRef.current) {
+      clearTimeout(handsfreeTimerRef.current);
+      handsfreeTimerRef.current = null;
+    }
+
+    // 2. Clear recording timeout
+    if (recordingTimeoutRef.current) {
+      clearTimeout(recordingTimeoutRef.current);
+      recordingTimeoutRef.current = null;
+    }
+
+    // 3. Clear silence countdown & timer
+    clearSilenceCountdown();
+
+    // 4. Cancel inactivity watchdog & hide banner
+    cancelInactivityWatchdog();
+    setInactivityBanner(null);
+    inactivityStageRef.current = 0;
+
+    // 5. Stop all audio playback immediately (native streaming audio, notice audio, Web Speech synthesis)
+    if (currentAudioRef.current) {
+      try {
+        currentAudioRef.current.pause();
+        currentAudioRef.current.src = '';
+      } catch {}
+      currentAudioRef.current = null;
+    }
+    if (noticeAudioRef.current) {
+      try {
+        noticeAudioRef.current.pause();
+        noticeAudioRef.current.src = '';
+      } catch {}
+      noticeAudioRef.current = null;
+    }
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      try {
+        window.speechSynthesis.cancel();
+      } catch {}
+    }
+    setIsAiSpeaking(false);
+
+    // 6. Stop microphone recording & speech recognition
+    stopAudioRecording();
+
+    // 7. Stop live audio monitoring & release all media stream tracks
+    stopLiveAudioMonitoring();
+
+    // 8. Cancel hold timer
+    if (holdTimerIntervalRef.current) {
+      clearInterval(holdTimerIntervalRef.current);
+      holdTimerIntervalRef.current = null;
+    }
+    setIsInterviewOnHold(false);
+    isInterviewOnHoldRef.current = false;
+  };
+  stopAllInterviewBackgroundProcessesRef.current = stopAllInterviewBackgroundProcesses;
 
   // Toggle Speech & Audio Recording (Press-to-start / Press-to-stop across natural pauses)
   const toggleSpeechRecognition = async () => {
@@ -1073,11 +1349,17 @@ export const InterviewPage: React.FC = () => {
 
   // Complete Interview & Run Evaluation
   const handleCompleteInterview = async (overrideSessionId?: string) => {
+    if (isEvaluatingRef.current) return;
     const targetSessionId = typeof overrideSessionId === 'string' ? overrideSessionId : activeSession?.id;
     if (!targetSessionId) return;
+
+    // Immediately stop all interview background activities (mic, audio, timers, watchdog)
+    stopAllInterviewBackgroundProcesses();
+    isEvaluatingRef.current = true;
+    setIsEvaluating(true);
+    setError(null);
+
     try {
-      setIsEvaluating(true);
-      setError(null);
       const res = await fetch(
         `${API_BASE}/interview/sessions/${targetSessionId}/complete`,
         {
@@ -1088,6 +1370,8 @@ export const InterviewPage: React.FC = () => {
 
       const data = await res.json();
       if (data.success) {
+        // Enforce full teardown of all background processes
+        stopAllInterviewBackgroundProcesses();
         setActiveSession(data.data);
         setActiveView('EVALUATION');
         fetchPastSessions();
@@ -1098,6 +1382,7 @@ export const InterviewPage: React.FC = () => {
       setError(err.message || 'Error completing interview');
     } finally {
       setIsEvaluating(false);
+      isEvaluatingRef.current = false;
     }
   };
 
@@ -1105,7 +1390,7 @@ export const InterviewPage: React.FC = () => {
   const handleSubmitTurn = async (e?: React.FormEvent, overrideText?: string) => {
     if (e) e.preventDefault();
     const currentMessage = (overrideText !== undefined ? overrideText : candidateInput).trim();
-    if (!activeSession || !currentMessage || isSubmittingTurn) return;
+    if (!activeSession || !currentMessage || isSubmittingTurn || isEvaluatingRef.current || !isInterviewActiveRef.current) return;
 
     // 1. Guard against speech recognition and MediaRecorder race conditions:
     isSubmittingRef.current = true;
@@ -1145,13 +1430,12 @@ export const InterviewPage: React.FC = () => {
       const data = await res.json();
       if (data.success) {
         setActiveSession(data.data.session);
-        if (data.data.aiTurn?.message) {
-          speakMessage(data.data.aiTurn.message, data.data.aiTurn.audioUrl);
-        }
 
         // Automatic transition to results/scorecard view when session concludes
         if (data.data.isCompleted || data.data.session?.status === 'COMPLETED') {
           await handleCompleteInterview(data.data.session?.id || activeSession.id);
+        } else if (data.data.aiTurn?.message) {
+          speakMessage(data.data.aiTurn.message, data.data.aiTurn.audioUrl);
         }
       } else {
         setError(data.message || 'Failed to submit interview turn');
@@ -1169,7 +1453,7 @@ export const InterviewPage: React.FC = () => {
 
   // Skip Question Turn
   const handleSkipTurn = async () => {
-    if (!activeSession || isSubmittingTurn) return;
+    if (!activeSession || isSubmittingTurn || isEvaluatingRef.current || !isInterviewActiveRef.current) return;
     clearSilenceCountdown();
     cancelInactivityWatchdog();
     setInactivityBanner(null);
@@ -1184,12 +1468,13 @@ export const InterviewPage: React.FC = () => {
       const data = await res.json();
       if (data.success) {
         setActiveSession(data.data);
-        const latestAi = [...(data.data.turns || [])].reverse().find((t: any) => t.speaker === 'AI');
-        if (latestAi?.message) {
-          speakMessage(latestAi.message, latestAi.audioUrl);
-        }
         if (data.data.status === 'COMPLETED') {
           await handleCompleteInterview(data.data.id);
+        } else {
+          const latestAi = [...(data.data.turns || [])].reverse().find((t: any) => t.speaker === 'AI');
+          if (latestAi?.message) {
+            speakMessage(latestAi.message, latestAi.audioUrl);
+          }
         }
       } else {
         setError(data.message || 'Failed to skip question');
@@ -2064,7 +2349,10 @@ export const InterviewPage: React.FC = () => {
 
               <button
                 id="btn-exit-interview-room"
-                onClick={() => setActiveView('CATALOG')}
+                onClick={() => {
+                  stopAllInterviewBackgroundProcesses();
+                  setActiveView('CATALOG');
+                }}
                 style={{
                   background: 'none',
                   border: '1px solid var(--border-color)',

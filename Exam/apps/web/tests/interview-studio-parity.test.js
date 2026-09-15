@@ -99,5 +99,14 @@ describe('AI Interview Studio Parity Tests (ExamOS <-> Video_model_train)', () =
     assert.ok(pageContent.includes('onQuestionSpeechFinished'), 'Must define onQuestionSpeechFinished');
     assert.ok(pageContent.includes('isHandsfreeMode'), 'Must track isHandsfreeMode state');
   });
+
+  test('PARITY-010: Complete Teardown of Background Processes on Finish & Exit', () => {
+    const pageContent = fs.readFileSync(interviewPagePath, 'utf8');
+    assert.ok(pageContent.includes('stopAllInterviewBackgroundProcesses'), 'Must define stopAllInterviewBackgroundProcesses');
+    assert.ok(pageContent.includes('isInterviewActiveRef'), 'Must track isInterviewActiveRef');
+    assert.ok(pageContent.includes('isEvaluatingRef'), 'Must track isEvaluatingRef');
+    assert.ok(pageContent.includes('handsfreeTimerRef'), 'Must track handsfreeTimerRef to clear delays');
+  });
 });
+
 
