@@ -107,6 +107,79 @@ describe('AI Interview Studio Parity Tests (ExamOS <-> Video_model_train)', () =
     assert.ok(pageContent.includes('isEvaluatingRef'), 'Must track isEvaluatingRef');
     assert.ok(pageContent.includes('handsfreeTimerRef'), 'Must track handsfreeTimerRef to clear delays');
   });
+
+  test('PARITY-011: Adaptive Silence Detection & Incomplete Thought Guard (Video_model_train Parity)', () => {
+    const audioMeasurementPath = path.resolve(__dirname, '../src/utils/audioMeasurement.ts');
+    const audioContent = fs.readFileSync(audioMeasurementPath, 'utf8');
+    const pageContent = fs.readFileSync(interviewPagePath, 'utf8');
+
+    // 1. Verify utility functions and sets are defined in audioMeasurement.ts
+    assert.ok(audioContent.includes('export const CONTINUATION_WORDS'), 'Must export CONTINUATION_WORDS');
+    assert.ok(audioContent.includes('export function isIncompleteCandidateThought'), 'Must export isIncompleteCandidateThought');
+    assert.ok(audioContent.includes('export function isMeaningfulCandidateResponse'), 'Must export isMeaningfulCandidateResponse');
+    assert.ok(audioContent.includes('export function getEffectiveSilenceWaitMs'), 'Must export getEffectiveSilenceWaitMs');
+
+    // 2. Verify InterviewPage.tsx wires up adaptive timing refs and functions
+    assert.ok(pageContent.includes('getEffectiveSilenceWaitMs'), 'InterviewPage must import and call getEffectiveSilenceWaitMs');
+    assert.ok(pageContent.includes('isMeaningfulCandidateResponse'), 'InterviewPage must filter trivial fillers with isMeaningfulCandidateResponse');
+    assert.ok(pageContent.includes('recordingStartTimeRef'), 'InterviewPage must track answer duration via recordingStartTimeRef');
+    assert.ok(pageContent.includes('lastSpeechActivityTimeRef'), 'InterviewPage must track voice frames with lastSpeechActivityTimeRef');
+
+    // 3. Algorithmic verification: Incomplete thought regex and continuation connectors
+    const continuationWords = new Set([
+      'and', 'or', 'but', 'nor', 'so', 'yet', 'because', 'although', 'though', 'even',
+      'if', 'unless', 'while', 'whereas', 'since', 'after', 'before', 'until', 'when',
+      'whenever', 'where', 'wherever', 'whether', 'as', 'that', 'which', 'who', 'whom',
+      'whose', 'furthermore', 'moreover', 'besides', 'additionally', 'specifically',
+      'namely', 'like', 'including', 'with', 'without', 'to', 'for', 'of', 'in', 'on', 'at'
+    ]);
+
+    const isIncompleteThought = (text) => {
+      if (!text || typeof text !== 'string') return false;
+      const clean = text.replace(/\[.*?\]|\(.*?\)/g, '').trim();
+      if (!clean) return false;
+      if (/([,\-–—:;]|\.{2,}|…)\s*$/.test(clean)) return true;
+      if (/(such as|for example|for instance|in order to|as well as)\s*$/i.test(clean)) return true;
+      const words = clean.toLowerCase().match(/[a-z0-9]+/g) || [];
+      if (words.length > 0 && continuationWords.has(words[words.length - 1])) {
+        return true;
+      }
+      return false;
+    };
+
+    const getEffectiveWait = (text = '', durationMs = 0, baseWaitMs = 3000) => {
+      let bonusMs = 0;
+      const words = (text || '').replace(/\[.*?\]|\(.*?\)/g, '').trim().split(/\s+/).filter(Boolean);
+      const wordCount = words.length;
+      if (wordCount >= 35 || durationMs >= 20000) bonusMs += 1800;
+      else if (wordCount >= 15 || durationMs >= 10000) bonusMs += 1000;
+      else if (wordCount >= 6 || durationMs >= 5000) bonusMs += 400;
+      if (isIncompleteThought(text)) bonusMs += 2200;
+      return Math.min(7000, baseWaitMs + bonusMs);
+    };
+
+    // Candidate pauses mid-clause with trailing comma or hyphen
+    assert.strictEqual(isIncompleteThought('First we configure the load balancer, and then,'), true);
+    assert.strictEqual(isIncompleteThought('The database latency spiked because...'), true);
+    assert.strictEqual(isIncompleteThought('We used several cloud providers such as'), true);
+    assert.strictEqual(isIncompleteThought('That completes my answer on indexing.'), false);
+
+    // Baseline response: 3000ms
+    assert.strictEqual(getEffectiveWait('Hello there', 1000, 3000), 3000);
+
+    // Medium response (16 words): 3000ms + 1000ms bonus = 4000ms
+    const mediumText = 'We implemented a distributed redis cache that reduced our overall database read latency by sixty percent.';
+    assert.strictEqual(getEffectiveWait(mediumText, 8000, 3000), 4000);
+
+    // Incomplete thought clause: 3000ms + 400ms (6 words) + 2200ms (incomplete) = 5600ms
+    assert.strictEqual(getEffectiveWait('We started building the backend service because', 6000, 3000), 5600);
+
+    // Long comprehensive answer (35+ words) capped at 7000ms max
+    const longText = 'In my previous project, we encountered heavy database bottlenecks during high-traffic flash sales. To mitigate this issue, I redesigned the caching tier using Redis clusters and implemented idempotent message queues with RabbitMQ to handle asynchronous order processing smoothly.';
+    assert.strictEqual(getEffectiveWait(longText, 25000, 3000), 4800); // 3000 + 1800
+    assert.strictEqual(getEffectiveWait(longText + ' and furthermore,', 25000, 3000), 7000); // 3000 + 1800 + 2200 = 7000 capped
+  });
 });
+
 
 

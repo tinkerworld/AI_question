@@ -519,3 +519,105 @@ export function calculateTurnAcousticParameters(
     isPersonalized: active,
   };
 }
+
+/**
+ * Common continuation words, transition markers, and connective prepositions
+ * indicating the candidate is mid-thought or formulating their next clause.
+ */
+export const CONTINUATION_WORDS = new Set([
+  'and', 'because', 'but', 'so', 'or', 'also', 'which', 'that',
+  'although', 'though', 'since', 'while', 'whereas',
+  'if', 'when', 'unless', 'until',
+  'firstly', 'secondly', 'thirdly', 'finally', 'next',
+  'furthermore', 'moreover', 'however', 'therefore', 'additionally',
+  'specifically', 'like', 'including', 'such',
+  'to', 'with', 'for', 'in', 'on', 'at', 'by', 'about', 'into', 'through', 'during'
+]);
+
+export const NON_MEANINGFUL_SINGLE_WORDS = new Set([
+  'you', 'thank', 'thanks', 'bye', 'goodbye', 'um', 'uh', 'ah', 'oh', 
+  'er', 'hmm', 'yeah', 'yes', 'no', 'ok', 'okay', 'right', 'alright', 
+  'so', 'well', 'like', 'music', 'silence', 'blank_audio'
+]);
+
+export function isIncompleteCandidateThought(text: string): boolean {
+  if (!text || typeof text !== 'string') return false;
+  const clean = text.replace(/\[.*?\]|\(.*?\)/g, '').trim();
+  if (!clean) return false;
+
+  // 1. Trailing punctuation that explicitly indicates continuation or mid-clause pause
+  if (/[,\-–—…;:]\s*$/.test(clean)) {
+    return true;
+  }
+
+  // 2. Trailing multi-word connector phrases
+  if (/(such as|for example|for instance|as well as|in order to|due to|which means|in terms of|that is|on the other hand|in addition to)\s*$/i.test(clean)) {
+    return true;
+  }
+
+  // 3. Last spoken word is a coordinating conjunction, subordinating conjunction, or transition marker
+  const words = clean.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').trim().split(/\s+/).filter(Boolean);
+  if (words.length > 0) {
+    const lastWord = words[words.length - 1];
+    if (CONTINUATION_WORDS.has(lastWord)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+export function isMeaningfulCandidateResponse(text: string): boolean {
+  if (!text || typeof text !== 'string') return false;
+  const clean = text.replace(/\[.*?\]|\(.*?\)/g, '').trim();
+  if (!clean) return false;
+
+  const words = clean.toLowerCase().match(/[a-z0-9]+/g) || [];
+  if (words.length === 0) return false;
+  if (words.length === 1 && NON_MEANINGFUL_SINGLE_WORDS.has(words[0])) {
+    return false;
+  }
+  const lettersOnly = clean.replace(/[^a-zA-Z0-9]/g, '');
+  if (lettersOnly.length < 2) return false;
+
+  return true;
+}
+
+/**
+ * Calculates adaptive silence wait time for candidate responses.
+ * Prevents premature submission when candidate is giving a long answer or pausing between clauses.
+ * 
+ * - Base wait: From user-selected pacing (fast: 1.8s, natural: 3.0s, thoughtful: 4.0s, relaxed: 5.0s)
+ * - Long answer scaling:
+ *     >= 35 words or >= 20s elapsed: +1800ms
+ *     >= 15 words or >= 10s elapsed: +1000ms
+ *     >= 6 words or >= 5s elapsed: +400ms
+ * - Incomplete thought guard: +2200ms when ending on conjunction/transition word
+ * - Capped at 7000ms to preserve conversational responsiveness.
+ */
+export function getEffectiveSilenceWaitMs(
+  text = '',
+  recordingDurationMs = 0,
+  baseWaitMs = 3000
+): number {
+  let bonusMs = 0;
+  const words = (text || '').replace(/\[.*?\]|\(.*?\)/g, '').trim().split(/\s+/).filter(Boolean);
+  const wordCount = words.length;
+
+  // Adaptive scaling: longer, structured answers receive generous breathing room between sentences
+  if (wordCount >= 35 || recordingDurationMs >= 20000) {
+    bonusMs += 1800;
+  } else if (wordCount >= 15 || recordingDurationMs >= 10000) {
+    bonusMs += 1000;
+  } else if (wordCount >= 6 || recordingDurationMs >= 5000) {
+    bonusMs += 400;
+  }
+
+  // Incomplete sentence guard: grant additional grace period if candidate ended on a connector
+  if (isIncompleteCandidateThought(text)) {
+    bonusMs += 2200;
+  }
+
+  return Math.min(7000, baseWaitMs + bonusMs);
+}
+

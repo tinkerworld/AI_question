@@ -18,6 +18,9 @@ import {
   setUsePersonalizedVoiceCalibration,
   computeRms,
   rmsToDbfs,
+  getEffectiveSilenceWaitMs,
+  isMeaningfulCandidateResponse,
+  isIncompleteCandidateThought,
 } from '../utils/audioMeasurement';
 
 // Helper to safely extract rubric criteria regardless of backend structure (Array, Object map, or undefined)
@@ -145,6 +148,8 @@ export const InterviewPage: React.FC = () => {
   const silenceExtensionMsRef = useRef<number>(0);
   const silenceTimerRef = useRef<any>(null);
   const countdownIntervalRef = useRef<any>(null);
+  const recordingStartTimeRef = useRef<number>(0);
+  const lastSpeechActivityTimeRef = useRef<number>(0);
 
   // Speech Pacing Mode ('fast' | 'natural' | 'thoughtful' | 'relaxed')
   const [speechPacing, setSpeechPacing] = useState<'fast' | 'natural' | 'thoughtful' | 'relaxed'>('natural');
@@ -296,6 +301,9 @@ export const InterviewPage: React.FC = () => {
     setIsRecording(false);
     clearSilenceCountdown();
     stopLiveAudioMonitoring();
+    recordingStartTimeRef.current = 0;
+    lastSpeechActivityTimeRef.current = 0;
+    silenceExtensionMsRef.current = 0;
     if (recordingTimeoutRef.current) {
       clearTimeout(recordingTimeoutRef.current);
       recordingTimeoutRef.current = null;
@@ -347,14 +355,40 @@ export const InterviewPage: React.FC = () => {
         if (dbfs > activeAcousticsRef.current.silenceThresholdDbfs) {
           cancelInactivityWatchdog();
           const now = Date.now();
+          lastSpeechActivityTimeRef.current = now;
           if (now - lastResetTime > 200) {
             lastResetTime = now;
+            // Candidate is actively speaking aloud: reset silence countdown so mid-sentence pauses never submit early!
+            clearSilenceCountdown();
+
+            const currentTranscript = candidateInputRef.current?.trim() || '';
+            const recDurationMs = recordingStartTimeRef.current ? now - recordingStartTimeRef.current : 0;
+            const baseWaitMs = activeAcousticsRef.current?.pauseTimeoutMs || 3000;
+            const effectiveWaitMs = getEffectiveSilenceWaitMs(currentTranscript, recDurationMs, baseWaitMs) + silenceExtensionMsRef.current;
+
             if (recordingTimeoutRef.current) {
               clearTimeout(recordingTimeoutRef.current);
             }
             recordingTimeoutRef.current = setTimeout(() => {
-              stopAudioRecording();
-            }, activeAcousticsRef.current.pauseTimeoutMs);
+              if (Date.now() - lastSpeechActivityTimeRef.current >= effectiveWaitMs) {
+                stopAudioRecording();
+              }
+            }, effectiveWaitMs + 1500);
+
+            if (isMeaningfulCandidateResponse(currentTranscript)) {
+              silenceTimerRef.current = setTimeout(() => {
+                clearSilenceCountdown();
+                if (
+                  isInterviewActiveRef.current &&
+                  activeViewRef.current === 'ROOM' &&
+                  !isEvaluatingRef.current &&
+                  activeSessionRef.current &&
+                  activeSessionRef.current.status !== 'COMPLETED'
+                ) {
+                  handleDoneSpeaking();
+                }
+              }, effectiveWaitMs);
+            }
           }
         }
         liveAnimFrameRef.current = requestAnimationFrame(monitorLoop);
@@ -527,13 +561,18 @@ export const InterviewPage: React.FC = () => {
         triggerSilenceCountdownRef.current(fullTranscript);
       }
 
-      // Reset pause timeout on active speech input (Sprint 4)
+      // Reset pause timeout on active speech input with adaptive buffer
       if (recordingTimeoutRef.current) {
         clearTimeout(recordingTimeoutRef.current);
       }
+      const recDurationMs = recordingStartTimeRef.current ? Date.now() - recordingStartTimeRef.current : 0;
+      const baseWaitMs = activeAcousticsRef.current?.pauseTimeoutMs || 3000;
+      const effectiveWaitMs = getEffectiveSilenceWaitMs(fullTranscript, recDurationMs, baseWaitMs) + silenceExtensionMsRef.current;
       recordingTimeoutRef.current = setTimeout(() => {
-        stopAudioRecording();
-      }, (activeAcousticsRef.current.pauseTimeoutMs || 3000) + silenceExtensionMsRef.current);
+        if (Date.now() - lastSpeechActivityTimeRef.current >= effectiveWaitMs) {
+          stopAudioRecording();
+        }
+      }, effectiveWaitMs + 1500);
     };
 
     recog.onend = () => {
@@ -1057,24 +1096,39 @@ export const InterviewPage: React.FC = () => {
   const handleExtendSilence = (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     silenceExtensionMsRef.current += 5000;
-    setSilenceCountdownSeconds((prev) => (prev !== null ? prev + 5 : 5));
+    const recDurationMs = recordingStartTimeRef.current ? Date.now() - recordingStartTimeRef.current : 0;
+    const baseWaitMs = activeAcousticsRef.current?.pauseTimeoutMs || 3000;
+    const effectiveWaitMs = getEffectiveSilenceWaitMs(candidateInputRef.current?.trim() || '', recDurationMs, baseWaitMs) + silenceExtensionMsRef.current;
+    let secondsLeft = Math.max(1, Math.round(effectiveWaitMs / 1000));
+    setSilenceCountdownSeconds(secondsLeft);
     if (silenceTimerRef.current) {
       clearTimeout(silenceTimerRef.current);
     }
-    const currentWait = (silenceCountdownSeconds ? silenceCountdownSeconds * 1000 : 3000) + 5000;
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+    }
+    countdownIntervalRef.current = setInterval(() => {
+      secondsLeft--;
+      if (secondsLeft >= 1) {
+        setSilenceCountdownSeconds(secondsLeft);
+      }
+    }, 1000);
     silenceTimerRef.current = setTimeout(() => {
       clearSilenceCountdown();
       handleDoneSpeaking();
-    }, currentWait);
+    }, effectiveWaitMs);
   };
 
   const triggerSilenceCountdown = (text: string) => {
+    lastSpeechActivityTimeRef.current = Date.now();
+
+    // Whenever speech recognition yields new text, always clear active countdown so talking never gets cut off
+    clearSilenceCountdown();
+
     const cleaned = text.trim();
-    if (!cleaned || cleaned.split(/\s+/).length < 2) {
-      clearSilenceCountdown();
+    if (!isMeaningfulCandidateResponse(cleaned)) {
       return;
     }
-    if (countdownIntervalRef.current) return;
     if (
       !isInterviewActiveRef.current ||
       activeViewRef.current !== 'ROOM' ||
@@ -1082,12 +1136,13 @@ export const InterviewPage: React.FC = () => {
       !activeSession ||
       activeSession.status === 'COMPLETED'
     ) {
-      clearSilenceCountdown();
       return;
     }
 
-    const baseWaitMs = (activeAcousticsRef.current?.pauseTimeoutMs || 3000) + silenceExtensionMsRef.current;
-    let secondsLeft = Math.max(1, Math.round(baseWaitMs / 1000));
+    const recDurationMs = recordingStartTimeRef.current ? Date.now() - recordingStartTimeRef.current : 0;
+    const baseWaitMs = activeAcousticsRef.current?.pauseTimeoutMs || 3000;
+    const effectiveWaitMs = getEffectiveSilenceWaitMs(cleaned, recDurationMs, baseWaitMs) + silenceExtensionMsRef.current;
+    let secondsLeft = Math.max(1, Math.round(effectiveWaitMs / 1000));
     setSilenceCountdownSeconds(secondsLeft);
 
     countdownIntervalRef.current = setInterval(() => {
@@ -1117,7 +1172,7 @@ export const InterviewPage: React.FC = () => {
       ) {
         handleDoneSpeaking();
       }
-    }, baseWaitMs);
+    }, effectiveWaitMs);
   };
   triggerSilenceCountdownRef.current = triggerSilenceCountdown;
 
@@ -1177,6 +1232,9 @@ export const InterviewPage: React.FC = () => {
     ) return;
     try {
       isSubmittingRef.current = false;
+      recordingStartTimeRef.current = Date.now();
+      lastSpeechActivityTimeRef.current = Date.now();
+      silenceExtensionMsRef.current = 0;
       setIsRecording(true);
       startLiveAudioMonitoring();
       await startAudioRecording();
@@ -1189,10 +1247,12 @@ export const InterviewPage: React.FC = () => {
       }
 
       if (recordingTimeoutRef.current) clearTimeout(recordingTimeoutRef.current);
-      // Candidate personalized pause tolerance duration (Sprint 4)
+      // Give initial generous window before inactivity watchdog/silence detection kicks in
       recordingTimeoutRef.current = setTimeout(() => {
-        stopAudioRecording();
-      }, activeAcousticsRef.current.pauseTimeoutMs);
+        if (Date.now() - lastSpeechActivityTimeRef.current >= 24000) {
+          stopAudioRecording();
+        }
+      }, 24000);
     } catch (err) {
       console.warn('startRecordingSession error:', err);
       stopAudioRecording();
@@ -1289,6 +1349,9 @@ export const InterviewPage: React.FC = () => {
 
     // 6. Stop microphone recording & speech recognition
     stopAudioRecording();
+    recordingStartTimeRef.current = 0;
+    lastSpeechActivityTimeRef.current = 0;
+    silenceExtensionMsRef.current = 0;
 
     // 7. Stop live audio monitoring & release all media stream tracks
     stopLiveAudioMonitoring();
