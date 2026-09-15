@@ -229,6 +229,7 @@ export const InterviewPage: React.FC = () => {
   const [showReferenceDrawer, setShowReferenceDrawer] = useState<boolean>(false);
   const isSubmittingRef = useRef<boolean>(false);
   const lastSpokenTurnIdRef = useRef<string | null>(null);
+  const currentAudioSessionTokenRef = useRef<number>(0);
 
   useEffect(() => {
     activeViewRef.current = activeView;
@@ -726,6 +727,38 @@ export const InterviewPage: React.FC = () => {
     }
   }, [activeSession?.turns]);
 
+  // Guaranteed single-audio mutex: stops ALL currently playing audio elements and cancels speech synthesis
+  const stopAllAudioPlayback = () => {
+    // Invalidate any in-flight async audio callbacks
+    currentAudioSessionTokenRef.current++;
+    if (currentAudioRef.current) {
+      try {
+        currentAudioRef.current.onended = null;
+        currentAudioRef.current.onerror = null;
+        currentAudioRef.current.onplaying = null;
+        currentAudioRef.current.pause();
+        currentAudioRef.current.src = '';
+      } catch {}
+      currentAudioRef.current = null;
+    }
+    if (noticeAudioRef.current) {
+      try {
+        noticeAudioRef.current.onended = null;
+        noticeAudioRef.current.onerror = null;
+        noticeAudioRef.current.onplaying = null;
+        noticeAudioRef.current.pause();
+        noticeAudioRef.current.src = '';
+      } catch {}
+      noticeAudioRef.current = null;
+    }
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      try {
+        window.speechSynthesis.cancel();
+      } catch {}
+    }
+    setIsAiSpeaking(false);
+  };
+
   // Speak AI message using Native Streaming Audio or SpeechSynthesis fallback
   const speakMessage = (text: string, audioUrl?: string | null) => {
     // If interview has completed, evaluating, or user is not in room: do not speak or auto-listen
@@ -753,27 +786,14 @@ export const InterviewPage: React.FC = () => {
     // Stop recording while AI speaks to eliminate microphone echo feedback
     stopAudioRecording();
 
-    if (currentAudioRef.current) {
-      try {
-        currentAudioRef.current.pause();
-        currentAudioRef.current.src = '';
-      } catch {}
-      currentAudioRef.current = null;
-    }
-    if (noticeAudioRef.current) {
-      try {
-        noticeAudioRef.current.pause();
-        noticeAudioRef.current.src = '';
-      } catch {}
-      noticeAudioRef.current = null;
-    }
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
-      window.speechSynthesis.cancel();
-    }
+    // Kill ANY existing audio playback immediately and acquire a fresh session token
+    stopAllAudioPlayback();
+    const token = currentAudioSessionTokenRef.current;
 
     const pacingRate = speechPacing === 'fast' ? 1.1 : speechPacing === 'thoughtful' ? 0.9 : speechPacing === 'relaxed' ? 0.85 : 1.0;
 
     const handleSpeechFinished = () => {
+      if (token !== currentAudioSessionTokenRef.current) return;
       setIsAiSpeaking(false);
       currentAudioRef.current = null;
       if (
@@ -795,9 +815,21 @@ export const InterviewPage: React.FC = () => {
         const audio = new Audio(freshAudioUrl);
         audio.playbackRate = pacingRate;
         currentAudioRef.current = audio;
-        audio.onended = handleSpeechFinished;
+
+        audio.onended = () => {
+          if (token === currentAudioSessionTokenRef.current) {
+            handleSpeechFinished();
+          }
+        };
+
         audio.onerror = () => {
-          currentAudioRef.current = null;
+          if (token !== currentAudioSessionTokenRef.current) return;
+          console.warn('Audio stream error, falling back to browser speech synthesis');
+          audio.onended = null;
+          audio.onerror = null;
+          try { audio.pause(); audio.src = ''; } catch {}
+          if (currentAudioRef.current === audio) currentAudioRef.current = null;
+
           if (
             isInterviewActiveRef.current &&
             activeViewRef.current === 'ROOM' &&
@@ -809,36 +841,64 @@ export const InterviewPage: React.FC = () => {
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.rate = pacingRate;
             utterance.pitch = 1.0;
-            utterance.onend = handleSpeechFinished;
-            utterance.onerror = handleSpeechFinished;
+            utterance.onend = () => {
+              if (token === currentAudioSessionTokenRef.current) handleSpeechFinished();
+            };
+            utterance.onerror = () => {
+              if (token === currentAudioSessionTokenRef.current) handleSpeechFinished();
+            };
             window.speechSynthesis.speak(utterance);
           } else {
             setIsAiSpeaking(false);
             handleSpeechFinished();
           }
         };
-        audio.play().catch(() => {
-          if (
-            isInterviewActiveRef.current &&
-            activeViewRef.current === 'ROOM' &&
-            !isEvaluatingRef.current &&
-            typeof window !== 'undefined' &&
-            window.speechSynthesis
-          ) {
-            setIsAiSpeaking(true);
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.rate = pacingRate;
-            utterance.pitch = 1.0;
-            utterance.onend = handleSpeechFinished;
-            utterance.onerror = handleSpeechFinished;
-            window.speechSynthesis.speak(utterance);
-          } else {
-            setIsAiSpeaking(false);
-            handleSpeechFinished();
-          }
-        });
+
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          playPromise.catch((err) => {
+            // CRITICAL: If aborted because audio was paused or superseded, DO NOT fall back!
+            if (err && (err.name === 'AbortError' || err.code === 20)) {
+              return;
+            }
+            if (token !== currentAudioSessionTokenRef.current) {
+              return;
+            }
+            console.warn('Audio play() rejected:', err);
+            // Autoplay blocked by browser policy
+            if (
+              isInterviewActiveRef.current &&
+              activeViewRef.current === 'ROOM' &&
+              !isEvaluatingRef.current &&
+              typeof window !== 'undefined' &&
+              window.speechSynthesis
+            ) {
+              audio.onended = null;
+              audio.onerror = null;
+              try { audio.pause(); audio.src = ''; } catch {}
+              if (currentAudioRef.current === audio) currentAudioRef.current = null;
+
+              setIsAiSpeaking(true);
+              const utterance = new SpeechSynthesisUtterance(text);
+              utterance.rate = pacingRate;
+              utterance.pitch = 1.0;
+              utterance.onend = () => {
+                if (token === currentAudioSessionTokenRef.current) handleSpeechFinished();
+              };
+              utterance.onerror = () => {
+                if (token === currentAudioSessionTokenRef.current) handleSpeechFinished();
+              };
+              window.speechSynthesis.speak(utterance);
+            } else {
+              setIsAiSpeaking(false);
+              handleSpeechFinished();
+            }
+          });
+        }
         return;
-      } catch {}
+      } catch (err) {
+        console.warn('Failed to initialize Audio element:', err);
+      }
     }
 
     if (typeof window === 'undefined' || !window.speechSynthesis) {
@@ -849,8 +909,12 @@ export const InterviewPage: React.FC = () => {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.rate = pacingRate;
     utterance.pitch = 1.0;
-    utterance.onend = handleSpeechFinished;
-    utterance.onerror = handleSpeechFinished;
+    utterance.onend = () => {
+      if (token === currentAudioSessionTokenRef.current) handleSpeechFinished();
+    };
+    utterance.onerror = () => {
+      if (token === currentAudioSessionTokenRef.current) handleSpeechFinished();
+    };
     window.speechSynthesis.speak(utterance);
   };
 
@@ -876,17 +940,9 @@ export const InterviewPage: React.FC = () => {
       }
       return;
     }
-    if (currentAudioRef.current) {
-      try { currentAudioRef.current.pause(); currentAudioRef.current.src = ''; } catch {}
-      currentAudioRef.current = null;
-    }
-    if (noticeAudioRef.current) {
-      try { noticeAudioRef.current.pause(); noticeAudioRef.current.src = ''; } catch {}
-      noticeAudioRef.current = null;
-    }
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
-      try { window.speechSynthesis.cancel(); } catch {}
-    }
+
+    stopAllAudioPlayback();
+    const token = currentAudioSessionTokenRef.current;
 
     const pacingRate = speechPacing === 'fast' ? 1.1 : speechPacing === 'thoughtful' ? 0.9 : speechPacing === 'relaxed' ? 0.85 : 1.0;
     const synthUrl = `${API_BASE}/interview/audio/synthesize?voice=${encodeURIComponent(selectedVoicePersona)}&rate=${pacingRate}&text=${encodeURIComponent(text)}`;
@@ -897,7 +953,7 @@ export const InterviewPage: React.FC = () => {
 
     let finished = false;
     const finishNotice = () => {
-      if (finished) return;
+      if (finished || token !== currentAudioSessionTokenRef.current) return;
       finished = true;
       setIsAiSpeaking(false);
       noticeAudioRef.current = null;
@@ -914,6 +970,11 @@ export const InterviewPage: React.FC = () => {
 
     audio.onended = finishNotice;
     audio.onerror = () => {
+      if (token !== currentAudioSessionTokenRef.current) return;
+      audio.onended = null;
+      audio.onerror = null;
+      try { audio.pause(); audio.src = ''; } catch {}
+      noticeAudioRef.current = null;
       if (
         typeof window !== 'undefined' &&
         window.speechSynthesis &&
@@ -921,6 +982,7 @@ export const InterviewPage: React.FC = () => {
         activeViewRef.current === 'ROOM' &&
         !isEvaluatingRef.current
       ) {
+        setIsAiSpeaking(true);
         const utt = new SpeechSynthesisUtterance(text);
         utt.rate = pacingRate;
         utt.onend = finishNotice;
@@ -930,23 +992,34 @@ export const InterviewPage: React.FC = () => {
         finishNotice();
       }
     };
-    audio.play().catch(() => {
-      if (
-        typeof window !== 'undefined' &&
-        window.speechSynthesis &&
-        isInterviewActiveRef.current &&
-        activeViewRef.current === 'ROOM' &&
-        !isEvaluatingRef.current
-      ) {
-        const utt = new SpeechSynthesisUtterance(text);
-        utt.rate = pacingRate;
-        utt.onend = finishNotice;
-        utt.onerror = finishNotice;
-        window.speechSynthesis.speak(utt);
-      } else {
-        finishNotice();
-      }
-    });
+
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+      playPromise.catch((err) => {
+        if (err && (err.name === 'AbortError' || err.code === 20)) return;
+        if (token !== currentAudioSessionTokenRef.current) return;
+        audio.onended = null;
+        audio.onerror = null;
+        try { audio.pause(); audio.src = ''; } catch {}
+        noticeAudioRef.current = null;
+        if (
+          typeof window !== 'undefined' &&
+          window.speechSynthesis &&
+          isInterviewActiveRef.current &&
+          activeViewRef.current === 'ROOM' &&
+          !isEvaluatingRef.current
+        ) {
+          setIsAiSpeaking(true);
+          const utt = new SpeechSynthesisUtterance(text);
+          utt.rate = pacingRate;
+          utt.onend = finishNotice;
+          utt.onerror = finishNotice;
+          window.speechSynthesis.speak(utt);
+        } else {
+          finishNotice();
+        }
+      });
+    }
   };
 
   // Auto-speak: Ensure the AI interviewer ALWAYS starts the conversation automatically
@@ -1388,26 +1461,7 @@ export const InterviewPage: React.FC = () => {
     inactivityStageRef.current = 0;
 
     // 5. Stop all audio playback immediately (native streaming audio, notice audio, Web Speech synthesis)
-    if (currentAudioRef.current) {
-      try {
-        currentAudioRef.current.pause();
-        currentAudioRef.current.src = '';
-      } catch {}
-      currentAudioRef.current = null;
-    }
-    if (noticeAudioRef.current) {
-      try {
-        noticeAudioRef.current.pause();
-        noticeAudioRef.current.src = '';
-      } catch {}
-      noticeAudioRef.current = null;
-    }
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
-      try {
-        window.speechSynthesis.cancel();
-      } catch {}
-    }
-    setIsAiSpeaking(false);
+    stopAllAudioPlayback();
 
     // 6. Stop microphone recording & speech recognition
     stopAudioRecording();
@@ -1425,7 +1479,9 @@ export const InterviewPage: React.FC = () => {
     }
     setIsInterviewOnHold(false);
     isInterviewOnHoldRef.current = false;
-    lastSpokenTurnIdRef.current = null;
+    if (!activeSessionRef.current || activeSessionRef.current.status === 'COMPLETED') {
+      lastSpokenTurnIdRef.current = null;
+    }
   };
   stopAllInterviewBackgroundProcessesRef.current = stopAllInterviewBackgroundProcesses;
 
@@ -1576,7 +1632,10 @@ export const InterviewPage: React.FC = () => {
         if (data.data.isCompleted || data.data.session?.status === 'COMPLETED') {
           await handleCompleteInterview(data.data.session?.id || activeSession.id);
         } else if (data.data.aiTurn?.message) {
-          speakMessage(data.data.aiTurn.message, data.data.aiTurn.audioUrl);
+          const aiTurn = data.data.aiTurn;
+          const turnKey = aiTurn.id || `${data.data.session.id}_turn_${aiTurn.turnNumber || data.data.session.turns?.length || 1}`;
+          lastSpokenTurnIdRef.current = turnKey;
+          speakMessage(aiTurn.message, aiTurn.audioUrl);
         }
       } else {
         setError(data.message || 'Failed to submit interview turn');
@@ -1614,6 +1673,8 @@ export const InterviewPage: React.FC = () => {
         } else {
           const latestAi = [...(data.data.turns || [])].reverse().find((t: any) => t.speaker === 'AI');
           if (latestAi?.message) {
+            const turnKey = latestAi.id || `${data.data.id}_turn_${latestAi.turnNumber || 1}`;
+            lastSpokenTurnIdRef.current = turnKey;
             speakMessage(latestAi.message, latestAi.audioUrl);
           }
         }
