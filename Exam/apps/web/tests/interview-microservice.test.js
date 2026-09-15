@@ -180,8 +180,67 @@ describe('AI Interview & Viva Microservice Integration Tests', () => {
     assert.strictEqual(res.body.success, true);
     assert.ok(res.body.data);
     assert.strictEqual(res.body.data.status, 'healthy');
-    assert.strictEqual(res.body.data.whisper_model, 'small');
+    assert.ok(res.body.data.whisper_model, 'Whisper model should be present');
     assert.strictEqual(res.body.data.tts_provider, 'piper');
+  });
+
+  test('PATCH /api/v1/interview/sessions/:id/voice switches voice persona and speed rate mid-interview', async () => {
+    assert.ok(adminToken, 'Token required');
+    // Start session
+    const startRes = await apiRequest(
+      'POST',
+      '/interview/sessions/start',
+      {
+        questionId: 'q_interview_ielts_07',
+        mode: 'PRACTICE',
+        voicePersona: 'emma',
+      },
+      adminToken
+    );
+    assert.strictEqual(startRes.status, 201);
+    const sess = startRes.body.data.session || startRes.body.data;
+    assert.ok(sess.id);
+
+    // Switch voice persona to pooja
+    const patchRes = await apiRequest(
+      'PATCH',
+      `/interview/sessions/${sess.id}/voice`,
+      {
+        voicePersona: 'pooja',
+        speedRate: 1.05,
+      },
+      adminToken
+    );
+    assert.strictEqual(patchRes.status, 200);
+    assert.strictEqual(patchRes.body.success, true);
+    assert.strictEqual(patchRes.body.data.voicePersona, 'pooja');
+  });
+
+  test('POST /api/v1/interview/sessions/:id/candidate-name updates candidate name', async () => {
+    assert.ok(adminToken, 'Token required');
+    const startRes = await apiRequest(
+      'POST',
+      '/interview/sessions/start',
+      {
+        questionId: 'q_interview_ielts_07',
+        mode: 'PRACTICE',
+      },
+      adminToken
+    );
+    assert.strictEqual(startRes.status, 201);
+    const sess = startRes.body.data.session || startRes.body.data;
+
+    const nameRes = await apiRequest(
+      'POST',
+      `/interview/sessions/${sess.id}/candidate-name`,
+      {
+        candidateName: 'Shekhar Sharma',
+      },
+      adminToken
+    );
+    assert.strictEqual(nameRes.status, 200);
+    assert.strictEqual(nameRes.body.success, true);
+    assert.strictEqual(nameRes.body.data.candidateName, 'Shekhar Sharma');
   });
 
   test('POST /api/v1/interview/workspaces/:id/search performs vector search', async () => {

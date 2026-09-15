@@ -447,6 +447,58 @@ router.post(
 );
 
 /**
+ * PATCH /api/v1/interview/sessions/:id/voice
+ * Updates examiner voice persona and speech rate mid-interview.
+ */
+router.patch(
+  '/sessions/:id/voice',
+  requirePermission(PERMISSIONS.INTERVIEW_ATTEMPT),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const voicePersona = req.body.voicePersona || req.body.voice || 'emma';
+      const speedRate = Number(req.body.speedRate || req.body.rate) || 1.0;
+      const result = await InterviewService.updateSessionVoice(
+        req.params.id,
+        voicePersona,
+        speedRate,
+        {
+          userId: (req as any).user.userId,
+          roles: (req as any).user.roles || [],
+        }
+      );
+      res.json({ success: true, data: result });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+/**
+ * POST /api/v1/interview/sessions/:id/candidate-name
+ * Updates candidate full name for greetings and evaluation reports.
+ */
+router.post(
+  '/sessions/:id/candidate-name',
+  requirePermission(PERMISSIONS.INTERVIEW_ATTEMPT),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const candidateName = (req.body.candidateName || req.body.name || '').trim();
+      const result = await InterviewService.updateSessionCandidateName(
+        req.params.id,
+        candidateName,
+        {
+          userId: (req as any).user.userId,
+          roles: (req as any).user.roles || [],
+        }
+      );
+      res.json({ success: true, data: result });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+/**
  * GET /api/v1/interview/audio/health
  * Checks health of Whisper ASR & Piper TTS audio microservice.
  */

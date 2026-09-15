@@ -18,6 +18,9 @@ import {
   setUsePersonalizedVoiceCalibration,
   computeRms,
   rmsToDbfs,
+  getEffectiveSilenceWaitMs,
+  isMeaningfulCandidateResponse,
+  isIncompleteCandidateThought,
 } from '../utils/audioMeasurement';
 
 // Helper to safely extract rubric criteria regardless of backend structure (Array, Object map, or undefined)
@@ -124,6 +127,57 @@ export const InterviewPage: React.FC = () => {
   const [isAiSpeaking, setIsAiSpeaking] = useState<boolean>(false);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
 
+  // AI Interview Studio Features (Hold Mode, Inactivity Watchdog, Pacing, Dynamic VU Meter & Silence Extension)
+  const [isInterviewOnHold, setIsInterviewOnHold] = useState<boolean>(false);
+  const [holdSecondsRemaining, setHoldSecondsRemaining] = useState<number>(180);
+  const [holdReason, setHoldReason] = useState<string>('Interview paused.');
+  const holdTimerIntervalRef = useRef<any>(null);
+  const noticeAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Inactivity Watchdog
+  const [inactivityBanner, setInactivityBanner] = useState<{ title: string; message: string } | null>(null);
+  const inactivityStageRef = useRef<number>(0);
+  const inactivityWatchdogTimerRef = useRef<any>(null);
+
+  // Dynamic Microphone 6-Bar VU Meter & Real-time Live Preview
+  const [liveVuBars, setLiveVuBars] = useState<number[]>([3, 3, 3, 3, 3, 3]);
+  const [livePreviewText, setLivePreviewText] = useState<string>('');
+
+  // Silence Auto-Send Countdown & +5s Thinking Extension
+  const [silenceCountdownSeconds, setSilenceCountdownSeconds] = useState<number | null>(null);
+  const silenceExtensionMsRef = useRef<number>(0);
+  const silenceTimerRef = useRef<any>(null);
+  const countdownIntervalRef = useRef<any>(null);
+  const recordingStartTimeRef = useRef<number>(0);
+  const lastSpeechActivityTimeRef = useRef<number>(0);
+
+  // Speech Pacing Mode ('fast' | 'natural' | 'thoughtful' | 'relaxed')
+  const [speechPacing, setSpeechPacing] = useState<'fast' | 'natural' | 'thoughtful' | 'relaxed'>('natural');
+  const triggerSilenceCountdownRef = useRef<(text: string) => void>(() => {});
+  const cancelInactivityWatchdogRef = useRef<() => void>(() => {});
+
+  // Handsfree Conversational Auto-Listen Mode (mirrors Video_model_train #live-voice-check)
+  const [isHandsfreeMode, setIsHandsfreeMode] = useState<boolean>(true);
+  const isHandsfreeModeRef = useRef<boolean>(true);
+  useEffect(() => {
+    isHandsfreeModeRef.current = isHandsfreeMode;
+  }, [isHandsfreeMode]);
+
+  const isInterviewOnHoldRef = useRef<boolean>(false);
+  useEffect(() => {
+    isInterviewOnHoldRef.current = isInterviewOnHold;
+  }, [isInterviewOnHold]);
+
+  const onQuestionSpeechFinishedRef = useRef<() => void>(() => {});
+
+  // Master Interview Lifecycle Refs & Teardown Guards
+  const isInterviewActiveRef = useRef<boolean>(false);
+  const activeViewRef = useRef<'CATALOG' | 'ROOM' | 'EVALUATION' | 'HISTORY' | 'GROWTH'>('CATALOG');
+  const activeSessionRef = useRef<InterviewSessionDTO | null>(null);
+  const isEvaluatingRef = useRef<boolean>(false);
+  const handsfreeTimerRef = useRef<any>(null);
+  const stopAllInterviewBackgroundProcessesRef = useRef<() => void>(() => {});
+
   // Eligibility & Data States
   const [eligibility, setEligibility] = useState<InterviewEligibilityDTO | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -140,6 +194,30 @@ export const InterviewPage: React.FC = () => {
   const [isEvaluating, setIsEvaluating] = useState<boolean>(false);
   const [showReferenceDrawer, setShowReferenceDrawer] = useState<boolean>(false);
   const isSubmittingRef = useRef<boolean>(false);
+
+  useEffect(() => {
+    activeViewRef.current = activeView;
+    if (activeView === 'ROOM' && activeSession && activeSession.status !== 'COMPLETED') {
+      isInterviewActiveRef.current = true;
+    } else {
+      isInterviewActiveRef.current = false;
+      stopAllInterviewBackgroundProcessesRef.current();
+    }
+  }, [activeView, activeSession?.status]);
+
+  useEffect(() => {
+    activeSessionRef.current = activeSession;
+  }, [activeSession]);
+
+  useEffect(() => {
+    isEvaluatingRef.current = isEvaluating;
+  }, [isEvaluating]);
+
+  useEffect(() => {
+    return () => {
+      stopAllInterviewBackgroundProcessesRef.current();
+    };
+  }, []);
 
   // Instructions Modal State (Modeled on Exam Hall Instructions pattern)
   const [selectedQuestionForInstructions, setSelectedQuestionForInstructions] = useState<any | null>(null);
@@ -191,6 +269,7 @@ export const InterviewPage: React.FC = () => {
       cancelAnimationFrame(liveAnimFrameRef.current);
       liveAnimFrameRef.current = null;
     }
+    setLiveVuBars([3, 3, 3, 3, 3, 3]);
     if (liveAudioCtxRef.current) {
       try {
         if (liveAudioCtxRef.current.state !== 'closed') {
@@ -220,7 +299,11 @@ export const InterviewPage: React.FC = () => {
       } catch {}
     }
     setIsRecording(false);
+    clearSilenceCountdown();
     stopLiveAudioMonitoring();
+    recordingStartTimeRef.current = 0;
+    lastSpeechActivityTimeRef.current = 0;
+    silenceExtensionMsRef.current = 0;
     if (recordingTimeoutRef.current) {
       clearTimeout(recordingTimeoutRef.current);
       recordingTimeoutRef.current = null;
@@ -248,22 +331,64 @@ export const InterviewPage: React.FC = () => {
       let lastResetTime = Date.now();
 
       const monitorLoop = () => {
-        if (!liveAudioCtxRef.current) return;
+        if (!liveAudioCtxRef.current || !isInterviewActiveRef.current || activeViewRef.current !== 'ROOM' || isEvaluatingRef.current) {
+          stopLiveAudioMonitoring();
+          return;
+        }
         analyser.getFloatTimeDomainData(pcmBuffer);
         const rms = computeRms(pcmBuffer);
         const dbfs = rmsToDbfs(rms);
 
+        // Compute 6-bar dynamic VU meter heights
+        const norm = Math.min(1.0, Math.max(0.0, (rms - 0.005) / 0.055));
+        const baseHeights = [4, 7, 10, 14, 8, 4];
+        const newBars = baseHeights.map((base) => {
+          if (norm > 0.06) {
+            const jitter = 0.85 + Math.random() * 0.3;
+            return Math.min(16, Math.max(3, Math.round(base * (0.6 + norm * 1.5 * jitter))));
+          }
+          return 3;
+        });
+        setLiveVuBars(newBars);
+
         // If audio energy exceeds candidate's personalized silence threshold: candidate is actively speaking
         if (dbfs > activeAcousticsRef.current.silenceThresholdDbfs) {
+          cancelInactivityWatchdog();
           const now = Date.now();
+          lastSpeechActivityTimeRef.current = now;
           if (now - lastResetTime > 200) {
             lastResetTime = now;
+            // Candidate is actively speaking aloud: reset silence countdown so mid-sentence pauses never submit early!
+            clearSilenceCountdown();
+
+            const currentTranscript = candidateInputRef.current?.trim() || '';
+            const recDurationMs = recordingStartTimeRef.current ? now - recordingStartTimeRef.current : 0;
+            const baseWaitMs = activeAcousticsRef.current?.pauseTimeoutMs || 3000;
+            const effectiveWaitMs = getEffectiveSilenceWaitMs(currentTranscript, recDurationMs, baseWaitMs) + silenceExtensionMsRef.current;
+
             if (recordingTimeoutRef.current) {
               clearTimeout(recordingTimeoutRef.current);
             }
             recordingTimeoutRef.current = setTimeout(() => {
-              stopAudioRecording();
-            }, activeAcousticsRef.current.pauseTimeoutMs);
+              if (Date.now() - lastSpeechActivityTimeRef.current >= effectiveWaitMs) {
+                stopAudioRecording();
+              }
+            }, effectiveWaitMs + 1500);
+
+            if (isMeaningfulCandidateResponse(currentTranscript)) {
+              silenceTimerRef.current = setTimeout(() => {
+                clearSilenceCountdown();
+                if (
+                  isInterviewActiveRef.current &&
+                  activeViewRef.current === 'ROOM' &&
+                  !isEvaluatingRef.current &&
+                  activeSessionRef.current &&
+                  activeSessionRef.current.status !== 'COMPLETED'
+                ) {
+                  handleDoneSpeaking();
+                }
+              }, effectiveWaitMs);
+            }
           }
         }
         liveAnimFrameRef.current = requestAnimationFrame(monitorLoop);
@@ -381,7 +506,7 @@ export const InterviewPage: React.FC = () => {
               recordedAudioBase64Ref.current = base64Data;
 
               // If candidateInput is empty, auto-transcribe through Whisper microservice
-              if (!candidateInputRef.current?.trim() && !isSubmittingRef.current && base64Data) {
+              if (!candidateInputRef.current?.trim() && !isSubmittingRef.current && isInterviewActiveRef.current && activeViewRef.current === 'ROOM' && !isEvaluatingRef.current && base64Data) {
                 try {
                   setIsTranscribingAudio(true);
                   const res = await fetch(`${API_BASE}/interview/audio/transcribe`, {
@@ -394,7 +519,7 @@ export const InterviewPage: React.FC = () => {
                     }),
                   });
                   const data = await res.json();
-                  if (data?.success && data?.data?.text && !isSubmittingRef.current) {
+                  if (data?.success && data?.data?.text && !isSubmittingRef.current && isInterviewActiveRef.current && activeViewRef.current === 'ROOM' && !isEvaluatingRef.current) {
                     setCandidateInput(data.data.text);
                   }
                 } catch (asrErr) {
@@ -419,23 +544,35 @@ export const InterviewPage: React.FC = () => {
   // Helper to bind continuous onresult handler safely with personalized pause tolerance
   const bindRecognitionHandlers = (recog: any) => {
     recog.onresult = (event: any) => {
-      // Guard against late async results delivered during/after submission
-      if (isSubmittingRef.current) return;
+      // Guard against late async results delivered during/after submission or after session complete
+      if (isSubmittingRef.current || !isInterviewActiveRef.current || activeViewRef.current !== 'ROOM' || isEvaluatingRef.current) return;
       let fullTranscript = '';
       for (let i = 0; i < event.results.length; ++i) {
         fullTranscript += event.results[i][0].transcript;
       }
       if (!isSubmittingRef.current) {
         setCandidateInput(fullTranscript);
+        setLivePreviewText(fullTranscript);
+      }
+      if (cancelInactivityWatchdogRef.current) {
+        cancelInactivityWatchdogRef.current();
+      }
+      if (triggerSilenceCountdownRef.current) {
+        triggerSilenceCountdownRef.current(fullTranscript);
       }
 
-      // Reset pause timeout on active speech input (Sprint 4)
+      // Reset pause timeout on active speech input with adaptive buffer
       if (recordingTimeoutRef.current) {
         clearTimeout(recordingTimeoutRef.current);
       }
+      const recDurationMs = recordingStartTimeRef.current ? Date.now() - recordingStartTimeRef.current : 0;
+      const baseWaitMs = activeAcousticsRef.current?.pauseTimeoutMs || 3000;
+      const effectiveWaitMs = getEffectiveSilenceWaitMs(fullTranscript, recDurationMs, baseWaitMs) + silenceExtensionMsRef.current;
       recordingTimeoutRef.current = setTimeout(() => {
-        stopAudioRecording();
-      }, activeAcousticsRef.current.pauseTimeoutMs);
+        if (Date.now() - lastSpeechActivityTimeRef.current >= effectiveWaitMs) {
+          stopAudioRecording();
+        }
+      }, effectiveWaitMs + 1500);
     };
 
     recog.onend = () => {
@@ -556,17 +693,63 @@ export const InterviewPage: React.FC = () => {
 
   // Speak AI message using Native Streaming Audio or SpeechSynthesis fallback
   const speakMessage = (text: string, audioUrl?: string | null) => {
-    if (!ttsEnabled) return;
+    // If interview has completed, evaluating, or user is not in room: do not speak or auto-listen
+    if (
+      !isInterviewActiveRef.current ||
+      activeViewRef.current !== 'ROOM' ||
+      isEvaluatingRef.current ||
+      (activeSessionRef.current && activeSessionRef.current.status === 'COMPLETED')
+    ) {
+      return;
+    }
+
+    if (!ttsEnabled) {
+      if (
+        isInterviewActiveRef.current &&
+        activeViewRef.current === 'ROOM' &&
+        !isEvaluatingRef.current &&
+        (!activeSessionRef.current || activeSessionRef.current.status !== 'COMPLETED')
+      ) {
+        onQuestionSpeechFinishedRef.current();
+      }
+      return;
+    }
+
+    // Stop recording while AI speaks to eliminate microphone echo feedback
+    stopAudioRecording();
 
     if (currentAudioRef.current) {
       try {
         currentAudioRef.current.pause();
-        currentAudioRef.current = null;
+        currentAudioRef.current.src = '';
       } catch {}
+      currentAudioRef.current = null;
+    }
+    if (noticeAudioRef.current) {
+      try {
+        noticeAudioRef.current.pause();
+        noticeAudioRef.current.src = '';
+      } catch {}
+      noticeAudioRef.current = null;
     }
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel();
     }
+
+    const pacingRate = speechPacing === 'fast' ? 1.1 : speechPacing === 'thoughtful' ? 0.9 : speechPacing === 'relaxed' ? 0.85 : 1.0;
+
+    const handleSpeechFinished = () => {
+      setIsAiSpeaking(false);
+      currentAudioRef.current = null;
+      if (
+        isInterviewActiveRef.current &&
+        activeViewRef.current === 'ROOM' &&
+        !isEvaluatingRef.current &&
+        (!activeSessionRef.current || activeSessionRef.current.status !== 'COMPLETED')
+      ) {
+        onQuestionSpeechFinishedRef.current();
+      }
+    };
 
     if (audioUrl) {
       try {
@@ -575,74 +758,620 @@ export const InterviewPage: React.FC = () => {
         const separator = audioUrl.includes('?') ? '&' : '?';
         const freshAudioUrl = `${audioUrl}${separator}_t=${Date.now()}`;
         const audio = new Audio(freshAudioUrl);
+        audio.playbackRate = pacingRate;
         currentAudioRef.current = audio;
-        audio.onended = () => {
-          setIsAiSpeaking(false);
-          currentAudioRef.current = null;
-        };
+        audio.onended = handleSpeechFinished;
         audio.onerror = () => {
           setIsAiSpeaking(false);
           currentAudioRef.current = null;
-          if (typeof window !== 'undefined' && window.speechSynthesis) {
+          if (
+            isInterviewActiveRef.current &&
+            activeViewRef.current === 'ROOM' &&
+            !isEvaluatingRef.current &&
+            typeof window !== 'undefined' &&
+            window.speechSynthesis
+          ) {
             const utterance = new SpeechSynthesisUtterance(text);
-            utterance.rate = 1.0;
+            utterance.rate = pacingRate;
             utterance.pitch = 1.0;
-            utterance.onend = () => setIsAiSpeaking(false);
-            utterance.onerror = () => setIsAiSpeaking(false);
+            utterance.onend = handleSpeechFinished;
+            utterance.onerror = handleSpeechFinished;
             window.speechSynthesis.speak(utterance);
+          } else {
+            handleSpeechFinished();
           }
         };
         audio.play().catch(() => {
           setIsAiSpeaking(false);
-          if (typeof window !== 'undefined' && window.speechSynthesis) {
+          if (
+            isInterviewActiveRef.current &&
+            activeViewRef.current === 'ROOM' &&
+            !isEvaluatingRef.current &&
+            typeof window !== 'undefined' &&
+            window.speechSynthesis
+          ) {
             const utterance = new SpeechSynthesisUtterance(text);
-            utterance.rate = 1.0;
+            utterance.rate = pacingRate;
             utterance.pitch = 1.0;
-            utterance.onend = () => setIsAiSpeaking(false);
-            utterance.onerror = () => setIsAiSpeaking(false);
+            utterance.onend = handleSpeechFinished;
+            utterance.onerror = handleSpeechFinished;
             window.speechSynthesis.speak(utterance);
+          } else {
+            handleSpeechFinished();
           }
         });
         return;
       } catch {}
     }
 
-    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+    if (typeof window === 'undefined' || !window.speechSynthesis) {
+      handleSpeechFinished();
+      return;
+    }
     setIsAiSpeaking(true);
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 1.0;
+    utterance.rate = pacingRate;
     utterance.pitch = 1.0;
-    utterance.onend = () => setIsAiSpeaking(false);
-    utterance.onerror = () => setIsAiSpeaking(false);
+    utterance.onend = handleSpeechFinished;
+    utterance.onerror = handleSpeechFinished;
     window.speechSynthesis.speak(utterance);
   };
+
+  // Play Examiner System / Hold / Nudge Spoken Announcements
+  const playNoticeAudio = (text: string, onEnded?: () => void) => {
+    stopAudioRecording(); // Ensure mic is quiet when notice audio plays
+    if (
+      !text ||
+      !ttsEnabled ||
+      !isInterviewActiveRef.current ||
+      activeViewRef.current !== 'ROOM' ||
+      isEvaluatingRef.current ||
+      (activeSessionRef.current && activeSessionRef.current.status === 'COMPLETED')
+    ) {
+      if (
+        onEnded &&
+        isInterviewActiveRef.current &&
+        activeViewRef.current === 'ROOM' &&
+        !isEvaluatingRef.current &&
+        (!activeSessionRef.current || activeSessionRef.current.status !== 'COMPLETED')
+      ) {
+        onEnded();
+      }
+      return;
+    }
+    if (currentAudioRef.current) {
+      try { currentAudioRef.current.pause(); currentAudioRef.current.src = ''; } catch {}
+      currentAudioRef.current = null;
+    }
+    if (noticeAudioRef.current) {
+      try { noticeAudioRef.current.pause(); noticeAudioRef.current.src = ''; } catch {}
+      noticeAudioRef.current = null;
+    }
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      try { window.speechSynthesis.cancel(); } catch {}
+    }
+
+    const pacingRate = speechPacing === 'fast' ? 1.1 : speechPacing === 'thoughtful' ? 0.9 : speechPacing === 'relaxed' ? 0.85 : 1.0;
+    const synthUrl = `${API_BASE}/interview/audio/synthesize?voice=${encodeURIComponent(selectedVoicePersona)}&rate=${pacingRate}&text=${encodeURIComponent(text)}`;
+    const audio = new Audio(synthUrl);
+    noticeAudioRef.current = audio;
+    audio.playbackRate = pacingRate;
+    setIsAiSpeaking(true);
+
+    let finished = false;
+    const finishNotice = () => {
+      if (finished) return;
+      finished = true;
+      setIsAiSpeaking(false);
+      noticeAudioRef.current = null;
+      if (
+        onEnded &&
+        isInterviewActiveRef.current &&
+        activeViewRef.current === 'ROOM' &&
+        !isEvaluatingRef.current &&
+        (!activeSessionRef.current || activeSessionRef.current.status !== 'COMPLETED')
+      ) {
+        onEnded();
+      }
+    };
+
+    audio.onended = finishNotice;
+    audio.onerror = () => {
+      if (
+        typeof window !== 'undefined' &&
+        window.speechSynthesis &&
+        isInterviewActiveRef.current &&
+        activeViewRef.current === 'ROOM' &&
+        !isEvaluatingRef.current
+      ) {
+        const utt = new SpeechSynthesisUtterance(text);
+        utt.rate = pacingRate;
+        utt.onend = finishNotice;
+        utt.onerror = finishNotice;
+        window.speechSynthesis.speak(utt);
+      } else {
+        finishNotice();
+      }
+    };
+    audio.play().catch(() => {
+      if (
+        typeof window !== 'undefined' &&
+        window.speechSynthesis &&
+        isInterviewActiveRef.current &&
+        activeViewRef.current === 'ROOM' &&
+        !isEvaluatingRef.current
+      ) {
+        const utt = new SpeechSynthesisUtterance(text);
+        utt.rate = pacingRate;
+        utt.onend = finishNotice;
+        utt.onerror = finishNotice;
+        window.speechSynthesis.speak(utt);
+      } else {
+        finishNotice();
+      }
+    });
+  };
+
+  // Format countdown timestamp mm:ss
+  const formatHoldTime = (totalSeconds: number): string => {
+    const m = Math.floor(Math.max(0, totalSeconds) / 60);
+    const s = Math.max(0, totalSeconds) % 60;
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  };
+
+  // Hold Mode State Machine
+  const startHold = (durationSec = 180, reason = 'Interview paused.') => {
+    if (
+      isInterviewOnHold ||
+      !isInterviewActiveRef.current ||
+      activeViewRef.current !== 'ROOM' ||
+      isEvaluatingRef.current
+    ) return;
+    setIsInterviewOnHold(true);
+    isInterviewOnHoldRef.current = true;
+    setHoldSecondsRemaining(durationSec);
+    setHoldReason(reason);
+
+    clearSilenceCountdown();
+    cancelInactivityWatchdog();
+    stopAudioRecording();
+    if (currentAudioRef.current) {
+      try { currentAudioRef.current.pause(); currentAudioRef.current.src = ''; } catch {}
+      currentAudioRef.current = null;
+    }
+    setIsAiSpeaking(false);
+
+    playNoticeAudio('Holding the interview for up to 3 minutes. Take your time, and click Resume Interview whenever you are ready.');
+
+    if (holdTimerIntervalRef.current) clearInterval(holdTimerIntervalRef.current);
+    holdTimerIntervalRef.current = setInterval(() => {
+      setHoldSecondsRemaining((prev) => {
+        if (
+          !isInterviewActiveRef.current ||
+          activeViewRef.current !== 'ROOM' ||
+          isEvaluatingRef.current ||
+          (activeSessionRef.current && activeSessionRef.current.status === 'COMPLETED')
+        ) {
+          clearInterval(holdTimerIntervalRef.current);
+          holdTimerIntervalRef.current = null;
+          return 0;
+        }
+        if (prev <= 1) {
+          clearInterval(holdTimerIntervalRef.current);
+          holdTimerIntervalRef.current = null;
+          resumeInterview(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const resumeInterview = (autoFromTimeout = false) => {
+    if (holdTimerIntervalRef.current) {
+      clearInterval(holdTimerIntervalRef.current);
+      holdTimerIntervalRef.current = null;
+    }
+    setIsInterviewOnHold(false);
+    isInterviewOnHoldRef.current = false;
+    setInactivityBanner(null);
+    inactivityStageRef.current = 0;
+
+    if (
+      !isInterviewActiveRef.current ||
+      activeViewRef.current !== 'ROOM' ||
+      isEvaluatingRef.current ||
+      !activeSessionRef.current ||
+      activeSessionRef.current.status === 'COMPLETED'
+    ) {
+      return;
+    }
+
+    const welcomeMsg = autoFromTimeout
+      ? "Your 3-minute break has ended. Let's resume the interview!"
+      : "Welcome back! Let's resume your interview.";
+
+    playNoticeAudio(welcomeMsg, () => {
+      if (
+        isInterviewActiveRef.current &&
+        activeViewRef.current === 'ROOM' &&
+        !isEvaluatingRef.current &&
+        activeSessionRef.current &&
+        activeSessionRef.current.status !== 'COMPLETED'
+      ) {
+        const lastAiTurn = activeSession?.turns?.filter((t) => t.speaker === 'AI').slice(-1)[0];
+        if (lastAiTurn?.message) {
+          speakMessage(lastAiTurn.message, lastAiTurn.audioUrl);
+        }
+        armInactivityWatchdog(24000);
+      }
+    });
+  };
+
+  const repeatQuestionFromHold = () => {
+    const lastAiTurn = activeSession?.turns?.filter((t) => t.speaker === 'AI').slice(-1)[0];
+    if (lastAiTurn?.message) {
+      playNoticeAudio(lastAiTurn.message);
+    }
+  };
+
+  // Inactivity Watchdog
+  const cancelInactivityWatchdog = () => {
+    if (inactivityWatchdogTimerRef.current) {
+      clearTimeout(inactivityWatchdogTimerRef.current);
+      inactivityWatchdogTimerRef.current = null;
+    }
+  };
+  cancelInactivityWatchdogRef.current = cancelInactivityWatchdog;
+
+  const armInactivityWatchdog = (delayMs = 24000) => {
+    cancelInactivityWatchdog();
+    if (
+      !isInterviewActiveRef.current ||
+      activeViewRef.current !== 'ROOM' ||
+      isEvaluatingRef.current ||
+      isInterviewOnHold ||
+      !activeSession ||
+      activeSession.status === 'COMPLETED'
+    ) return;
+    inactivityWatchdogTimerRef.current = setTimeout(() => {
+      inactivityWatchdogTimerRef.current = null;
+      triggerInactivityStep();
+    }, delayMs);
+  };
+
+  const triggerInactivityStep = () => {
+    if (
+      !isInterviewActiveRef.current ||
+      activeViewRef.current !== 'ROOM' ||
+      isEvaluatingRef.current ||
+      isInterviewOnHold ||
+      !activeSession ||
+      activeSession.status === 'COMPLETED' ||
+      isAiSpeaking
+    ) return;
+
+    if (candidateInputRef.current && candidateInputRef.current.trim().length > 10) {
+      armInactivityWatchdog(24000);
+      return;
+    }
+
+    if (inactivityStageRef.current === 0) {
+      inactivityStageRef.current = 1;
+      setInactivityBanner({
+        title: 'Interviewer is waiting for your response',
+        message: "Take your time! Whenever you're ready, please share your thoughts on the question.",
+      });
+      playNoticeAudio("Take your time! Whenever you're ready, please share your thoughts on the question.", () => {
+        armInactivityWatchdog(26000);
+      });
+    } else if (inactivityStageRef.current === 1) {
+      inactivityStageRef.current = 2;
+      setInactivityBanner({
+        title: 'Are you still there?',
+        message: 'If you need a moment to think or take a break, I can hold the interview for up to 3 minutes.',
+      });
+      playNoticeAudio("Are you still there? If you need a moment to think, I can hold the interview for you.", () => {
+        armInactivityWatchdog(25000);
+      });
+    } else {
+      setInactivityBanner(null);
+      startHold(180, 'No response detected. The interview is held for up to 3 minutes so you can prepare or take a break.');
+    }
+  };
+
+  // Silence Auto-Send & Thinking Extension
+  const clearSilenceCountdown = () => {
+    if (silenceTimerRef.current) {
+      clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = null;
+    }
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
+    }
+    setSilenceCountdownSeconds(null);
+  };
+
+  const handleExtendSilence = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    silenceExtensionMsRef.current += 5000;
+    const recDurationMs = recordingStartTimeRef.current ? Date.now() - recordingStartTimeRef.current : 0;
+    const baseWaitMs = activeAcousticsRef.current?.pauseTimeoutMs || 3000;
+    const effectiveWaitMs = getEffectiveSilenceWaitMs(candidateInputRef.current?.trim() || '', recDurationMs, baseWaitMs) + silenceExtensionMsRef.current;
+    let secondsLeft = Math.max(1, Math.round(effectiveWaitMs / 1000));
+    setSilenceCountdownSeconds(secondsLeft);
+    if (silenceTimerRef.current) {
+      clearTimeout(silenceTimerRef.current);
+    }
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+    }
+    countdownIntervalRef.current = setInterval(() => {
+      secondsLeft--;
+      if (secondsLeft >= 1) {
+        setSilenceCountdownSeconds(secondsLeft);
+      }
+    }, 1000);
+    silenceTimerRef.current = setTimeout(() => {
+      clearSilenceCountdown();
+      handleDoneSpeaking();
+    }, effectiveWaitMs);
+  };
+
+  const triggerSilenceCountdown = (text: string) => {
+    lastSpeechActivityTimeRef.current = Date.now();
+
+    // Whenever speech recognition yields new text, always clear active countdown so talking never gets cut off
+    clearSilenceCountdown();
+
+    const cleaned = text.trim();
+    if (!isMeaningfulCandidateResponse(cleaned)) {
+      return;
+    }
+    if (
+      !isInterviewActiveRef.current ||
+      activeViewRef.current !== 'ROOM' ||
+      isEvaluatingRef.current ||
+      !activeSession ||
+      activeSession.status === 'COMPLETED'
+    ) {
+      return;
+    }
+
+    const recDurationMs = recordingStartTimeRef.current ? Date.now() - recordingStartTimeRef.current : 0;
+    const baseWaitMs = activeAcousticsRef.current?.pauseTimeoutMs || 3000;
+    const effectiveWaitMs = getEffectiveSilenceWaitMs(cleaned, recDurationMs, baseWaitMs) + silenceExtensionMsRef.current;
+    let secondsLeft = Math.max(1, Math.round(effectiveWaitMs / 1000));
+    setSilenceCountdownSeconds(secondsLeft);
+
+    countdownIntervalRef.current = setInterval(() => {
+      if (
+        !isInterviewActiveRef.current ||
+        activeViewRef.current !== 'ROOM' ||
+        isEvaluatingRef.current ||
+        (activeSessionRef.current && activeSessionRef.current.status === 'COMPLETED')
+      ) {
+        clearSilenceCountdown();
+        return;
+      }
+      secondsLeft--;
+      if (secondsLeft >= 1) {
+        setSilenceCountdownSeconds(secondsLeft);
+      }
+    }, 1000);
+
+    silenceTimerRef.current = setTimeout(() => {
+      clearSilenceCountdown();
+      if (
+        isInterviewActiveRef.current &&
+        activeViewRef.current === 'ROOM' &&
+        !isEvaluatingRef.current &&
+        activeSessionRef.current &&
+        activeSessionRef.current.status !== 'COMPLETED'
+      ) {
+        handleDoneSpeaking();
+      }
+    }, effectiveWaitMs);
+  };
+  triggerSilenceCountdownRef.current = triggerSilenceCountdown;
+
+  const handleDoneSpeaking = () => {
+    clearSilenceCountdown();
+    stopAudioRecording();
+    if (
+      !isInterviewActiveRef.current ||
+      activeViewRef.current !== 'ROOM' ||
+      isEvaluatingRef.current ||
+      !activeSessionRef.current ||
+      activeSessionRef.current.status === 'COMPLETED'
+    ) return;
+    const currentText = candidateInputRef.current?.trim();
+    if (currentText && !isSubmittingRef.current) {
+      handleSubmitTurn(undefined, currentText);
+    }
+  };
+
+  // Mid-Interview Voice Switching
+  const handleSwitchVoicePersona = async (newPersona: string) => {
+    setSelectedVoicePersona(newPersona);
+    if (!activeSession) return;
+    try {
+      await fetch(`${API_BASE}/interview/sessions/${activeSession.id}/voice`, {
+        method: 'PATCH',
+        headers: getAuthHeaders(token),
+        body: JSON.stringify({ voicePersona: newPersona }),
+      });
+      setActiveSession((prev) => (prev ? { ...prev, voicePersona: newPersona } : prev));
+    } catch (err) {
+      console.warn('Failed to update session voice persona:', err);
+    }
+  };
+
+  // Pacing Control
+  const handlePacingChange = (newPacing: 'fast' | 'natural' | 'thoughtful' | 'relaxed') => {
+    setSpeechPacing(newPacing);
+    const timeoutMap = { fast: 1800, natural: 3000, thoughtful: 4000, relaxed: 5000 };
+    activeAcousticsRef.current = {
+      ...activeAcousticsRef.current,
+      pauseTimeoutMs: timeoutMap[newPacing],
+    };
+  };
+
+  // Start active recording session (used both by manual click and automatic handsfree listen)
+  const startRecordingSession = async () => {
+    if (
+      !isInterviewActiveRef.current ||
+      activeViewRef.current !== 'ROOM' ||
+      isEvaluatingRef.current ||
+      !activeSessionRef.current ||
+      activeSessionRef.current.status === 'COMPLETED' ||
+      isRecording ||
+      isInterviewOnHoldRef.current ||
+      isSubmittingRef.current
+    ) return;
+    try {
+      isSubmittingRef.current = false;
+      recordingStartTimeRef.current = Date.now();
+      lastSpeechActivityTimeRef.current = Date.now();
+      silenceExtensionMsRef.current = 0;
+      setIsRecording(true);
+      startLiveAudioMonitoring();
+      await startAudioRecording();
+
+      if (recognitionRef.current) {
+        try {
+          bindRecognitionHandlers(recognitionRef.current);
+          recognitionRef.current.start();
+        } catch {}
+      }
+
+      if (recordingTimeoutRef.current) clearTimeout(recordingTimeoutRef.current);
+      // Give initial generous window before inactivity watchdog/silence detection kicks in
+      recordingTimeoutRef.current = setTimeout(() => {
+        if (Date.now() - lastSpeechActivityTimeRef.current >= 24000) {
+          stopAudioRecording();
+        }
+      }, 24000);
+    } catch (err) {
+      console.warn('startRecordingSession error:', err);
+      stopAudioRecording();
+    }
+  };
+
+  // Triggered when interviewer finishes speaking aloud -> automatically activates microphone in handsfree mode
+  const onQuestionSpeechFinished = () => {
+    if (
+      !isInterviewActiveRef.current ||
+      activeViewRef.current !== 'ROOM' ||
+      isEvaluatingRef.current ||
+      !activeSessionRef.current ||
+      activeSessionRef.current.status === 'COMPLETED'
+    ) {
+      return;
+    }
+
+    if (
+      isHandsfreeModeRef.current &&
+      !isRecording &&
+      !isInterviewOnHoldRef.current &&
+      !isSubmittingRef.current
+    ) {
+      console.log('Interviewer finished speaking -> Auto-listening to candidate handsfree...');
+      if (handsfreeTimerRef.current) {
+        clearTimeout(handsfreeTimerRef.current);
+      }
+      handsfreeTimerRef.current = setTimeout(async () => {
+        handsfreeTimerRef.current = null;
+        if (
+          isInterviewActiveRef.current &&
+          activeViewRef.current === 'ROOM' &&
+          !isEvaluatingRef.current &&
+          !isInterviewOnHoldRef.current &&
+          !isSubmittingRef.current &&
+          !isRecording &&
+          activeSessionRef.current &&
+          activeSessionRef.current.status !== 'COMPLETED'
+        ) {
+          await startRecordingSession();
+        }
+      }, 400);
+    }
+    armInactivityWatchdog(24000);
+  };
+  onQuestionSpeechFinishedRef.current = onQuestionSpeechFinished;
+
+  // Master teardown for interview session: stops all audio playback, recognition, recording, timers, and watchdogs
+  const stopAllInterviewBackgroundProcesses = () => {
+    isInterviewActiveRef.current = false;
+
+    // 1. Clear handsfree auto-listen timer
+    if (handsfreeTimerRef.current) {
+      clearTimeout(handsfreeTimerRef.current);
+      handsfreeTimerRef.current = null;
+    }
+
+    // 2. Clear recording timeout
+    if (recordingTimeoutRef.current) {
+      clearTimeout(recordingTimeoutRef.current);
+      recordingTimeoutRef.current = null;
+    }
+
+    // 3. Clear silence countdown & timer
+    clearSilenceCountdown();
+
+    // 4. Cancel inactivity watchdog & hide banner
+    cancelInactivityWatchdog();
+    setInactivityBanner(null);
+    inactivityStageRef.current = 0;
+
+    // 5. Stop all audio playback immediately (native streaming audio, notice audio, Web Speech synthesis)
+    if (currentAudioRef.current) {
+      try {
+        currentAudioRef.current.pause();
+        currentAudioRef.current.src = '';
+      } catch {}
+      currentAudioRef.current = null;
+    }
+    if (noticeAudioRef.current) {
+      try {
+        noticeAudioRef.current.pause();
+        noticeAudioRef.current.src = '';
+      } catch {}
+      noticeAudioRef.current = null;
+    }
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      try {
+        window.speechSynthesis.cancel();
+      } catch {}
+    }
+    setIsAiSpeaking(false);
+
+    // 6. Stop microphone recording & speech recognition
+    stopAudioRecording();
+    recordingStartTimeRef.current = 0;
+    lastSpeechActivityTimeRef.current = 0;
+    silenceExtensionMsRef.current = 0;
+
+    // 7. Stop live audio monitoring & release all media stream tracks
+    stopLiveAudioMonitoring();
+
+    // 8. Cancel hold timer
+    if (holdTimerIntervalRef.current) {
+      clearInterval(holdTimerIntervalRef.current);
+      holdTimerIntervalRef.current = null;
+    }
+    setIsInterviewOnHold(false);
+    isInterviewOnHoldRef.current = false;
+  };
+  stopAllInterviewBackgroundProcessesRef.current = stopAllInterviewBackgroundProcesses;
 
   // Toggle Speech & Audio Recording (Press-to-start / Press-to-stop across natural pauses)
   const toggleSpeechRecognition = async () => {
     if (isRecording) {
       stopAudioRecording();
     } else {
-      try {
-        isSubmittingRef.current = false;
-        setIsRecording(true);
-        startLiveAudioMonitoring();
-        await startAudioRecording();
-
-        if (recognitionRef.current) {
-          try {
-            bindRecognitionHandlers(recognitionRef.current);
-            recognitionRef.current.start();
-          } catch {}
-        }
-
-        if (recordingTimeoutRef.current) clearTimeout(recordingTimeoutRef.current);
-        // Candidate personalized pause tolerance duration (Sprint 4)
-        recordingTimeoutRef.current = setTimeout(() => {
-          stopAudioRecording();
-        }, activeAcousticsRef.current.pauseTimeoutMs);
-      } catch {
-        stopAudioRecording();
-      }
+      await startRecordingSession();
     }
   };
 
@@ -666,9 +1395,11 @@ export const InterviewPage: React.FC = () => {
         setActiveSession(data.data.session);
         setActiveView('ROOM');
         setCandidateInput('');
+        setLivePreviewText('');
         if (data.data.initialTurn?.message) {
           speakMessage(data.data.initialTurn.message, data.data.initialTurn.audioUrl);
         }
+        armInactivityWatchdog(24000);
       } else {
         setError(data.message || 'Failed to start interview session');
       }
@@ -681,11 +1412,17 @@ export const InterviewPage: React.FC = () => {
 
   // Complete Interview & Run Evaluation
   const handleCompleteInterview = async (overrideSessionId?: string) => {
+    if (isEvaluatingRef.current) return;
     const targetSessionId = typeof overrideSessionId === 'string' ? overrideSessionId : activeSession?.id;
     if (!targetSessionId) return;
+
+    // Immediately stop all interview background activities (mic, audio, timers, watchdog)
+    stopAllInterviewBackgroundProcesses();
+    isEvaluatingRef.current = true;
+    setIsEvaluating(true);
+    setError(null);
+
     try {
-      setIsEvaluating(true);
-      setError(null);
       const res = await fetch(
         `${API_BASE}/interview/sessions/${targetSessionId}/complete`,
         {
@@ -696,6 +1433,8 @@ export const InterviewPage: React.FC = () => {
 
       const data = await res.json();
       if (data.success) {
+        // Enforce full teardown of all background processes
+        stopAllInterviewBackgroundProcesses();
         setActiveSession(data.data);
         setActiveView('EVALUATION');
         fetchPastSessions();
@@ -706,16 +1445,21 @@ export const InterviewPage: React.FC = () => {
       setError(err.message || 'Error completing interview');
     } finally {
       setIsEvaluating(false);
+      isEvaluatingRef.current = false;
     }
   };
 
   // Submit Turn Answer
-  const handleSubmitTurn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!activeSession || !candidateInput.trim() || isSubmittingTurn) return;
+  const handleSubmitTurn = async (e?: React.FormEvent, overrideText?: string) => {
+    if (e) e.preventDefault();
+    const currentMessage = (overrideText !== undefined ? overrideText : candidateInput).trim();
+    if (!activeSession || !currentMessage || isSubmittingTurn || isEvaluatingRef.current || !isInterviewActiveRef.current) return;
 
     // 1. Guard against speech recognition and MediaRecorder race conditions:
     isSubmittingRef.current = true;
+    clearSilenceCountdown();
+    cancelInactivityWatchdog();
+    setInactivityBanner(null);
     stopAudioRecording();
 
     // If MediaRecorder was active, allow brief 150ms delay for FileReader onstop to populate base64
@@ -723,8 +1467,8 @@ export const InterviewPage: React.FC = () => {
       await new Promise((resolve) => setTimeout(resolve, 150));
     }
 
-    const currentMessage = candidateInput.trim();
     setCandidateInput('');
+    setLivePreviewText('');
     const audioPayload = recordedAudioBase64Ref.current;
     recordedAudioBase64Ref.current = null;
     audioChunksRef.current = [];
@@ -749,13 +1493,12 @@ export const InterviewPage: React.FC = () => {
       const data = await res.json();
       if (data.success) {
         setActiveSession(data.data.session);
-        if (data.data.aiTurn?.message) {
-          speakMessage(data.data.aiTurn.message, data.data.aiTurn.audioUrl);
-        }
 
         // Automatic transition to results/scorecard view when session concludes
         if (data.data.isCompleted || data.data.session?.status === 'COMPLETED') {
           await handleCompleteInterview(data.data.session?.id || activeSession.id);
+        } else if (data.data.aiTurn?.message) {
+          speakMessage(data.data.aiTurn.message, data.data.aiTurn.audioUrl);
         }
       } else {
         setError(data.message || 'Failed to submit interview turn');
@@ -773,7 +1516,11 @@ export const InterviewPage: React.FC = () => {
 
   // Skip Question Turn
   const handleSkipTurn = async () => {
-    if (!activeSession || isSubmittingTurn) return;
+    if (!activeSession || isSubmittingTurn || isEvaluatingRef.current || !isInterviewActiveRef.current) return;
+    clearSilenceCountdown();
+    cancelInactivityWatchdog();
+    setInactivityBanner(null);
+    stopAudioRecording();
     try {
       setIsSubmittingTurn(true);
       setError(null);
@@ -784,12 +1531,13 @@ export const InterviewPage: React.FC = () => {
       const data = await res.json();
       if (data.success) {
         setActiveSession(data.data);
-        const latestAi = [...(data.data.turns || [])].reverse().find((t: any) => t.speaker === 'AI');
-        if (latestAi?.message) {
-          speakMessage(latestAi.message, latestAi.audioUrl);
-        }
         if (data.data.status === 'COMPLETED') {
           await handleCompleteInterview(data.data.id);
+        } else {
+          const latestAi = [...(data.data.turns || [])].reverse().find((t: any) => t.speaker === 'AI');
+          if (latestAi?.message) {
+            speakMessage(latestAi.message, latestAi.audioUrl);
+          }
         }
       } else {
         setError(data.message || 'Failed to skip question');
@@ -1344,35 +2092,148 @@ export const InterviewPage: React.FC = () => {
               </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-              {/* Persona & Speaking Badge */}
-              {activeSession.voicePersona && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              {/* Dynamic Speaking Wave Badge */}
+              {isAiSpeaking && (
                 <div
-                  id="voice-persona-badge"
-                  data-testid="voice-persona-badge"
+                  id="voice-speaking-badge"
+                  data-testid="voice-speaking-badge"
                   style={{
-                    display: 'flex',
+                    display: 'inline-flex',
                     alignItems: 'center',
                     gap: '6px',
                     fontSize: '11px',
                     padding: '3px 10px',
                     borderRadius: '6px',
-                    background: isAiSpeaking ? 'rgba(236, 72, 153, 0.2)' : 'rgba(168, 85, 247, 0.15)',
-                    border: `1px solid ${isAiSpeaking ? '#ec4899' : '#a855f7'}`,
-                    color: isAiSpeaking ? '#ec4899' : '#a855f7',
+                    background: 'rgba(56, 189, 248, 0.15)',
+                    border: '1px solid rgba(56, 189, 248, 0.4)',
+                    color: '#38bdf8',
                     fontWeight: 600,
                   }}
-                  title={`Examiner Voice Persona: ${activeSession.voicePersona}`}
                 >
-                  <span>{isAiSpeaking ? '🔊' : '🎙️'}</span>
-                  <span>{activeSession.voicePersona}</span>
-                  {isAiSpeaking && (
-                    <span style={{ fontSize: '10px', color: '#ec4899', fontWeight: 700 }}>
-                      [Speaking...]
-                    </span>
-                  )}
+                  <span className="speaking-wave">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                  </span>
+                  <span>AI Speaking...</span>
                 </div>
               )}
+
+              {/* Dynamic Listening Wave Badge */}
+              {isRecording && (
+                <div
+                  id="live-listening-badge"
+                  data-testid="live-listening-badge"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '11px',
+                    padding: '3px 10px',
+                    borderRadius: '6px',
+                    background: 'rgba(52, 211, 153, 0.15)',
+                    border: '1px solid rgba(52, 211, 153, 0.4)',
+                    color: '#34d399',
+                    fontWeight: 600,
+                  }}
+                >
+                  <span className="listening-wave">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                  </span>
+                  <span>Listening...</span>
+                </div>
+              )}
+
+              {/* Voice Persona Selector (Mid-Interview Switcher) */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <label htmlFor="voice-bar-profile-select" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Voice:</label>
+                <select
+                  id="voice-bar-profile-select"
+                  data-testid="voice-bar-profile-select"
+                  value={selectedVoicePersona}
+                  onChange={(e) => handleSwitchVoicePersona(e.target.value)}
+                  style={{
+                    background: 'var(--bg-secondary)',
+                    border: '1px solid var(--border-color)',
+                    color: '#38bdf8',
+                    borderRadius: '6px',
+                    padding: '3px 8px',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                  title="Switch Examiner Voice Persona in real time"
+                >
+                  {DEFAULT_VOICE_PERSONAS.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.flag} {p.name} ({p.accent.split(' ')[0]})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Speech Pacing Selector */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <label htmlFor="voice-bar-pace-select" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Pacing:</label>
+                <select
+                  id="voice-bar-pace-select"
+                  data-testid="voice-bar-pace-select"
+                  value={speechPacing}
+                  onChange={(e) => handlePacingChange(e.target.value as any)}
+                  style={{
+                    background: 'var(--bg-secondary)',
+                    border: '1px solid var(--border-color)',
+                    color: '#34d399',
+                    borderRadius: '6px',
+                    padding: '3px 8px',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                  title="Adjust candidate pause tolerance and conversational pacing"
+                >
+                  <option value="fast">⚡ Fast (1.8s wait)</option>
+                  <option value="natural">⏱️ Natural (3.0s wait)</option>
+                  <option value="thoughtful">🧠 Thoughtful (4.0s wait)</option>
+                  <option value="relaxed">🧘 Relaxed (5.0s wait)</option>
+                </select>
+              </div>
+
+              {/* Handsfree Conversational Auto-Listen Toggle (mirrors Video_model_train) */}
+              <label
+                id="label-live-voice-check"
+                data-testid="label-live-voice-check"
+                style={{
+                  fontSize: '11px',
+                  color: isHandsfreeMode ? '#38bdf8' : 'var(--text-muted)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  cursor: 'pointer',
+                  userSelect: 'none',
+                  fontWeight: 600,
+                  padding: '3px 8px',
+                  borderRadius: '6px',
+                  background: isHandsfreeMode ? 'rgba(56, 189, 248, 0.12)' : 'transparent',
+                  border: isHandsfreeMode ? '1px solid rgba(56, 189, 248, 0.35)' : '1px solid transparent',
+                }}
+                title="Handsfree mode: Microphone turns on automatically when interviewer finishes speaking"
+              >
+                <input
+                  type="checkbox"
+                  id="live-voice-check"
+                  data-testid="live-voice-check"
+                  checked={isHandsfreeMode}
+                  onChange={(e) => setIsHandsfreeMode(e.target.checked)}
+                  style={{ width: '13px', height: '13px', accentColor: '#06b6d4', cursor: 'pointer' }}
+                />
+                <span>🎙️ Handsfree</span>
+              </label>
 
               {/* Unobtrusive Live Provider Indicator */}
               <div
@@ -1551,7 +2412,10 @@ export const InterviewPage: React.FC = () => {
 
               <button
                 id="btn-exit-interview-room"
-                onClick={() => setActiveView('CATALOG')}
+                onClick={() => {
+                  stopAllInterviewBackgroundProcesses();
+                  setActiveView('CATALOG');
+                }}
                 style={{
                   background: 'none',
                   border: '1px solid var(--border-color)',
@@ -1581,6 +2445,144 @@ export const InterviewPage: React.FC = () => {
                 gap: '16px',
               }}
             >
+            {/* 3-Minute Hold / Break Overlay Card */}
+            {isInterviewOnHold && (
+              <div
+                id="interview-hold-card"
+                data-testid="interview-hold-card"
+                style={{
+                  padding: '24px 28px',
+                  borderRadius: '10px',
+                  background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.08))',
+                  border: '2px solid rgba(245, 158, 11, 0.5)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  textAlign: 'center',
+                  gap: '12px',
+                  boxShadow: '0 8px 24px rgba(245, 158, 11, 0.15)',
+                  margin: '0 0 16px 0',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#f59e0b', fontWeight: 700, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  <span style={{ fontSize: '16px' }}>⏸️</span>
+                  <span>Interview On Hold (3-Minute Break)</span>
+                </div>
+                <div
+                  id="hold-countdown-timer"
+                  data-testid="hold-countdown-timer"
+                  style={{
+                    fontSize: '44px',
+                    fontWeight: 800,
+                    fontFamily: 'JetBrains Mono, monospace',
+                    color: '#fbbf24',
+                    letterSpacing: '2px',
+                    lineHeight: '1',
+                  }}
+                >
+                  {formatHoldTime(holdSecondsRemaining)}
+                </div>
+                <p style={{ fontSize: '13px', color: 'var(--text-main)', margin: 0, maxWidth: '520px', lineHeight: '1.5' }}>
+                  {holdReason}
+                </p>
+                <div style={{ display: 'flex', gap: '12px', marginTop: '6px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                  <button
+                    type="button"
+                    id="btn-resume-interview"
+                    data-testid="btn-resume-interview"
+                    onClick={() => resumeInterview(false)}
+                    style={{
+                      padding: '8px 20px',
+                      borderRadius: '6px',
+                      border: 'none',
+                      background: 'linear-gradient(135deg, #10b981, #059669)',
+                      color: '#fff',
+                      fontWeight: 700,
+                      fontSize: '13px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)',
+                    }}
+                  >
+                    ▶️ Resume Interview
+                  </button>
+                  <button
+                    type="button"
+                    id="btn-hold-repeat-question"
+                    data-testid="btn-hold-repeat-question"
+                    onClick={repeatQuestionFromHold}
+                    style={{
+                      padding: '8px 16px',
+                      borderRadius: '6px',
+                      border: '1px solid rgba(245, 158, 11, 0.4)',
+                      background: 'rgba(245, 158, 11, 0.15)',
+                      color: '#f59e0b',
+                      fontWeight: 600,
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                    }}
+                  >
+                    🔊 Hear Question Again
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Inactivity Nudge Warning Banner */}
+            {inactivityBanner && !isInterviewOnHold && (
+              <div
+                id="inactivity-nudge-banner"
+                data-testid="inactivity-nudge-banner"
+                style={{
+                  padding: '12px 16px',
+                  borderRadius: '8px',
+                  background: 'rgba(245, 158, 11, 0.12)',
+                  border: '1px solid rgba(245, 158, 11, 0.4)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  gap: '12px',
+                  margin: '0 0 16px 0',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ fontSize: '18px' }}>💡</span>
+                  <div>
+                    <strong style={{ fontSize: '12px', color: '#f59e0b', display: 'block' }}>
+                      {inactivityBanner.title}
+                    </strong>
+                    <span style={{ fontSize: '12px', color: 'var(--text-main)' }}>
+                      {inactivityBanner.message}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  id="btn-nudge-hold"
+                  data-testid="btn-nudge-hold"
+                  onClick={() => startHold(180, 'Candidate requested a 3-minute break.')}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: '4px',
+                    border: '1px solid rgba(245, 158, 11, 0.4)',
+                    background: 'rgba(245, 158, 11, 0.2)',
+                    color: '#f59e0b',
+                    fontWeight: 600,
+                    fontSize: '11px',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  ⏸️ Hold (3m)
+                </button>
+              </div>
+            )}
+
             {/* Mid-Interview Fallback Transition Banner */}
             {activeSession.isFallback && (
               <div
@@ -1604,7 +2606,7 @@ export const InterviewPage: React.FC = () => {
               </div>
             )}
 
-            {activeSession.turns?.map((turn) => {
+            {activeSession.turns?.map((turn, tIdx) => {
               const isAi = turn.speaker === 'AI';
               return (
                 <div
@@ -1726,6 +2728,59 @@ export const InterviewPage: React.FC = () => {
                       position: 'relative',
                     }}
                   >
+                    {/* Conversational Dialogue Banner (when examiner replies directly to candidate greetings/clarifications) */}
+                    {isAi && (() => {
+                      const convReply = (turn as any).conversational_prompt || (turn as any).conversationalPrompt || turn.evaluationData?.conversational_prompt;
+                      if (!convReply) return null;
+                      return (
+                        <div
+                          id="conversational-response-card"
+                          data-testid="conversational-response-card"
+                          style={{
+                            marginBottom: '10px',
+                            background: 'linear-gradient(135deg, rgba(30, 58, 138, 0.25), rgba(15, 23, 42, 0.85))',
+                            border: '1px solid rgba(56, 189, 248, 0.45)',
+                            borderRadius: '8px',
+                            padding: '10px 12px',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span style={{ fontSize: '14px' }}>💬</span>
+                              <span id="conversational-response-title" style={{ fontWeight: 700, fontSize: '11px', color: '#38bdf8' }}>
+                                Examiner&apos;s Direct Reply:
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              id="btn-replay-conversational-audio"
+                              data-testid="btn-replay-conversational-audio"
+                              onClick={() => speakMessage(convReply)}
+                              title="Hear conversational response"
+                              style={{
+                                fontSize: '10px',
+                                padding: '2px 8px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                background: 'rgba(56, 189, 248, 0.15)',
+                                border: '1px solid rgba(56, 189, 248, 0.4)',
+                                color: '#38bdf8',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontWeight: 600,
+                              }}
+                            >
+                              <span>🔊 Hear Reply</span>
+                            </button>
+                          </div>
+                          <div id="conversational-response-text" style={{ fontSize: '12px', color: '#f1f5f9', lineHeight: '1.5' }}>
+                            {convReply}
+                          </div>
+                        </div>
+                      );
+                    })()}
+
                     {turn.message}
 
                     {isAi && (
@@ -1791,6 +2846,51 @@ export const InterviewPage: React.FC = () => {
                           gap: '6px',
                         }}
                       >
+                        {/* Candidate Spoken Answer Section */}
+                        {(() => {
+                          const candAnswer = turn.evaluationData.candidate_answer || turn.evaluationData.candidate_response || activeSession.turns?.slice(0, tIdx).filter((t) => t.speaker === 'CANDIDATE').pop()?.message;
+                          if (!candAnswer) return null;
+                          return (
+                            <div
+                              id="eval-candidate-answer-section"
+                              data-testid="eval-candidate-answer-section"
+                              style={{
+                                marginBottom: '8px',
+                                padding: '8px 10px',
+                                background: 'rgba(15, 23, 42, 0.65)',
+                                border: '1px solid rgba(56, 189, 248, 0.3)',
+                                borderRadius: '6px',
+                              }}
+                            >
+                              <div
+                                style={{
+                                  fontSize: '10px',
+                                  fontWeight: 700,
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.05em',
+                                  color: '#38bdf8',
+                                  marginBottom: '3px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '5px',
+                                }}
+                              >
+                                <span>🗣️</span> <span>What You Spoke:</span>
+                              </div>
+                              <div
+                                id="eval-candidate-answer-text"
+                                style={{
+                                  fontSize: '12px',
+                                  color: '#f1f5f9',
+                                  lineHeight: '1.45',
+                                  fontStyle: 'italic',
+                                }}
+                              >
+                                &ldquo;{candAnswer}&rdquo;
+                              </div>
+                            </div>
+                          );
+                        })()}
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '6px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <span style={{ fontWeight: 700, color: '#10b981' }}>📊 Response Evaluation</span>
@@ -2015,7 +3115,129 @@ export const InterviewPage: React.FC = () => {
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleSubmitTurn} style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+              <>
+                {/* Real-Time Speech Capture & Live Visual Feedback Card */}
+            {isRecording && (
+              <div
+                id="live-speech-preview-box"
+                data-testid="live-speech-preview-box"
+                style={{
+                  marginBottom: '12px',
+                  padding: '10px 14px',
+                  borderRadius: '8px',
+                  background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.9))',
+                  border: '1.5px solid #38bdf8',
+                  boxShadow: '0 4px 14px rgba(56, 189, 248, 0.22)',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span className="live-mic-pulse"></span>
+                    <span id="live-speech-status-label" style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#38bdf8' }}>
+                      🎙️ Speaking Now:
+                    </span>
+                  </div>
+                  {/* 6-bar dynamic VU meter driven by Web Audio RMS */}
+                  <div
+                    id="live-vu-meter"
+                    data-testid="live-vu-meter"
+                    style={{ display: 'flex', alignItems: 'flex-end', gap: '3px', height: '16px', padding: '0 4px' }}
+                    title="Microphone energy level"
+                  >
+                    {liveVuBars.map((height, idx) => {
+                      const colors = ['#06b6d4', '#06b6d4', '#10b981', '#10b981', '#f59e0b', '#ef4444'];
+                      return (
+                        <span
+                          key={idx}
+                          className="vu-bar"
+                          style={{
+                            width: '3px',
+                            height: `${height}px`,
+                            backgroundColor: colors[idx],
+                            opacity: height > 4 ? 1 : 0.45,
+                          }}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+                <div
+                  id="live-speech-preview-text"
+                  data-testid="live-speech-preview-text"
+                  style={{ fontSize: '13px', color: '#f8fafc', fontWeight: 500, minHeight: '22px', lineHeight: '1.5', wordBreak: 'break-word' }}
+                >
+                  {candidateInput || livePreviewText || 'Listening to your speech... Speak clearly into your microphone.'}
+                </div>
+              </div>
+            )}
+
+            {/* Silence Auto-Send Countdown with +5s Extension */}
+            {silenceCountdownSeconds !== null && (
+              <div style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span
+                  id="silence-countdown"
+                  data-testid="silence-countdown"
+                  onClick={handleExtendSilence}
+                  style={{
+                    background: 'rgba(245, 158, 11, 0.2)',
+                    color: '#fbbf24',
+                    border: '1px solid rgba(245, 158, 11, 0.4)',
+                    padding: '3px 10px',
+                    borderRadius: '9999px',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    userSelect: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                  title="Click to add +5 seconds thinking time"
+                >
+                  <span>⏳ Auto-sending in <strong>{silenceCountdownSeconds}s</strong>...</span>
+                  <button
+                    type="button"
+                    id="btn-extend-silence"
+                    data-testid="btn-extend-silence"
+                    onClick={handleExtendSilence}
+                    style={{
+                      background: 'rgba(245, 158, 11, 0.35)',
+                      border: '1px solid rgba(251, 191, 36, 0.5)',
+                      color: '#fff',
+                      padding: '1px 6px',
+                      borderRadius: '4px',
+                      fontSize: '10px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    +5s Thinking
+                  </button>
+                </span>
+              </div>
+            )}
+            {/* Handsfree Conversational Mode Hint */}
+            {isHandsfreeMode && (
+              <div
+                id="mic-status-hint"
+                data-testid="mic-status-hint"
+                style={{
+                  fontSize: '11px',
+                  color: 'var(--text-muted)',
+                  marginBottom: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                }}
+              >
+                <span>💬</span>
+                <span>
+                  <strong>Handsfree Mode Active:</strong> Speak naturally. The microphone turns on automatically after each examiner question and sends your response when you pause.
+                </span>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmitTurn} style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                 {speechSupported && (
                   <button
                     type="button"
@@ -2038,6 +3260,36 @@ export const InterviewPage: React.FC = () => {
                     }}
                   >
                     {isTranscribingAudio ? '⏳ Whisper...' : isRecording ? '🔴 Listening...' : '🎙️ Mic'}
+                  </button>
+                )}
+
+                {/* Done Speaking Instant Send Button */}
+                {(isRecording || candidateInput.trim().length > 0) && (
+                  <button
+                    type="button"
+                    id="btn-done-speaking"
+                    data-testid="btn-done-speaking"
+                    onClick={handleDoneSpeaking}
+                    disabled={isSubmittingTurn || !candidateInput.trim()}
+                    style={{
+                      padding: '10px 14px',
+                      borderRadius: '6px',
+                      border: '1px solid #10b981',
+                      background: candidateInput.trim() ? '#059669' : 'rgba(16, 185, 129, 0.2)',
+                      color: '#fff',
+                      fontWeight: 600,
+                      fontSize: '12px',
+                      cursor: candidateInput.trim() && !isSubmittingTurn ? 'pointer' : 'not-allowed',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      boxShadow: candidateInput.trim() ? '0 0 10px rgba(16, 185, 129, 0.3)' : 'none',
+                      whiteSpace: 'nowrap',
+                    }}
+                    title="Finished speaking? Click to submit your response immediately"
+                  >
+                    <span>✓</span>
+                    <span id="done-speaking-label">Done Speaking</span>
                   </button>
                 )}
 
@@ -2086,6 +3338,33 @@ export const InterviewPage: React.FC = () => {
                   Submit Turn →
                 </button>
 
+                {/* Manual 3-Minute Hold / Break Button */}
+                <button
+                  type="button"
+                  id="btn-manual-hold"
+                  data-testid="btn-manual-hold"
+                  onClick={() => startHold(180, 'Interview paused by candidate. Take your time to gather your thoughts.')}
+                  disabled={isInterviewOnHold || isSubmittingTurn}
+                  title="Take a 3-minute break or pause the interview"
+                  style={{
+                    padding: '10px 14px',
+                    borderRadius: '6px',
+                    border: '1px solid rgba(245, 158, 11, 0.5)',
+                    background: 'rgba(245, 158, 11, 0.1)',
+                    color: '#fbbf24',
+                    fontWeight: 600,
+                    fontSize: '12px',
+                    cursor: isInterviewOnHold || isSubmittingTurn ? 'not-allowed' : 'pointer',
+                    whiteSpace: 'nowrap',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  <span>⏸️</span>
+                  <span>Hold (3m)</span>
+                </button>
+
                 {activeSession.remoteSessionId && (
                   <button
                     type="button"
@@ -2130,7 +3409,8 @@ export const InterviewPage: React.FC = () => {
                   </button>
                 )}
               </form>
-            )}
+            </>
+          )}
           </div>
         </div>
       )}
