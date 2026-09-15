@@ -307,6 +307,20 @@ router.post('/student-register', async (req: Request, res: Response, next: NextF
       `, [userId, roleId]);
     }
 
+    // Auto-enroll new student into published courses so they have immediate access to exams, practice & interviews
+    try {
+      const coursesRes = await pgDb.query(`SELECT "id" FROM "courses" WHERE "status" = 'PUBLISHED'`);
+      for (const course of coursesRes.rows) {
+        await pgDb.query(`
+          INSERT INTO "enrollments" ("id", "userId", "courseId", "status", "enrolledAt", "updatedAt")
+          VALUES ($1, $2, $3, 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+          ON CONFLICT ("userId", "courseId") DO NOTHING
+        `, [`enr_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`, userId, course.id]);
+      }
+    } catch (enrollErr) {
+      console.warn('Could not auto-enroll user into published courses:', enrollErr);
+    }
+
     // Baseline permissions for STUDENT
     const permissions = [
       'exams.attempt',

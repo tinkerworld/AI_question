@@ -149,7 +149,7 @@ const DEFAULT_VOICE_PERSONAS = [
 ];
 
 export const InterviewPage: React.FC = () => {
-  const { user, token } = useAuth();
+  const { user, token, logout } = useAuth();
 
   // Navigation & View States
   const [activeView, setActiveView] = useState<'CATALOG' | 'ROOM' | 'EVALUATION' | 'HISTORY' | 'GROWTH'>('CATALOG');
@@ -624,14 +624,28 @@ export const InterviewPage: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
+      if (!token) {
+        setLoading(false);
+        return;
+      }
       const res = await fetch(`${API_BASE}/interview/eligibility`, {
         headers: getAuthHeaders(token),
       });
+      if (res.status === 401) {
+        await logout();
+        setError('Your session has expired. Please sign in again.');
+        return;
+      }
       const data = await res.json();
       if (data.success) {
         setEligibility(data.data);
       } else {
-        setError(data.message || 'Failed to load interview eligibility');
+        if (data.errorCode === 'INVALID_TOKEN' || data.errorCode === 'UNAUTHORIZED' || res.status === 401) {
+          await logout();
+          setError('Your session has expired. Please sign in again.');
+        } else {
+          setError(data.message || 'Failed to load interview eligibility');
+        }
       }
     } catch (err: any) {
       setError(err.message || 'Error connecting to interview service');
@@ -1454,6 +1468,12 @@ export const InterviewPage: React.FC = () => {
         }),
       });
 
+      if (res.status === 401) {
+        await logout();
+        setError('Your session has expired. Please sign in again.');
+        return;
+      }
+
       const data = await res.json();
       if (data.success) {
         const session = data.data.session;
@@ -1479,7 +1499,12 @@ export const InterviewPage: React.FC = () => {
         }
         armInactivityWatchdog(24000);
       } else {
-        setError(data.message || 'Failed to start interview session');
+        if (data.errorCode === 'INVALID_TOKEN' || data.errorCode === 'UNAUTHORIZED' || res.status === 401) {
+          await logout();
+          setError('Your session has expired. Please sign in again.');
+        } else {
+          setError(data.message || 'Failed to start interview session');
+        }
       }
     } catch (err: any) {
       setError(err.message || 'Error starting interview');
@@ -1704,8 +1729,40 @@ export const InterviewPage: React.FC = () => {
 
       {/* Error Alert */}
       {error && (
-        <div style={{ padding: '12px 16px', borderRadius: '6px', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid #ef4444', color: '#ef4444', marginBottom: '16px', fontSize: '13px' }}>
-          ⚠️ {error}
+        <div
+          style={{
+            padding: '14px 18px',
+            borderRadius: '8px',
+            background: 'rgba(239, 68, 68, 0.12)',
+            border: '1px solid #ef4444',
+            color: '#ef4444',
+            marginBottom: '16px',
+            fontSize: '13px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '10px',
+          }}
+        >
+          <div>⚠️ {error}</div>
+          {(error.includes('expired') || error.includes('token') || error.includes('sign in')) && (
+            <button
+              onClick={() => logout()}
+              style={{
+                background: '#ef4444',
+                color: '#fff',
+                border: 'none',
+                padding: '6px 14px',
+                borderRadius: '6px',
+                fontSize: '12px',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              Sign In Again
+            </button>
+          )}
         </div>
       )}
 

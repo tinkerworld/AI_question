@@ -1975,7 +1975,23 @@ Output JSON only.`;
         `SELECT "courseId" FROM "enrollments" WHERE "userId" = $1 AND "status" = 'ACTIVE'`,
         [userId]
       );
-      const enrolledCourseIds = enrollRes.rows.map((r: any) => r.courseId);
+      let enrolledCourseIds = enrollRes.rows.map((r: any) => r.courseId);
+
+      // Self-healing: If student has zero active enrollments, auto-enroll in published courses
+      if (enrolledCourseIds.length === 0 && eligibleCoursesAll.length > 0) {
+        for (const c of eligibleCoursesAll) {
+          if (c.id !== 'general') {
+            await db.query(
+              `INSERT INTO "enrollments" ("id", "userId", "courseId", "status", "enrolledAt", "updatedAt")
+               VALUES ($1, $2, $3, 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+               ON CONFLICT ("userId", "courseId") DO UPDATE SET "status" = 'ACTIVE'`,
+              [`enr_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`, userId, c.id]
+            );
+          }
+        }
+        enrolledCourseIds = eligibleCoursesAll.map((c) => c.id);
+      }
+
       userEligibleCourseIds = eligibleCoursesAll
         .filter((c) => enrolledCourseIds.includes(c.id) || c.id === 'general')
         .map((c) => c.id);
