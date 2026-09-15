@@ -179,6 +179,29 @@ describe('AI Interview Studio Parity Tests (ExamOS <-> Video_model_train)', () =
     assert.strictEqual(getEffectiveWait(longText, 25000, 3000), 4800); // 3000 + 1800
     assert.strictEqual(getEffectiveWait(longText + ' and furthermore,', 25000, 3000), 7000); // 3000 + 1800 + 2200 = 7000 capped
   });
+
+  test('PARITY-012: Interviewer Always Starts Conversation (Auto-Speak on Start & Room Entry)', () => {
+    const pageContent = fs.readFileSync(interviewPagePath, 'utf8');
+
+    // 1. Browser audio autoplay unlocker
+    assert.ok(pageContent.includes('function unlockAudioContext'), 'Must define unlockAudioContext');
+    assert.ok(pageContent.includes('window.addEventListener(\'click\', unlockAudioContext'), 'Must attach click listener for audio unlock');
+
+    // 2. State & refs tracking spoken turns
+    assert.ok(pageContent.includes('lastSpokenTurnIdRef'), 'Must track lastSpokenTurnIdRef to prevent duplicate speech');
+    assert.ok(pageContent.includes('lastSpokenTurnIdRef.current = null;'), 'Must reset lastSpokenTurnIdRef on session teardown');
+
+    // 3. Synchronous ref priming before starting speech in handleStartInterview
+    assert.ok(pageContent.includes('activeViewRef.current = \'ROOM\';'), 'Must set activeViewRef to ROOM before speaking');
+    assert.ok(pageContent.includes('isInterviewActiveRef.current = true;'), 'Must set isInterviewActiveRef to true before speaking');
+
+    // 4. Reactive auto-speak effect for room entry & session resume
+    assert.ok(pageContent.includes('latestTurn.speaker === \'AI\''), 'Auto-speak effect must detect AI speaker turns');
+    assert.ok(pageContent.includes('speakMessage(latestTurn.message, latestTurn.audioUrl);'), 'Auto-speak must speak the AI message automatically');
+
+    // 5. Replay button clarity
+    assert.ok(pageContent.includes('title="Replay Audio (Click to hear question again)"'), 'Replay button must clearly state it is for replaying');
+  });
 });
 
 

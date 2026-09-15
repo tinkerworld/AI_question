@@ -23,6 +23,40 @@ import {
   isIncompleteCandidateThought,
 } from '../utils/audioMeasurement';
 
+// Browser Audio Context & Autoplay Unlocking (matches Video_model_train)
+let audioContextUnlocked = false;
+export function unlockAudioContext() {
+  if (audioContextUnlocked || typeof window === 'undefined') return;
+  try {
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (AudioCtx) {
+      const ctx = new AudioCtx();
+      if (ctx.state === 'suspended') {
+        ctx.resume().then(() => {
+          audioContextUnlocked = true;
+        }).catch(() => {});
+      } else {
+        audioContextUnlocked = true;
+      }
+    }
+    const silentAudio = new Audio(
+      'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA'
+    );
+    silentAudio
+      .play()
+      .then(() => {
+        audioContextUnlocked = true;
+      })
+      .catch(() => {});
+  } catch {}
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('click', unlockAudioContext, { passive: true });
+  window.addEventListener('touchstart', unlockAudioContext, { passive: true });
+  window.addEventListener('keydown', unlockAudioContext, { passive: true });
+}
+
 // Helper to safely extract rubric criteria regardless of backend structure (Array, Object map, or undefined)
 const getSafeRubricScores = (rubricScores: any, defaultRubric: any[] = []): any[] => {
   if (!rubricScores) {
@@ -194,6 +228,7 @@ export const InterviewPage: React.FC = () => {
   const [isEvaluating, setIsEvaluating] = useState<boolean>(false);
   const [showReferenceDrawer, setShowReferenceDrawer] = useState<boolean>(false);
   const isSubmittingRef = useRef<boolean>(false);
+  const lastSpokenTurnIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     activeViewRef.current = activeView;
@@ -762,7 +797,6 @@ export const InterviewPage: React.FC = () => {
         currentAudioRef.current = audio;
         audio.onended = handleSpeechFinished;
         audio.onerror = () => {
-          setIsAiSpeaking(false);
           currentAudioRef.current = null;
           if (
             isInterviewActiveRef.current &&
@@ -771,6 +805,7 @@ export const InterviewPage: React.FC = () => {
             typeof window !== 'undefined' &&
             window.speechSynthesis
           ) {
+            setIsAiSpeaking(true);
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.rate = pacingRate;
             utterance.pitch = 1.0;
@@ -778,11 +813,11 @@ export const InterviewPage: React.FC = () => {
             utterance.onerror = handleSpeechFinished;
             window.speechSynthesis.speak(utterance);
           } else {
+            setIsAiSpeaking(false);
             handleSpeechFinished();
           }
         };
         audio.play().catch(() => {
-          setIsAiSpeaking(false);
           if (
             isInterviewActiveRef.current &&
             activeViewRef.current === 'ROOM' &&
@@ -790,6 +825,7 @@ export const InterviewPage: React.FC = () => {
             typeof window !== 'undefined' &&
             window.speechSynthesis
           ) {
+            setIsAiSpeaking(true);
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.rate = pacingRate;
             utterance.pitch = 1.0;
@@ -797,6 +833,7 @@ export const InterviewPage: React.FC = () => {
             utterance.onerror = handleSpeechFinished;
             window.speechSynthesis.speak(utterance);
           } else {
+            setIsAiSpeaking(false);
             handleSpeechFinished();
           }
         });
@@ -911,6 +948,31 @@ export const InterviewPage: React.FC = () => {
       }
     });
   };
+
+  // Auto-speak: Ensure the AI interviewer ALWAYS starts the conversation automatically
+  // as soon as the candidate enters the interview room or whenever a new turn arrives.
+  useEffect(() => {
+    if (
+      activeView === 'ROOM' &&
+      activeSession &&
+      activeSession.status !== 'COMPLETED' &&
+      !isEvaluating
+    ) {
+      const turns = activeSession.turns || [];
+      const latestTurn = turns.length > 0 ? turns[turns.length - 1] : null;
+      if (
+        latestTurn &&
+        latestTurn.speaker === 'AI' &&
+        latestTurn.message
+      ) {
+        const turnKey = latestTurn.id || `${activeSession.id}_turn_${latestTurn.turnNumber || turns.length}`;
+        if (lastSpokenTurnIdRef.current !== turnKey) {
+          lastSpokenTurnIdRef.current = turnKey;
+          speakMessage(latestTurn.message, latestTurn.audioUrl);
+        }
+      }
+    }
+  }, [activeView, activeSession?.id, activeSession?.turns?.length, activeSession?.status, isEvaluating]);
 
   // Format countdown timestamp mm:ss
   const formatHoldTime = (totalSeconds: number): string => {
@@ -1363,6 +1425,7 @@ export const InterviewPage: React.FC = () => {
     }
     setIsInterviewOnHold(false);
     isInterviewOnHoldRef.current = false;
+    lastSpokenTurnIdRef.current = null;
   };
   stopAllInterviewBackgroundProcessesRef.current = stopAllInterviewBackgroundProcesses;
 
@@ -1378,6 +1441,7 @@ export const InterviewPage: React.FC = () => {
   // Start Interview Session
   const handleStartInterview = async (questionId: string) => {
     try {
+      unlockAudioContext();
       setLoading(true);
       setError(null);
       const res = await fetch(`${API_BASE}/interview/sessions/start`, {
@@ -1392,12 +1456,26 @@ export const InterviewPage: React.FC = () => {
 
       const data = await res.json();
       if (data.success) {
-        setActiveSession(data.data.session);
+        const session = data.data.session;
+        const initialTurn = data.data.initialTurn;
+
+        // Synchronously prime active session refs before transitioning view
+        activeSessionRef.current = session;
+        activeViewRef.current = 'ROOM';
+        isInterviewActiveRef.current = true;
+        if (initialTurn) {
+          const turnKey = initialTurn.id || `${session.id}_turn_${initialTurn.turnNumber || 1}`;
+          lastSpokenTurnIdRef.current = turnKey;
+        }
+
+        setActiveSession(session);
         setActiveView('ROOM');
         setCandidateInput('');
         setLivePreviewText('');
-        if (data.data.initialTurn?.message) {
-          speakMessage(data.data.initialTurn.message, data.data.initialTurn.audioUrl);
+
+        // The AI interviewer immediately starts the conversation by speaking the opening question
+        if (initialTurn?.message) {
+          speakMessage(initialTurn.message, initialTurn.audioUrl);
         }
         armInactivityWatchdog(24000);
       } else {
@@ -2029,6 +2107,7 @@ export const InterviewPage: React.FC = () => {
                 id="btn-confirm-begin-interview"
                 disabled={!agreedToInterviewTerms || calibrationStatus !== 'CALIBRATED' || loading}
                 onClick={() => {
+                  unlockAudioContext();
                   cleanupCalibration();
                   const qId = selectedQuestionForInstructions.id;
                   setSelectedQuestionForInstructions(null);
@@ -2786,7 +2865,8 @@ export const InterviewPage: React.FC = () => {
                     {isAi && (
                       <button
                         onClick={() => speakMessage(turn.message, turn.audioUrl)}
-                        title="Replay Audio"
+                        title="Replay Audio (Click to hear question again)"
+                        aria-label="Replay Question Audio"
                         style={{
                           background: 'none',
                           border: 'none',
@@ -3709,6 +3789,7 @@ export const InterviewPage: React.FC = () => {
 
                     <button
                       onClick={async () => {
+                        unlockAudioContext();
                         const res = await fetch(`${API_BASE}/interview/sessions/${sess.id}`, {
                           headers: getAuthHeaders(token),
                         });
