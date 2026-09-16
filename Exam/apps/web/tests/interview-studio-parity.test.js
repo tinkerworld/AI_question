@@ -202,6 +202,27 @@ describe('AI Interview Studio Parity Tests (ExamOS <-> Video_model_train)', () =
     // 5. Replay button clarity
     assert.ok(pageContent.includes('title="Replay Audio (Click to hear question again)"'), 'Replay button must clearly state it is for replaying');
   });
+
+  test('PARITY-013: Collapsible Settings Side Drawer & Streamlined Room Top Bar', () => {
+    const pageContent = fs.readFileSync(interviewPagePath, 'utf8');
+
+    // 1. Settings state and trigger button
+    assert.ok(pageContent.includes('const [showSettingsDrawer, setShowSettingsDrawer] = useState'), 'Must declare showSettingsDrawer state');
+    assert.ok(pageContent.includes('id="btn-open-interview-settings"'), 'Must have btn-open-interview-settings button in top bar');
+    assert.ok(pageContent.includes('id="btn-close-interview-settings"'), 'Must have btn-close-interview-settings button');
+
+    // 2. Settings side drawer container
+    assert.ok(pageContent.includes('id="interview-settings-drawer"'), 'Must have interview-settings-drawer container');
+
+    // 3. Custom options properly placed inside settings drawer
+    assert.ok(pageContent.includes('id="voice-bar-profile-select"'), 'Voice profile switcher must exist in settings drawer');
+    assert.ok(pageContent.includes('id="btn-toggle-tts-mute"'), 'TTS mute toggle must exist in settings drawer');
+    assert.ok(pageContent.includes('id="live-voice-check"'), 'Handsfree auto-mic checkbox must exist in settings drawer');
+    assert.ok(pageContent.includes('id="voice-bar-pace-select"'), 'Speech pacing dropdown must exist in settings drawer');
+    assert.ok(pageContent.includes('id="voice-calibration-badge"'), 'Acoustic calibration badge must exist in settings drawer');
+    assert.ok(pageContent.includes('id="btn-toggle-voice-personalization"'), 'Personalization toggle must exist in settings drawer');
+    assert.ok(pageContent.includes('id="active-provider-badge"'), 'Provider architecture badge must exist in settings drawer');
+  });
 });
 
 
