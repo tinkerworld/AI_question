@@ -1459,6 +1459,57 @@ Output JSON only.`;
   }
 
   /**
+   * Platform services fleet status check (microservice, cloudflared, examos-api, examos-web, postgres).
+   */
+  static async getPlatformServicesStatus() {
+    return await VoiceMicroserviceClient.getInstance().getServicesStatus();
+  }
+
+  /**
+   * Fetches live logs from microservice or components.
+   */
+  static async getPlatformLogs(source?: string, lines?: number, filter?: string) {
+    return await VoiceMicroserviceClient.getInstance().getLogs({ source, lines, filter });
+  }
+
+  /**
+   * Automatic Candidate Pacing & WPM Speech Calibration.
+   */
+  static async calibrateSpeech(params: {
+    audio_base64: string;
+    audio_format?: string;
+    language?: string;
+  }) {
+    return await VoiceMicroserviceClient.getInstance().calibrateSpeech(params);
+  }
+
+  /**
+   * Creates a new knowledge workspace in the microservice.
+   */
+  static async createWorkspace(
+    name: string,
+    subject: string = 'General',
+    description: string = '',
+    topics: string[] = []
+  ) {
+    return await VoiceMicroserviceClient.getInstance().createWorkspace(name, subject, description, topics);
+  }
+
+  /**
+   * Deletes a knowledge workspace from the microservice.
+   */
+  static async deleteWorkspace(workspaceId: string) {
+    return await VoiceMicroserviceClient.getInstance().deleteWorkspace(workspaceId);
+  }
+
+  /**
+   * Gets version history for a knowledge workspace.
+   */
+  static async getWorkspaceVersions(workspaceId: string) {
+    return await VoiceMicroserviceClient.getInstance().getWorkspaceVersions(workspaceId);
+  }
+
+  /**
    * Skips the current turn in the microservice interview session.
    */
   static async skipTurn(
@@ -1543,6 +1594,18 @@ Output JSON only.`;
       `UPDATE "interview_sessions" SET "voicePersona" = $1, "updatedAt" = CURRENT_TIMESTAMP WHERE "id" = $2`,
       [voicePersona, sessionId]
     );
+    const row = sessRes.rows[0] as any;
+    if (row.remoteSessionId) {
+      try {
+        await VoiceMicroserviceClient.getInstance().updateRemoteVoice(
+          row.remoteSessionId,
+          voicePersona,
+          speedRate ?? 1.0
+        );
+      } catch (err) {
+        console.warn('Microservice voice profile update warning:', err);
+      }
+    }
     return { success: true, sessionId, voicePersona, speedRate };
   }
 
@@ -2067,7 +2130,7 @@ Output JSON only.`;
    */
   static async startInterviewSession(
     dto: StartInterviewDTO,
-    user: { userId: string; roles?: string[] }
+    user: { userId: string; email?: string; roles?: string[] }
   ): Promise<{ session: InterviewSessionDTO; initialTurn: InterviewTurnDTO }> {
     await InterviewService.ensureSchema();
     const db = pgDb;

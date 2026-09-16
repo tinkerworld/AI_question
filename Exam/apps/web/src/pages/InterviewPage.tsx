@@ -276,6 +276,106 @@ export const InterviewPage: React.FC = () => {
     setUsePersonalizedCalibrationState(val);
   };
 
+  // Platform Fleet Status & Microservice Speech Pacing Calibration
+  const [platformServices, setPlatformServices] = useState<Record<string, any> | null>(null);
+  const [loadingPlatformServices, setLoadingPlatformServices] = useState<boolean>(false);
+  const [microserviceWpmCalibration, setMicroserviceWpmCalibration] = useState<{
+    wpm: number;
+    paceProfile: string;
+    paceLabel: string;
+    recommendedSettings: any;
+    status: string;
+  } | null>(null);
+  const [isCalibratingWpm, setIsCalibratingWpm] = useState<boolean>(false);
+
+  const fetchPlatformServicesStatus = async () => {
+    try {
+      setLoadingPlatformServices(true);
+      const res = await fetch(`${API_BASE}/interview/services/status`, {
+        headers: getAuthHeaders(token),
+      });
+      const data = await res.json();
+      if (data?.success && data?.data?.services) {
+        setPlatformServices(data.data.services);
+      }
+    } catch (err) {
+      console.warn('Failed to fetch platform services status:', err);
+    } finally {
+      setLoadingPlatformServices(false);
+    }
+  };
+
+  const handleMicroserviceWpmCalibration = async () => {
+    try {
+      setIsCalibratingWpm(true);
+      let base64ToUse = recordedAudioBase64Ref.current;
+      if (!base64ToUse) {
+        // Generate a sample calibration utterance via Piper TTS synthesis proxy
+        const synthRes = await fetch(`${API_BASE}/interview/audio/synthesize`, {
+          method: 'POST',
+          headers: {
+            ...getAuthHeaders(token),
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            text: 'I am taking this interview to demonstrate my technical knowledge, communication skills, and problem solving ability.',
+            voice: selectedVoicePersona || 'emma',
+          }),
+        });
+        if (synthRes.ok) {
+          const buf = await synthRes.arrayBuffer();
+          const bytes = new Uint8Array(buf);
+          let binary = '';
+          for (let i = 0; i < bytes.byteLength; i++) {
+            binary += String.fromCharCode(bytes[i]);
+          }
+          base64ToUse = btoa(binary);
+        }
+      }
+
+      if (!base64ToUse) {
+        alert('Please record speech first or ensure audio services are reachable.');
+        return;
+      }
+
+      const res = await fetch(`${API_BASE}/interview/audio/calibrate-speech`, {
+        method: 'POST',
+        headers: {
+          ...getAuthHeaders(token),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          audio_base64: base64ToUse,
+          audio_format: 'mp3',
+          language: 'en',
+        }),
+      });
+
+      const json = await res.json();
+      if (json?.success && json?.data) {
+        const d = json.data;
+        setMicroserviceWpmCalibration({
+          wpm: d.wpm,
+          paceProfile: d.pace_profile,
+          paceLabel: d.pace_label,
+          recommendedSettings: d.recommended_settings,
+          status: d.status,
+        });
+        if (d.pace_profile === 'fast') {
+          handlePacingChange('fast');
+        } else if (d.pace_profile === 'deliberate') {
+          handlePacingChange('thoughtful');
+        } else {
+          handlePacingChange('natural');
+        }
+      }
+    } catch (err: any) {
+      console.warn('WPM speech calibration failed:', err);
+    } finally {
+      setIsCalibratingWpm(false);
+    }
+  };
+
   // Derive active turn acoustic parameters (Pause timeout & silence threshold)
   const activeAcoustics = calculateTurnAcousticParameters(
     voiceCalibrationProfile,
@@ -3294,6 +3394,56 @@ export const InterviewPage: React.FC = () => {
                       ? `Calibrated from candidate baseline (Speech rate: ${voiceCalibrationProfile?.speechRateWpm || 140} WPM).`
                       : 'Using standardized fixed acoustic thresholds.'}
                   </p>
+
+                  {/* Microservice WPM Speech Calibration */}
+                  <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px dashed var(--border-color)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-main)' }}>Microservice WPM Analyzer</span>
+                      <button
+                        type="button"
+                        id="btn-wpm-calibrate"
+                        data-testid="btn-wpm-calibrate"
+                        onClick={handleMicroserviceWpmCalibration}
+                        disabled={isCalibratingWpm}
+                        style={{
+                          padding: '3px 8px',
+                          fontSize: '10px',
+                          fontWeight: 700,
+                          borderRadius: '4px',
+                          border: '1px solid #06b6d4',
+                          background: 'rgba(6, 182, 212, 0.15)',
+                          color: '#06b6d4',
+                          cursor: isCalibratingWpm ? 'wait' : 'pointer',
+                        }}
+                      >
+                        {isCalibratingWpm ? 'Analyzing...' : '⚡ Auto-Calibrate WPM'}
+                      </button>
+                    </div>
+                    {microserviceWpmCalibration && (
+                      <div
+                        id="wpm-calibration-result"
+                        data-testid="wpm-calibration-result"
+                        style={{
+                          fontSize: '10px',
+                          padding: '6px 8px',
+                          borderRadius: '4px',
+                          background: 'rgba(6, 182, 212, 0.08)',
+                          border: '1px solid rgba(6, 182, 212, 0.25)',
+                          color: 'var(--text-main)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '2px',
+                        }}
+                      >
+                        <div>
+                          <strong>{microserviceWpmCalibration.wpm} WPM</strong> — {microserviceWpmCalibration.paceLabel} ({microserviceWpmCalibration.paceProfile})
+                        </div>
+                        <div style={{ color: 'var(--text-muted)' }}>
+                          Silence Wait: {microserviceWpmCalibration.recommendedSettings?.silence_wait_sec}s | Inactivity Nudge: {microserviceWpmCalibration.recommendedSettings?.inactivity_nudge_sec}s
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* 4. Active AI Provider & Architecture */}
@@ -3353,6 +3503,65 @@ export const InterviewPage: React.FC = () => {
 
                   <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
                     Session ID: <span style={{ fontFamily: 'monospace' }}>{activeSession.id?.slice(0, 16)}...</span>
+                  </div>
+
+                  {/* Platform Fleet Status */}
+                  <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px dashed var(--border-color)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-main)' }}>Platform Fleet Health</span>
+                      <button
+                        type="button"
+                        id="btn-refresh-services-status"
+                        data-testid="btn-refresh-services-status"
+                        onClick={fetchPlatformServicesStatus}
+                        disabled={loadingPlatformServices}
+                        style={{
+                          padding: '2px 6px',
+                          fontSize: '10px',
+                          fontWeight: 600,
+                          borderRadius: '4px',
+                          border: '1px solid var(--border-color)',
+                          background: 'transparent',
+                          color: 'var(--text-muted)',
+                          cursor: loadingPlatformServices ? 'wait' : 'pointer',
+                        }}
+                      >
+                        {loadingPlatformServices ? 'Checking...' : '🔄 Query Fleet'}
+                      </button>
+                    </div>
+                    {platformServices && (
+                      <div
+                        id="platform-services-list"
+                        data-testid="platform-services-list"
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns: '1fr 1fr',
+                          gap: '4px',
+                          fontSize: '10px',
+                        }}
+                      >
+                        {Object.entries(platformServices).map(([key, svc]: [string, any]) => (
+                          <div
+                            key={key}
+                            style={{
+                              padding: '4px 6px',
+                              borderRadius: '4px',
+                              background: svc.status === 'running' || svc.status === 'active' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                              border: `1px solid ${svc.status === 'running' || svc.status === 'active' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+                              color: svc.status === 'running' || svc.status === 'active' ? '#10b981' : '#ef4444',
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                            }}
+                          >
+                            <span style={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={svc.name || key}>
+                              {key}
+                            </span>
+                            <span style={{ fontSize: '9px', textTransform: 'uppercase' }}>{svc.status}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

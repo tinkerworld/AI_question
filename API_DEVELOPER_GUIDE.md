@@ -17,6 +17,8 @@ Welcome to the **AI Interview & Knowledge Microservice API**. This guide provide
 | **OpenAPI 3.0.3 Spec** | [`/openapi.json`](https://voice.tinkerlab.online/openapi.json) | Machine-readable OpenAPI schema to generate client SDKs in any language. |
 | **System Health Check** | [`/v1/health`](https://voice.tinkerlab.online/v1/health) | Ping endpoint to monitor service and LLM availability. |
 | **System Status** | [`/v1/status`](https://voice.tinkerlab.online/v1/status) | Returns active model, database info, and indexed corpus size. |
+| **Services Status Overview** | [`/v1/services/status`](https://voice.tinkerlab.online/v1/services/status) | Live operational status, PIDs, ports, and health of all platform services. |
+| **Service & API Logs** | [`/v1/logs`](https://voice.tinkerlab.online/v1/logs) | Tail & filter live logs across API server, Cloudflare Tunnel, ExamOS, Postgres, and training. |
 | **Audio Service Health** | [`/v1/audio/health`](https://voice.tinkerlab.online/v1/audio/health) | Real-time Whisper ASR and Piper TTS engine / device status. |
 | **Speech-to-Text (ASR)** | `/v1/audio/transcribe` | Transcribes speech audio with acoustic confidence metadata. |
 | **Text-to-Speech (TTS)** | `/v1/audio/synthesize` | Direct audio voice synthesis with 9 examiner personas. |
@@ -186,6 +188,118 @@ Returns database statistics and training corpus counts.
   "status": "online",
   "version": "1.0.0"
 }
+```
+
+---
+
+#### `GET /v1/services/status`
+Returns real-time operational status, ports, PIDs, and protocol info for all platform services.
+
+**Response (`200 OK`):**
+```json
+{
+  "services": {
+    "ai_interview_server": {
+      "name": "AI Interview Microservice",
+      "port": 8000,
+      "status": "running",
+      "pid": 3554410,
+      "protocol": "HTTPS"
+    },
+    "cloudflared": {
+      "name": "Cloudflare Tunnel",
+      "status": "active",
+      "unit": "cloudflared-interview.service",
+      "domain": "voice.tinkerlab.online"
+    },
+    "examos_api": {
+      "name": "ExamOS NestJS API",
+      "status": "running",
+      "pid": 127007,
+      "port": 8083
+    },
+    "examos_web": {
+      "name": "ExamOS NextJS Web",
+      "status": "running",
+      "pid": 127008,
+      "port": 8082
+    },
+    "postgres": {
+      "name": "ExamOS PostgreSQL (Docker)",
+      "status": "running",
+      "port": 5433
+    }
+  },
+  "timestamp": "2026-09-16 02:10:00"
+}
+```
+
+**cURL Example:**
+```bash
+curl -k -X GET "https://voice.tinkerlab.online/v1/services/status"
+```
+
+---
+
+#### `GET /v1/logs`
+Tails real-time log lines from any service component with optional keyword filtering.
+
+**Query Parameters:**
+| Parameter | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `source` | string | No | `"server"` | Log source: `server`, `cloudflared`, `examos-api`, `examos-web`, `docker-postgres`, `telemetry`, `phase11-train`, `phase6`. |
+| `lines` | integer | No | `100` | Number of trailing lines to fetch (`10` to `2000`). |
+| `filter` | string | No | `""` | Optional case-insensitive substring/keyword filter (e.g. `ERROR`, `POST`, `500`). |
+
+**Response (`200 OK`):**
+```json
+{
+  "source": "server",
+  "service": {
+    "name": "AI Interview API Server",
+    "status": "running",
+    "pid": 3554410,
+    "port": 8000,
+    "type": "in-memory"
+  },
+  "count": 3,
+  "total": 3,
+  "lines": [
+    "[2026-09-16 02:05:10] [INFO] [127.0.0.1] \"GET /v1/health HTTP/1.1\" 200 -",
+    "[2026-09-16 02:05:15] [INFO] [127.0.0.1] \"POST /v1/interview/sessions HTTP/1.1\" 201 -",
+    "[2026-09-16 02:05:18] [INFO] [127.0.0.1] \"GET /v1/interview/sessions/sess_abc123 HTTP/1.1\" 200 -"
+  ],
+  "timestamp": "2026-09-16 02:10:00"
+}
+```
+
+**cURL Examples:**
+```bash
+# Fetch last 50 lines from AI microservice server
+curl -k -X GET "https://voice.tinkerlab.online/v1/logs?source=server&lines=50"
+
+# Fetch error logs only from ExamOS backend API
+curl -k -X GET "https://voice.tinkerlab.online/v1/logs?source=examos-api&lines=100&filter=ERROR"
+
+# Fetch Cloudflare Tunnel logs
+curl -k -X GET "https://voice.tinkerlab.online/v1/logs?source=cloudflared&lines=50"
+```
+
+**Python SDK Example:**
+```python
+from sdk.python.interview_client import InterviewClient
+
+client = InterviewClient(base_url="https://voice.tinkerlab.online", verify_ssl=False)
+
+# Check all services status
+status = client.get_services_status()
+print("Cloudflare Tunnel:", status["services"]["cloudflared"]["status"])
+print("ExamOS API:", status["services"]["examos_api"]["status"])
+
+# Fetch recent error logs
+logs = client.get_logs(source="server", lines=50, filter_text="ERROR")
+for line in logs["lines"]:
+    print(line)
 ```
 
 ---
@@ -513,7 +627,12 @@ Permanently deletes a workspace and all scoped sources.
 ---
 
 #### `POST /v1/workspaces/{id}/ingest`
-Ingests a YouTube video, playlist, or document file. Automatically transcribes audio, segments into chunks, and computes `sqlite-vec` embeddings.
+Ingests a YouTube video, playlist, or document file into a workspace.
+
+> [!WARNING]
+> **Access Policy & Data Protection Notice:**
+> By default, video uploads, document uploads, and data ingestion via the external API are **disabled (`403 Forbidden`)**. Training datasets and knowledge bases are strictly **read-only** for external API consumers to protect against unauthorized modification or dataset pollution.
+> Ingestion via API is only permitted if the server administrator explicitly configures an admin secret and the client passes `X-Admin-Secret: <secret>` or `Authorization: Bearer <secret>`.
 
 **Request Options:**
 - **YouTube Video URL:**
@@ -620,7 +739,7 @@ Checks the live status of the Whisper ASR model, Piper TTS engine, and active ha
 {
   "status": "healthy",
   "service": "audio_microservice",
-  "whisper_model": "small",
+  "whisper_model": "medium",
   "whisper_device_configured": "cuda",
   "whisper_model_loaded": true,
   "active_device": "cuda",
@@ -731,6 +850,100 @@ curl -k -X POST "https://voice.tinkerlab.online/v1/audio/synthesize" \
   -H "Content-Type: application/json" \
   -d '{"text": "Hello world", "voice": "emma", "rate": 1.0}' \
   --output hello.wav
+```
+
+---
+
+#### `POST /v1/audio/calibrate-speech`
+Analyzes a 5–6 second speech sample from the candidate to measure their natural speaking rate (Words Per Minute / WPM) and automatically determine optimal interview pacing settings.
+
+**Request Body (JSON Base64 Payload):**
+```json
+{
+  "audio_base64": "<BASE64_ENCODED_AUDIO_BYTES>",
+  "audio_format": "webm",
+  "language": "en"
+}
+```
+
+*Binary Audio Upload:* You can also send raw binary audio directly with `Content-Type: audio/webm`, `audio/wav`, or `audio/ogg`.
+
+**Success Response (`200 OK`):**
+```json
+{
+  "status": "calibrated",
+  "transcribed_text": "Hi, I am excited for the software engineering interview today.",
+  "duration_s": 4.85,
+  "words_count": 10,
+  "wpm": 124,
+  "pace_profile": "moderate",
+  "pace_label": "Natural / Moderate",
+  "recommended_settings": {
+    "speed_rate": 1.0,
+    "silence_wait_sec": 2.0,
+    "inactivity_nudge_sec": 24,
+    "speech_threshold_rms": 0.022
+  },
+  "confidence_metadata": {
+    "is_low_confidence": false,
+    "avg_logprob": -0.28,
+    "max_no_speech_prob": 0.02
+  }
+}
+```
+
+**How Pacing Thresholds Are Determined:**
+| Pace Profile | Measured WPM | AI Speech Rate (`speed_rate`) | Silence Wait Time | Inactivity Prompt | Profile Description |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Fast** | $\ge 145$ WPM | `1.10x` | 1.4 seconds | 18 seconds | Fast & Fluent speaker; tighter turnaround times |
+| **Moderate** | $111 - 144$ WPM | `1.00x` | 2.0 seconds | 24 seconds | Balanced, natural conversational pacing |
+| **Deliberate** | $\le 110$ WPM | `0.90x` | 3.2 seconds | 34 seconds | Thoughtful / Deliberate; generous pauses before interruption |
+
+**How to Use Calibrated Settings in Your Integration:**
+1. **Pass `speed_rate` to Session Creation:**
+   When calling `POST /v1/interview/sessions`, supply the recommended `speed_rate`:
+   ```json
+   {
+     "interview_type": "technical",
+     "voice": "emma",
+     "speed_rate": 1.10
+   }
+   ```
+2. **Apply `silence_wait_sec` to Client-Side Audio Recorder:**
+   Configure your client-side Voice Activity Detection (VAD) to wait `silence_wait_sec` seconds after the candidate stops talking before submitting the answer to `POST /v1/interview/sessions/{session_id}/answer`.
+3. **Set `inactivity_nudge_sec` for Client Inactivity Timers:**
+   If the candidate has been silent for `inactivity_nudge_sec` seconds without answering, trigger an encouraging prompt or remind them to proceed.
+
+**cURL Example:**
+```bash
+curl -k -X POST "https://voice.tinkerlab.online/v1/audio/calibrate-speech" \
+  -H "Authorization: Bearer my_shared_secret" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "audio_base64": "'$(base64 -w 0 sample.webm)'",
+    "audio_format": "webm",
+    "language": "en"
+  }'
+```
+
+**Python SDK Example:**
+```python
+from sdk.python.interview_client import InterviewClient
+
+client = InterviewClient(base_url="https://voice.tinkerlab.online")
+
+with open("sample.webm", "rb") as f:
+    calibration = client.calibrate_speech(f.read(), audio_format="webm")
+
+print("Candidate WPM:", calibration["wpm"])
+print("Recommended AI Speed:", calibration["recommended_settings"]["speed_rate"])
+
+# Start session tuned to candidate's pace
+session = client.create_session(
+    interview_type="behavioral",
+    voice="emma",
+    speed_rate=calibration["recommended_settings"]["speed_rate"]
+)
 ```
 
 ---
