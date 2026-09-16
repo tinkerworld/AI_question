@@ -227,6 +227,7 @@ export const InterviewPage: React.FC = () => {
   const [isSubmittingTurn, setIsSubmittingTurn] = useState<boolean>(false);
   const [isEvaluating, setIsEvaluating] = useState<boolean>(false);
   const [showReferenceDrawer, setShowReferenceDrawer] = useState<boolean>(false);
+  const [showSettingsDrawer, setShowSettingsDrawer] = useState<boolean>(false);
   const isSubmittingRef = useRef<boolean>(false);
   const lastSpokenTurnIdRef = useRef<string | null>(null);
   const currentAudioSessionTokenRef = useRef<number>(0);
@@ -2289,198 +2290,6 @@ export const InterviewPage: React.FC = () => {
                 </div>
               )}
 
-              {/* Voice Persona Selector (Mid-Interview Switcher) */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                <label htmlFor="voice-bar-profile-select" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Voice:</label>
-                <select
-                  id="voice-bar-profile-select"
-                  data-testid="voice-bar-profile-select"
-                  value={selectedVoicePersona}
-                  onChange={(e) => handleSwitchVoicePersona(e.target.value)}
-                  style={{
-                    background: 'var(--bg-secondary)',
-                    border: '1px solid var(--border-color)',
-                    color: '#38bdf8',
-                    borderRadius: '6px',
-                    padding: '3px 8px',
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
-                  title="Switch Examiner Voice Persona in real time"
-                >
-                  {DEFAULT_VOICE_PERSONAS.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.flag} {p.name} ({p.accent.split(' ')[0]})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Speech Pacing Selector */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                <label htmlFor="voice-bar-pace-select" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Pacing:</label>
-                <select
-                  id="voice-bar-pace-select"
-                  data-testid="voice-bar-pace-select"
-                  value={speechPacing}
-                  onChange={(e) => handlePacingChange(e.target.value as any)}
-                  style={{
-                    background: 'var(--bg-secondary)',
-                    border: '1px solid var(--border-color)',
-                    color: '#34d399',
-                    borderRadius: '6px',
-                    padding: '3px 8px',
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
-                  title="Adjust candidate pause tolerance and conversational pacing"
-                >
-                  <option value="fast">⚡ Fast (1.8s wait)</option>
-                  <option value="natural">⏱️ Natural (3.0s wait)</option>
-                  <option value="thoughtful">🧠 Thoughtful (4.0s wait)</option>
-                  <option value="relaxed">🧘 Relaxed (5.0s wait)</option>
-                </select>
-              </div>
-
-              {/* Handsfree Conversational Auto-Listen Toggle (mirrors Video_model_train) */}
-              <label
-                id="label-live-voice-check"
-                data-testid="label-live-voice-check"
-                style={{
-                  fontSize: '11px',
-                  color: isHandsfreeMode ? '#38bdf8' : 'var(--text-muted)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                  cursor: 'pointer',
-                  userSelect: 'none',
-                  fontWeight: 600,
-                  padding: '3px 8px',
-                  borderRadius: '6px',
-                  background: isHandsfreeMode ? 'rgba(56, 189, 248, 0.12)' : 'transparent',
-                  border: isHandsfreeMode ? '1px solid rgba(56, 189, 248, 0.35)' : '1px solid transparent',
-                }}
-                title="Handsfree mode: Microphone turns on automatically when interviewer finishes speaking"
-              >
-                <input
-                  type="checkbox"
-                  id="live-voice-check"
-                  data-testid="live-voice-check"
-                  checked={isHandsfreeMode}
-                  onChange={(e) => setIsHandsfreeMode(e.target.checked)}
-                  style={{ width: '13px', height: '13px', accentColor: '#06b6d4', cursor: 'pointer' }}
-                />
-                <span>🎙️ Handsfree</span>
-              </label>
-
-              {/* Unobtrusive Live Provider Indicator */}
-              <div
-                id="active-provider-badge"
-                data-testid="active-provider-badge"
-                title={
-                  activeSession.isFallback
-                    ? 'Primary AI provider failed or is offline; falling back to Mock Safety Net'
-                    : `Active AI Examiner: ${activeSession.activeProviderType || 'AI'} (${activeSession.activeModelUsed || 'active'})`
-                }
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  fontSize: '11px',
-                  padding: '3px 10px',
-                  borderRadius: '6px',
-                  background: activeSession.isFallback
-                    ? 'rgba(245, 158, 11, 0.15)'
-                    : activeSession.activeProviderType === 'LOCAL'
-                    ? 'rgba(16, 185, 129, 0.15)'
-                    : 'rgba(6, 182, 212, 0.15)',
-                  border: `1px solid ${
-                    activeSession.isFallback
-                      ? '#f59e0b'
-                      : activeSession.activeProviderType === 'LOCAL'
-                      ? '#10b981'
-                      : '#06b6d4'
-                  }`,
-                  color: activeSession.isFallback
-                    ? '#f59e0b'
-                    : activeSession.activeProviderType === 'LOCAL'
-                    ? '#10b981'
-                    : '#06b6d4',
-                  fontWeight: 600,
-                }}
-              >
-                <span>
-                  {activeSession.isFallback
-                    ? '⚠️'
-                    : activeSession.activeProviderType === 'LOCAL'
-                    ? '🖥️'
-                    : '☁️'}
-                </span>
-                <span>
-                  {activeSession.isFallback
-                    ? 'Mock (fallback)'
-                    : `${activeSession.activeProviderType === 'LOCAL' ? 'Local' : 'Cloud'}: ${activeSession.activeModelUsed || 'gemma4:e2b'}`}
-                </span>
-              </div>
-
-              {/* Feature Flag & Voice Calibration Indicator (Sprint 4) */}
-              <div
-                id="voice-calibration-badge"
-                data-testid="voice-calibration-badge"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  fontSize: '11px',
-                  padding: '3px 10px',
-                  borderRadius: '6px',
-                  background: activeAcoustics.isPersonalized
-                    ? 'rgba(16, 185, 129, 0.12)'
-                    : 'rgba(148, 163, 184, 0.12)',
-                  border: `1px solid ${
-                    activeAcoustics.isPersonalized
-                      ? 'rgba(16, 185, 129, 0.35)'
-                      : 'rgba(148, 163, 184, 0.3)'
-                  }`,
-                  color: activeAcoustics.isPersonalized ? '#10b981' : '#94a3b8',
-                  fontWeight: 600,
-                }}
-                title={
-                  activeAcoustics.isPersonalized
-                    ? `Personalized Voice Calibration Active: Pause Tolerance = ${activeAcoustics.pauseTimeoutMs}ms (WPM: ${voiceCalibrationProfile?.speechRateWpm}, P75 Pause: ${voiceCalibrationProfile?.p75PauseMs}ms), Silence Threshold = ${activeAcoustics.silenceThresholdDbfs} dBFS`
-                    : `Fixed Baseline Acoustic Timing Active: Pause Tolerance = 4000ms, Silence Threshold = -35.0 dBFS`
-                }
-              >
-                <span>{activeAcoustics.isPersonalized ? '🎯' : '⏱️'}</span>
-                <span>
-                  {activeAcoustics.isPersonalized
-                    ? `Personalized (${activeAcoustics.pauseTimeoutMs}ms / ${activeAcoustics.silenceThresholdDbfs} dBFS)`
-                    : `Fixed Baseline (4000ms / -35 dBFS)`}
-                </span>
-                <button
-                  type="button"
-                  id="btn-toggle-voice-personalization"
-                  data-testid="btn-toggle-voice-personalization"
-                  onClick={() => toggleFeatureFlag(!usePersonalizedCalibration)}
-                  style={{
-                    marginLeft: '4px',
-                    padding: '2px 6px',
-                    fontSize: '10px',
-                    fontWeight: 700,
-                    borderRadius: '4px',
-                    border: '1px solid currentColor',
-                    background: 'transparent',
-                    color: 'inherit',
-                    cursor: 'pointer',
-                  }}
-                  title="Toggle USE_PERSONALIZED_VOICE_CALIBRATION feature flag"
-                >
-                  {usePersonalizedCalibration ? 'Rollback to Fixed' : 'Use Calibrated'}
-                </button>
-              </div>
-
               {/* Hierarchical Main Question & Follow-up Counter */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span id="interview-main-counter" style={{ fontSize: '13px', fontWeight: 700, color: '#06b6d4' }}>
@@ -2504,6 +2313,7 @@ export const InterviewPage: React.FC = () => {
                 )}
               </div>
 
+              {/* Case Study Reference Materials Toggle */}
               <button
                 id="btn-toggle-reference-drawer"
                 onClick={() => setShowReferenceDrawer(!showReferenceDrawer)}
@@ -2523,37 +2333,40 @@ export const InterviewPage: React.FC = () => {
                 }}
               >
                 <span>📚</span>
-                <span>Case Study Materials</span>
+                <span>Case Study</span>
               </button>
 
+              {/* Settings Drawer Button */}
               <button
-                onClick={() => {
-                  const nextState = !ttsEnabled;
-                  setTtsEnabled(nextState);
-                  if (!nextState && typeof window !== 'undefined' && window.speechSynthesis) {
-                    try {
-                      window.speechSynthesis.cancel();
-                    } catch {}
-                  }
-                }}
-                title={ttsEnabled ? 'Mute AI Voice' : 'Unmute AI Voice'}
+                id="btn-open-interview-settings"
+                data-testid="btn-open-interview-settings"
+                onClick={() => setShowSettingsDrawer(!showSettingsDrawer)}
+                title="Open Interview Settings & Configuration"
                 style={{
-                  background: 'none',
-                  border: '1px solid var(--border-color)',
+                  background: showSettingsDrawer ? 'rgba(56, 189, 248, 0.15)' : 'none',
+                  border: showSettingsDrawer ? '1px solid #38bdf8' : '1px solid var(--border-color)',
                   borderRadius: '4px',
-                  color: ttsEnabled ? '#10b981' : 'var(--text-muted)',
-                  padding: '4px 8px',
+                  color: showSettingsDrawer ? '#38bdf8' : 'var(--text-main)',
+                  padding: '4px 10px',
                   fontSize: '12px',
+                  fontWeight: 600,
                   cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
                 }}
               >
-                {ttsEnabled ? '🔊 Voice ON' : '🔇 Muted'}
+                <span>⚙️</span>
+                <span>Settings</span>
               </button>
 
+              {/* Exit Room Button */}
               <button
                 id="btn-exit-interview-room"
                 onClick={() => {
                   stopAllInterviewBackgroundProcesses();
+                  setShowSettingsDrawer(false);
+                  setShowReferenceDrawer(false);
                   setActiveView('CATALOG');
                 }}
                 style={{
@@ -3226,6 +3039,322 @@ export const InterviewPage: React.FC = () => {
                     ))}
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Collapsible Interview Settings Drawer */}
+            {showSettingsDrawer && (
+              <div
+                id="interview-settings-drawer"
+                data-testid="interview-settings-drawer"
+                style={{
+                  width: '380px',
+                  borderLeft: '1px solid var(--border-color)',
+                  background: 'var(--bg-color)',
+                  padding: '16px',
+                  overflowY: 'auto',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '14px',
+                  flexShrink: 0,
+                }}
+              >
+                {/* Drawer Header */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '10px', borderBottom: '1px solid var(--border-color)' }}>
+                  <h3 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-main)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span>⚙️</span>
+                    <span>Interview Settings</span>
+                  </h3>
+                  <button
+                    id="btn-close-interview-settings"
+                    data-testid="btn-close-interview-settings"
+                    onClick={() => setShowSettingsDrawer(false)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--text-muted)',
+                      cursor: 'pointer',
+                      fontSize: '16px',
+                      padding: '2px 6px',
+                      borderRadius: '4px',
+                    }}
+                    title="Close Settings"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {/* 1. Voice Persona & Audio Settings */}
+                <div style={{ padding: '12px', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 700, color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    🎙️ Voice & Audio Output
+                  </div>
+
+                  {/* Voice Persona Selector */}
+                  <div>
+                    <label htmlFor="voice-bar-profile-select" style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '4px' }}>
+                      Examiner Persona & Accent
+                    </label>
+                    <select
+                      id="voice-bar-profile-select"
+                      data-testid="voice-bar-profile-select"
+                      value={selectedVoicePersona}
+                      onChange={(e) => handleSwitchVoicePersona(e.target.value)}
+                      style={{
+                        width: '100%',
+                        background: 'var(--bg-color)',
+                        border: '1px solid var(--border-color)',
+                        color: '#38bdf8',
+                        borderRadius: '6px',
+                        padding: '6px 8px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                      }}
+                      title="Switch Examiner Voice Persona in real time"
+                    >
+                      {DEFAULT_VOICE_PERSONAS.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.flag} {p.name} ({p.accent.split(' ')[0]})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Audio Mute / Unmute Button */}
+                  <div>
+                    <button
+                      id="btn-toggle-tts-mute"
+                      data-testid="btn-toggle-tts-mute"
+                      onClick={() => {
+                        const nextState = !ttsEnabled;
+                        setTtsEnabled(nextState);
+                        if (!nextState && typeof window !== 'undefined' && window.speechSynthesis) {
+                          try {
+                            window.speechSynthesis.cancel();
+                          } catch {}
+                        }
+                      }}
+                      title={ttsEnabled ? 'Mute AI Voice' : 'Unmute AI Voice'}
+                      style={{
+                        width: '100%',
+                        background: ttsEnabled ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+                        border: `1px solid ${ttsEnabled ? 'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.4)'}`,
+                        borderRadius: '6px',
+                        color: ttsEnabled ? '#10b981' : '#ef4444',
+                        padding: '7px 10px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                      }}
+                    >
+                      <span>{ttsEnabled ? '🔊' : '🔇'}</span>
+                      <span>{ttsEnabled ? 'AI Voice Active (Click to Mute)' : 'AI Voice Muted (Click to Unmute)'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* 2. Conversational Flow & Pacing */}
+                <div style={{ padding: '12px', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 700, color: '#34d399', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    ⏱️ Conversational Flow & Pacing
+                  </div>
+
+                  {/* Handsfree Toggle */}
+                  <label
+                    id="label-live-voice-check"
+                    data-testid="label-live-voice-check"
+                    style={{
+                      fontSize: '12px',
+                      color: isHandsfreeMode ? '#38bdf8' : 'var(--text-main)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      cursor: 'pointer',
+                      userSelect: 'none',
+                      fontWeight: 600,
+                      padding: '7px 10px',
+                      borderRadius: '6px',
+                      background: isHandsfreeMode ? 'rgba(56, 189, 248, 0.12)' : 'var(--bg-color)',
+                      border: isHandsfreeMode ? '1px solid rgba(56, 189, 248, 0.35)' : '1px solid var(--border-color)',
+                    }}
+                    title="Handsfree mode: Microphone turns on automatically when interviewer finishes speaking"
+                  >
+                    <input
+                      type="checkbox"
+                      id="live-voice-check"
+                      data-testid="live-voice-check"
+                      checked={isHandsfreeMode}
+                      onChange={(e) => setIsHandsfreeMode(e.target.checked)}
+                      style={{ width: '14px', height: '14px', accentColor: '#06b6d4', cursor: 'pointer' }}
+                    />
+                    <span>🎙️ Handsfree Auto-Listen Mode</span>
+                  </label>
+
+                  {/* Speech Pacing Selector */}
+                  <div>
+                    <label htmlFor="voice-bar-pace-select" style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '4px' }}>
+                      Pause Tolerance / Speech Pacing
+                    </label>
+                    <select
+                      id="voice-bar-pace-select"
+                      data-testid="voice-bar-pace-select"
+                      value={speechPacing}
+                      onChange={(e) => handlePacingChange(e.target.value as any)}
+                      style={{
+                        width: '100%',
+                        background: 'var(--bg-color)',
+                        border: '1px solid var(--border-color)',
+                        color: '#34d399',
+                        borderRadius: '6px',
+                        padding: '6px 8px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                      }}
+                      title="Adjust candidate pause tolerance and conversational pacing"
+                    >
+                      <option value="fast">⚡ Fast (1.8s silence wait)</option>
+                      <option value="natural">⏱️ Natural (3.0s silence wait)</option>
+                      <option value="thoughtful">🧠 Thoughtful (4.0s silence wait)</option>
+                      <option value="relaxed">🧘 Relaxed (5.0s silence wait)</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* 3. Acoustic Calibration & Timing */}
+                <div style={{ padding: '12px', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    🎯 Acoustic Timing & Calibration
+                  </div>
+
+                  <div
+                    id="voice-calibration-badge"
+                    data-testid="voice-calibration-badge"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '8px',
+                      fontSize: '11px',
+                      padding: '8px 10px',
+                      borderRadius: '6px',
+                      background: activeAcoustics.isPersonalized
+                        ? 'rgba(16, 185, 129, 0.12)'
+                        : 'rgba(148, 163, 184, 0.12)',
+                      border: `1px solid ${
+                        activeAcoustics.isPersonalized
+                          ? 'rgba(16, 185, 129, 0.35)'
+                          : 'rgba(148, 163, 184, 0.3)'
+                      }`,
+                      color: activeAcoustics.isPersonalized ? '#10b981' : '#94a3b8',
+                      fontWeight: 600,
+                    }}
+                    title={
+                      activeAcoustics.isPersonalized
+                        ? `Personalized Voice Calibration Active: Pause Tolerance = ${activeAcoustics.pauseTimeoutMs}ms (WPM: ${voiceCalibrationProfile?.speechRateWpm}, P75 Pause: ${voiceCalibrationProfile?.p75PauseMs}ms), Silence Threshold = ${activeAcoustics.silenceThresholdDbfs} dBFS`
+                        : `Fixed Baseline Acoustic Timing Active: Pause Tolerance = 4000ms, Silence Threshold = -35.0 dBFS`
+                    }
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>{activeAcoustics.isPersonalized ? '🎯' : '⏱️'}</span>
+                      <span>
+                        {activeAcoustics.isPersonalized
+                          ? `Personalized (${activeAcoustics.pauseTimeoutMs}ms / ${activeAcoustics.silenceThresholdDbfs} dBFS)`
+                          : `Fixed Baseline (4000ms / -35 dBFS)`}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      id="btn-toggle-voice-personalization"
+                      data-testid="btn-toggle-voice-personalization"
+                      onClick={() => toggleFeatureFlag(!usePersonalizedCalibration)}
+                      style={{
+                        padding: '3px 6px',
+                        fontSize: '10px',
+                        fontWeight: 700,
+                        borderRadius: '4px',
+                        border: '1px solid currentColor',
+                        background: 'transparent',
+                        color: 'inherit',
+                        cursor: 'pointer',
+                      }}
+                      title="Toggle USE_PERSONALIZED_VOICE_CALIBRATION feature flag"
+                    >
+                      {usePersonalizedCalibration ? 'Rollback' : 'Calibrated'}
+                    </button>
+                  </div>
+
+                  <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0, lineHeight: '1.4' }}>
+                    {activeAcoustics.isPersonalized
+                      ? `Calibrated from candidate baseline (Speech rate: ${voiceCalibrationProfile?.speechRateWpm || 140} WPM).`
+                      : 'Using standardized fixed acoustic thresholds.'}
+                  </p>
+                </div>
+
+                {/* 4. Active AI Provider & Architecture */}
+                <div style={{ padding: '12px', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 700, color: '#06b6d4', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    ☁️ AI Examiner Architecture
+                  </div>
+
+                  <div
+                    id="active-provider-badge"
+                    data-testid="active-provider-badge"
+                    title={
+                      activeSession.isFallback
+                        ? 'Primary AI provider failed or is offline; falling back to Mock Safety Net'
+                        : `Active AI Examiner: ${activeSession.activeProviderType || 'AI'} (${activeSession.activeModelUsed || 'active'})`
+                    }
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      fontSize: '11px',
+                      padding: '8px 10px',
+                      borderRadius: '6px',
+                      background: activeSession.isFallback
+                        ? 'rgba(245, 158, 11, 0.15)'
+                        : activeSession.activeProviderType === 'LOCAL'
+                        ? 'rgba(16, 185, 129, 0.15)'
+                        : 'rgba(6, 182, 212, 0.15)',
+                      border: `1px solid ${
+                        activeSession.isFallback
+                          ? '#f59e0b'
+                          : activeSession.activeProviderType === 'LOCAL'
+                          ? '#10b981'
+                          : '#06b6d4'
+                      }`,
+                      color: activeSession.isFallback
+                        ? '#f59e0b'
+                        : activeSession.activeProviderType === 'LOCAL'
+                        ? '#10b981'
+                        : '#06b6d4',
+                      fontWeight: 600,
+                    }}
+                  >
+                    <span>
+                      {activeSession.isFallback
+                        ? '⚠️'
+                        : activeSession.activeProviderType === 'LOCAL'
+                        ? '🖥️'
+                        : '☁️'}
+                    </span>
+                    <span>
+                      {activeSession.isFallback
+                        ? 'Mock Safety Net (Fallback Mode)'
+                        : `${activeSession.activeProviderType === 'LOCAL' ? 'Local Inference' : 'Cloud LLM'}: ${activeSession.activeModelUsed || 'gemma4:e2b'}`}
+                    </span>
+                  </div>
+
+                  <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                    Session ID: <span style={{ fontFamily: 'monospace' }}>{activeSession.id?.slice(0, 16)}...</span>
+                  </div>
+                </div>
               </div>
             )}
           </div>
