@@ -160,6 +160,7 @@ exports.ROLE_PERMISSIONS_MAP = {
         exports.PERMISSIONS.SUBSCRIPTIONS_READ,
         exports.PERMISSIONS.ENTITLEMENTS_READ,
         exports.PERMISSIONS.BILLING_READ_OWN,
+        exports.PERMISSIONS.PREFERENCES_UPDATE,
     ],
     [exports.SYSTEM_ROLES.STUDENT]: [
         exports.PERMISSIONS.COURSES_READ,
@@ -180,6 +181,7 @@ exports.ROLE_PERMISSIONS_MAP = {
         exports.PERMISSIONS.SUBSCRIPTIONS_READ,
         exports.PERMISSIONS.ENTITLEMENTS_READ,
         exports.PERMISSIONS.BILLING_READ_OWN,
+        exports.PERMISSIONS.PREFERENCES_UPDATE,
     ],
 };
 function hasPermission(userPermissions, requiredPermission) {

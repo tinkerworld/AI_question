@@ -814,6 +814,7 @@ export const QuestionBankPage: React.FC = () => {
     } else if (q.type === 'WRITING') {
       setWritingConfig({
         promptStem: d.promptStem || d.promptText || q.content,
+        promptImageUrl: d.promptImageUrl || '',
         stimulusText: d.stimulusText || '',
         minWords: d.minWords || d.minWordCount || 150,
         maxWords: d.maxWords || d.maxWordCount || 400,
@@ -886,6 +887,7 @@ export const QuestionBankPage: React.FC = () => {
         return {
           promptStem: writingConfig.promptStem || formContent,
           promptText: writingConfig.promptStem || formContent,
+          promptImageUrl: writingConfig.promptImageUrl || undefined,
           stimulusText: writingConfig.stimulusText || undefined,
           minWords: Number(writingConfig.minWords || 150),
           minWordCount: Number(writingConfig.minWords || 150),

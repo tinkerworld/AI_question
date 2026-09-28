@@ -620,24 +620,36 @@ export class WritingHandler implements QuestionTypeHandler<WritingQuestionData, 
 
   serialize(data: WritingQuestionData): Record<string, any> {
     return {
-      promptText: data.promptText,
+      promptText: data.promptText || data.promptStem,
+      promptStem: data.promptStem || data.promptText,
       promptImageUrl: data.promptImageUrl,
-      minWordCount: data.minWordCount,
-      maxWordCount: data.maxWordCount,
-      timeLimitMinutes: data.timeLimitMinutes,
-      rubric: data.rubric,
+      stimulusText: data.stimulusText,
+      minWordCount: data.minWordCount ?? data.minWords ?? 150,
+      minWords: data.minWords ?? data.minWordCount ?? 150,
+      maxWordCount: data.maxWordCount ?? data.maxWords ?? 300,
+      maxWords: data.maxWords ?? data.maxWordCount ?? 300,
+      timeLimitMinutes: data.timeLimitMinutes ?? data.recommendedTimeMinutes,
+      recommendedTimeMinutes: data.recommendedTimeMinutes ?? data.timeLimitMinutes,
+      rubric: data.rubric || data.rubricCriteria || [],
+      rubricCriteria: data.rubricCriteria || data.rubric || [],
       preset: data.preset,
     };
   }
 
   deserialize(json: any): WritingQuestionData {
     return {
-      promptText: json.promptText || '',
+      promptText: json.promptText || json.promptStem || '',
+      promptStem: json.promptStem || json.promptText || '',
       promptImageUrl: json.promptImageUrl,
-      minWordCount: Number(json.minWordCount || 150),
-      maxWordCount: Number(json.maxWordCount || 300),
-      timeLimitMinutes: json.timeLimitMinutes ? Number(json.timeLimitMinutes) : undefined,
-      rubric: json.rubric || [],
+      stimulusText: json.stimulusText,
+      minWordCount: Number(json.minWordCount ?? json.minWords ?? 150),
+      minWords: Number(json.minWords ?? json.minWordCount ?? 150),
+      maxWordCount: Number(json.maxWordCount ?? json.maxWords ?? 300),
+      maxWords: Number(json.maxWords ?? json.maxWordCount ?? 300),
+      timeLimitMinutes: json.timeLimitMinutes ? Number(json.timeLimitMinutes) : (json.recommendedTimeMinutes ? Number(json.recommendedTimeMinutes) : undefined),
+      recommendedTimeMinutes: json.recommendedTimeMinutes ? Number(json.recommendedTimeMinutes) : (json.timeLimitMinutes ? Number(json.timeLimitMinutes) : undefined),
+      rubric: json.rubric || json.rubricCriteria || [],
+      rubricCriteria: json.rubricCriteria || json.rubric || [],
       preset: json.preset,
     };
   }

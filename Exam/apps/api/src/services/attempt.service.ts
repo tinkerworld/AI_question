@@ -378,6 +378,7 @@ export class AttemptService {
           subQuestions: sanitizedSubQuestions,
           // Writing fields
           promptStem: qData?.promptStem || qData?.promptText || q.content,
+          promptImageUrl: qData?.promptImageUrl,
           stimulusText: qData?.stimulusText,
           minWords: qData?.minWords ?? qData?.minWordCount ?? 150,
           maxWords: qData?.maxWords ?? qData?.maxWordCount ?? 400,
@@ -483,6 +484,7 @@ export class AttemptService {
         allowTranscript: snap?.allowTranscript,
         subQuestions: snap?.subQuestions,
         promptStem: snap?.promptStem,
+        promptImageUrl: snap?.promptImageUrl,
         stimulusText: snap?.stimulusText,
         minWords: snap?.minWords,
         maxWords: snap?.maxWords,

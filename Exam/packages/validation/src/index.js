@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createPreviewProfileSchema = exports.evaluatePracticeSubmissionSchema = exports.submitPracticeAnswerSchema = exports.generatePracticePaperSchema = exports.initiateExamCorrectionSchema = exports.assignExamReviewerSchema = exports.updateExamWorkflowStatusSchema = exports.flagAttemptSchema = exports.syncAttemptSchema = exports.syncAnswerItemSchema = exports.startAttemptSchema = exports.reorderExamQuestionsSchema = exports.swapExamQuestionSchema = exports.addExamQuestionsSchema = exports.createManualExamSectionSchema = exports.updateExamMetadataSchema = exports.createManualExamSchema = exports.generateExamSchema = exports.multiSubjectAllocationSchema = exports.setMarkingSchemeSchema = exports.setSectionDifficultySchema = exports.setSectionTopicsSchema = exports.setSectionRulesSchema = exports.reorderSectionsSchema = exports.updateExamPatternSectionSchema = exports.createExamPatternSectionSchema = exports.updateExamPatternSchema = exports.createExamPatternSchema = exports.tagSchema = exports.addExamUsageSchema = exports.questionStatusSchema = exports.updateQuestionSchema = exports.createQuestionSchema = exports.createEnrollmentSchema = exports.reorderSyllabusNodeSchema = exports.updateSyllabusNodeSchema = exports.createSyllabusNodeSchema = exports.updateSubjectSchema = exports.createSubjectSchema = exports.updateCourseSchema = exports.createCourseSchema = exports.auditQuerySchema = exports.updateRolePermissionsSchema = exports.createRoleSchema = exports.userStatusSchema = exports.updateUserSchema = exports.createUserSchema = exports.refreshTokenSchema = exports.loginSchema = exports.z = void 0;
-exports.processRefundSchema = exports.checkoutSchema = exports.purchaseCreditPackageSchema = exports.entitlementCheckSchema = exports.updateEntitlementRuleSchema = exports.updateSubscriptionStatusSchema = exports.subscribeSchema = exports.updatePlanSchema = exports.createPlanSchema = exports.overrideScoreSchema = exports.simulateInterviewTurnSchema = exports.interviewQuestionDataSchema = exports.interviewBehavioralPromptSchema = exports.interviewKnowledgeDatasetSchema = exports.submitInterviewTurnSchema = exports.startInterviewSchema = exports.routeAIRequestSchema = exports.updateAIProviderSchema = exports.reviewDraftQuestionSchema = exports.generateQuestionsAISchema = exports.modifyQuestionAISchema = exports.startImpersonationSchema = exports.startPreviewSessionSchema = exports.updatePreviewProfileSchema = void 0;
+exports.importExecuteRequestSchema = exports.importValidateRequestSchema = exports.courseExportItemSchema = exports.subjectExportItemSchema = exports.syllabusNodeExportItemSchema = exports.questionExportItemSchema = exports.importExportMetadataSchema = exports.conflictResolutionStrategySchema = exports.processRefundSchema = exports.checkoutSchema = exports.purchaseCreditPackageSchema = exports.entitlementCheckSchema = exports.updateEntitlementRuleSchema = exports.updateSubscriptionStatusSchema = exports.subscribeSchema = exports.updatePlanSchema = exports.createPlanSchema = exports.overrideScoreSchema = exports.simulateInterviewTurnSchema = exports.interviewQuestionDataSchema = exports.interviewBehavioralPromptSchema = exports.interviewKnowledgeDatasetSchema = exports.submitInterviewTurnSchema = exports.startInterviewSchema = exports.routeAIRequestSchema = exports.updateAIProviderSchema = exports.reviewDraftQuestionSchema = exports.generateQuestionsAISchema = exports.modifyQuestionAISchema = exports.startImpersonationSchema = exports.startPreviewSessionSchema = exports.updatePreviewProfileSchema = void 0;
 const zod_1 = require("zod");
 Object.defineProperty(exports, "z", { enumerable: true, get: function () { return zod_1.z; } });
 exports.loginSchema = zod_1.z.object({
@@ -522,4 +522,76 @@ exports.processRefundSchema = zod_1.z.object({
     amount: zod_1.z.number().min(0.01, 'Refund amount must be greater than zero'),
     reason: zod_1.z.string().min(3, 'Valid reason for refund is required'),
     clawbackCredits: zod_1.z.boolean().default(true),
+});
+// ==========================================
+// Feature 15.16: Schema-Validated JSON Import & Export Schemas
+// ==========================================
+exports.conflictResolutionStrategySchema = zod_1.z.enum(['SKIP_EXISTING', 'OVERWRITE', 'CREATE_COPY']);
+exports.importExportMetadataSchema = zod_1.z.object({
+    schemaVersion: zod_1.z.literal('2.0'),
+    exportedAt: zod_1.z.string(),
+    exportedBy: zod_1.z.string().optional(),
+    institution: zod_1.z.string().optional(),
+    entityType: zod_1.z.enum(['QUESTIONS', 'COURSES']),
+    itemCount: zod_1.z.number().int().nonnegative(),
+});
+exports.questionExportItemSchema = zod_1.z.object({
+    id: zod_1.z.string().optional(),
+    type: zod_1.z.string().min(1, 'Question type is required'),
+    content: zod_1.z.string().min(3, 'Question content must be at least 3 characters'),
+    data: zod_1.z.record(zod_1.z.any()),
+    difficulty: zod_1.z.enum(['EASY', 'MEDIUM', 'HARD']).default('MEDIUM'),
+    marks: zod_1.z.number().positive('Marks must be greater than 0').default(1.0),
+    status: zod_1.z.enum(['DRAFT', 'REVIEW', 'PUBLISHED', 'ARCHIVED']).default('PUBLISHED'),
+    courseCode: zod_1.z.string().optional(),
+    subjectCode: zod_1.z.string().optional(),
+    syllabusNodeTitle: zod_1.z.string().optional(),
+    tags: zod_1.z.array(zod_1.z.string()).optional(),
+    examUsages: zod_1.z.array(zod_1.z.object({
+        examName: zod_1.z.string().min(1, 'Exam name is required'),
+        year: zod_1.z.number().int().min(1950).max(2100),
+        shift: zod_1.z.string().optional(),
+    })).optional(),
+});
+exports.syllabusNodeExportItemSchema = zod_1.z.lazy(() => zod_1.z.object({
+    id: zod_1.z.string().optional(),
+    title: zod_1.z.string().min(1, 'Node title is required'),
+    type: zod_1.z.enum(['UNIT', 'TOPIC', 'SUBTOPIC', 'CONCEPT']).default('UNIT'),
+    orderIndex: zod_1.z.number().int().default(0),
+    description: zod_1.z.string().optional(),
+    estimatedMinutes: zod_1.z.number().int().positive().optional(),
+    learningObjectives: zod_1.z.array(zod_1.z.string()).optional(),
+    status: zod_1.z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']).optional(),
+    tags: zod_1.z.array(zod_1.z.string()).optional(),
+    parentTitle: zod_1.z.string().optional(),
+    children: zod_1.z.array(exports.syllabusNodeExportItemSchema).optional(),
+}));
+exports.subjectExportItemSchema = zod_1.z.object({
+    id: zod_1.z.string().optional(),
+    code: zod_1.z.string().min(1, 'Subject code is required'),
+    name: zod_1.z.string().min(1, 'Subject name is required'),
+    description: zod_1.z.string().optional(),
+    credits: zod_1.z.number().int().positive().optional(),
+    order: zod_1.z.number().int().default(0),
+    syllabusNodes: zod_1.z.array(exports.syllabusNodeExportItemSchema).optional(),
+});
+exports.courseExportItemSchema = zod_1.z.object({
+    id: zod_1.z.string().optional(),
+    code: zod_1.z.string().min(1, 'Course code is required'),
+    name: zod_1.z.string().min(1, 'Course name is required'),
+    description: zod_1.z.string().optional(),
+    status: zod_1.z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']).default('PUBLISHED'),
+    durationMonths: zod_1.z.number().int().positive().optional(),
+    thumbnailUrl: zod_1.z.string().optional(),
+    subjects: zod_1.z.array(exports.subjectExportItemSchema).optional(),
+});
+exports.importValidateRequestSchema = zod_1.z.object({
+    entityType: zod_1.z.enum(['QUESTIONS', 'COURSES']),
+    items: zod_1.z.array(zod_1.z.any()).min(1, 'At least one item is required in the import payload'),
+    metadata: exports.importExportMetadataSchema.optional(),
+});
+exports.importExecuteRequestSchema = zod_1.z.object({
+    entityType: zod_1.z.enum(['QUESTIONS', 'COURSES']),
+    items: zod_1.z.array(zod_1.z.any()).min(1, 'At least one item is required in the import payload'),
+    conflictStrategy: exports.conflictResolutionStrategySchema.default('SKIP_EXISTING'),
 });

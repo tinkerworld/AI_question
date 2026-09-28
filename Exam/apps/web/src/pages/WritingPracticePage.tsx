@@ -26,6 +26,10 @@ export const WritingPracticePage: React.FC = () => {
   // Result / Evaluation
   const [evaluationResult, setEvaluationResult] = useState<any>(null);
 
+  // Stimulus Image Lightbox / Zoom
+  const [enlargedImageUrl, setEnlargedImageUrl] = useState<string | null>(null);
+  const [imageModalZoom, setImageModalZoom] = useState<number>(1.0);
+
   // Past Sessions
   const [pastSessions, setPastSessions] = useState<any[]>([]);
 
@@ -412,6 +416,21 @@ export const WritingPracticePage: React.FC = () => {
                       >
                         ⏱️ {qMinutes} min
                       </span>
+                      {q.data?.promptImageUrl && (
+                        <span
+                          style={{
+                            fontSize: '11px',
+                            padding: '2px 8px',
+                            borderRadius: '4px',
+                            background: 'rgba(6, 182, 212, 0.12)',
+                            color: '#06b6d4',
+                            fontWeight: 600,
+                            border: '1px solid rgba(6, 182, 212, 0.3)',
+                          }}
+                        >
+                          📊 Chart / Diagram
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -526,6 +545,82 @@ export const WritingPracticePage: React.FC = () => {
                   {activeQuestion.data?.promptStem || activeQuestion.content}
                 </div>
               </div>
+
+              {/* Task Stimulus Chart / Diagram (IELTS Task 1 & Visual Stimuli) */}
+              {activeQuestion.data?.promptImageUrl && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h4 style={{ fontSize: '13px', fontWeight: 600, margin: 0, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>📊</span> Task Stimulus Chart / Diagram:
+                    </h4>
+                    <button
+                      type="button"
+                      id="btn-enlarge-stimulus-chart"
+                      onClick={() => {
+                        setEnlargedImageUrl(activeQuestion.data.promptImageUrl);
+                        setImageModalZoom(1.0);
+                      }}
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        background: 'rgba(6, 182, 212, 0.15)',
+                        border: '1px solid #06b6d4',
+                        color: '#06b6d4',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                      }}
+                    >
+                      <span>🔍</span> Enlarge Fullscreen
+                    </button>
+                  </div>
+                  <div
+                    onClick={() => {
+                      setEnlargedImageUrl(activeQuestion.data.promptImageUrl);
+                      setImageModalZoom(1.0);
+                    }}
+                    style={{
+                      background: '#0a0f1d',
+                      padding: '12px',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-color)',
+                      textAlign: 'center',
+                      cursor: 'zoom-in',
+                      position: 'relative',
+                    }}
+                    title="Click to Enlarge Chart / Diagram"
+                  >
+                    <img
+                      src={activeQuestion.data.promptImageUrl}
+                      alt="Writing Task Stimulus"
+                      style={{
+                        maxWidth: '100%',
+                        maxHeight: '260px',
+                        objectFit: 'contain',
+                        borderRadius: '6px',
+                      }}
+                    />
+                    <div
+                      style={{
+                        position: 'absolute',
+                        bottom: '8px',
+                        right: '8px',
+                        background: 'rgba(0,0,0,0.7)',
+                        color: '#06b6d4',
+                        padding: '3px 8px',
+                        borderRadius: '4px',
+                        fontSize: '10px',
+                        fontWeight: 600,
+                      }}
+                    >
+                      🔍 Click to Zoom
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {activeQuestion.data?.context && (
                 <div>
@@ -774,6 +869,146 @@ export const WritingPracticePage: React.FC = () => {
                 No past writing attempts recorded yet. Start practicing from the catalog!
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Lightbox / High-Resolution Image Zoom Modal */}
+      {enlargedImageUrl && (
+        <div
+          id="modal-stimulus-lightbox"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.85)',
+            zIndex: 9999,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px',
+            backdropFilter: 'blur(4px)',
+          }}
+          onClick={() => setEnlargedImageUrl(null)}
+        >
+          {/* Modal Header Controls */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              width: '90%',
+              maxWidth: '1100px',
+              marginBottom: '12px',
+              color: '#fff',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '15px', fontWeight: 700, fontFamily: 'JetBrains Mono' }}>
+                📊 IELTS Task 1 Stimulus Diagram
+              </span>
+              <span style={{ fontSize: '12px', color: '#9ca3af' }}>
+                ({Math.round(imageModalZoom * 100)}%)
+              </span>
+            </div>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <button
+                type="button"
+                id="btn-zoom-out-lightbox"
+                onClick={() => setImageModalZoom((prev) => Math.max(0.5, Math.round((prev - 0.2) * 10) / 10))}
+                style={{
+                  background: 'rgba(255,255,255,0.1)',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  color: '#fff',
+                  borderRadius: '6px',
+                  padding: '6px 12px',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                }}
+              >
+                - Zoom Out
+              </button>
+              <button
+                type="button"
+                id="btn-zoom-reset-lightbox"
+                onClick={() => setImageModalZoom(1.0)}
+                style={{
+                  background: 'rgba(255,255,255,0.1)',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  color: '#fff',
+                  borderRadius: '6px',
+                  padding: '6px 12px',
+                  cursor: 'pointer',
+                }}
+              >
+                Reset (100%)
+              </button>
+              <button
+                type="button"
+                id="btn-zoom-in-lightbox"
+                onClick={() => setImageModalZoom((prev) => Math.min(3.0, Math.round((prev + 0.2) * 10) / 10))}
+                style={{
+                  background: 'rgba(255,255,255,0.1)',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  color: '#fff',
+                  borderRadius: '6px',
+                  padding: '6px 12px',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                }}
+              >
+                + Zoom In
+              </button>
+              <button
+                type="button"
+                id="btn-close-lightbox"
+                onClick={() => setEnlargedImageUrl(null)}
+                style={{
+                  background: 'rgba(239, 68, 68, 0.2)',
+                  border: '1px solid #ef4444',
+                  color: '#ef4444',
+                  borderRadius: '6px',
+                  padding: '6px 14px',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  marginLeft: '8px',
+                }}
+              >
+                ✕ Close
+              </button>
+            </div>
+          </div>
+
+          {/* Modal Image Body with Scrolling if zoomed */}
+          <div
+            style={{
+              width: '90%',
+              maxWidth: '1100px',
+              height: '80vh',
+              background: '#0a0f1d',
+              borderRadius: '12px',
+              border: '1px solid #374151',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'auto',
+              padding: '20px',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={enlargedImageUrl}
+              alt="Stimulus Full Size"
+              style={{
+                transform: `scale(${imageModalZoom})`,
+                transformOrigin: 'center center',
+                transition: 'transform 0.15s ease-out',
+                maxWidth: imageModalZoom <= 1.0 ? '100%' : undefined,
+                maxHeight: imageModalZoom <= 1.0 ? '100%' : undefined,
+                objectFit: 'contain',
+              }}
+            />
           </div>
         </div>
       )}

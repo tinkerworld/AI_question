@@ -191,11 +191,15 @@ export class WritingEvaluationService {
 
     // Merge AI Evaluation if available, otherwise use baseline heuristic
     if (aiEvaluation) {
-      const finalScore = typeof aiEvaluation.score === 'number'
+      let finalScore = typeof aiEvaluation.score === 'number'
         ? aiEvaluation.score
         : typeof aiEvaluation.finalScore === 'number'
         ? aiEvaluation.finalScore
         : roundedOverall;
+
+      if (wordCount < minWordCount) {
+        finalScore = Math.max(1.0, finalScore * (1 - lengthPenaltyFraction * 0.7));
+      }
 
       const mergedCriteriaScores = rubric.map((c, idx) => {
         const aiCritList = aiEvaluation.criteria || aiEvaluation.rubricScores || [];
@@ -204,11 +208,16 @@ export class WritingEvaluationService {
           (ac.id && ac.id.toLowerCase() === c.id.toLowerCase())
         ) || aiCritList[idx];
 
+        let s = typeof matched?.score === 'number' ? matched.score : baselineCriteriaScores[idx].score;
+        if (wordCount < minWordCount) {
+          s = Math.max(1.0, Math.round(s * (1 - lengthPenaltyFraction * 0.7) * 2) / 2);
+        }
+
         if (matched) {
           return {
             id: c.id,
             name: c.name,
-            score: typeof matched.score === 'number' ? matched.score : baselineCriteriaScores[idx].score,
+            score: s,
             maxScore: c.maxScore,
             feedback: matched.feedback || baselineCriteriaScores[idx].feedback,
           };
@@ -223,10 +232,11 @@ export class WritingEvaluationService {
         vocabularySuggestions.push(...aiEvaluation.vocabularySuggestions);
       }
 
+      const finalRounded = Math.round(finalScore * 2) / 2;
       return {
-        overallScore: Math.round(finalScore * 2) / 2,
+        overallScore: finalRounded,
         maxScore: 9,
-        band: aiEvaluation.gradeBand || `Band ${finalScore.toFixed(1)}`,
+        band: wordCount < minWordCount ? `Band ${finalRounded.toFixed(1)} (Short Length Penalty)` : (aiEvaluation.gradeBand || `Band ${finalScore.toFixed(1)}`),
         wordCount,
         wordCountCompliant,
         criteriaScores: mergedCriteriaScores,
@@ -614,12 +624,19 @@ export class WritingEvaluationService {
     const minWords = Number(qData.minWords || qData.minWordCount || 150);
     const maxWords = Number(qData.maxWords || qData.maxWordCount || 400);
     const promptStem = qData.promptStem || row.questionContent || '';
-    const rubrics = Array.isArray(qData.rubrics) && qData.rubrics.length > 0
+    const textToEvaluate = dto.essayText || (dto as any).submissionText || '';
+    const rubrics = Array.isArray(qData.rubricCriteria) && qData.rubricCriteria.length > 0
+      ? qData.rubricCriteria
+      : Array.isArray(qData.rubric) && qData.rubric.length > 0
+      ? qData.rubric
+      : Array.isArray(qData.rubrics) && qData.rubrics.length > 0
       ? qData.rubrics
+      : qData.preset === 'IELTS_TASK_1'
+      ? BUILTIN_WRITING_RUBRICS.IELTS_TASK_1.criteria
       : BUILTIN_WRITING_RUBRICS.IELTS_TASK_2.criteria;
 
     const evaluation = await this.evaluateWriting(
-      dto.essayText || '',
+      textToEvaluate,
       rubrics,
       minWords,
       maxWords,
