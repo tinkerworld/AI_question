@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from '../../context/I18nContext';
 
 export interface ExamWritingEditorProps {
   value: string;
@@ -21,6 +22,7 @@ export const ExamWritingEditor: React.FC<ExamWritingEditorProps> = ({
   autoSaveIntervalMs = 5000,
   onAutoSave,
 }) => {
+  const { t } = useTranslation();
   const [text, setText] = useState(value);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const autoSaveTimerRef = useRef<any>(null);
@@ -55,12 +57,12 @@ export const ExamWritingEditor: React.FC<ExamWritingEditorProps> = ({
 
   const getWordCountStatus = () => {
     if (wordCount < minWords) {
-      return { color: '#f59e0b', text: `Under minimum (${minWords - wordCount} words needed)` };
+      return { color: '#f59e0b', text: `${t('under_minimum_words', 'Under minimum')} (${minWords - wordCount} ${t('words_needed', 'words needed')})` };
     }
     if (maxWords && wordCount > maxWords) {
-      return { color: '#ef4444', text: `Exceeds maximum by ${wordCount - maxWords} words` };
+      return { color: '#ef4444', text: `${t('exceeds_maximum_words', 'Exceeds maximum')} (${wordCount - maxWords} ${t('words_over', 'words')})` };
     }
-    return { color: '#10b981', text: 'Word count on target' };
+    return { color: '#10b981', text: t('word_count_on_target', 'Word count on target') };
   };
 
   const status = getWordCountStatus();
@@ -91,14 +93,14 @@ export const ExamWritingEditor: React.FC<ExamWritingEditorProps> = ({
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <div>
-            <strong>Words:</strong>{' '}
+            <strong>{t('word_count', 'Words')}:</strong>{' '}
             <span data-testid="writing-word-count" style={{ fontWeight: 700, fontSize: '14px', color: status.color }}>
               {wordCount}
             </span>{' '}
-            / {minWords}–{maxWords} target
+            / {minWords}–{maxWords} {t('target_words_range', 'target')}
           </div>
           <div style={{ color: 'var(--text-muted)' }}>
-            <strong>Chars:</strong> {charCount}
+            <strong>{t('chars', 'Chars')}:</strong> {charCount}
           </div>
           <span
             style={{
@@ -116,7 +118,7 @@ export const ExamWritingEditor: React.FC<ExamWritingEditorProps> = ({
 
         {lastSaved && (
           <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-            Auto-saved at {lastSaved.toLocaleTimeString()}
+            {t('auto_saved', 'Auto-saved')} at {lastSaved.toLocaleTimeString()}
           </div>
         )}
       </div>

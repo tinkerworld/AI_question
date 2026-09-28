@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from '../context/I18nContext';
 import { API_BASE } from '../config/api';
 import { getAuthHeaders } from '../utils/api';
 import { ExamWritingEditor } from '../components/writing/ExamWritingEditor';
@@ -7,6 +8,7 @@ import { WritingScorecard } from '../components/writing/WritingScorecard';
 
 export const WritingPracticePage: React.FC = () => {
   const { token } = useAuth();
+  const { t } = useTranslation();
 
   const [activeView, setActiveView] = useState<'CATALOG' | 'ATTEMPT' | 'RESULTS' | 'HISTORY'>('CATALOG');
   const [selectedMode, setSelectedMode] = useState<'PRACTICE' | 'EXAM'>('PRACTICE');
@@ -174,10 +176,10 @@ export const WritingPracticePage: React.FC = () => {
               gap: '8px',
             }}
           >
-            ✍️ Standalone Writing Practice & AI Evaluation Studio
+            ✍️ {t('writing_lab_title', 'Standalone Writing Practice & AI Evaluation Studio')}
           </h1>
           <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
-            Academic essay composition, real-time word counting compliance, and multi-criteria rubric evaluation.
+            {t('writing_lab_subtitle', 'Academic essay composition, real-time word counting compliance, and multi-criteria rubric evaluation.')}
           </p>
         </div>
 
@@ -196,7 +198,7 @@ export const WritingPracticePage: React.FC = () => {
               cursor: 'pointer',
             }}
           >
-            📋 Writing Catalog
+            📋 {t('writing_catalog', 'Writing Catalog')}
           </button>
           <button
             id="btn-writing-history"
@@ -215,7 +217,7 @@ export const WritingPracticePage: React.FC = () => {
               cursor: 'pointer',
             }}
           >
-            📊 My Attempts ({pastSessions.length})
+            📊 {t('my_attempts', 'My Attempts')} ({pastSessions.length})
           </button>
         </div>
       </div>
@@ -254,7 +256,7 @@ export const WritingPracticePage: React.FC = () => {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-              <span style={{ fontSize: '13px', fontWeight: 600 }}>Practice Mode:</span>
+              <span style={{ fontSize: '13px', fontWeight: 600 }}>{t('practice_mode', 'Practice Mode')}:</span>
               <div
                 style={{
                   display: 'flex',
@@ -278,7 +280,7 @@ export const WritingPracticePage: React.FC = () => {
                     cursor: 'pointer',
                   }}
                 >
-                  🌱 Practice Mode
+                  🌱 {t('practice_mode', 'Practice Mode')}
                 </button>
                 <button
                   id="btn-writing-mode-exam"
@@ -294,13 +296,13 @@ export const WritingPracticePage: React.FC = () => {
                     cursor: 'pointer',
                   }}
                 >
-                  ⚡ Exam Mode
+                  ⚡ {t('exam_mode', 'Exam Mode')}
                 </button>
               </div>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <label htmlFor="select-writing-course-filter" style={{ fontSize: '13px', fontWeight: 600 }}>Course Filter:</label>
+              <label htmlFor="select-writing-course-filter" style={{ fontSize: '13px', fontWeight: 600 }}>{t('filter_by_course', 'Course Filter')}:</label>
               <select
                 id="select-writing-course-filter"
                 value={selectedCourseFilter}
@@ -314,10 +316,10 @@ export const WritingPracticePage: React.FC = () => {
                   fontSize: '12px',
                 }}
               >
-                <option value="">All Eligible Courses ({eligibility?.eligibleCourses?.length || 0})</option>
+                <option value="">{t('all_courses_option', 'All Eligible Courses')} ({eligibility?.eligibleCourses?.length || 0})</option>
                 {(eligibility?.eligibleCourses || []).map((c: any) => (
                   <option key={c.id} value={c.id}>
-                    {c.name} ({c.questionCount} Questions)
+                    {c.name} ({c.questionCount} {t('questions', 'Questions')})
                   </option>
                 ))}
               </select>
@@ -375,7 +377,7 @@ export const WritingPracticePage: React.FC = () => {
                       >
                         {q.difficulty}
                       </span>
-                      <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{q.marks} Marks</span>
+                      <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{q.marks} {t('marks', 'Marks')}</span>
                     </div>
 
                     <h3 style={{ fontSize: '15px', fontWeight: 600, margin: '0 0 8px 0', lineHeight: 1.4 }}>
@@ -403,7 +405,7 @@ export const WritingPracticePage: React.FC = () => {
                           color: 'var(--text-muted)',
                         }}
                       >
-                        📏 {qMinWords}–{qMaxWords} words
+                        📏 {qMinWords}–{qMaxWords} {t('words', 'words')}
                       </span>
                       <span
                         style={{
@@ -414,7 +416,7 @@ export const WritingPracticePage: React.FC = () => {
                           color: 'var(--text-muted)',
                         }}
                       >
-                        ⏱️ {qMinutes} min
+                        ⏱️ {qMinutes} {t('minutes_abbrev', 'min')}
                       </span>
                       {q.data?.promptImageUrl && (
                         <span
@@ -428,7 +430,7 @@ export const WritingPracticePage: React.FC = () => {
                             border: '1px solid rgba(6, 182, 212, 0.3)',
                           }}
                         >
-                          📊 Chart / Diagram
+                          📊 {t('task_stimulus_chart', 'Chart / Diagram')}
                         </span>
                       )}
                     </div>
@@ -452,7 +454,7 @@ export const WritingPracticePage: React.FC = () => {
                       gap: '6px',
                     }}
                   >
-                    ▶️ Start Writing Practice
+                    ▶️ {t('start_writing_practice', 'Start Writing Practice')}
                   </button>
                 </div>
               );
@@ -470,7 +472,7 @@ export const WritingPracticePage: React.FC = () => {
                 color: 'var(--text-muted)',
               }}
             >
-              No writing prompts available for your enrolled course(s).
+              {t('no_writing_drills', 'No writing prompts available for your enrolled course(s).')}
             </div>
           )}
         </div>
@@ -512,7 +514,7 @@ export const WritingPracticePage: React.FC = () => {
                 cursor: 'pointer',
               }}
             >
-              ✕ Exit Attempt
+              ✕ {t('exit_attempt', 'Exit Attempt')}
             </button>
           </div>
 
@@ -531,7 +533,7 @@ export const WritingPracticePage: React.FC = () => {
               }}
             >
               <div>
-                <h3 style={{ fontSize: '15px', fontWeight: 600, margin: '0 0 8px 0' }}>Prompt Stimulus</h3>
+                <h3 style={{ fontSize: '15px', fontWeight: 600, margin: '0 0 8px 0' }}>{t('prompt_stimulus', 'Prompt Stimulus')}</h3>
                 <div
                   style={{
                     fontSize: '14px',
@@ -551,7 +553,7 @@ export const WritingPracticePage: React.FC = () => {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <h4 style={{ fontSize: '13px', fontWeight: 600, margin: 0, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span>📊</span> Task Stimulus Chart / Diagram:
+                      <span>📊</span> {t('task_stimulus_chart', 'Task Stimulus Chart / Diagram')}:
                     </h4>
                     <button
                       type="button"
@@ -574,7 +576,7 @@ export const WritingPracticePage: React.FC = () => {
                         gap: '4px',
                       }}
                     >
-                      <span>🔍</span> Enlarge Fullscreen
+                      <span>🔍</span> {t('enlarge_fullscreen', 'Enlarge Fullscreen')}
                     </button>
                   </div>
                   <div
@@ -591,7 +593,7 @@ export const WritingPracticePage: React.FC = () => {
                       cursor: 'zoom-in',
                       position: 'relative',
                     }}
-                    title="Click to Enlarge Chart / Diagram"
+                    title={t('click_to_zoom', 'Click to Enlarge Chart / Diagram')}
                   >
                     <img
                       src={activeQuestion.data.promptImageUrl}
@@ -616,7 +618,7 @@ export const WritingPracticePage: React.FC = () => {
                         fontWeight: 600,
                       }}
                     >
-                      🔍 Click to Zoom
+                      🔍 {t('click_to_zoom', 'Click to Zoom')}
                     </div>
                   </div>
                 </div>
@@ -625,7 +627,7 @@ export const WritingPracticePage: React.FC = () => {
               {activeQuestion.data?.context && (
                 <div>
                   <h4 style={{ fontSize: '13px', fontWeight: 600, margin: '0 0 6px 0', color: 'var(--text-muted)' }}>
-                    Background Context:
+                    {t('background_context', 'Background Context')}:
                   </h4>
                   <p style={{ fontSize: '13px', lineHeight: 1.5, margin: 0 }}>{activeQuestion.data.context}</p>
                 </div>
@@ -644,18 +646,18 @@ export const WritingPracticePage: React.FC = () => {
                 }}
               >
                 <div>
-                  <span style={{ color: 'var(--text-muted)' }}>Target: </span>
-                  <strong>{minWords} – {maxWords} words</strong>
+                  <span style={{ color: 'var(--text-muted)' }}>{t('target', 'Target')}: </span>
+                  <strong>{minWords} – {maxWords} {t('words', 'words')}</strong>
                 </div>
                 <div>
-                  <span style={{ color: 'var(--text-muted)' }}>Time: </span>
-                  <strong>{activeQuestion.data?.recommendedMinutes || 40} minutes</strong>
+                  <span style={{ color: 'var(--text-muted)' }}>{t('time_spent', 'Time')}: </span>
+                  <strong>{activeQuestion.data?.recommendedMinutes || 40} {t('minutes', 'minutes')}</strong>
                 </div>
               </div>
 
               {/* Rubric Criteria List */}
               <div>
-                <h4 style={{ fontSize: '13px', fontWeight: 600, margin: '0 0 10px 0' }}>Evaluation Criteria:</h4>
+                <h4 style={{ fontSize: '13px', fontWeight: 600, margin: '0 0 10px 0' }}>{t('evaluation_criteria', 'Evaluation Criteria')}:</h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {(activeQuestion.data?.rubrics || []).map((r: any) => (
                     <div
@@ -688,14 +690,14 @@ export const WritingPracticePage: React.FC = () => {
                 gap: '18px',
               }}
             >
-              <h3 style={{ fontSize: '16px', fontWeight: 600, margin: 0 }}>Candidate Essay Composition</h3>
+              <h3 style={{ fontSize: '16px', fontWeight: 600, margin: 0 }}>{t('candidate_essay_composition', 'Candidate Essay Composition')}</h3>
 
               <ExamWritingEditor
                 value={essayText}
                 onChange={setEssayText}
                 minWords={minWords}
                 maxWords={maxWords}
-                placeholder="Begin composing your response here..."
+                placeholder={t('begin_composition_placeholder', 'Begin composing your response here...')}
               />
 
               <button
@@ -718,7 +720,7 @@ export const WritingPracticePage: React.FC = () => {
                   gap: '8px',
                 }}
               >
-                {isSubmitting ? 'Evaluating Essay...' : '✓ Submit Essay for AI Evaluation'}
+                {isSubmitting ? t('evaluating_essay', 'Evaluating Essay...') : `✓ ${t('submit_writing_drill', 'Submit Essay for AI Evaluation')}`}
               </button>
             </div>
           </div>
@@ -742,9 +744,9 @@ export const WritingPracticePage: React.FC = () => {
             }}
           >
             <div>
-              <span style={{ fontSize: '12px', fontWeight: 700, color: '#10b981' }}>PRACTICE COMPLETE</span>
+              <span style={{ fontSize: '12px', fontWeight: 700, color: '#10b981' }}>{t('practice_complete', 'PRACTICE COMPLETE')}</span>
               <h2 style={{ fontSize: '20px', fontWeight: 700, margin: '4px 0 0 0' }}>
-                Essay Assessment & Scorecard
+                {t('writing_assessment_report', 'Essay Assessment & Scorecard')}
               </h2>
               <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
                 {activeQuestion?.content}
@@ -766,7 +768,7 @@ export const WritingPracticePage: React.FC = () => {
                   cursor: 'pointer',
                 }}
               >
-                📋 Back to Catalog
+                📋 {t('back_to_catalog', 'Back to Catalog')}
               </button>
             </div>
           </div>
@@ -783,7 +785,7 @@ export const WritingPracticePage: React.FC = () => {
               padding: '24px',
             }}
           >
-            <h3 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '12px' }}>Submitted Essay Text</h3>
+            <h3 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '12px' }}>{t('submitted_essay_text', 'Submitted Essay Text')}</h3>
             <div
               style={{
                 fontSize: '13px',
@@ -806,7 +808,7 @@ export const WritingPracticePage: React.FC = () => {
       {activeView === 'HISTORY' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <h2 style={{ fontSize: '18px', fontWeight: 700, margin: '0 0 8px 0' }}>
-            My Standalone Writing Attempts
+            {t('my_writing_attempts', 'My Standalone Writing Attempts')}
           </h2>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -831,13 +833,13 @@ export const WritingPracticePage: React.FC = () => {
                     {s.questionContent}
                   </div>
                   <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                    Attempted on {new Date(s.startedAt).toLocaleString()} • Word Count: {s.wordCount || 0} • Duration: {s.timeSpentSeconds || 0}s
+                    Attempted on {new Date(s.startedAt).toLocaleString()} • {t('word_count', 'Word Count')}: {s.wordCount || 0} • {t('duration', 'Duration')}: {s.timeSpentSeconds || 0}s
                   </div>
                 </div>
 
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontSize: '18px', fontWeight: 800, color: '#10b981' }}>
-                    Score: {s.score} / {s.maxScore}
+                    {t('score', 'Score')}: {s.score} / {s.maxScore}
                   </div>
                   <span
                     style={{
@@ -866,7 +868,7 @@ export const WritingPracticePage: React.FC = () => {
                   color: 'var(--text-muted)',
                 }}
               >
-                No past writing attempts recorded yet. Start practicing from the catalog!
+                {t('no_writing_history', 'No past writing attempts recorded yet. Start practicing from the catalog!')}
               </div>
             )}
           </div>
@@ -906,7 +908,7 @@ export const WritingPracticePage: React.FC = () => {
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <span style={{ fontSize: '15px', fontWeight: 700, fontFamily: 'JetBrains Mono' }}>
-                📊 IELTS Task 1 Stimulus Diagram
+                📊 {t('task_stimulus_chart', 'IELTS Task 1 Stimulus Diagram')}
               </span>
               <span style={{ fontSize: '12px', color: '#9ca3af' }}>
                 ({Math.round(imageModalZoom * 100)}%)
@@ -927,7 +929,7 @@ export const WritingPracticePage: React.FC = () => {
                   fontWeight: 'bold',
                 }}
               >
-                - Zoom Out
+                - {t('zoom_out', 'Zoom Out')}
               </button>
               <button
                 type="button"
@@ -942,7 +944,7 @@ export const WritingPracticePage: React.FC = () => {
                   cursor: 'pointer',
                 }}
               >
-                Reset (100%)
+                {t('reset_zoom', 'Reset')} (100%)
               </button>
               <button
                 type="button"
@@ -958,7 +960,7 @@ export const WritingPracticePage: React.FC = () => {
                   fontWeight: 'bold',
                 }}
               >
-                + Zoom In
+                + {t('zoom_in', 'Zoom In')}
               </button>
               <button
                 type="button"
@@ -975,7 +977,7 @@ export const WritingPracticePage: React.FC = () => {
                   marginLeft: '8px',
                 }}
               >
-                ✕ Close
+                ✕ {t('close_lightbox', 'Close')}
               </button>
             </div>
           </div>

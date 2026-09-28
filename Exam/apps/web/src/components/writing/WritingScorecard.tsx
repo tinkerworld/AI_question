@@ -1,6 +1,7 @@
 import React from 'react';
 import { WritingEvaluationResultDTO } from '@repo/types';
 import { PremiumGuardrail } from '../entitlements/PremiumGuardrail';
+import { useTranslation } from '../../context/I18nContext';
 
 interface WritingScorecardProps {
   result: WritingEvaluationResultDTO;
@@ -13,6 +14,8 @@ export const WritingScorecard: React.FC<WritingScorecardProps> = ({
   isLocked = false,
   onUpgrade,
 }) => {
+  const { t } = useTranslation();
+
   return (
     <div
       data-testid="writing-scorecard"
@@ -39,20 +42,20 @@ export const WritingScorecard: React.FC<WritingScorecardProps> = ({
         }}
       >
         <div>
-          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700 }}>Writing Assessment Report</h3>
+          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700 }}>{t('writing_assessment_report', 'Writing Assessment Report')}</h3>
           <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>
-            Evaluated against standard rubrics and word count compliance rules.
+            {t('writing_report_desc', 'Evaluated against standard rubrics and word count compliance rules.')}
           </p>
         </div>
 
         <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Word Count</div>
+            <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>{t('word_count', 'Word Count')}</div>
             <div style={{ fontSize: '20px', fontWeight: 700, color: result.wordCountCompliant ? 'var(--text-main)' : '#ef4444' }}>
               {result.wordCount}
             </div>
             {!result.wordCountCompliant && (
-              <span style={{ fontSize: '10px', color: '#ef4444' }}>Non-compliant length</span>
+              <span style={{ fontSize: '10px', color: '#ef4444' }}>{t('non_compliant_length', 'Non-compliant length')}</span>
             )}
           </div>
 
@@ -65,7 +68,7 @@ export const WritingScorecard: React.FC<WritingScorecardProps> = ({
               textAlign: 'center',
             }}
           >
-            <div style={{ fontSize: '11px', color: '#06b6d4', fontWeight: 600 }}>OVERALL SCORE (BAND {result.band})</div>
+            <div style={{ fontSize: '11px', color: '#06b6d4', fontWeight: 600 }}>{t('overall_score', 'OVERALL SCORE')} ({t('overall_band', 'BAND')} {result.band})</div>
             <div style={{ fontSize: '26px', fontWeight: 800, color: '#06b6d4' }}>
               {result.overallScore} / {result.maxScore}
             </div>
@@ -75,7 +78,7 @@ export const WritingScorecard: React.FC<WritingScorecardProps> = ({
 
       {/* General Summary */}
       <div>
-        <h4 style={{ margin: '0 0 8px', fontSize: '14px', fontWeight: 600 }}>Examiner Feedback</h4>
+        <h4 style={{ margin: '0 0 8px', fontSize: '14px', fontWeight: 600 }}>{t('examiner_feedback', 'Examiner Feedback')}</h4>
         <p style={{ margin: 0, fontSize: '13px', lineHeight: 1.6, color: 'var(--text-main)' }}>
           {result.overallFeedback}
         </p>
@@ -91,7 +94,7 @@ export const WritingScorecard: React.FC<WritingScorecardProps> = ({
         onUpgrade={onUpgrade}
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 600 }}>Criterion-by-Criterion Performance</h4>
+          <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 600 }}>{t('evaluation_criteria', 'Criterion-by-Criterion Performance')}</h4>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px' }}>
             {(result.criteriaScores || []).map((c) => {
@@ -127,7 +130,7 @@ export const WritingScorecard: React.FC<WritingScorecardProps> = ({
           {result.vocabularySuggestions && result.vocabularySuggestions.length > 0 && (
             <div style={{ marginTop: '8px' }}>
               <h4 style={{ margin: '0 0 8px', fontSize: '13px', fontWeight: 600, color: '#10b981' }}>
-                Lexical & Vocabulary Suggestions
+                {t('lexical_suggestions', 'Lexical & Vocabulary Suggestions')}
               </h4>
               <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '13px', color: 'var(--text-main)', lineHeight: 1.7 }}>
                 {result.vocabularySuggestions.map((v, idx) => (
@@ -142,7 +145,7 @@ export const WritingScorecard: React.FC<WritingScorecardProps> = ({
           {result.grammarFeedback && result.grammarFeedback.length > 0 && (
             <div style={{ marginTop: '8px' }}>
               <h4 style={{ margin: '0 0 8px', fontSize: '13px', fontWeight: 600, color: '#3b82f6' }}>
-                Grammar & Syntax Feedback
+                {t('grammar_feedback', 'Grammar & Syntax Feedback')}
               </h4>
               <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '13px', color: 'var(--text-main)', lineHeight: 1.7 }}>
                 {result.grammarFeedback.map((g, idx) => (

@@ -18,7 +18,7 @@ interface I18nContextType {
   currentLanguage: string;
   language: string;
   setLanguage: (code: string) => void;
-  t: (key: string) => string;
+  t: (key: string, fallback?: string) => string;
   availableLanguages: LanguageInfo[];
   registerLanguage: (lang: LanguageInfo, initialKeys?: Record<string, string>) => Promise<boolean>;
   isLoading: boolean;
@@ -149,8 +149,9 @@ export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const t = (key: string): string => {
+  const t = (key: string, fallback?: string): string => {
     if (translations[key]) return translations[key];
+    if (fallback !== undefined) return fallback;
     // Fallback formatting
     return key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
   };

@@ -199,22 +199,24 @@ export const BASELINE_LANGUAGES = [
   { code: 'lus', name: 'Mizo', nativeName: 'Mizo', isDefault: false },
 ];
 
-export const TRANSLATION_KEYS = [
-  { key: 'welcome', description: 'Welcome banner heading', module: 'common' },
-  { key: 'app_title', description: 'Application header title', module: 'common' },
-  { key: 'dashboard', description: 'Navigation dashboard label', module: 'navigation' },
-  { key: 'users', description: 'Navigation user management label', module: 'navigation' },
-  { key: 'courses', description: 'Navigation academic courses label', module: 'navigation' },
-  { key: 'question_bank', description: 'Navigation question bank label', module: 'navigation' },
-  { key: 'exam_patterns', description: 'Navigation exam patterns label', module: 'navigation' },
-  { key: 'exams', description: 'Navigation exams generator label', module: 'navigation' },
-  { key: 'archive', description: 'Navigation published exam archive label', module: 'navigation' },
-  { key: 'analytics', description: 'Navigation student analytics label', module: 'navigation' },
-];
+import { SEED_TRANSLATION_KEYS } from '../../apps/api/src/constants/seed-translation-keys';
+import { BASELINE_TRANSLATION_DICTIONARIES } from '../../apps/api/src/services/ai-translation.service';
+
+const baseSeedEn: Record<string, string> = {};
+for (const k of SEED_TRANSLATION_KEYS) {
+  baseSeedEn[k.key] = k.english;
+}
+
+const baseSeedHi: Record<string, string> = {
+  ...baseSeedEn,
+  ...(BASELINE_TRANSLATION_DICTIONARIES['hi'] || {}),
+};
+
+export const TRANSLATION_KEYS = SEED_TRANSLATION_KEYS;
 
 export const SEED_TRANSLATIONS: Record<string, Record<string, string>> = {
-  en: { welcome: 'Welcome to ExamOS Platform', app_title: 'ExamOS // Adaptive Learning Platform', dashboard: 'Dashboard', users: 'User Management', courses: 'Academic Courses', question_bank: 'Question Bank', exam_patterns: 'Exam Patterns', exams: 'Exam Generator', archive: 'Published Archive', analytics: 'Student Analytics' },
-  hi: { welcome: 'ExamOS प्लेटफॉर्म में आपका स्वागत है', app_title: 'ExamOS // अनुकूलनीय शिक्षण मंच', dashboard: 'डैशबोर्ड', users: 'उपयोगकर्ता प्रबंधन', courses: 'अकादमिक पाठ्यक्रम', question_bank: 'प्रश्न बैंक', exam_patterns: 'परीक्षा पैटर्न', exams: 'परीक्षा जनरेटर', archive: 'प्रकाशित अभिलेखागार', analytics: 'छात्र विश्लेषण' },
+  en: baseSeedEn,
+  hi: baseSeedHi,
   bn: { welcome: 'ExamOS প্ল্যাটফর্মে স্বাগতম', app_title: 'ExamOS // অ্যাডাপ্টিভ লার্নিং প্ল্যাটফর্ম', dashboard: 'ড্যাশবোর্ড', users: 'ব্যবহারকারী পরিচালনা', courses: 'একাডেমিক কোর্স', question_bank: 'প্রশ্ন ব্যাংক', exam_patterns: 'পরীক্ষার প্যাটার্ন', exams: 'পরীক্ষা জেনারেটর', archive: 'প্রকাশিত সংরক্ষণাগার', analytics: 'ছাত্র অ্যানালিটিক্স' },
   gu: { welcome: 'ExamOS પ્લેટફોર્મ પર આપનું સ્વાગત છે', app_title: 'ExamOS // અનુકૂલનશીલ શિક્ષણ પ્લેટફોર્મ', dashboard: 'ડેશબોર્ડ', users: 'વપરાશકર્તા સંચાલન', courses: 'શૈક્ષણિક અભ્યાસક્રમો', question_bank: 'પ્રશ્ન બેંક', exam_patterns: 'પરીક્ષા પેટર્ન', exams: 'પરીક્ષા જનરેટર', analytics: 'વિદ્યાર્થી પૃથ્થકરણ' },
   kn: { welcome: 'ExamOS ವೇದಿಕೆಗೆ ನಿಮಗೆ ಸುಸ್ವಾಗತ', app_title: 'ExamOS // ಅಡಾಪ್ಟಿವ್ ಕಲಿಕಾ ವೇದಿಕೆ', dashboard: 'ಡ್ಯಾಶ್‌ಬೋರ್ಡ್', users: 'ಬಳಕೆದಾರರ ನಿರ್ವಹಣೆ', courses: 'ಶೈಕ್ಷಣಿಕ ಕೋರ್ಸ್‌ಗಳು', question_bank: 'ಪ್ರಶ್ನೆ ಬ್ಯಾಂಕ್', exam_patterns: 'ಪರೀಕ್ಷಾ ಮಾದರಿಗಳು', exams: 'ಪರೀಕ್ಷಾ ಜನರೇಟರ್', analytics: 'ವಿದ್ಯಾರ್ಥಿ ವಿಶ್ಲೇಷಣೆ' },
@@ -3951,11 +3953,12 @@ export async function runSeed() {
         if (keyRes.rows.length > 0) {
           const keyId = (keyRes.rows[0] as any).id;
           const trId = `tr_${langCode}_${key}`;
+          const isVerified = langCode === 'en';
           await pgDb.query(
-            `INSERT INTO "translations" ("id", "languageId", "translationKeyId", "value")
-             VALUES ($1, $2, $3, $4)
-             ON CONFLICT ("languageId", "translationKeyId") DO UPDATE SET "value" = EXCLUDED."value"`,
-            [trId, langId, keyId, value]
+            `INSERT INTO "translations" ("id", "languageId", "translationKeyId", "value", "isVerified")
+             VALUES ($1, $2, $3, $4, $5)
+             ON CONFLICT ("languageId", "translationKeyId") DO UPDATE SET "value" = EXCLUDED."value", "isVerified" = EXCLUDED."isVerified"`,
+            [trId, langId, keyId, value, isVerified]
           );
           totalTranslationsSeeded++;
         }
