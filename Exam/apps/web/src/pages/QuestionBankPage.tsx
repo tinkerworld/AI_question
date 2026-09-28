@@ -726,6 +726,23 @@ export const QuestionBankPage: React.FC = () => {
     setDocRoleContext('');
     setDocGenerateError(null);
     setIsGeneratingDoc(false);
+    setWritingConfig({
+      promptStem: '',
+      promptImageUrl: '',
+      stimulusText: '',
+      minWords: 150,
+      maxWords: 400,
+      recommendedTimeMinutes: 40,
+      rubricCriteria: [
+        { id: 'task_response', name: 'Task Response', weight: 0.25, maxScore: 9, description: 'Addressing all parts of the task' },
+        { id: 'coherence_cohesion', name: 'Coherence and Cohesion', weight: 0.25, maxScore: 9, description: 'Logical flow and linking devices' },
+        { id: 'lexical_resource', name: 'Lexical Resource', weight: 0.25, maxScore: 9, description: 'Range and precision of vocabulary' },
+        { id: 'grammatical_range', name: 'Grammatical Accuracy', weight: 0.25, maxScore: 9, description: 'Range of complex structures and accuracy' },
+      ],
+      sampleAnswer: '',
+      preset: 'IELTS_TASK_2',
+      taskType: 'TASK_2_ESSAY',
+    });
     setEditingQuestion(null);
   };
 
@@ -820,6 +837,9 @@ export const QuestionBankPage: React.FC = () => {
         maxWords: d.maxWords || d.maxWordCount || 400,
         recommendedTimeMinutes: d.recommendedTimeMinutes || d.timeLimitMinutes || 40,
         rubricCriteria: d.rubricCriteria || d.rubric || [],
+        sampleAnswer: d.sampleAnswer || '',
+        preset: d.preset || (d.minWords <= 200 ? 'IELTS_TASK_1' : 'IELTS_TASK_2'),
+        taskType: d.taskType || (d.minWords <= 200 ? 'TASK_1_GRAPH' : 'TASK_2_ESSAY'),
       });
     }
 
@@ -885,6 +905,8 @@ export const QuestionBankPage: React.FC = () => {
         };
       case 'WRITING':
         return {
+          preset: writingConfig.preset || (writingConfig.minWords <= 200 ? 'IELTS_TASK_1' : 'IELTS_TASK_2'),
+          taskType: writingConfig.taskType || (writingConfig.minWords <= 200 ? 'TASK_1_GRAPH' : 'TASK_2_ESSAY'),
           promptStem: writingConfig.promptStem || formContent,
           promptText: writingConfig.promptStem || formContent,
           promptImageUrl: writingConfig.promptImageUrl || undefined,
@@ -897,6 +919,7 @@ export const QuestionBankPage: React.FC = () => {
           timeLimitMinutes: Number(writingConfig.recommendedTimeMinutes || 40),
           rubricCriteria: writingConfig.rubricCriteria || [],
           rubric: writingConfig.rubricCriteria || [],
+          sampleAnswer: writingConfig.sampleAnswer || undefined,
         };
       default:
         return {};
@@ -909,9 +932,14 @@ export const QuestionBankPage: React.FC = () => {
       setError(null);
       setActionSuccess(null);
 
+      let effectiveContent = formContent;
+      if (formType === 'WRITING' && (!effectiveContent.trim() || effectiveContent.trim().length === 0)) {
+        effectiveContent = writingConfig.promptStem || 'Writing Assessment Task';
+      }
+
       const payload: any = {
         type: formType,
-        content: formContent,
+        content: effectiveContent,
         difficulty: formDifficulty,
         marks: Number(formMarks),
         status: formStatus,
@@ -1925,7 +1953,17 @@ export const QuestionBankPage: React.FC = () => {
                     id="select-question-type"
                     value={formType}
                     disabled={Boolean(editingQuestion)}
-                    onChange={(e) => setFormType(e.target.value)}
+                    onChange={(e) => {
+                      const newType = e.target.value;
+                      setFormType(newType);
+                      if (newType === 'WRITING') {
+                        setFormMarks(9.0);
+                      } else if (newType === 'INTERVIEW') {
+                        setFormMarks(100.0);
+                      } else if (formMarks === 9.0 || formMarks === 100.0) {
+                        setFormMarks(4.0);
+                      }
+                    }}
                     style={{
                       width: '100%',
                       padding: '8px',
@@ -3513,8 +3551,16 @@ export const QuestionBankPage: React.FC = () => {
                 {formType === 'WRITING' && (
                   <div style={{ marginTop: '8px' }}>
                     <WritingAuthoringPanel
-                      initialConfig={writingConfig}
-                      onChange={(cfg) => setWritingConfig(cfg)}
+                      initialConfig={{
+                        ...writingConfig,
+                        promptStem: writingConfig.promptStem || formContent,
+                      }}
+                      onChange={(cfg) => {
+                        setWritingConfig(cfg);
+                        if (cfg.promptStem && (!formContent || formContent.trim() === '')) {
+                          setFormContent(cfg.promptStem);
+                        }
+                      }}
                     />
                   </div>
                 )}

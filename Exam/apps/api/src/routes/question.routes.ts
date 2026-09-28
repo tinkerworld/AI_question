@@ -201,31 +201,53 @@ router.post(
   auditLog('CREATE', 'question'),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { type, content, data, difficulty, marks, status, courseId, subjectId, syllabusNodeId } = req.body;
+      const { id: customId, type, content, data, difficulty, marks, status, courseId, subjectId, syllabusNodeId } = req.body;
 
       const typeKey = type.toUpperCase();
-      const qId = `q_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+      const qId = customId || `q_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
       const payloadData = typeof data === 'object' ? JSON.stringify(data) : data;
 
-      await pgDb.query(
-        `INSERT INTO "questions" (
-          "id", "type", "content", "data", "difficulty", "marks", "status", "version",
-          "courseId", "subjectId", "syllabusNodeId", "createdById", "createdAt", "updatedAt"
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, 1, $8, $9, $10, $11, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-        [
-          qId,
-          typeKey,
-          content,
-          payloadData,
-          difficulty || 'MEDIUM',
-          marks || 1.0,
-          status || 'DRAFT',
-          courseId || null,
-          subjectId || null,
-          syllabusNodeId || null,
-          req.user!.userId,
-        ]
-      );
+      const existing = await pgDb.query(`SELECT id FROM "questions" WHERE "id" = $1`, [qId]);
+      if (existing.rows.length > 0) {
+        await pgDb.query(
+          `UPDATE "questions" SET
+             "type" = $1, "content" = $2, "data" = $3, "difficulty" = $4, "marks" = $5,
+             "status" = $6, "courseId" = $7, "subjectId" = $8, "syllabusNodeId" = $9, "updatedAt" = CURRENT_TIMESTAMP
+           WHERE "id" = $10`,
+          [
+            typeKey,
+            content,
+            payloadData,
+            difficulty || 'MEDIUM',
+            marks || 1.0,
+            status || 'DRAFT',
+            courseId || null,
+            subjectId || null,
+            syllabusNodeId || null,
+            qId,
+          ]
+        );
+      } else {
+        await pgDb.query(
+          `INSERT INTO "questions" (
+            "id", "type", "content", "data", "difficulty", "marks", "status", "version",
+            "courseId", "subjectId", "syllabusNodeId", "createdById", "createdAt", "updatedAt"
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, 1, $8, $9, $10, $11, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+          [
+            qId,
+            typeKey,
+            content,
+            payloadData,
+            difficulty || 'MEDIUM',
+            marks || 1.0,
+            status || 'DRAFT',
+            courseId || null,
+            subjectId || null,
+            syllabusNodeId || null,
+            req.user!.userId,
+          ]
+        );
+      }
 
       const vId = `qv_${crypto.randomBytes(8).toString('hex')}`;
       await pgDb.query(

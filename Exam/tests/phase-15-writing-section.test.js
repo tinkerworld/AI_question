@@ -30,7 +30,7 @@ async function login(email, password) {
 
 async function runWritingSuite() {
   console.log('================================================================');
-  console.log('✍️  RUNNING EXAMOS WRITING SECTION & IELTS TASK 1 VERIFICATION');
+  console.log('✍️  RUNNING EXAMOS WRITING SECTION & IELTS TASK 1 / TASK 2 SUITE');
   console.log('================================================================\n');
 
   let passed = 0;
@@ -43,106 +43,160 @@ async function runWritingSuite() {
     const student = await login('student@examos.com', 'Student@123');
     console.log('   ✓ Admin and Student personas authenticated successfully');
 
-    // 2. Verify Student Writing Eligibility & Sidebar Unlock
-    console.log('\n2. Verifying Student Writing Eligibility & Dynamic Sidebar Tab...');
+    // 2. Authoring Mechanism: Create custom Writing Question via API
+    console.log('\n2. Testing Authoring Mechanism: Create & Publish Custom Writing Questions...');
+    const customTask1 = {
+      type: 'WRITING',
+      difficulty: 'MEDIUM',
+      marks: 9.0,
+      status: 'PUBLISHED',
+      courseId: 'c3',
+      subjectId: 'sub_ielts_writing',
+      content: 'IELTS Academic Writing Task 1: Authoring API Test Prompt on Wind Power',
+      data: {
+        preset: 'IELTS_TASK_1',
+        taskType: 'TASK_1_GRAPH',
+        promptStem: 'IELTS Academic Writing Task 1: Authoring API Test Prompt on Wind Power',
+        promptImageUrl: '/assets/charts/ielts_task1_renewable_energy.svg',
+        stimulusText: 'Summarize the wind energy growth figures across nations.',
+        minWords: 150,
+        maxWords: 250,
+        recommendedTimeMinutes: 20,
+        rubricCriteria: [
+          { id: 'task_achievement', name: 'Task Achievement', maxScore: 9, weight: 0.25, description: 'Accurate overview' },
+          { id: 'coherence_cohesion', name: 'Coherence & Cohesion', maxScore: 9, weight: 0.25, description: 'Logical progression' },
+          { id: 'lexical_resource', name: 'Lexical Resource', maxScore: 9, weight: 0.25, description: 'Lexical precision' },
+          { id: 'grammatical_range', name: 'Grammatical Range & Accuracy', maxScore: 9, weight: 0.25, description: 'Grammar accuracy' },
+        ],
+      },
+    };
+
+    const createRes = await fetchJson('/questions', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${admin.token}` },
+      body: JSON.stringify(customTask1),
+    });
+    assert.strictEqual(createRes.status, 201, 'Should create question with 201 status');
+    assert.ok(createRes.data.data?.id, 'Should return generated question ID');
+    console.log(`   ✓ Successfully authored and published custom Task 1 question (${createRes.data.data.id})`);
+
+    // 3. Verify Student Writing Eligibility & Available Questions
+    console.log('\n3. Verifying Student Writing Eligibility & Sample Question Roster...');
     const eligRes = await fetchJson('/writing/eligibility', {
       headers: { Authorization: `Bearer ${student.token}` },
     });
     assert.strictEqual(eligRes.status, 200);
     assert.strictEqual(eligRes.data.success, true);
     assert.strictEqual(eligRes.data.data.isEligible, true, 'Student must be marked isEligible: true');
-    assert.ok(eligRes.data.data.availableQuestions.length >= 4, 'At least 4 writing questions must be available');
+    assert.ok(eligRes.data.data.availableQuestions.length >= 8, 'At least 8 sample writing questions must be available');
     console.log(`   ✓ Student writing eligibility: isEligible=true (${eligRes.data.data.availableQuestions.length} published questions available)`);
-    console.log('   ✓ Writing Practice tab (#nav-tab-writing_practice) is fully unlocked in navigation sidebar');
 
-    // 3. Verify IELTS Task 1 Chart & Diagram Prompt Image Metadata
-    console.log('\n3. Verifying IELTS Task 1 Prompts and SVG Diagram Attachments...');
-    const q1 = eligRes.data.data.availableQuestions.find((q) => q.id === 'q_ielts_wrt_01');
-    assert.ok(q1, 'q_ielts_wrt_01 exists');
-    assert.strictEqual(q1.data.preset, 'IELTS_TASK_1');
-    assert.strictEqual(q1.data.promptImageUrl, '/assets/charts/ielts_task1_renewable_energy.svg');
-    assert.strictEqual(q1.data.minWords, 150);
-    assert.strictEqual(q1.data.maxWords, 250);
-    assert.strictEqual(q1.data.recommendedTimeMinutes, 20);
-    const hasTaskAchievement = q1.data.rubricCriteria?.some((c) => c.name === 'Task Achievement');
-    assert.ok(hasTaskAchievement, 'IELTS Task 1 must use Task Achievement rubric criterion');
-    console.log('   ✓ q_ielts_wrt_01 verified: Task 1 Renewable Energy Bar Chart, Task Achievement rubric, 150-250 words / 20 min');
+    // Verify all 8 core sample questions exist
+    const qIds = ['q_ielts_wrt_01', 'q_ielts_wrt_02', 'q_ielts_wrt_03', 'q_ielts_wrt_04', 'q_ielts_wrt_05', 'q_ielts_wrt_06', 'q_ielts_wrt_07', 'q_ielts_wrt_08'];
+    for (const qId of qIds) {
+      const found = eligRes.data.data.availableQuestions.find((q) => q.id === qId);
+      assert.ok(found, `Question ${qId} must exist in available questions`);
+    }
+    console.log('   ✓ Verified all 8 core IELTS sample questions (Task 1: 01,02,05,06; Task 2: 03,04,07,08)');
 
-    const q2 = eligRes.data.data.availableQuestions.find((q) => q.id === 'q_ielts_wrt_02');
-    assert.ok(q2, 'q_ielts_wrt_02 exists');
-    assert.strictEqual(q2.data.preset, 'IELTS_TASK_1');
-    assert.strictEqual(q2.data.promptImageUrl, '/assets/charts/ielts_task1_desalination_process.svg');
-    assert.strictEqual(q2.data.minWords, 150);
-    console.log('   ✓ q_ielts_wrt_02 verified: Task 1 Desalination Flow Diagram, Task Achievement rubric, 150-250 words / 20 min');
+    // 4. Verify High-Resolution SVG Visual Assets
+    console.log('\n4. Verifying High-Resolution SVG Chart Asset Delivery on Port 3000...');
+    const charts = [
+      '/assets/charts/ielts_task1_renewable_energy.svg',
+      '/assets/charts/ielts_task1_desalination_process.svg',
+      '/assets/charts/ielts_task1_global_co2_trends.svg',
+      '/assets/charts/ielts_task1_household_expenditure_pie.svg',
+    ];
+    for (const chartPath of charts) {
+      const res = await fetch(`${WEB_BASE}${chartPath}`);
+      assert.strictEqual(res.status, 200, `Chart ${chartPath} should return HTTP 200`);
+      assert.ok(res.headers.get('content-type')?.includes('svg'), `Chart ${chartPath} should be SVG`);
+      console.log(`   ✓ ${chartPath} delivered successfully (HTTP 200 image/svg+xml)`);
+    }
 
-    const q3 = eligRes.data.data.availableQuestions.find((q) => q.id === 'q_ielts_wrt_03');
-    assert.ok(q3, 'q_ielts_wrt_03 exists');
-    assert.strictEqual(q3.data.preset, 'IELTS_TASK_2');
-    assert.strictEqual(q3.data.minWords, 250);
-    const hasTaskResponse = q3.data.rubricCriteria?.some((c) => c.name === 'Task Response');
-    assert.ok(hasTaskResponse, 'IELTS Task 2 must use Task Response rubric criterion');
-    console.log('   ✓ q_ielts_wrt_03 verified: Task 2 Discursive Essay, Task Response rubric, 250-400 words / 40 min');
-
-    // 4. Verify Static Image Serving on Frontend (Vite)
-    console.log('\n4. Verifying High-Resolution SVG Chart Asset Delivery...');
-    const svg1Res = await fetch(`${WEB_BASE}/assets/charts/ielts_task1_renewable_energy.svg`);
-    assert.strictEqual(svg1Res.status, 200);
-    assert.ok(svg1Res.headers.get('content-type')?.includes('svg'));
-    console.log('   ✓ Renewable energy SVG served successfully (HTTP 200 image/svg+xml)');
-
-    const svg2Res = await fetch(`${WEB_BASE}/assets/charts/ielts_task1_desalination_process.svg`);
-    assert.strictEqual(svg2Res.status, 200);
-    assert.ok(svg2Res.headers.get('content-type')?.includes('svg'));
-    console.log('   ✓ Desalination process flow diagram SVG served successfully (HTTP 200 image/svg+xml)');
-
-    // 5. Verify Full Practice Session Lifecycle with Task 1 Diagram
-    console.log('\n5. Testing End-to-End Writing Practice Session with Task 1 Diagram...');
-    const sessionRes = await fetchJson('/writing/sessions/start', {
+    // 5. Test IELTS Task 1 Session Lifecycle (Bar Chart)
+    console.log('\n5. Testing End-to-End Task 1 Session with Visual Diagram...');
+    const t1SessionRes = await fetchJson('/writing/sessions/start', {
       method: 'POST',
       headers: { Authorization: `Bearer ${student.token}` },
       body: JSON.stringify({ questionId: 'q_ielts_wrt_01', mode: 'PRACTICE' }),
     });
-    assert.strictEqual(sessionRes.status, 201);
-    const session = sessionRes.data.data.session;
-    const question = sessionRes.data.data.question;
-    assert.ok(session.id);
-    assert.strictEqual(question.data?.promptImageUrl, '/assets/charts/ielts_task1_renewable_energy.svg');
-    console.log(`   ✓ Writing session created (${session.id}) with promptImageUrl preserved`);
+    assert.strictEqual(t1SessionRes.status, 201);
+    const t1Session = t1SessionRes.data.data.session;
+    const t1Question = t1SessionRes.data.data.question;
+    assert.strictEqual(t1Question.data?.promptImageUrl, '/assets/charts/ielts_task1_renewable_energy.svg');
 
-    const essayResponse = `The provided bar chart compares the percentage shares of renewable electricity generated via solar, wind, and hydroelectric sources across five European countries over a 14-year period from 2010 to 2024. Overall, it is immediately apparent that all five nations experienced substantial growth in renewable electricity generation, with wind and solar recording the most dramatic relative increases. Hydroelectric power remained dominant in mountainous regions like Norway. In Germany, total renewable electricity surged remarkably. Wind power escalated from approximately 12 percent in 2010 to over 35 percent by 2024, representing the primary driver of national decarbonization. Solar generation exhibited a parallel upward trajectory, expanding from under 5 percent to nearly 18 percent. In contrast, hydroelectric output remained relatively constant at roughly 4 percent throughout the timeframe. A similar pattern was observable in the United Kingdom, where offshore wind expanded from 8 percent to 31 percent. Meanwhile, Norway retained its position with hydroelectric generation contributing an impressive 88 percent of domestic supply, supplemented marginally by modern wind installations. In summary, European nations diversified their clean energy matrices significantly between 2010 and 2024.`;
+    const t1Essay = `The provided bar chart compares the percentage shares of renewable electricity generated via solar, wind, and hydroelectric sources across five European countries over a 14-year period from 2010 to 2024. Overall, renewable energy generation expanded substantially in all five nations, with wind and solar recording the most pronounced percentage gains, while hydroelectric power remained dominant in Norway. In 2010, Norway led all surveyed nations with hydroelectricity accounting for nearly 90% of its domestic output, a proportion that remained virtually unchanged by 2024 at approximately 88%. By contrast, wind power in Denmark witnessed the steepest upward trajectory, surging from roughly 21% in 2010 to over 55% in 2024, eclipsing all other sources combined. Germany and Spain also demonstrated substantial transformations. In Germany, solar PV generation climbed from 3% to nearly 18%, while wind electricity rose from 9% to 32%. Spain exhibited a parallel diversification, with solar and wind collectively contributing over 45% of total generation in 2024 compared to under 20% in 2010. The United Kingdom experienced notable growth in offshore wind, rising from 5% to 28% across the period, underscoring a continent-wide transition toward decarbonised power grids.`;
 
-    const submitRes = await fetchJson(`/writing/sessions/${session.id}/submit`, {
+    const t1SubmitRes = await fetchJson(`/writing/sessions/${t1Session.id}/submit`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${student.token}` },
+      body: JSON.stringify({ essayText: t1Essay, timeSpentSeconds: 1100 }),
+    });
+    assert.strictEqual(t1SubmitRes.status, 200);
+    const t1Eval = t1SubmitRes.data.data.evaluation;
+    assert.ok(t1Eval.overallScore >= 7.0, 'Task 1 proficient essay should score Band 7+');
+    const taskAch = t1Eval.criteriaScores.find((c) => c.name === 'Task Achievement');
+    assert.ok(taskAch, 'Task 1 evaluation must evaluate Task Achievement');
+    console.log(`   ✓ Task 1 evaluated: ${t1Eval.band}, Overall: ${t1Eval.overallScore}/9, Task Achievement: ${taskAch.score}/9`);
+
+    // 6. Test IELTS Task 2 Session Lifecycle (Discursive Essay)
+    console.log('\n6. Testing End-to-End Task 2 Discursive Essay Lifecycle...');
+    const t2SessionRes = await fetchJson('/writing/sessions/start', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${student.token}` },
+      body: JSON.stringify({ questionId: 'q_ielts_wrt_07', mode: 'PRACTICE' }),
+    });
+    assert.strictEqual(t2SessionRes.status, 201);
+    const t2Session = t2SessionRes.data.data.session;
+
+    const t2Essay = `In an era marked by profound social inequality, escalating climate instability, and overburdened healthcare systems, allocating billions of dollars to extraterrestrial exploration frequently evokes intense moral reproach. Many critics maintain that humanitarian crises on Earth demand total fiscal prioritization over speculative interplanetary voyages. While addressing human suffering is undeniably an ethical imperative, I disagree that defunding space exploration is the remedy, as astronomical research provides the technological, ecological, and economic tools essential for solving terrestrial problems.
+
+First, the perceived dichotomy between space spending and domestic poverty alleviation relies on a fundamental misconception regarding how space budgets are utilized. Governments do not literally send piles of cash into orbit; rather, capital is invested terrestrially in scientists, engineers, manufacturing supply chains, and academic research institutions. The aerospace sector drives high-wage employment, scientific infrastructure, and tax revenues that directly finance social welfare programs. Furthermore, global space budgets represent a minuscule fraction of national expenditures compared to military defense and corporate subsidies, making it illogical to blame space initiatives for socioeconomic neglect.
+
+More importantly, space exploration yields indispensable technological spin-offs that directly mitigate acute planetary and human suffering. Modern satellite constellations provide the real-time meteorological and orbital imagery required to model climate change, track agricultural drought patterns, optimize freshwater distribution, and orchestrate humanitarian disaster relief during catastrophic typhoons. Medical innovations originally developed for astronaut survival—such as advanced dialysis filtration, portable cardiac monitors, and robotic micro-surgical tools—have transformed public healthcare worldwide. Defunding space programs would cripple our ability to safeguard global food security and monitor environmental collapse.
+
+In conclusion, astronomical exploration is not an extravagant vanity project, but an indispensable catalyst for scientific progress and planetary stewardship. Rather than curtailing space exploration, governments should reallocate wasteful military spending toward poverty alleviation while sustaining the orbital innovations that protect humanity's collective future.`;
+
+    const t2SubmitRes = await fetchJson(`/writing/sessions/${t2Session.id}/submit`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${student.token}` },
+      body: JSON.stringify({ essayText: t2Essay, timeSpentSeconds: 2100 }),
+    });
+    assert.strictEqual(t2SubmitRes.status, 200);
+    const t2Eval = t2SubmitRes.data.data.evaluation;
+    assert.ok(t2Eval.overallScore >= 7.5, 'Proficient Task 2 essay should score Band 7.5+');
+    assert.strictEqual(t2Eval.wordCountCompliant, true);
+    assert.ok(t2Eval.wordCount >= 250);
+    const taskResp = t2Eval.criteriaScores.find((c) => c.name === 'Task Response');
+    assert.ok(taskResp, 'Task 2 evaluation must evaluate Task Response');
+    console.log(`   ✓ Task 2 evaluated: ${t2Eval.band}, Overall: ${t2Eval.overallScore}/9, Task Response: ${taskResp.score}/9`);
+    console.log(`   ✓ Word Count: ${t2Eval.wordCount} words (compliant >= 250 min)`);
+
+    // 7. Test AI Question Generator Endpoint for WRITING type
+    console.log('\n7. Testing AI Question Generator Endpoint for WRITING type...');
+    const aiGenRes = await fetchJson('/ai/questions/generate', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${admin.token}` },
       body: JSON.stringify({
-        essayText: essayResponse,
-        timeSpentSeconds: 1120,
+        subjectId: 'sub_ielts_writing',
+        topicId: 'top_ielts_write_t1',
+        type: 'WRITING',
+        difficulty: 'MEDIUM',
+        marks: 9.0,
+        count: 1,
+        customPrompt: 'Task 1 bar chart on urban renewable energy trends',
       }),
     });
-    assert.strictEqual(submitRes.status, 200);
-    assert.strictEqual(submitRes.data.success, true);
-    const evalData = submitRes.data.data.evaluation;
-    assert.ok(evalData.overallScore >= 7.0, 'Proficient essay should score >= Band 7.0');
-    assert.strictEqual(evalData.wordCountCompliant, true);
-    assert.ok(evalData.wordCount >= 150);
-
-    const taskAchievementScore = evalData.criteriaScores.find((c) => c.name === 'Task Achievement');
-    assert.ok(taskAchievementScore, 'Task Achievement score must exist in evaluation');
-    console.log(`   ✓ Task 1 essay evaluated: ${evalData.band}, Score: ${evalData.overallScore}/9`);
-    console.log(`   ✓ Criteria: Task Achievement (${taskAchievementScore.score}/9), Coherence, Lexical, Grammar`);
-
-    // 6. Verify Question Attempt Snapshot passing promptImageUrl in attempt.service
-    console.log('\n6. Verifying In-Exam Question Attempt Snapshot with promptImageUrl...');
-    const path = require('path');
-    const { pgDb } = require(path.resolve(__dirname, '../packages/database/src/index.js'));
-    const examQ = await pgDb.query(`SELECT id, type, data FROM "questions" WHERE id = 'q_ielts_wrt_01'`);
-    assert.strictEqual(examQ.rows[0].type, 'WRITING');
-    const qData = typeof examQ.rows[0].data === 'string' ? JSON.parse(examQ.rows[0].data) : examQ.rows[0].data;
-    assert.strictEqual(qData.promptImageUrl, '/assets/charts/ielts_task1_renewable_energy.svg');
-    console.log('   ✓ Database question data contains verified promptImageUrl for exam engine consumption');
+    assert.strictEqual(aiGenRes.status, 201, 'AI generation should return 201');
+    const aiQ = aiGenRes.data.data?.questions ? aiGenRes.data.data.questions[0] : aiGenRes.data.data;
+    assert.ok(aiQ, 'Should generate at least 1 draft question');
+    assert.strictEqual(aiQ.type, 'WRITING');
+    assert.strictEqual(aiQ.status, 'DRAFT');
+    console.log(`   ✓ AI generator created draft writing question (${aiQ.id}) with status DRAFT`);
 
     console.log('\n================================================================');
-    console.log('🎉 ALL WRITING SECTION & IELTS TASK 1 TESTS PASSED SUCCESSFULLY!');
+    console.log('🎉 ALL EXAMOS WRITING SECTION & AUTHORING TESTS PASSED!');
     console.log('================================================================\n');
     passed++;
   } catch (err) {

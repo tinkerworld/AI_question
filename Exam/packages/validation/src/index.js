@@ -101,6 +101,7 @@ exports.createEnrollmentSchema = zod_1.z.object({
 });
 // Phase 3 Validation Schemas (Question Bank)
 exports.createQuestionSchema = zod_1.z.object({
+    id: zod_1.z.string().optional(),
     type: zod_1.z.string().min(1, 'Question type is required'),
     content: zod_1.z.string().min(5, 'Question content must be at least 5 characters'),
     data: zod_1.z.record(zod_1.z.any()),

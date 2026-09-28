@@ -195,7 +195,70 @@ export class AIMockGenerator {
       explanation = `Option 1 correctly defines the foundational canonical law of ${topic} under standard academic curriculum definitions.`;
     }
 
-    // Adjust for NUMERICAL or MULTIPLE_SELECT if requested
+    // Adjust for WRITING, NUMERICAL or MULTIPLE_SELECT if requested
+    if (type === 'WRITING') {
+      const isTask1 = promptLower.includes('task 1') || topicLower.includes('task 1') || promptLower.includes('chart') || promptLower.includes('graph') || promptLower.includes('diagram');
+      const writingMarks = marks || 9.0;
+      let promptStem = '';
+      let promptImageUrl: string | undefined = undefined;
+      let stimulusText: string | undefined = undefined;
+      let minWords = 250;
+      let maxWords = 400;
+      let timeLimit = 40;
+      let rubrics: any[] = [];
+
+      if (isTask1) {
+        minWords = 150;
+        maxWords = 250;
+        timeLimit = 20;
+        promptStem = `IELTS Academic Writing Task 1: The visual diagram illustrates trends and distributions relevant to ${topic}. Summarise the information by selecting and reporting the main features, and make comparisons where relevant. (Write at least 150 words).`;
+        promptImageUrl = '/assets/charts/ielts_task1_global_co2_trends.svg';
+        stimulusText = `Examine the provided visual data for topic "${topic}". Synthesize primary trajectories and key inflection points.`;
+        rubrics = [
+          { id: 'task_achievement', name: 'Task Achievement', weight: 0.25, maxScore: 9, description: 'Accurate overview, key features selected and illustrated with data/stages.' },
+          { id: 'coherence_cohesion', name: 'Coherence and Cohesion', weight: 0.25, maxScore: 9, description: 'Logical paragraph progression, cohesive devices, and data sequencing.' },
+          { id: 'lexical_resource', name: 'Lexical Resource', weight: 0.25, maxScore: 9, description: 'Accurate data vocabulary, proportions, change verbs, and precision.' },
+          { id: 'grammatical_range', name: 'Grammatical Range & Accuracy', weight: 0.25, maxScore: 9, description: 'Variety of complex structures, passive forms, and error-free sentences.' },
+        ];
+      } else {
+        minWords = 250;
+        maxWords = 400;
+        timeLimit = 40;
+        promptStem = customPrompt 
+          ? `IELTS Academic Writing Task 2: ${customPrompt} (Write at least 250 words).`
+          : `IELTS Academic Writing Task 2: Contemporary developments in ${topic} present both significant opportunities and profound societal challenges. To what extent do you agree or disagree that technological interventions in ${topic} require strict governmental regulation? Support your argument with concrete reasoning. (Write at least 250 words).`;
+        rubrics = [
+          { id: 'task_response', name: 'Task Response', weight: 0.25, maxScore: 9, description: 'Addressing all parts of the task with clear position and extended ideas.' },
+          { id: 'coherence_cohesion', name: 'Coherence and Cohesion', weight: 0.25, maxScore: 9, description: 'Logical flow, clear paragraph progression, and linking devices.' },
+          { id: 'lexical_resource', name: 'Lexical Resource', weight: 0.25, maxScore: 9, description: 'Range, accuracy, natural academic collocations, and sophistication.' },
+          { id: 'grammatical_range', name: 'Grammatical Range & Accuracy', weight: 0.25, maxScore: 9, description: 'Complex sentence structures, high accuracy, and punctuation control.' },
+        ];
+      }
+
+      return {
+        content: promptStem,
+        type: 'WRITING',
+        difficulty,
+        marks: writingMarks,
+        data: {
+          preset: isTask1 ? 'IELTS_TASK_1' : 'IELTS_TASK_2',
+          taskType: isTask1 ? 'TASK_1_GRAPH' : 'TASK_2_ESSAY',
+          promptStem,
+          promptText: promptStem,
+          promptImageUrl,
+          stimulusText,
+          minWords,
+          minWordCount: minWords,
+          maxWords,
+          maxWordCount: maxWords,
+          recommendedTimeMinutes: timeLimit,
+          timeLimitMinutes: timeLimit,
+          rubricCriteria: rubrics,
+          rubric: rubrics,
+        },
+      };
+    }
+
     if (type === 'NUMERICAL') {
       return {
         content: stem,
