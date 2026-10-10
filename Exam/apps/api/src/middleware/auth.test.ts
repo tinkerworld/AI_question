@@ -1,34 +1,30 @@
-import { test } from 'node:test';
+import { test, after } from 'node:test';
 import { strict as assert } from 'node:assert';
-import { authenticate } from './auth';
+import { authenticate, JWT_SECRET, JWT_REFRESH_SECRET } from './auth';
 import jwt from 'jsonwebtoken';
 import { AppError } from './error';
 import { pgDb } from '@repo/database';
 
 // Mock pgDb.query to avoid actual database calls
-const mockPgDbQuery = {
-  query: async (query: string, params: any[]) => {
-    if (query.includes('impersonation_sessions')) {
-      // Simulate a valid active session
-      return {
-        rows: [
-          {
-            id: 'test-session-id',
-            isActive: true,
-            isExpired: false,
-          },
-        ],
-      };
-    }
-    return { rows: [] };
-  },
+const originalQuery = pgDb.query;
+(pgDb as any).query = async (query: string, params?: any[]) => {
+  if (typeof query === 'string' && query.includes('impersonation_sessions')) {
+    // Simulate a valid active session
+    return {
+      rows: [
+        {
+          id: 'test-session-id',
+          isActive: true,
+          isExpired: false,
+        },
+      ],
+    };
+  }
+  return originalQuery ? originalQuery.call(pgDb, query, params) : Promise.resolve({ rows: [] });
 };
-
-// Replace pgDb with mock
-Object.assign(pgDb, mockPgDbQuery);
-
-const JWT_SECRET = 'examos_super_secret_jwt_key_2026';
-const JWT_REFRESH_SECRET = 'examos_super_secret_refresh_key_2026';
+after(() => {
+  (pgDb as any).query = originalQuery;
+});
 
 // Helper to create a valid JWT token
 function createToken(payload: any) {

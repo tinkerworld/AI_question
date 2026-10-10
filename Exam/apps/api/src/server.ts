@@ -59,6 +59,26 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Readiness for deployment: unlike liveness, this verifies the active database.
+app.get('/ready', async (_req, res) => {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    const { pgDb } = await import('@repo/database');
+    await Promise.race([
+      pgDb.query('SELECT 1 AS ready'),
+      new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error('Readiness timeout')), 3000);
+      }),
+    ]);
+    res.json({ status: 'ready', commit: process.env.EXAMOS_COMMIT || null });
+  } catch {
+    // Never expose database paths, connection strings, or internal errors here.
+    res.status(503).json({ status: 'not_ready' });
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+});
+
 // Phase 1 Routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', userRoutes);

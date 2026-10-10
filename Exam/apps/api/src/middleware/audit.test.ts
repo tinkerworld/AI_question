@@ -1,4 +1,4 @@
-import { test } from 'node:test';
+import { test, after } from 'node:test';
 import { strict as assert } from 'node:assert';
 import { auditLog } from './audit.js';
 import { pgDb } from '@repo/database';
@@ -50,8 +50,10 @@ const mockNext = () => {};
 // Mock pgDb.query to avoid actual database calls
 const originalQuery = pgDb.query;
 (pgDb as any).query = async (query: string, params?: any[]) => {
-  // Simulate successful insert
-  return Promise.resolve({ rows: [], fields: [] });
+  if (typeof query === 'string' && query.includes('audit_logs')) {
+    return Promise.resolve({ rows: [], fields: [] });
+  }
+  return originalQuery ? originalQuery.call(pgDb, query, params) : Promise.resolve({ rows: [], fields: [] });
 };
 
 test('auditLog middleware should log audit entry on successful request', async () => {
@@ -131,4 +133,6 @@ test('auditLog middleware should handle missing ip and user-agent gracefully', a
 });
 
 // Restore original query after tests
-(pgDb as any).query = originalQuery;
+after(() => {
+  (pgDb as any).query = originalQuery;
+});

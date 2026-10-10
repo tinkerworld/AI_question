@@ -1,0 +1,92 @@
+name: ExamOS CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: examos-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  check:
+    name: Build and test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      CI: 'true'
+      NODE_ENV: test
+      PG_DATA_DIR: memory://
+      DATABASE_URL: postgresql://ci:ci@127.0.0.1:1/ci_disabled
+      TURBO_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24.16.0'
+      - name: Enable repository-pinned pnpm
+        run: |
+          mkdir -p "$RUNNER_TEMP/corepack-bin"
+          corepack enable --install-directory "$RUNNER_TEMP/corepack-bin"
+          echo "$RUNNER_TEMP/corepack-bin" >> "$GITHUB_PATH"
+      - name: Cache package store only
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ~/.local/share/pnpm/store
+          key: pnpm9-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('Exam/pnpm-lock.yaml') }}
+      - name: Install locked dependencies
+        working-directory: Exam
+        run: pnpm install --frozen-lockfile
+      - name: Validate deployment tooling
+        run: |
+          python3 -m unittest discover -s scripts/ci/tests -v
+          bash -n scripts/deploy.sh scripts/rollback.sh scripts/health-check.sh scripts/ci/run-service.sh scripts/ci/install-host.sh
+          node --test scripts/ci/tests/serve-web.test.cjs
+      - name: Lint
+        working-directory: Exam
+        run: pnpm run lint
+      - name: Type checks
+        working-directory: Exam
+        run: pnpm -r --if-present typecheck
+      - name: Dependency security audit
+        working-directory: Exam
+        run: pnpm audit --prod --audit-level high
+      - name: Reject tracked environment secrets
+        run: python3 scripts/ci/check-env.py
+      - name: Build
+        working-directory: Exam
+        run: pnpm run build
+      - name: Tests (failures and hangs block deployment)
+        working-directory: Exam
+        timeout-minutes: 10
+        shell: bash
+        run: |
+          set -o pipefail
+          timeout --signal=TERM --kill-after=15s 8m pnpm test 2>&1 | tee "$RUNNER_TEMP/examos-tests.log"
+      - name: Save test output
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: test-output-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/examos-tests.log
+          if-no-files-found: ignore
+          retention-days: 14
+      - name: Package tested source and build outputs
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+        run: python3 scripts/ci/package.py "$RUNNER_TEMP/package"
+      - name: Save deployable artifact
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release-${{ github.sha }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/package/release.tar.gz
+          retention-days: 7
+          compression-level: 0

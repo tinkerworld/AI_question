@@ -112,7 +112,18 @@ export interface ExamDatabaseClient extends Omit<PGlite, 'query'> {
 // Primary in-process PostgreSQL 16 engine for all runtime services and routes
 // Uses lazy Proxy so importing @repo/database in unit tests without queries does not lock postgres-data
 export const pgDb: ExamDatabaseClient = new Proxy({} as any, {
-  get(_target, prop) {
+  set(target, prop, value) {
+    target[prop] = value;
+    return true;
+  },
+  deleteProperty(target, prop) {
+    delete target[prop];
+    return true;
+  },
+  get(target, prop) {
+    if (prop in target) {
+      return (target as any)[prop];
+    }
     if (prop === 'close') {
       return async () => {
         if (_pgDbInstance) {
