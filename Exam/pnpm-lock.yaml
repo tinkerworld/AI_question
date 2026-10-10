@@ -87,6 +87,9 @@ importers:
       '@repo/permissions':
         specifier: workspace:*
         version: link:../../packages/permissions
+      '@repo/question-types':
+        specifier: workspace:*
+        version: link:../../packages/question-types
       '@repo/types':
         specifier: workspace:*
         version: link:../../packages/types
