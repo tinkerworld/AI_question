@@ -1,0 +1,854 @@
+{
+  "config": {
+    "argv": [
+      "/home/ubuntu/.nvm/versions/node/v24.16.0/bin/node",
+      "/home/ubuntu/exam_shekhar/AI_question/tools/e2e-tester/node_modules/.bin/playwright",
+      "test",
+      "--config",
+      "/tmp/examos-reverify-pPUolh/final.config.cjs"
+    ],
+    "configFile": "/tmp/examos-reverify-pPUolh/final.config.cjs",
+    "rootDir": "/tmp/examos-reverify-pPUolh/focused",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/tmp/examos-reverify-pPUolh/final-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/tmp/examos-reverify-pPUolh/focused",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 45000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "./final-report/results.json"
+        }
+      ],
+      [
+        "html",
+        {
+          "open": "never",
+          "outputFolder": "./final-report/html"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.62.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "current.spec.ts",
+      "file": "current.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "public landing links to student login",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2413,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T07:47:55.623Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e16f9ddfc2380dc9fa32-9915a716b7764ecd19ca",
+          "file": "current.spec.ts",
+          "line": 7,
+          "column": 5
+        },
+        {
+          "title": "admin current login reaches dashboard",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1324,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T07:47:58.175Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e16f9ddfc2380dc9fa32-627166dccedf97011cca",
+          "file": "current.spec.ts",
+          "line": 8,
+          "column": 62
+        },
+        {
+          "title": "teacher current login reaches dashboard",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1811,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T07:47:59.523Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e16f9ddfc2380dc9fa32-f4bf070ce797c81b1879",
+          "file": "current.spec.ts",
+          "line": 8,
+          "column": 62
+        },
+        {
+          "title": "student current login reaches dashboard",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1340,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T07:48:01.351Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e16f9ddfc2380dc9fa32-09a37895585434832934",
+          "file": "current.spec.ts",
+          "line": 8,
+          "column": 62
+        },
+        {
+          "title": "invalid student login shows error",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 996,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T07:48:02.715Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e16f9ddfc2380dc9fa32-54502089ea646e6546b2",
+          "file": "current.spec.ts",
+          "line": 9,
+          "column": 5
+        },
+        {
+          "title": "mobile login fits 390px viewport",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 952,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T07:48:03.728Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e16f9ddfc2380dc9fa32-9f4b94d75e6b492c5cbb",
+          "file": "current.spec.ts",
+          "line": 10,
+          "column": 5
+        },
+        {
+          "title": "writing Task 1 opens image, counts words, and submits",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2426,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T07:48:04.694Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e16f9ddfc2380dc9fa32-353e98424dc1005b5af4",
+          "file": "current.spec.ts",
+          "line": 11,
+          "column": 5
+        },
+        {
+          "title": "writing draft survives refresh",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 8701,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T07:48:07.142Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e16f9ddfc2380dc9fa32-15eadc46ef424f9b1a53",
+          "file": "current.spec.ts",
+          "line": 23,
+          "column": 5
+        },
+        {
+          "title": "student cannot access staff reviews and export",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 148,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T07:48:15.862Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e16f9ddfc2380dc9fa32-cbd85531c50291fdcdf5",
+          "file": "current.spec.ts",
+          "line": 24,
+          "column": 5
+        },
+        {
+          "title": "student cannot enable mock grading through request body",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 64,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T07:48:16.021Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "evaluation-response",
+                      "contentType": "application/json",
+                      "body": "ewogICJzdWNjZXNzIjogdHJ1ZSwKICAiZGF0YSI6IHsKICAgICJpZCI6ICJ3cnRfZXZhbF85Yzc5OTg2ODA0OWEyZWY5IiwKICAgICJzZXNzaW9uSWQiOiBudWxsLAogICAgInRhc2tUeXBlIjogIlRBU0tfMiIsCiAgICAib3ZlcmFsbFNjb3JlIjogMCwKICAgICJyYXdBdmVyYWdlU2NvcmUiOiAwLAogICAgIm1heFNjb3JlIjogOSwKICAgICJiYW5kIjogIjAuMCIsCiAgICAiYmFuZExhYmVsIjogIkVzdGltYXRlZCBJRUxUUyBiYW5kIC0tIChUZWFjaGVyIFJldmlldyBSZXF1aXJlZCkiLAogICAgIndvcmRDb3VudCI6IDI4MCwKICAgICJ3b3JkQ291bnRDb21wbGlhbnQiOiB0cnVlLAogICAgInNlbnRlbmNlQ291bnQiOiA3MCwKICAgICJwYXJhZ3JhcGhDb3VudCI6IDEsCiAgICAidGV4dFN0YXRzIjogewogICAgICAid29yZENvdW50IjogMjgwLAogICAgICAic2VudGVuY2VDb3VudCI6IDcwLAogICAgICAibGV4aWNhbERlbnNpdHkiOiAxLAogICAgICAicGFyYWdyYXBoQ291bnQiOiAxLAogICAgICAiYXZnU2VudGVuY2VMZW5ndGgiOiA0LAogICAgICAidm9jYWJ1bGFyeURpdmVyc2l0eSI6IDAuMDE0CiAgICB9LAogICAgInN0YXR1cyI6ICJSRVZJRVdfUkVRVUlSRUQiLAogICAgInJlbGlhYmlsaXR5U3RhdHVzIjogIkZMQUdHRURfRk9SX1JFVklFVyIsCiAgICAicmV2aWV3UmVhc29ucyI6IFsKICAgICAgIk1PQ0tfUFJPVklERVJfRVhDTFVTSU9OX1RFQUNIRVJfUkVWSUVXX1JFUVVJUkVEIgogICAgXSwKICAgICJjcml0ZXJpYVNjb3JlcyI6IFsKICAgICAgewogICAgICAgICJpZCI6ICJ0YXNrX3Jlc3BvbnNlIiwKICAgICAgICAibmFtZSI6ICJUYXNrIFJlc3BvbnNlIiwKICAgICAgICAic2NvcmUiOiAwLAogICAgICAgICJtYXhTY29yZSI6IDksCiAgICAgICAgInJhd1Njb3JlIjogMCwKICAgICAgICAiZXhwbGFuYXRpb24iOiAiTW9jayBwcm92aWRlciBvdXRwdXQgZXhjbHVkZWQuIFBlbmRpbmcgY2VydGlmaWVkIGh1bWFuIHRlYWNoZXIgYXNzZXNzbWVudC4iLAogICAgICAgICJyZXF1aXJlc1JldmlldyI6IHRydWUsCiAgICAgICAgIndoYXRXb3VsZEltcHJvdmUiOiAiU3VibWlzc2lvbiB3aWxsIGJlIHJldmlld2VkIGJ5IGFuIGF1dGhvcml6ZWQgdGVhY2hlci4iLAogICAgICAgICJzcGVjaWZpY1dlYWtuZXNzZXMiOiBbXSwKICAgICAgICAic3VwcG9ydGluZ1F1b3RhdGlvbnMiOiBbXQogICAgICB9LAogICAgICB7CiAgICAgICAgImlkIjogImNvaGVyZW5jZV9jb2hlc2lvbiIsCiAgICAgICAgIm5hbWUiOiAiQ29oZXJlbmNlIGFuZCBDb2hlc2lvbiIsCiAgICAgICAgInNjb3JlIjogMCwKICAgICAgICAibWF4U2NvcmUiOiA5LAogICAgICAgICJyYXdTY29yZSI6IDAsCiAgICAgICAgImV4cGxhbmF0aW9uIjogIk1vY2sgcHJvdmlkZXIgb3V0cHV0IGV4Y2x1ZGVkLiBQZW5kaW5nIGNlcnRpZmllZCBodW1hbiB0ZWFjaGVyIGFzc2Vzc21lbnQuIiwKICAgICAgICAicmVxdWlyZXNSZXZpZXciOiB0cnVlLAogICAgICAgICJ3aGF0V291bGRJbXByb3ZlIjogIlN1Ym1pc3Npb24gd2lsbCBiZSByZXZpZXdlZCBieSBhbiBhdXRob3JpemVkIHRlYWNoZXIuIiwKICAgICAgICAic3BlY2lmaWNXZWFrbmVzc2VzIjogW10sCiAgICAgICAgInN1cHBvcnRpbmdRdW90YXRpb25zIjogW10KICAgICAgfSwKICAgICAgewogICAgICAgICJpZCI6ICJsZXhpY2FsX3Jlc291cmNlIiwKICAgICAgICAibmFtZSI6ICJMZXhpY2FsIFJlc291cmNlIiwKICAgICAgICAic2NvcmUiOiAwLAogICAgICAgICJtYXhTY29yZSI6IDksCiAgICAgICAgInJhd1Njb3JlIjogMCwKICAgICAgICAiZXhwbGFuYXRpb24iOiAiTW9jayBwcm92aWRlciBvdXRwdXQgZXhjbHVkZWQuIFBlbmRpbmcgY2VydGlmaWVkIGh1bWFuIHRlYWNoZXIgYXNzZXNzbWVudC4iLAogICAgICAgICJyZXF1aXJlc1JldmlldyI6IHRydWUsCiAgICAgICAgIndoYXRXb3VsZEltcHJvdmUiOiAiU3VibWlzc2lvbiB3aWxsIGJlIHJldmlld2VkIGJ5IGFuIGF1dGhvcml6ZWQgdGVhY2hlci4iLAogICAgICAgICJzcGVjaWZpY1dlYWtuZXNzZXMiOiBbXSwKICAgICAgICAic3VwcG9ydGluZ1F1b3RhdGlvbnMiOiBbXQogICAgICB9LAogICAgICB7CiAgICAgICAgImlkIjogImdyYW1tYXRpY2FsX3JhbmdlIiwKICAgICAgICAibmFtZSI6ICJHcmFtbWF0aWNhbCBSYW5nZSBhbmQgQWNjdXJhY3kiLAogICAgICAgICJzY29yZSI6IDAsCiAgICAgICAgIm1heFNjb3JlIjogOSwKICAgICAgICAicmF3U2NvcmUiOiAwLAogICAgICAgICJleHBsYW5hdGlvbiI6ICJNb2NrIHByb3ZpZGVyIG91dHB1dCBleGNsdWRlZC4gUGVuZGluZyBjZXJ0aWZpZWQgaHVtYW4gdGVhY2hlciBhc3Nlc3NtZW50LiIsCiAgICAgICAgInJlcXVpcmVzUmV2aWV3IjogdHJ1ZSwKICAgICAgICAid2hhdFdvdWxkSW1wcm92ZSI6ICJTdWJtaXNzaW9uIHdpbGwgYmUgcmV2aWV3ZWQgYnkgYW4gYXV0aG9yaXplZCB0ZWFjaGVyLiIsCiAgICAgICAgInNwZWNpZmljV2Vha25lc3NlcyI6IFtdLAogICAgICAgICJzdXBwb3J0aW5nUXVvdGF0aW9ucyI6IFtdCiAgICAgIH0KICAgIF0sCiAgICAic3RyZW5ndGhzIjogW10sCiAgICAicHJpb3JpdHlJbXByb3ZlbWVudHMiOiBbCiAgICAgICJBd2FpdGluZyB0ZWFjaGVyIGZlZWRiYWNrIGFuZCBiYW5kIGNvbmZpcm1hdGlvbi4iCiAgICBdLAogICAgImdyYW1tYXJGZWVkYmFjayI6IFtdLAogICAgImdyYW1tYXJDb3JyZWN0aW9ucyI6IFtdLAogICAgInZvY2FidWxhcnlTdWdnZXN0aW9ucyI6IFtdLAogICAgIm92ZXJhbGxGZWVkYmFjayI6ICJBdXRvbWF0ZWQgbW9jayBzY29yZXMgYXJlIHN1cHByZXNzZWQgaW4gYWRoZXJlbmNlIHRvIG9mZmljaWFsIGFzc2Vzc21lbnQgaW50ZWdyaXR5LiBUaGlzIHN1Ym1pc3Npb24gaGFzIGJlZW4gc2VjdXJlbHkgcHJlc2VydmVkIGFuZCBhc3NpZ25lZCB0byB0aGUgdGVhY2hlciByZXZpZXcgcXVldWUuIiwKICAgICJyZXRyaWV2ZWREb2N1bWVudElkcyI6IFtdLAogICAgInByb3ZpZGVySWQiOiBudWxsLAogICAgIm1vZGVsVXNlZCI6IG51bGwsCiAgICAicnVicmljVmVyc2lvbiI6ICJJRUxUU19BQ0FERU1JQ18yMDI2X1YxIiwKICAgICJwcm9tcHRWZXJzaW9uIjogIjEuMCIsCiAgICAicmV0cmlldmFsVmVyc2lvbiI6ICIxLjAiLAogICAgImZhaWx1cmVSZWFzb24iOiBudWxsLAogICAgInRlYWNoZXJSZXZpZXdlZCI6IGZhbHNlLAogICAgInRlYWNoZXJSZXZpZXdJZCI6IG51bGwsCiAgICAidGVhY2hlck5vdGVzIjogbnVsbCwKICAgICJ0ZWFjaGVyUmV2aWV3ZWRBdCI6IG51bGwsCiAgICAic3VibWl0dGVkVGV4dCI6ICJFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIgogIH0KfQ=="
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e16f9ddfc2380dc9fa32-b8acc1ef16fbacf00151",
+          "file": "current.spec.ts",
+          "line": 25,
+          "column": 5
+        },
+        {
+          "title": "evaluation rejects a non-writing question",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 68,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T07:48:16.090Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e16f9ddfc2380dc9fa32-68817f3b7c1bbd6de1e2",
+          "file": "current.spec.ts",
+          "line": 26,
+          "column": 5
+        }
+      ]
+    },
+    {
+      "title": "legacy-drafts.spec.ts",
+      "file": "legacy-drafts.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "pre-upgrade ownerless draft must not restore for another student",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3721,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T07:48:16.165Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "9c719bc93ffe2e9de071-d2f3913da16bc7b58925",
+          "file": "legacy-drafts.spec.ts",
+          "line": 4,
+          "column": 5
+        },
+        {
+          "title": "two students retain independent drafts after reload",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 16685,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T07:48:19.906Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "9c719bc93ffe2e9de071-99a6caa596b8a0f00c20",
+          "file": "legacy-drafts.spec.ts",
+          "line": 5,
+          "column": 5
+        }
+      ]
+    },
+    {
+      "title": "regressions.spec.ts",
+      "file": "regressions.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "review rejects missing criterion IDs",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 203,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T07:48:36.621Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "response",
+                      "contentType": "application/json",
+                      "body": "eyJzdWNjZXNzIjpmYWxzZSwiZXJyb3JDb2RlIjoiQkFEX1JFUVVFU1QiLCJtZXNzYWdlIjoiSW52YWxpZCBjcml0ZXJpb24gc2V0IGZvciBUQVNLXzIuIEV4YWN0bHkgNCBjcml0ZXJpYSByZXF1aXJlZDogdGFza19yZXNwb25zZSwgY29oZXJlbmNlX2NvaGVzaW9uLCBsZXhpY2FsX3Jlc291cmNlLCBncmFtbWF0aWNhbF9yYW5nZSJ9"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a34af78d704591628420-ad2ab2915f1b4824cf92",
+          "file": "regressions.spec.ts",
+          "line": 6,
+          "column": 283
+        },
+        {
+          "title": "review rejects unknown criterion IDs",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 140,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T07:48:36.836Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "response",
+                      "contentType": "application/json",
+                      "body": "eyJzdWNjZXNzIjpmYWxzZSwiZXJyb3JDb2RlIjoiQkFEX1JFUVVFU1QiLCJtZXNzYWdlIjoiSW52YWxpZCBjcml0ZXJpb24gc2V0IGZvciBUQVNLXzIuIEV4YWN0bHkgNCBjcml0ZXJpYSByZXF1aXJlZDogdGFza19yZXNwb25zZSwgY29oZXJlbmNlX2NvaGVzaW9uLCBsZXhpY2FsX3Jlc291cmNlLCBncmFtbWF0aWNhbF9yYW5nZSJ9"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a34af78d704591628420-de5229065adc12fbb32b",
+          "file": "regressions.spec.ts",
+          "line": 6,
+          "column": 283
+        },
+        {
+          "title": "review rejects extra criterion IDs",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 264,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T07:48:36.985Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "response",
+                      "contentType": "application/json",
+                      "body": "eyJzdWNjZXNzIjpmYWxzZSwiZXJyb3JDb2RlIjoiQkFEX1JFUVVFU1QiLCJtZXNzYWdlIjoiSW52YWxpZCBjcml0ZXJpb24gc2V0IGZvciBUQVNLXzIuIEV4YWN0bHkgNCBjcml0ZXJpYSByZXF1aXJlZDogdGFza19yZXNwb25zZSwgY29oZXJlbmNlX2NvaGVzaW9uLCBsZXhpY2FsX3Jlc291cmNlLCBncmFtbWF0aWNhbF9yYW5nZSJ9"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a34af78d704591628420-6a45c0a3bf2a57d31562",
+          "file": "regressions.spec.ts",
+          "line": 6,
+          "column": 283
+        },
+        {
+          "title": "review rejects wrongTask criterion IDs",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 267,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T07:48:37.259Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "response",
+                      "contentType": "application/json",
+                      "body": "eyJzdWNjZXNzIjpmYWxzZSwiZXJyb3JDb2RlIjoiQkFEX1JFUVVFU1QiLCJtZXNzYWdlIjoiVW5rbm93biBvciBpbnZhbGlkIGNyaXRlcmlvbiAndGFza19hY2hpZXZlbWVudCcgZm9yIFRBU0tfMi4gQWxsb3dlZCBjcml0ZXJpYSBhcmU6IHRhc2tfcmVzcG9uc2UsIGNvaGVyZW5jZV9jb2hlc2lvbiwgbGV4aWNhbF9yZXNvdXJjZSwgZ3JhbW1hdGljYWxfcmFuZ2UifQ=="
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a34af78d704591628420-eff9a3ebaa3b51b144d3",
+          "file": "regressions.spec.ts",
+          "line": 6,
+          "column": 283
+        },
+        {
+          "title": "valid review calculates average instead of supplied overall",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 165,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T07:48:37.543Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a34af78d704591628420-2ffba120ea50c9bfd4a8",
+          "file": "regressions.spec.ts",
+          "line": 7,
+          "column": 5
+        },
+        {
+          "title": "draft is isolated when a second student signs in",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3185,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T07:48:37.720Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a34af78d704591628420-9a95998f5734e381987a",
+          "file": "regressions.spec.ts",
+          "line": 8,
+          "column": 5
+        },
+        {
+          "title": "erasing entire draft does not resurrect deleted text",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 7758,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T07:48:40.919Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a34af78d704591628420-546f74d787defc99d651",
+          "file": "regressions.spec.ts",
+          "line": 9,
+          "column": 5
+        },
+        {
+          "title": "submitted draft stays cleared after autosave debounce",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 7773,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T07:48:48.704Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a34af78d704591628420-86f00edcbf5358e75fa8",
+          "file": "regressions.spec.ts",
+          "line": 10,
+          "column": 5
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-03T07:47:55.116Z",
+    "duration": 61474.252,
+    "expected": 21,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

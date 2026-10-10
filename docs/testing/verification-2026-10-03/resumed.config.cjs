@@ -1,0 +1,1 @@
+const base=require('./focused.config.cjs');module.exports={...base,outputDir:'./resumed-results',reporter:[['list'],['json',{outputFile:'./resumed-report/results.json'}],['html',{open:'never',outputFolder:'./resumed-report/html'}]]};

@@ -78,7 +78,8 @@ const QUESTION_TYPES = [
   { id: 'SUBJECTIVE', label: 'Subjective / Long Answer' },
   { id: 'INTERVIEW', label: 'AI Interview / Oral Assessment' },
   { id: 'LISTENING', label: 'Listening Comprehension' },
-  { id: 'WRITING', label: 'Writing Essay / Assessment' },
+  { id: 'IELTS_WRITING_TASK_1', label: 'IELTS Writing Task 1 (Visual Data / Report)' },
+  { id: 'IELTS_WRITING_TASK_2', label: 'IELTS Writing Task 2 (Discursive Essay)' },
 ];
 
 const extractApiErrorMessage = (data: any, fallback: string = 'Operation failed'): string => {
@@ -267,14 +268,16 @@ export const QuestionBankPage: React.FC = () => {
   const [writingConfig, setWritingConfig] = useState<WritingQuestionConfig>({
     promptStem: '',
     minWords: 150,
-    maxWords: 400,
-    recommendedTimeMinutes: 40,
+    maxWords: 250,
+    recommendedTimeMinutes: 20,
     rubricCriteria: [
-      { id: 'crit_1', name: 'Task Achievement', weight: 0.25, maxScore: 9, description: 'Addressing all parts of the task' },
-      { id: 'crit_2', name: 'Coherence and Cohesion', weight: 0.25, maxScore: 9, description: 'Logical flow and linking devices' },
-      { id: 'crit_3', name: 'Lexical Resource', weight: 0.25, maxScore: 9, description: 'Range and precision of vocabulary' },
-      { id: 'crit_4', name: 'Grammatical Accuracy', weight: 0.25, maxScore: 9, description: 'Range of complex structures and accuracy' },
+      { id: 'task_achievement', name: 'Task Achievement', weight: 0.25, maxScore: 9, description: 'Accurate overview, key features selected and illustrated with data/stages.' },
+      { id: 'coherence_cohesion', name: 'Coherence and Cohesion', weight: 0.25, maxScore: 9, description: 'Logical paragraph progression, cohesive devices, and sequencing.' },
+      { id: 'lexical_resource', name: 'Lexical Resource', weight: 0.25, maxScore: 9, description: 'Accurate academic data vocabulary, proportions, verbs of change, and precision.' },
+      { id: 'grammatical_range', name: 'Grammatical Range & Accuracy', weight: 0.25, maxScore: 9, description: 'Variety of complex structures, passive forms for processes, and error-free sentences.' },
     ],
+    preset: 'IELTS_TASK_1',
+    taskType: 'TASK_1_GRAPH',
   });
 
   const loadInterviewPreset = (preset: string) => {
@@ -731,23 +734,47 @@ export const QuestionBankPage: React.FC = () => {
       promptImageUrl: '',
       stimulusText: '',
       minWords: 150,
-      maxWords: 400,
-      recommendedTimeMinutes: 40,
+      maxWords: 250,
+      recommendedTimeMinutes: 20,
       rubricCriteria: [
-        { id: 'task_response', name: 'Task Response', weight: 0.25, maxScore: 9, description: 'Addressing all parts of the task' },
-        { id: 'coherence_cohesion', name: 'Coherence and Cohesion', weight: 0.25, maxScore: 9, description: 'Logical flow and linking devices' },
-        { id: 'lexical_resource', name: 'Lexical Resource', weight: 0.25, maxScore: 9, description: 'Range and precision of vocabulary' },
-        { id: 'grammatical_range', name: 'Grammatical Accuracy', weight: 0.25, maxScore: 9, description: 'Range of complex structures and accuracy' },
+        { id: 'task_achievement', name: 'Task Achievement', weight: 0.25, maxScore: 9, description: 'Accurate overview, key features selected and illustrated with data/stages.' },
+        { id: 'coherence_cohesion', name: 'Coherence and Cohesion', weight: 0.25, maxScore: 9, description: 'Logical paragraph progression, cohesive devices, and sequencing.' },
+        { id: 'lexical_resource', name: 'Lexical Resource', weight: 0.25, maxScore: 9, description: 'Accurate academic data vocabulary, proportions, verbs of change, and precision.' },
+        { id: 'grammatical_range', name: 'Grammatical Range & Accuracy', weight: 0.25, maxScore: 9, description: 'Variety of complex structures, passive forms for processes, and error-free sentences.' },
       ],
       sampleAnswer: '',
-      preset: 'IELTS_TASK_2',
-      taskType: 'TASK_2_ESSAY',
+      preset: 'IELTS_TASK_1',
+      taskType: 'TASK_1_GRAPH',
     });
     setEditingQuestion(null);
   };
 
   const openCreateModal = () => {
     resetForm();
+    if (filterType === 'IELTS_WRITING_TASK_1') {
+      setFormType('IELTS_WRITING_TASK_1');
+      setFormMarks(9.0);
+    } else if (filterType === 'IELTS_WRITING_TASK_2') {
+      setFormType('IELTS_WRITING_TASK_2');
+      setFormMarks(9.0);
+      setWritingConfig({
+        promptStem: '',
+        promptImageUrl: '',
+        stimulusText: '',
+        minWords: 250,
+        maxWords: 400,
+        recommendedTimeMinutes: 40,
+        rubricCriteria: [
+          { id: 'task_response', name: 'Task Response', weight: 0.25, maxScore: 9, description: 'Addressing all parts of the task with clear position throughout and extended, supported ideas.' },
+          { id: 'coherence_cohesion', name: 'Coherence and Cohesion', weight: 0.25, maxScore: 9, description: 'Logical sequencing, clear central topic per paragraph, and linking devices.' },
+          { id: 'lexical_resource', name: 'Lexical Resource', weight: 0.25, maxScore: 9, description: 'Range, accuracy, natural academic collocations, and sophistication of vocabulary.' },
+          { id: 'grammatical_range', name: 'Grammatical Range & Accuracy', weight: 0.25, maxScore: 9, description: 'Complex sentence structures, high accuracy, punctuation control, and communicative effect.' },
+        ],
+        sampleAnswer: '',
+        preset: 'IELTS_TASK_2',
+        taskType: 'TASK_2_ESSAY',
+      });
+    }
     setShowCreateModal(true);
   };
 
@@ -828,18 +855,29 @@ export const QuestionBankPage: React.FC = () => {
         allowTranscriptInReview: d.allowTranscriptInReview ?? true,
         subQuestions: d.subQuestions || [],
       });
-    } else if (q.type === 'WRITING') {
+    } else if (q.type === 'WRITING' || q.type === 'IELTS_WRITING_TASK_1' || q.type === 'IELTS_WRITING_TASK_2') {
+      const isT1 = q.type === 'IELTS_WRITING_TASK_1' ||
+        d.preset === 'IELTS_TASK_1' ||
+        d.taskType?.startsWith('TASK_1') ||
+        Boolean(d.promptImageUrl) ||
+        Boolean(d.aiVisualContext) ||
+        (q.content && /task\s*1/i.test(q.content)) ||
+        (d.minWords && d.minWords <= 200);
+
+      setFormType(isT1 ? 'IELTS_WRITING_TASK_1' : 'IELTS_WRITING_TASK_2');
       setWritingConfig({
         promptStem: d.promptStem || d.promptText || q.content,
         promptImageUrl: d.promptImageUrl || '',
         stimulusText: d.stimulusText || '',
-        minWords: d.minWords || d.minWordCount || 150,
-        maxWords: d.maxWords || d.maxWordCount || 400,
-        recommendedTimeMinutes: d.recommendedTimeMinutes || d.timeLimitMinutes || 40,
+        aiVisualContext: d.aiVisualContext || (typeof d.chartFacts === 'string' ? d.chartFacts : d.chartFacts?.contextText || d.chartFacts?.notes) || '',
+        minWords: d.minWords || d.minWordCount || (isT1 ? 150 : 250),
+        maxWords: d.maxWords || d.maxWordCount || (isT1 ? 250 : 400),
+        recommendedTimeMinutes: d.recommendedTimeMinutes || d.timeLimitMinutes || (isT1 ? 20 : 40),
         rubricCriteria: d.rubricCriteria || d.rubric || [],
         sampleAnswer: d.sampleAnswer || '',
-        preset: d.preset || (d.minWords <= 200 ? 'IELTS_TASK_1' : 'IELTS_TASK_2'),
-        taskType: d.taskType || (d.minWords <= 200 ? 'TASK_1_GRAPH' : 'TASK_2_ESSAY'),
+        preset: isT1 ? 'IELTS_TASK_1' : 'IELTS_TASK_2',
+        taskType: d.taskType || (isT1 ? 'TASK_1_GRAPH' : 'TASK_2_ESSAY'),
+        chartFacts: d.chartFacts,
       });
     }
 
@@ -904,21 +942,52 @@ export const QuestionBankPage: React.FC = () => {
           subQuestions: listeningConfig.subQuestions || [],
         };
       case 'WRITING':
+      case 'IELTS_WRITING_TASK_1':
+      case 'IELTS_WRITING_TASK_2':
+        const isTask1 = formType === 'IELTS_WRITING_TASK_1' || writingConfig.preset?.startsWith('IELTS_TASK_1') || false;
+        const defaultT1Rubrics = [
+          { id: 'task_achievement', name: 'Task Achievement', weight: 0.25, maxScore: 9, description: 'Accurate overview, key features selected and illustrated with data/stages.' },
+          { id: 'coherence_cohesion', name: 'Coherence and Cohesion', weight: 0.25, maxScore: 9, description: 'Logical paragraph progression, cohesive devices, and sequencing.' },
+          { id: 'lexical_resource', name: 'Lexical Resource', weight: 0.25, maxScore: 9, description: 'Accurate academic data vocabulary, proportions, verbs of change, and precision.' },
+          { id: 'grammatical_range', name: 'Grammatical Range & Accuracy', weight: 0.25, maxScore: 9, description: 'Variety of complex structures, passive forms for processes, and error-free sentences.' },
+        ];
+        const defaultT2Rubrics = [
+          { id: 'task_response', name: 'Task Response', weight: 0.25, maxScore: 9, description: 'Addressing all parts of the task with clear position throughout and extended, supported ideas.' },
+          { id: 'coherence_cohesion', name: 'Coherence and Cohesion', weight: 0.25, maxScore: 9, description: 'Logical sequencing, clear central topic per paragraph, and linking devices.' },
+          { id: 'lexical_resource', name: 'Lexical Resource', weight: 0.25, maxScore: 9, description: 'Range, accuracy, natural academic collocations, and sophistication of vocabulary.' },
+          { id: 'grammatical_range', name: 'Grammatical Range & Accuracy', weight: 0.25, maxScore: 9, description: 'Complex sentence structures, high accuracy, punctuation control, and communicative effect.' },
+        ];
+        const cleanRubrics = isTask1
+          ? (writingConfig.rubricCriteria?.length && !writingConfig.rubricCriteria.some((r) => r.id === 'task_response')
+              ? writingConfig.rubricCriteria
+              : defaultT1Rubrics)
+          : (writingConfig.rubricCriteria?.length && !writingConfig.rubricCriteria.some((r) => r.id === 'task_achievement')
+              ? writingConfig.rubricCriteria
+              : defaultT2Rubrics);
+
         return {
-          preset: writingConfig.preset || (writingConfig.minWords <= 200 ? 'IELTS_TASK_1' : 'IELTS_TASK_2'),
-          taskType: writingConfig.taskType || (writingConfig.minWords <= 200 ? 'TASK_1_GRAPH' : 'TASK_2_ESSAY'),
+          preset: isTask1 ? (writingConfig.preset === 'IELTS_TASK_1_GT' ? 'IELTS_TASK_1_GT' : 'IELTS_TASK_1') : 'IELTS_TASK_2',
+          taskType: isTask1 ? (writingConfig.taskType?.startsWith('TASK_1') ? writingConfig.taskType : 'TASK_1_GRAPH') : 'TASK_2_ESSAY',
           promptStem: writingConfig.promptStem || formContent,
           promptText: writingConfig.promptStem || formContent,
-          promptImageUrl: writingConfig.promptImageUrl || undefined,
+          promptImageUrl: isTask1 ? (writingConfig.promptImageUrl || undefined) : undefined,
           stimulusText: writingConfig.stimulusText || undefined,
-          minWords: Number(writingConfig.minWords || 150),
-          minWordCount: Number(writingConfig.minWords || 150),
-          maxWords: Number(writingConfig.maxWords || 400),
-          maxWordCount: Number(writingConfig.maxWords || 400),
-          recommendedTimeMinutes: Number(writingConfig.recommendedTimeMinutes || 40),
-          timeLimitMinutes: Number(writingConfig.recommendedTimeMinutes || 40),
-          rubricCriteria: writingConfig.rubricCriteria || [],
-          rubric: writingConfig.rubricCriteria || [],
+          aiVisualContext: isTask1 ? (writingConfig.aiVisualContext || undefined) : undefined,
+          chartFacts: isTask1 && writingConfig.aiVisualContext ? {
+            chartTitle: writingConfig.promptStem?.slice(0, 100) || 'Visual Stimulus Chart',
+            chartType: writingConfig.taskType || 'CHART',
+            notes: writingConfig.aiVisualContext,
+            contextText: writingConfig.aiVisualContext,
+            majorTrends: [writingConfig.aiVisualContext],
+          } : (writingConfig.chartFacts || undefined),
+          minWords: Number(writingConfig.minWords || (isTask1 ? 150 : 250)),
+          minWordCount: Number(writingConfig.minWords || (isTask1 ? 150 : 250)),
+          maxWords: Number(writingConfig.maxWords || (isTask1 ? 250 : 400)),
+          maxWordCount: Number(writingConfig.maxWords || (isTask1 ? 250 : 400)),
+          recommendedTimeMinutes: Number(writingConfig.recommendedTimeMinutes || (isTask1 ? 20 : 40)),
+          timeLimitMinutes: Number(writingConfig.recommendedTimeMinutes || (isTask1 ? 20 : 40)),
+          rubricCriteria: cleanRubrics,
+          rubric: cleanRubrics,
           sampleAnswer: writingConfig.sampleAnswer || undefined,
         };
       default:
@@ -932,9 +1001,17 @@ export const QuestionBankPage: React.FC = () => {
       setError(null);
       setActionSuccess(null);
 
+      const isWritingForm = formType === 'WRITING' || formType === 'IELTS_WRITING_TASK_1' || formType === 'IELTS_WRITING_TASK_2';
       let effectiveContent = formContent;
-      if (formType === 'WRITING' && (!effectiveContent.trim() || effectiveContent.trim().length === 0)) {
-        effectiveContent = writingConfig.promptStem || 'Writing Assessment Task';
+      if (isWritingForm && (!effectiveContent.trim() || effectiveContent.trim().length === 0)) {
+        effectiveContent = writingConfig.promptStem || (formType === 'IELTS_WRITING_TASK_1' ? 'IELTS Task 1 Visual Report' : 'IELTS Task 2 Discursive Essay');
+      }
+
+      if (formType === 'IELTS_WRITING_TASK_1') {
+        if (!writingConfig.promptImageUrl || !writingConfig.promptImageUrl.trim()) {
+          setError('A stimulus image/picture is required for IELTS Writing Task 1. Please provide an image URL or choose a preset asset.');
+          return;
+        }
       }
 
       const payload: any = {
@@ -1673,18 +1750,83 @@ export const QuestionBankPage: React.FC = () => {
                   >
                     {q.id}
                   </span>
-                  <span
-                    style={{
-                      padding: '2px 8px',
-                      borderRadius: '4px',
-                      fontSize: '11px',
-                      fontFamily: 'JetBrains Mono',
-                      background: 'rgba(255,255,255,0.06)',
-                      border: '1px solid var(--border-color)',
-                    }}
-                  >
-                    {q.type}
-                  </span>
+                  {(() => {
+                    const qData = typeof q.data === 'string' ? JSON.parse(q.data) : q.data || {};
+                    const isT1 = q.type === 'IELTS_WRITING_TASK_1' || 
+                      (q.type === 'WRITING' && (
+                        qData?.preset === 'IELTS_TASK_1' ||
+                        qData?.taskType?.startsWith('TASK_1') ||
+                        Boolean(qData?.promptImageUrl) ||
+                        Boolean(qData?.aiVisualContext) ||
+                        (q.content && /task\s*1/i.test(q.content)) ||
+                        (qData?.minWords && qData.minWords <= 200)
+                      ));
+                    const isT2 = q.type === 'IELTS_WRITING_TASK_2' || 
+                      (q.type === 'WRITING' && !isT1 && (
+                        qData?.preset === 'IELTS_TASK_2' ||
+                        qData?.taskType?.startsWith('TASK_2') ||
+                        (q.content && /task\s*2/i.test(q.content)) ||
+                        (qData?.minWords && qData.minWords > 200)
+                      ));
+
+                    if (isT1) {
+                      return (
+                        <span
+                          style={{
+                            padding: '2px 8px',
+                            borderRadius: '4px',
+                            fontSize: '11px',
+                            fontFamily: 'JetBrains Mono',
+                            background: 'rgba(6, 182, 212, 0.15)',
+                            border: '1px solid #06b6d4',
+                            color: '#06b6d4',
+                            fontWeight: 600,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                          }}
+                        >
+                          <span>📊</span> IELTS Task 1
+                        </span>
+                      );
+                    }
+                    if (isT2) {
+                      return (
+                        <span
+                          style={{
+                            padding: '2px 8px',
+                            borderRadius: '4px',
+                            fontSize: '11px',
+                            fontFamily: 'JetBrains Mono',
+                            background: 'rgba(99, 102, 241, 0.15)',
+                            border: '1px solid #818cf8',
+                            color: '#818cf8',
+                            fontWeight: 600,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                          }}
+                        >
+                          <span>📝</span> IELTS Task 2
+                        </span>
+                      );
+                    }
+
+                    return (
+                      <span
+                        style={{
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          fontSize: '11px',
+                          fontFamily: 'JetBrains Mono',
+                          background: 'rgba(255,255,255,0.06)',
+                          border: '1px solid var(--border-color)',
+                        }}
+                      >
+                        {q.type}
+                      </span>
+                    );
+                  })()}
                   <span
                     style={{
                       padding: '2px 8px',
@@ -1956,8 +2098,39 @@ export const QuestionBankPage: React.FC = () => {
                     onChange={(e) => {
                       const newType = e.target.value;
                       setFormType(newType);
-                      if (newType === 'WRITING') {
+                      if (newType === 'WRITING' || newType === 'IELTS_WRITING_TASK_1' || newType === 'IELTS_WRITING_TASK_2') {
                         setFormMarks(9.0);
+                        if (newType === 'IELTS_WRITING_TASK_1') {
+                          setWritingConfig((prev) => ({
+                            ...prev,
+                            preset: 'IELTS_TASK_1',
+                            taskType: 'TASK_1_GRAPH',
+                            minWords: 150,
+                            maxWords: 250,
+                            recommendedTimeMinutes: 20,
+                            rubricCriteria: [
+                              { id: 'task_achievement', name: 'Task Achievement', weight: 0.25, maxScore: 9, description: 'Accurate overview, key features selected and illustrated with data/stages.' },
+                              { id: 'coherence_cohesion', name: 'Coherence and Cohesion', weight: 0.25, maxScore: 9, description: 'Logical paragraph progression, cohesive devices, and sequencing.' },
+                              { id: 'lexical_resource', name: 'Lexical Resource', weight: 0.25, maxScore: 9, description: 'Accurate academic data vocabulary, proportions, verbs of change, and precision.' },
+                              { id: 'grammatical_range', name: 'Grammatical Range & Accuracy', weight: 0.25, maxScore: 9, description: 'Variety of complex structures, passive forms for processes, and error-free sentences.' },
+                            ],
+                          }));
+                        } else if (newType === 'IELTS_WRITING_TASK_2') {
+                          setWritingConfig((prev) => ({
+                            ...prev,
+                            preset: 'IELTS_TASK_2',
+                            taskType: 'TASK_2_ESSAY',
+                            minWords: 250,
+                            maxWords: 400,
+                            recommendedTimeMinutes: 40,
+                            rubricCriteria: [
+                              { id: 'task_response', name: 'Task Response', weight: 0.25, maxScore: 9, description: 'Addressing all parts of the task with clear position throughout and extended, supported ideas.' },
+                              { id: 'coherence_cohesion', name: 'Coherence and Cohesion', weight: 0.25, maxScore: 9, description: 'Logical sequencing, clear central topic per paragraph, and linking devices.' },
+                              { id: 'lexical_resource', name: 'Lexical Resource', weight: 0.25, maxScore: 9, description: 'Range, accuracy, natural academic collocations, and sophistication of vocabulary.' },
+                              { id: 'grammatical_range', name: 'Grammatical Range & Accuracy', weight: 0.25, maxScore: 9, description: 'Complex sentence structures, high accuracy, punctuation control, and communicative effect.' },
+                            ],
+                          }));
+                        }
                       } else if (newType === 'INTERVIEW') {
                         setFormMarks(100.0);
                       } else if (formMarks === 9.0 || formMarks === 100.0) {
@@ -3548,9 +3721,11 @@ export const QuestionBankPage: React.FC = () => {
                 )}
 
                 {/* WRITING TYPE CONFIGURATION */}
-                {formType === 'WRITING' && (
+                {(formType === 'WRITING' || formType === 'IELTS_WRITING_TASK_1' || formType === 'IELTS_WRITING_TASK_2') && (
                   <div style={{ marginTop: '8px' }}>
                     <WritingAuthoringPanel
+                      key={formType}
+                      forcedTask={formType === 'IELTS_WRITING_TASK_1' ? 'TASK_1' : formType === 'IELTS_WRITING_TASK_2' ? 'TASK_2' : undefined}
                       initialConfig={{
                         ...writingConfig,
                         promptStem: writingConfig.promptStem || formContent,
@@ -4114,17 +4289,57 @@ export const QuestionBankPage: React.FC = () => {
                 </div>
               )}
 
-              {previewQuestion.type === 'WRITING' && (
+              {(previewQuestion.type === 'WRITING' || previewQuestion.type === 'IELTS_WRITING_TASK_1' || previewQuestion.type === 'IELTS_WRITING_TASK_2') && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <div style={{ display: 'flex', gap: '16px', fontSize: '12px', color: 'var(--text-muted)' }}>
                     <span>Target: <strong style={{ color: '#10b981' }}>{previewQuestion.data?.minWords || previewQuestion.data?.minWordCount || 150}–{previewQuestion.data?.maxWords || previewQuestion.data?.maxWordCount || 400} words</strong></span>
                     <span>•</span>
                     <span>Recommended Time: <strong style={{ color: '#06b6d4' }}>{previewQuestion.data?.recommendedTimeMinutes || previewQuestion.data?.timeLimitMinutes || 40} mins</strong></span>
                   </div>
+
+                  {/* Stimulus Chart / Diagram */}
+                  {(() => {
+                    const qImg =
+                      previewQuestion.data?.promptImageUrl ||
+                      (previewQuestion as any).promptImageUrl ||
+                      previewQuestion.data?.imageUrl ||
+                      null;
+
+                    if (!qImg) return null;
+
+                    return (
+                      <div style={{ background: '#0a0f1d', borderRadius: '8px', border: '1px solid var(--border-color)', padding: '10px', textAlign: 'center' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                          <span style={{ fontSize: '11px', color: '#06b6d4', fontWeight: 600 }}>📊 Visual Stimulus (Task 1 Chart / Diagram):</span>
+                          <a href={qImg} target="_blank" rel="noopener noreferrer" style={{ fontSize: '11px', color: '#06b6d4', textDecoration: 'none' }}>Open original ↗</a>
+                        </div>
+                        <img
+                          src={qImg}
+                          alt="Writing Stimulus Diagram"
+                          style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'contain', borderRadius: '4px' }}
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                      </div>
+                    );
+                  })()}
+
                   {previewQuestion.data?.stimulusText && (
                     <div style={{ padding: '10px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '6px', fontSize: '12px' }}>
                       <strong style={{ display: 'block', color: 'var(--text-muted)', marginBottom: '4px' }}>Stimulus Context:</strong>
                       {previewQuestion.data.stimulusText}
+                    </div>
+                  )}
+
+                  {previewQuestion.data?.aiVisualContext && (
+                    <div style={{ padding: '10px', background: 'rgba(139, 92, 246, 0.08)', border: '1px solid rgba(139, 92, 246, 0.25)', borderRadius: '6px', fontSize: '12px' }}>
+                      <strong style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#c084fc', marginBottom: '4px' }}>
+                        <span>🧠</span> AI Image Visual Context (For AI Evaluation — Hidden from Candidates):
+                      </strong>
+                      <div style={{ whiteSpace: 'pre-wrap', color: '#e2e8f0', lineHeight: 1.5, fontFamily: 'monospace', fontSize: '11px' }}>
+                        {previewQuestion.data.aiVisualContext}
+                      </div>
                     </div>
                   )}
                   {Array.isArray(previewQuestion.data?.rubricCriteria || previewQuestion.data?.rubric) && (

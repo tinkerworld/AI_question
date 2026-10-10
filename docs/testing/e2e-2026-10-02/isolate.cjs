@@ -1,0 +1,2 @@
+const {PGlite}=require('/home/ubuntu/exam_shekhar/AI_question/Exam/node_modules/@electric-sql/pglite');
+(async()=>{const db=new PGlite('/tmp/examos-e2e-rR4hmB/fresh-db');await db.waitReady;await db.query(`UPDATE ai_providers SET "isActive" = (type = 'MOCK'), "baseUrl" = CASE WHEN type = 'MOCK' THEN replace("baseUrl",'localhost:4043','127.0.0.1:4044') ELSE "baseUrl" END`);console.log('Test database: non-mock AI providers disabled.');await db.close();})();

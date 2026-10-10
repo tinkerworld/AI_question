@@ -1,0 +1,623 @@
+{
+  "config": {
+    "argv": [
+      "/home/ubuntu/.nvm/versions/node/v24.16.0/bin/node",
+      "/home/ubuntu/exam_shekhar/AI_question/tools/e2e-tester/node_modules/.bin/playwright",
+      "test",
+      "--config",
+      "/tmp/examos-e2e-rR4hmB/focused.config.cjs"
+    ],
+    "configFile": "/tmp/examos-e2e-rR4hmB/focused.config.cjs",
+    "rootDir": "/tmp/examos-e2e-rR4hmB/focused",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/tmp/examos-e2e-rR4hmB/focused-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/tmp/examos-e2e-rR4hmB/focused",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 45000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "./focused-report/results.json"
+        }
+      ],
+      [
+        "html",
+        {
+          "open": "never",
+          "outputFolder": "./focused-report/html"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.62.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "current.spec.ts",
+      "file": "current.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "public landing links to student login",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 704,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-02T12:11:47.215Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e16f9ddfc2380dc9fa32-9915a716b7764ecd19ca",
+          "file": "current.spec.ts",
+          "line": 7,
+          "column": 5
+        },
+        {
+          "title": "admin current login reaches dashboard",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 733,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-02T12:11:48.006Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e16f9ddfc2380dc9fa32-627166dccedf97011cca",
+          "file": "current.spec.ts",
+          "line": 8,
+          "column": 62
+        },
+        {
+          "title": "teacher current login reaches dashboard",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 737,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-02T12:11:48.751Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e16f9ddfc2380dc9fa32-f4bf070ce797c81b1879",
+          "file": "current.spec.ts",
+          "line": 8,
+          "column": 62
+        },
+        {
+          "title": "student current login reaches dashboard",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 841,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-02T12:11:49.497Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e16f9ddfc2380dc9fa32-09a37895585434832934",
+          "file": "current.spec.ts",
+          "line": 8,
+          "column": 62
+        },
+        {
+          "title": "invalid student login shows error",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 659,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-02T12:11:50.349Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e16f9ddfc2380dc9fa32-54502089ea646e6546b2",
+          "file": "current.spec.ts",
+          "line": 9,
+          "column": 5
+        },
+        {
+          "title": "mobile login fits 390px viewport",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 605,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: <= \u001b[32m390\u001b[39m\nReceived:    \u001b[31m676\u001b[39m",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: <= \u001b[32m390\u001b[39m\nReceived:    \u001b[31m676\u001b[39m\n    at /tmp/examos-e2e-rR4hmB/focused/current.spec.ts:10:277",
+                    "location": {
+                      "file": "/tmp/examos-e2e-rR4hmB/focused/current.spec.ts",
+                      "column": 277,
+                      "line": 10
+                    },
+                    "snippet": "   8 | for(const role of ['admin','teacher','student'] as const)test(`${role} current login reaches dashboard`,async({page})=>{await loginAs(page,role);await expect(page.locator('#nav-tab-dashboard')).toBeVisible();});\n   9 | test('invalid student login shows error',async({page})=>{await page.goto('/login/student');await page.locator('input[type=email]').fill('invalid@example.com');await page.locator('input[type=password]').fill('InvalidPassword123');await page.locator('button[type=submit]').click();await expect(page.locator('#student-login-error-banner')).toBeVisible();});\n> 10 | test('mobile login fits 390px viewport',async({page})=>{await page.setViewportSize({width:390,height:844});await page.goto('/login/student');await expect(page.locator('#student-input-email')).toBeVisible();expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);});\n     |                                                                                                                                                                                                                                                                                     ^\n  11 | test('writing Task 1 opens image, counts words, and submits',async({page})=>{\n  12 |  await loginAs(page,'student');await goToTab(page,'writing_practice');\n  13 |  await page.locator('#btn-start-writing-q_ielts_wrt_01').click();"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/tmp/examos-e2e-rR4hmB/focused/current.spec.ts",
+                        "column": 277,
+                        "line": 10
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: <= \u001b[32m390\u001b[39m\nReceived:    \u001b[31m676\u001b[39m\n\n   8 | for(const role of ['admin','teacher','student'] as const)test(`${role} current login reaches dashboard`,async({page})=>{await loginAs(page,role);await expect(page.locator('#nav-tab-dashboard')).toBeVisible();});\n   9 | test('invalid student login shows error',async({page})=>{await page.goto('/login/student');await page.locator('input[type=email]').fill('invalid@example.com');await page.locator('input[type=password]').fill('InvalidPassword123');await page.locator('button[type=submit]').click();await expect(page.locator('#student-login-error-banner')).toBeVisible();});\n> 10 | test('mobile login fits 390px viewport',async({page})=>{await page.setViewportSize({width:390,height:844});await page.goto('/login/student');await expect(page.locator('#student-input-email')).toBeVisible();expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);});\n     |                                                                                                                                                                                                                                                                                     ^\n  11 | test('writing Task 1 opens image, counts words, and submits',async({page})=>{\n  12 |  await loginAs(page,'student');await goToTab(page,'writing_practice');\n  13 |  await page.locator('#btn-start-writing-q_ielts_wrt_01').click();\n    at /tmp/examos-e2e-rR4hmB/focused/current.spec.ts:10:277"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-02T12:11:51.021Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/tmp/examos-e2e-rR4hmB/focused-results/current-mobile-login-fits-390px-viewport-chromium/test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/tmp/examos-e2e-rR4hmB/focused-results/current-mobile-login-fits-390px-viewport-chromium/error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "/tmp/examos-e2e-rR4hmB/focused-results/current-mobile-login-fits-390px-viewport-chromium/trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/tmp/examos-e2e-rR4hmB/focused/current.spec.ts",
+                    "column": 277,
+                    "line": 10
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "e16f9ddfc2380dc9fa32-9f4b94d75e6b492c5cbb",
+          "file": "current.spec.ts",
+          "line": 10,
+          "column": 5
+        },
+        {
+          "title": "writing Task 1 opens image, counts words, and submits",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1165,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-02T12:11:52.078Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e16f9ddfc2380dc9fa32-353e98424dc1005b5af4",
+          "file": "current.spec.ts",
+          "line": 11,
+          "column": 5
+        },
+        {
+          "title": "writing draft survives refresh",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 12365,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveValue\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('[data-testid=writing-textarea]')\nExpected: \u001b[32m\"E2E draft recovery: education should prepare students for employment and independent thinking.\"\u001b[39m\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toHaveValue\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('[data-testid=writing-textarea]')\u001b[22m\n",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveValue\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('[data-testid=writing-textarea]')\nExpected: \u001b[32m\"E2E draft recovery: education should prepare students for employment and independent thinking.\"\u001b[39m\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toHaveValue\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('[data-testid=writing-textarea]')\u001b[22m\n\n    at /tmp/examos-e2e-rR4hmB/focused/current.spec.ts:23:514",
+                    "location": {
+                      "file": "/tmp/examos-e2e-rR4hmB/focused/current.spec.ts",
+                      "column": 514,
+                      "line": 23
+                    },
+                    "snippet": "  21 |  await expect(page.locator('[data-testid=writing-scorecard]')).toBeVisible({timeout:30000});\n  22 | });\n> 23 | test('writing draft survives refresh',async({page})=>{await loginAs(page,'student');await goToTab(page,'writing_practice');await page.locator('#btn-start-writing-q_ielts_wrt_03').click();const draft='E2E draft recovery: education should prepare students for employment and independent thinking.';await page.locator('[data-testid=writing-textarea]').fill(draft);await page.waitForTimeout(6000);await page.reload();await goToTab(page,'writing_practice');await expect(page.locator('[data-testid=writing-textarea]')).toHaveValue(draft);});\n     |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  ^\n  24 | test('student cannot access staff reviews and export',async({request})=>{const t=await token(request);for(const endpoint of ['reviews/pending','reviews/export']){const res=await request.get(`${api}/writing/${endpoint}`,{headers:{Authorization:`Bearer ${t}`}});expect(res.status()).toBe(403);}});\n  25 | test('student cannot enable mock grading through request body',async({request})=>{const t=await token(request);const res=await request.post(`${api}/writing/evaluations/submit`,{headers:{Authorization:`Bearer ${t}`},data:{questionId:'q_ielts_wrt_03',essayText:'Education gives people opportunities. '.repeat(70),allowTestMock:true}});const j=await res.json();await test.info().attach('evaluation-response',{body:JSON.stringify(j,null,2),contentType:'application/json'});expect([400,403].includes(res.status()) || ['REVIEW_REQUIRED','FAILED'].includes(j.data?.status)).toBeTruthy();});\n  26 | test('evaluation rejects a non-writing question',async({request})=>{const t=await token(request,'admin@examos.com','Admin@123');const list=await request.get(`${api}/questions?limit=100`,{headers:{Authorization:`Bearer ${t}`}});const j=await list.json();const items=Array.isArray(j.data)?j.data:j.data?.items||j.data?.questions||[];const q=items.find((x:any)=>x.type==='MCQ');test.skip(!q,'No MCQ returned by question list');const res=await request.post(`${api}/writing/evaluations/submit`,{headers:{Authorization:`Bearer ${t}`},data:{questionId:q.id,essayText:'This is an essay. '.repeat(70)}});expect(res.status()).toBe(400);});"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/tmp/examos-e2e-rR4hmB/focused/current.spec.ts",
+                        "column": 514,
+                        "line": 23
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveValue\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('[data-testid=writing-textarea]')\nExpected: \u001b[32m\"E2E draft recovery: education should prepare students for employment and independent thinking.\"\u001b[39m\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toHaveValue\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('[data-testid=writing-textarea]')\u001b[22m\n\n\n  21 |  await expect(page.locator('[data-testid=writing-scorecard]')).toBeVisible({timeout:30000});\n  22 | });\n> 23 | test('writing draft survives refresh',async({page})=>{await loginAs(page,'student');await goToTab(page,'writing_practice');await page.locator('#btn-start-writing-q_ielts_wrt_03').click();const draft='E2E draft recovery: education should prepare students for employment and independent thinking.';await page.locator('[data-testid=writing-textarea]').fill(draft);await page.waitForTimeout(6000);await page.reload();await goToTab(page,'writing_practice');await expect(page.locator('[data-testid=writing-textarea]')).toHaveValue(draft);});\n     |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  ^\n  24 | test('student cannot access staff reviews and export',async({request})=>{const t=await token(request);for(const endpoint of ['reviews/pending','reviews/export']){const res=await request.get(`${api}/writing/${endpoint}`,{headers:{Authorization:`Bearer ${t}`}});expect(res.status()).toBe(403);}});\n  25 | test('student cannot enable mock grading through request body',async({request})=>{const t=await token(request);const res=await request.post(`${api}/writing/evaluations/submit`,{headers:{Authorization:`Bearer ${t}`},data:{questionId:'q_ielts_wrt_03',essayText:'Education gives people opportunities. '.repeat(70),allowTestMock:true}});const j=await res.json();await test.info().attach('evaluation-response',{body:JSON.stringify(j,null,2),contentType:'application/json'});expect([400,403].includes(res.status()) || ['REVIEW_REQUIRED','FAILED'].includes(j.data?.status)).toBeTruthy();});\n  26 | test('evaluation rejects a non-writing question',async({request})=>{const t=await token(request,'admin@examos.com','Admin@123');const list=await request.get(`${api}/questions?limit=100`,{headers:{Authorization:`Bearer ${t}`}});const j=await list.json();const items=Array.isArray(j.data)?j.data:j.data?.items||j.data?.questions||[];const q=items.find((x:any)=>x.type==='MCQ');test.skip(!q,'No MCQ returned by question list');const res=await request.post(`${api}/writing/evaluations/submit`,{headers:{Authorization:`Bearer ${t}`},data:{questionId:q.id,essayText:'This is an essay. '.repeat(70)}});expect(res.status()).toBe(400);});\n    at /tmp/examos-e2e-rR4hmB/focused/current.spec.ts:23:514"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-02T12:11:53.322Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/tmp/examos-e2e-rR4hmB/focused-results/current-writing-draft-survives-refresh-chromium/test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/tmp/examos-e2e-rR4hmB/focused-results/current-writing-draft-survives-refresh-chromium/error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "/tmp/examos-e2e-rR4hmB/focused-results/current-writing-draft-survives-refresh-chromium/trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/tmp/examos-e2e-rR4hmB/focused/current.spec.ts",
+                    "column": 514,
+                    "line": 23
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "e16f9ddfc2380dc9fa32-15eadc46ef424f9b1a53",
+          "file": "current.spec.ts",
+          "line": 23,
+          "column": 5
+        },
+        {
+          "title": "student cannot access staff reviews and export",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 86,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-02T12:12:06.086Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e16f9ddfc2380dc9fa32-cbd85531c50291fdcdf5",
+          "file": "current.spec.ts",
+          "line": 24,
+          "column": 5
+        },
+        {
+          "title": "student cannot enable mock grading through request body",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 76,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m\n    at /tmp/examos-e2e-rR4hmB/focused/current.spec.ts:25:568",
+                    "location": {
+                      "file": "/tmp/examos-e2e-rR4hmB/focused/current.spec.ts",
+                      "column": 568,
+                      "line": 25
+                    },
+                    "snippet": "  23 | test('writing draft survives refresh',async({page})=>{await loginAs(page,'student');await goToTab(page,'writing_practice');await page.locator('#btn-start-writing-q_ielts_wrt_03').click();const draft='E2E draft recovery: education should prepare students for employment and independent thinking.';await page.locator('[data-testid=writing-textarea]').fill(draft);await page.waitForTimeout(6000);await page.reload();await goToTab(page,'writing_practice');await expect(page.locator('[data-testid=writing-textarea]')).toHaveValue(draft);});\n  24 | test('student cannot access staff reviews and export',async({request})=>{const t=await token(request);for(const endpoint of ['reviews/pending','reviews/export']){const res=await request.get(`${api}/writing/${endpoint}`,{headers:{Authorization:`Bearer ${t}`}});expect(res.status()).toBe(403);}});\n> 25 | test('student cannot enable mock grading through request body',async({request})=>{const t=await token(request);const res=await request.post(`${api}/writing/evaluations/submit`,{headers:{Authorization:`Bearer ${t}`},data:{questionId:'q_ielts_wrt_03',essayText:'Education gives people opportunities. '.repeat(70),allowTestMock:true}});const j=await res.json();await test.info().attach('evaluation-response',{body:JSON.stringify(j,null,2),contentType:'application/json'});expect([400,403].includes(res.status()) || ['REVIEW_REQUIRED','FAILED'].includes(j.data?.status)).toBeTruthy();});\n     |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        ^\n  26 | test('evaluation rejects a non-writing question',async({request})=>{const t=await token(request,'admin@examos.com','Admin@123');const list=await request.get(`${api}/questions?limit=100`,{headers:{Authorization:`Bearer ${t}`}});const j=await list.json();const items=Array.isArray(j.data)?j.data:j.data?.items||j.data?.questions||[];const q=items.find((x:any)=>x.type==='MCQ');test.skip(!q,'No MCQ returned by question list');const res=await request.post(`${api}/writing/evaluations/submit`,{headers:{Authorization:`Bearer ${t}`},data:{questionId:q.id,essayText:'This is an essay. '.repeat(70)}});expect(res.status()).toBe(400);});\n  27 |"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/tmp/examos-e2e-rR4hmB/focused/current.spec.ts",
+                        "column": 568,
+                        "line": 25
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeTruthy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mfalse\u001b[39m\n\n  23 | test('writing draft survives refresh',async({page})=>{await loginAs(page,'student');await goToTab(page,'writing_practice');await page.locator('#btn-start-writing-q_ielts_wrt_03').click();const draft='E2E draft recovery: education should prepare students for employment and independent thinking.';await page.locator('[data-testid=writing-textarea]').fill(draft);await page.waitForTimeout(6000);await page.reload();await goToTab(page,'writing_practice');await expect(page.locator('[data-testid=writing-textarea]')).toHaveValue(draft);});\n  24 | test('student cannot access staff reviews and export',async({request})=>{const t=await token(request);for(const endpoint of ['reviews/pending','reviews/export']){const res=await request.get(`${api}/writing/${endpoint}`,{headers:{Authorization:`Bearer ${t}`}});expect(res.status()).toBe(403);}});\n> 25 | test('student cannot enable mock grading through request body',async({request})=>{const t=await token(request);const res=await request.post(`${api}/writing/evaluations/submit`,{headers:{Authorization:`Bearer ${t}`},data:{questionId:'q_ielts_wrt_03',essayText:'Education gives people opportunities. '.repeat(70),allowTestMock:true}});const j=await res.json();await test.info().attach('evaluation-response',{body:JSON.stringify(j,null,2),contentType:'application/json'});expect([400,403].includes(res.status()) || ['REVIEW_REQUIRED','FAILED'].includes(j.data?.status)).toBeTruthy();});\n     |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        ^\n  26 | test('evaluation rejects a non-writing question',async({request})=>{const t=await token(request,'admin@examos.com','Admin@123');const list=await request.get(`${api}/questions?limit=100`,{headers:{Authorization:`Bearer ${t}`}});const j=await list.json();const items=Array.isArray(j.data)?j.data:j.data?.items||j.data?.questions||[];const q=items.find((x:any)=>x.type==='MCQ');test.skip(!q,'No MCQ returned by question list');const res=await request.post(`${api}/writing/evaluations/submit`,{headers:{Authorization:`Bearer ${t}`},data:{questionId:q.id,essayText:'This is an essay. '.repeat(70)}});expect(res.status()).toBe(400);});\n  27 |\n    at /tmp/examos-e2e-rR4hmB/focused/current.spec.ts:25:568"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-02T12:12:06.196Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "evaluation-response",
+                      "contentType": "application/json",
+                      "body": "ewogICJzdWNjZXNzIjogdHJ1ZSwKICAiZGF0YSI6IHsKICAgICJpZCI6ICJ3cnRfZXZhbF84YjFmZDU0ZmEyMjZmNzQ4IiwKICAgICJzZXNzaW9uSWQiOiBudWxsLAogICAgInRhc2tUeXBlIjogIlRBU0tfMiIsCiAgICAib3ZlcmFsbFNjb3JlIjogNSwKICAgICJyYXdBdmVyYWdlU2NvcmUiOiA1LAogICAgIm1heFNjb3JlIjogOSwKICAgICJiYW5kIjogIjUuMCIsCiAgICAiYmFuZExhYmVsIjogIkVzdGltYXRlZCBJRUxUUyBiYW5kIDUuMCIsCiAgICAid29yZENvdW50IjogMjgwLAogICAgIndvcmRDb3VudENvbXBsaWFudCI6IHRydWUsCiAgICAic2VudGVuY2VDb3VudCI6IDcwLAogICAgInBhcmFncmFwaENvdW50IjogMSwKICAgICJ0ZXh0U3RhdHMiOiB7CiAgICAgICJ3b3JkQ291bnQiOiAyODAsCiAgICAgICJzZW50ZW5jZUNvdW50IjogNzAsCiAgICAgICJsZXhpY2FsRGVuc2l0eSI6IDEsCiAgICAgICJwYXJhZ3JhcGhDb3VudCI6IDEsCiAgICAgICJhdmdTZW50ZW5jZUxlbmd0aCI6IDQsCiAgICAgICJ2b2NhYnVsYXJ5RGl2ZXJzaXR5IjogMC4wMTQKICAgIH0sCiAgICAic3RhdHVzIjogIkNPTVBMRVRFRCIsCiAgICAicmVsaWFiaWxpdHlTdGF0dXMiOiAiSElHSCIsCiAgICAicmV2aWV3UmVhc29ucyI6IFtdLAogICAgImNyaXRlcmlhU2NvcmVzIjogWwogICAgICB7CiAgICAgICAgImlkIjogInRhc2tfcmVzcG9uc2UiLAogICAgICAgICJuYW1lIjogIlRhc2sgUmVzcG9uc2UiLAogICAgICAgICJzY29yZSI6IDUuNSwKICAgICAgICAibWF4U2NvcmUiOiA5LAogICAgICAgICJyYXdTY29yZSI6IDUuNSwKICAgICAgICAiZXhwbGFuYXRpb24iOiAiQWRkcmVzc2VzIHRoZSB0b3BpYyBwYXJ0aWFsbHkgb3IgcGVyaXBoZXJhbGx5OyB0aGUgcG9zaXRpb24gaXMgdW5jbGVhciBvciBub3QgbWFpbnRhaW5lZCBjb25zaXN0ZW50bHkgdGhyb3VnaG91dCB0aGUgZXNzYXkuIiwKICAgICAgICAicmVxdWlyZXNSZXZpZXciOiBmYWxzZSwKICAgICAgICAid2hhdFdvdWxkSW1wcm92ZSI6ICJTdGF0ZSB5b3VyIGNsZWFyIHRoZXNpcyBpbiB0aGUgb3BlbmluZyBwYXJhZ3JhcGggYW5kIHJlaW5mb3JjZSBpdCBpbiB0aGUgY29uY2x1c2lvbi4iLAogICAgICAgICJzcGVjaWZpY1dlYWtuZXNzZXMiOiBbCiAgICAgICAgICAiQ2FuZGlkYXRlIHBvc2l0aW9uIGlzIGFtYmlndW91cyBvciBub3Qgc3RhdGVkIGNsZWFybHkgaW4gdGhlIGludHJvZHVjdGlvbi4iCiAgICAgICAgXSwKICAgICAgICAic3VwcG9ydGluZ1F1b3RhdGlvbnMiOiBbXQogICAgICB9LAogICAgICB7CiAgICAgICAgImlkIjogImNvaGVyZW5jZV9jb2hlc2lvbiIsCiAgICAgICAgIm5hbWUiOiAiQ29oZXJlbmNlIGFuZCBDb2hlc2lvbiIsCiAgICAgICAgInNjb3JlIjogNSwKICAgICAgICAibWF4U2NvcmUiOiA5LAogICAgICAgICJyYXdTY29yZSI6IDUsCiAgICAgICAgImV4cGxhbmF0aW9uIjogIlByZXNlbnRzIGluZm9ybWF0aW9uIHdpdGggc29tZSBvcmdhbml6YXRpb24sIGJ1dCBsYWNrcyBvdmVyYWxsIGxvZ2ljYWwgcHJvZ3Jlc3Npb24gb3IgZXhoaWJpdHMgdW5kZXItdXNlIG9mIHBhcmFncmFwaGluZy4iLAogICAgICAgICJyZXF1aXJlc1JldmlldyI6IGZhbHNlLAogICAgICAgICJ3aGF0V291bGRJbXByb3ZlIjogIkVtcGxveSBhIHdpZGVyIHZhcmlldHkgb2YgdHJhbnNpdGlvbmFsIGFkdmVyYnMgYmV0d2VlbiBjb250cmFzdGluZyB2aWV3cG9pbnRzLiIsCiAgICAgICAgInNwZWNpZmljV2Vha25lc3NlcyI6IFsKICAgICAgICAgICJVbmRlci1kZXZlbG9wZWQgcGFyYWdyYXBoaW5nOyBlc3NheSByZWFkcyBhcyBhIGNvbnRpbnVvdXMgYmxvY2sgb2YgdGV4dC4iCiAgICAgICAgXSwKICAgICAgICAic3VwcG9ydGluZ1F1b3RhdGlvbnMiOiBbXQogICAgICB9LAogICAgICB7CiAgICAgICAgImlkIjogImxleGljYWxfcmVzb3VyY2UiLAogICAgICAgICJuYW1lIjogIkxleGljYWwgUmVzb3VyY2UiLAogICAgICAgICJzY29yZSI6IDUsCiAgICAgICAgIm1heFNjb3JlIjogOSwKICAgICAgICAicmF3U2NvcmUiOiA1LAogICAgICAgICJleHBsYW5hdGlvbiI6ICJVc2VzIGEgbGltaXRlZCByYW5nZSBvZiB2b2NhYnVsYXJ5LCB3aGljaCBpcyBtaW5pbWFsbHkgYWRlcXVhdGUgZm9yIHRoZSB0YXNrLiBOb3RpY2VhYmxlIHJlcGV0aXRpb24gb2YgaGlnaC1mcmVxdWVuY3kgd29yZHMuIiwKICAgICAgICAicmVxdWlyZXNSZXZpZXciOiBmYWxzZSwKICAgICAgICAid2hhdFdvdWxkSW1wcm92ZSI6ICJJbnRyb2R1Y2UgZGlzY2lwbGluZS1zcGVjaWZpYyBhY2FkZW1pYyB2b2NhYnVsYXJ5IGFuZCBuYXR1cmFsIGNvbGxvY2F0aW9ucy4iLAogICAgICAgICJzcGVjaWZpY1dlYWtuZXNzZXMiOiBbCiAgICAgICAgICAiTm90aWNlYWJsZSByZXBldGl0aW9uIG9mIGNvbW1vbiB3b3Jkcy4iCiAgICAgICAgXSwKICAgICAgICAic3VwcG9ydGluZ1F1b3RhdGlvbnMiOiBbXQogICAgICB9LAogICAgICB7CiAgICAgICAgImlkIjogImdyYW1tYXRpY2FsX3JhbmdlIiwKICAgICAgICAibmFtZSI6ICJHcmFtbWF0aWNhbCBSYW5nZSBhbmQgQWNjdXJhY3kiLAogICAgICAgICJzY29yZSI6IDUsCiAgICAgICAgIm1heFNjb3JlIjogOSwKICAgICAgICAicmF3U2NvcmUiOiA1LAogICAgICAgICJleHBsYW5hdGlvbiI6ICJVc2VzIG9ubHkgYSBsaW1pdGVkIHJhbmdlIG9mIHN0cnVjdHVyZXMgd2l0aCBhdHRlbXB0cyBhdCBjb21wbGV4IHNlbnRlbmNlcyB0ZW5kaW5nIHRvIHByb2R1Y2UgZXJyb3JzLiIsCiAgICAgICAgInJlcXVpcmVzUmV2aWV3IjogZmFsc2UsCiAgICAgICAgIndoYXRXb3VsZEltcHJvdmUiOiAiSW5jb3Jwb3JhdGUgY29tcGxleCBzZW50ZW5jZXMgd2l0aCBjb25kaXRpb25hbCBjbGF1c2VzIGFuZCBwYXNzaXZlIGNvbnN0cnVjdGlvbnMuIiwKICAgICAgICAic3BlY2lmaWNXZWFrbmVzc2VzIjogWwogICAgICAgICAgIkhpZ2ggcHJvcG9ydGlvbiBvZiBzaW1wbGUgc2VudGVuY2VzOyBjb21wbGV4IHN0cnVjdHVyZXMgcHJvZHVjZSBncmFtbWF0aWNhbCBlcnJvcnMuIgogICAgICAgIF0sCiAgICAgICAgInN1cHBvcnRpbmdRdW90YXRpb25zIjogW10KICAgICAgfQogICAgXSwKICAgICJzdHJlbmd0aHMiOiBbCiAgICAgICJDb21tdW5pY2F0ZXMgYmFzaWMgbWVhbmluZyBhbmQgc2F0aXNmaWVzIGluaXRpYWwgZXNzYXkgc3RydWN0dXJlLiIKICAgIF0sCiAgICAicHJpb3JpdHlJbXByb3ZlbWVudHMiOiBbCiAgICAgICJVcGdyYWRlIHJlcGV0aXRpdmUgYWRqZWN0aXZlcyBhbmQgcmVwb3J0aW5nIHZlcmJzIHRvIHByZWNpc2UgYWNhZGVtaWMgY29sbG9jYXRpb25zLiIsCiAgICAgICJQcmFjdGljZSBjb21wbGV4IHN1Ym9yZGluYXRlIGFuZCByZWxhdGl2ZSBjbGF1c2VzIHRvIHJhaXNlIGdyYW1tYXRpY2FsIHZlcnNhdGlsaXR5LiIKICAgIF0sCiAgICAiZ3JhbW1hckZlZWRiYWNrIjogW10sCiAgICAiZ3JhbW1hckNvcnJlY3Rpb25zIjogW10sCiAgICAidm9jYWJ1bGFyeVN1Z2dlc3Rpb25zIjogW10sCiAgICAib3ZlcmFsbEZlZWRiYWNrIjogIlRoaXMgVGFzayAyIGRpc2N1cnNpdmUgZXNzYXkgcmVhY2hlZCAyODAgd29yZHMgKG1pbmltdW0gcmVxdWlyZWQ6IDI1MCB3b3JkcykuIFRoZSByZXNwb25zZSBkZW1vbnN0cmF0ZXMgZGV2ZWxvcGluZyBjb21tdW5pY2F0aXZlIGNvbXBldGVuY2Ugd2l0aCBhbiBlc3RpbWF0ZWQgYXZlcmFnZSBzY29yZSBvZiA1LjEgLyA5LjAuIiwKICAgICJyZXRyaWV2ZWREb2N1bWVudElkcyI6IFtdLAogICAgInByb3ZpZGVySWQiOiBudWxsLAogICAgIm1vZGVsVXNlZCI6IG51bGwsCiAgICAicnVicmljVmVyc2lvbiI6ICJJRUxUU19BQ0FERU1JQ18yMDI2X1YxIiwKICAgICJwcm9tcHRWZXJzaW9uIjogIjEuMCIsCiAgICAicmV0cmlldmFsVmVyc2lvbiI6ICIxLjAiLAogICAgImZhaWx1cmVSZWFzb24iOiBudWxsLAogICAgInRlYWNoZXJSZXZpZXdlZCI6IGZhbHNlLAogICAgInRlYWNoZXJSZXZpZXdJZCI6IG51bGwsCiAgICAidGVhY2hlck5vdGVzIjogbnVsbCwKICAgICJ0ZWFjaGVyUmV2aWV3ZWRBdCI6IG51bGwsCiAgICAic3VibWl0dGVkVGV4dCI6ICJFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIgogIH0KfQ=="
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/tmp/examos-e2e-rR4hmB/focused-results/current-student-cannot-ena-3db17-rading-through-request-body-chromium/error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "/tmp/examos-e2e-rR4hmB/focused-results/current-student-cannot-ena-3db17-rading-through-request-body-chromium/trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/tmp/examos-e2e-rR4hmB/focused/current.spec.ts",
+                    "column": 568,
+                    "line": 25
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "e16f9ddfc2380dc9fa32-b8acc1ef16fbacf00151",
+          "file": "current.spec.ts",
+          "line": 25,
+          "column": 5
+        },
+        {
+          "title": "evaluation rejects a non-writing question",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 106,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m400\u001b[39m\nReceived: \u001b[31m201\u001b[39m",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m400\u001b[39m\nReceived: \u001b[31m201\u001b[39m\n    at /tmp/examos-e2e-rR4hmB/focused/current.spec.ts:26:617",
+                    "location": {
+                      "file": "/tmp/examos-e2e-rR4hmB/focused/current.spec.ts",
+                      "column": 617,
+                      "line": 26
+                    },
+                    "snippet": "  24 | test('student cannot access staff reviews and export',async({request})=>{const t=await token(request);for(const endpoint of ['reviews/pending','reviews/export']){const res=await request.get(`${api}/writing/${endpoint}`,{headers:{Authorization:`Bearer ${t}`}});expect(res.status()).toBe(403);}});\n  25 | test('student cannot enable mock grading through request body',async({request})=>{const t=await token(request);const res=await request.post(`${api}/writing/evaluations/submit`,{headers:{Authorization:`Bearer ${t}`},data:{questionId:'q_ielts_wrt_03',essayText:'Education gives people opportunities. '.repeat(70),allowTestMock:true}});const j=await res.json();await test.info().attach('evaluation-response',{body:JSON.stringify(j,null,2),contentType:'application/json'});expect([400,403].includes(res.status()) || ['REVIEW_REQUIRED','FAILED'].includes(j.data?.status)).toBeTruthy();});\n> 26 | test('evaluation rejects a non-writing question',async({request})=>{const t=await token(request,'admin@examos.com','Admin@123');const list=await request.get(`${api}/questions?limit=100`,{headers:{Authorization:`Bearer ${t}`}});const j=await list.json();const items=Array.isArray(j.data)?j.data:j.data?.items||j.data?.questions||[];const q=items.find((x:any)=>x.type==='MCQ');test.skip(!q,'No MCQ returned by question list');const res=await request.post(`${api}/writing/evaluations/submit`,{headers:{Authorization:`Bearer ${t}`},data:{questionId:q.id,essayText:'This is an essay. '.repeat(70)}});expect(res.status()).toBe(400);});\n     |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         ^\n  27 |"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/tmp/examos-e2e-rR4hmB/focused/current.spec.ts",
+                        "column": 617,
+                        "line": 26
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m400\u001b[39m\nReceived: \u001b[31m201\u001b[39m\n\n  24 | test('student cannot access staff reviews and export',async({request})=>{const t=await token(request);for(const endpoint of ['reviews/pending','reviews/export']){const res=await request.get(`${api}/writing/${endpoint}`,{headers:{Authorization:`Bearer ${t}`}});expect(res.status()).toBe(403);}});\n  25 | test('student cannot enable mock grading through request body',async({request})=>{const t=await token(request);const res=await request.post(`${api}/writing/evaluations/submit`,{headers:{Authorization:`Bearer ${t}`},data:{questionId:'q_ielts_wrt_03',essayText:'Education gives people opportunities. '.repeat(70),allowTestMock:true}});const j=await res.json();await test.info().attach('evaluation-response',{body:JSON.stringify(j,null,2),contentType:'application/json'});expect([400,403].includes(res.status()) || ['REVIEW_REQUIRED','FAILED'].includes(j.data?.status)).toBeTruthy();});\n> 26 | test('evaluation rejects a non-writing question',async({request})=>{const t=await token(request,'admin@examos.com','Admin@123');const list=await request.get(`${api}/questions?limit=100`,{headers:{Authorization:`Bearer ${t}`}});const j=await list.json();const items=Array.isArray(j.data)?j.data:j.data?.items||j.data?.questions||[];const q=items.find((x:any)=>x.type==='MCQ');test.skip(!q,'No MCQ returned by question list');const res=await request.post(`${api}/writing/evaluations/submit`,{headers:{Authorization:`Bearer ${t}`},data:{questionId:q.id,essayText:'This is an essay. '.repeat(70)}});expect(res.status()).toBe(400);});\n     |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         ^\n  27 |\n    at /tmp/examos-e2e-rR4hmB/focused/current.spec.ts:26:617"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-02T12:12:06.641Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/tmp/examos-e2e-rR4hmB/focused-results/current-evaluation-rejects-a-non-writing-question-chromium/error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "/tmp/examos-e2e-rR4hmB/focused-results/current-evaluation-rejects-a-non-writing-question-chromium/trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/tmp/examos-e2e-rR4hmB/focused/current.spec.ts",
+                    "column": 617,
+                    "line": 26
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "e16f9ddfc2380dc9fa32-68817f3b7c1bbd6de1e2",
+          "file": "current.spec.ts",
+          "line": 26,
+          "column": 5
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-02T12:11:46.730Z",
+    "duration": 20063.515,
+    "expected": 7,
+    "skipped": 0,
+    "unexpected": 4,
+    "flaky": 0
+  }
+}

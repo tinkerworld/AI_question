@@ -9,7 +9,9 @@ export type BuiltInQuestionType =
   | 'SUBJECTIVE'
   | 'INTERVIEW'
   | 'LISTENING'
-  | 'WRITING';
+  | 'WRITING'
+  | 'IELTS_WRITING_TASK_1'
+  | 'IELTS_WRITING_TASK_2';
 
 export interface InterviewEvidenceQuote {
   turnNumber: number;
@@ -561,6 +563,7 @@ export interface WritingQuestionData {
   promptStem?: string;
   promptImageUrl?: string;
   stimulusText?: string;
+  aiVisualContext?: string;
   minWordCount?: number;
   minWords?: number;
   maxWordCount?: number;
@@ -570,10 +573,19 @@ export interface WritingQuestionData {
   rubric?: WritingRubricCriterion[];
   rubricCriteria?: WritingRubricCriterion[];
   preset?: 'IELTS_TASK_1' | 'IELTS_TASK_2' | 'TOEFL_INDEPENDENT' | 'ACADEMIC_ESSAY' | 'CUSTOM' | string;
+  taskType?: 'TASK_1_GRAPH' | 'TASK_1_PROCESS' | 'TASK_1_MAP' | 'TASK_1_GENERAL' | 'TASK_2_ESSAY' | string;
+  taskSpecification?: Record<string, any>;
+  chartFacts?: Record<string, any>;
+  teacherVerifiedChartData?: Record<string, any>;
+  sampleAnswer?: string;
 }
 
 export class WritingHandler implements QuestionTypeHandler<WritingQuestionData, string> {
-  type = 'WRITING';
+  type: string;
+
+  constructor(customType: string = 'WRITING') {
+    this.type = customType;
+  }
 
   validate(data: WritingQuestionData): boolean {
     if (!data) return false;
@@ -624,6 +636,7 @@ export class WritingHandler implements QuestionTypeHandler<WritingQuestionData, 
       promptStem: data.promptStem || data.promptText,
       promptImageUrl: data.promptImageUrl,
       stimulusText: data.stimulusText,
+      aiVisualContext: data.aiVisualContext,
       minWordCount: data.minWordCount ?? data.minWords ?? 150,
       minWords: data.minWords ?? data.minWordCount ?? 150,
       maxWordCount: data.maxWordCount ?? data.maxWords ?? 300,
@@ -633,6 +646,11 @@ export class WritingHandler implements QuestionTypeHandler<WritingQuestionData, 
       rubric: data.rubric || data.rubricCriteria || [],
       rubricCriteria: data.rubricCriteria || data.rubric || [],
       preset: data.preset,
+      taskType: data.taskType,
+      taskSpecification: data.taskSpecification,
+      chartFacts: data.chartFacts,
+      teacherVerifiedChartData: data.teacherVerifiedChartData,
+      sampleAnswer: data.sampleAnswer,
     };
   }
 
@@ -642,6 +660,7 @@ export class WritingHandler implements QuestionTypeHandler<WritingQuestionData, 
       promptStem: json.promptStem || json.promptText || '',
       promptImageUrl: json.promptImageUrl,
       stimulusText: json.stimulusText,
+      aiVisualContext: json.aiVisualContext,
       minWordCount: Number(json.minWordCount ?? json.minWords ?? 150),
       minWords: Number(json.minWords ?? json.minWordCount ?? 150),
       maxWordCount: Number(json.maxWordCount ?? json.maxWords ?? 300),
@@ -651,6 +670,11 @@ export class WritingHandler implements QuestionTypeHandler<WritingQuestionData, 
       rubric: json.rubric || json.rubricCriteria || [],
       rubricCriteria: json.rubricCriteria || json.rubric || [],
       preset: json.preset,
+      taskType: json.taskType,
+      taskSpecification: json.taskSpecification,
+      chartFacts: json.chartFacts,
+      teacherVerifiedChartData: json.teacherVerifiedChartData,
+      sampleAnswer: json.sampleAnswer,
     };
   }
 }
@@ -672,8 +696,9 @@ export class QuestionTypeRegistry {
     this.registerType(MatchingHandler);
     this.registerType(SubjectiveHandler);
     this.registerType(new InterviewHandler());
-    this.registerType(new ListeningHandler());
-    this.registerType(new WritingHandler());
+    this.registerType(new WritingHandler('WRITING'));
+    this.registerType(new WritingHandler('IELTS_WRITING_TASK_1'));
+    this.registerType(new WritingHandler('IELTS_WRITING_TASK_2'));
   }
 
   public registerType(handler: QuestionTypeHandler): void {

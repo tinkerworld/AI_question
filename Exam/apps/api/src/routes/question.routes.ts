@@ -40,7 +40,7 @@ const listQuestionsQuerySchema = z.object({
   subjectId: z.string().max(128).regex(identifierRegex, 'Invalid subject identifier format').optional(),
   syllabusNodeId: z.string().max(128).regex(identifierRegex, 'Invalid syllabus node identifier format').optional(),
   difficulty: z.enum(['EASY', 'MEDIUM', 'HARD']).optional(),
-  type: z.string().max(32).regex(/^[a-zA-Z_]+$/, 'Invalid question type format').optional(),
+  type: z.string().max(32).regex(/^[a-zA-Z0-9_]+$/, 'Invalid question type format').optional(),
   status: z.enum(['DRAFT', 'REVIEW', 'PUBLISHED', 'ARCHIVED']).optional(),
   limit: z.string().regex(/^\d+$/).optional(),
 });
@@ -165,8 +165,25 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
       params.push(difficulty);
     }
     if (type) {
-      whereClause += ` AND "type" = $${paramIdx++}`;
-      params.push((type as string).toUpperCase());
+      const typeUpper = (type as string).toUpperCase();
+      if (typeUpper === 'IELTS_WRITING_TASK_1' || typeUpper === 'WRITING_TASK_1') {
+        whereClause += ` AND ("type" = 'IELTS_WRITING_TASK_1' OR ("type" = 'WRITING' AND (
+          COALESCE("data"::text, '') LIKE '%IELTS_TASK_1%' OR 
+          COALESCE("data"::text, '') LIKE '%TASK_1%' OR 
+          "content" ILIKE '%task 1%'
+        )))`;
+      } else if (typeUpper === 'IELTS_WRITING_TASK_2' || typeUpper === 'WRITING_TASK_2') {
+        whereClause += ` AND ("type" = 'IELTS_WRITING_TASK_2' OR ("type" = 'WRITING' AND (
+          COALESCE("data"::text, '') LIKE '%IELTS_TASK_2%' OR 
+          COALESCE("data"::text, '') LIKE '%TASK_2%' OR 
+          "content" ILIKE '%task 2%'
+        )))`;
+      } else if (typeUpper === 'WRITING') {
+        whereClause += ` AND ("type" IN ('WRITING', 'IELTS_WRITING_TASK_1', 'IELTS_WRITING_TASK_2') OR "type" LIKE 'WRITING%')`;
+      } else {
+        whereClause += ` AND "type" = $${paramIdx++}`;
+        params.push(typeUpper);
+      }
     }
     if (status) {
       whereClause += ` AND "status" = $${paramIdx++}`;

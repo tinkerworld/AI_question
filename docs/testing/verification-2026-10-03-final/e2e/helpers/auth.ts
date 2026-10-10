@@ -1,0 +1,59 @@
+import { Page, expect } from '@playwright/test';
+
+/**
+ * Baseline personas from packages/database/prisma/seed.ts.
+ * Kept here (not imported) deliberately - this file should still catch a
+ * regression if someone changes seeded credentials without updating both
+ * places, since the UI login would then fail loudly.
+ */
+export const PERSONAS = {
+  admin: { email: 'admin@examos.com', password: 'Admin@123', role: 'MAIN_ADMIN' },
+  subAdmin: { email: 'subadmin@examos.com', password: 'SubAdmin@123', role: 'SUB_ADMIN' },
+  subadmin: { email: 'subadmin@examos.com', password: 'SubAdmin@123', role: 'SUB_ADMIN' },
+  teacher: { email: 'teacher@examos.com', password: 'Teacher@123', role: 'TEACHER' },
+  student: { email: 'student@examos.com', password: 'Student@123', role: 'STUDENT' },
+  student2: { email: 'student2@examos.com', password: 'Student2@123', role: 'STUDENT' },
+} as const;
+
+/**
+ * Logs in through the real UI (not an API shortcut) - the whole point of
+ * this suite is simulating an actual human, and LoginPage.tsx itself is one
+ * of the things worth continuously verifying (Phase 1 found it missing
+ * entirely once already).
+ */
+export async function loginAs(page: Page, persona: keyof typeof PERSONAS) {
+  const { email, password } = PERSONAS[persona];
+  
+  const route = persona === 'teacher' ? '/login/teacher' : persona.startsWith('student') ? '/login/student' : '/login/admin';
+  await page.goto(route);
+
+  // If already logged in from a previous test in this run, log out first
+  // so each test starts from a known clean state.
+  const logoutBtn = page.getByRole('button', { name: /logout/i });
+  if (await logoutBtn.isVisible().catch(() => false)) {
+    await logoutBtn.click();
+  } else {
+    const emailField = page.locator('input[type="email"]');
+    if (!(await emailField.isVisible().catch(() => false))) {
+      await page.evaluate(() => localStorage.clear());
+      await page.goto(route);
+    }
+  }
+
+  await expect(page.locator('input[type="email"]')).toBeVisible({ timeout: 10_000 });
+  await page.locator('input[type="email"]').fill(email);
+  await page.locator('input[type="password"]').fill(password);
+  await page.locator('button[type="submit"]').click();
+
+  // Confirm login actually succeeded - the sidebar nav only renders once
+  // authenticated, so its presence is the real assertion, not just "no error
+  // shown".
+  await expect(page.locator('#nav-tab-dashboard')).toBeVisible({ timeout: 10_000 });
+}
+
+export async function goToTab(
+  page: Page,
+  tab: 'dashboard' | 'student_exams' | 'exams' | 'archive' | 'exam_patterns' | 'question_bank' | 'courses' | 'users' | 'analytics' | string
+) {
+  await page.locator(`#nav-tab-${tab}`).click();
+}
