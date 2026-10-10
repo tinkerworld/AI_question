@@ -1,6 +1,9 @@
 import { pgDb } from '@repo/database';
 import { BASELINE_LANGUAGES } from '@repo/types';
 import { SEED_TRANSLATIONS } from '../routes/i18n.routes';
+import { SEED_TRANSLATION_KEYS } from '../constants/seed-translation-keys';
+import { BASELINE_TRANSLATION_DICTIONARIES } from '../services/ai-translation.service';
+import { initWritingEvaluationSchema } from './init-writing-evaluation';
 
 export async function initV2Tables(): Promise<void> {
   try {
@@ -323,7 +326,7 @@ export async function initV2Tables(): Promise<void> {
       `);
       await pgDb.query(`
         INSERT INTO "ai_providers" ("id", "name", "type", "modelId", "baseUrl", "priority", "scope", "isActive")
-        VALUES ('prov_trans_batch_mock', 'Deterministic Multilingual Batch Translation Engine', 'MOCK', 'mock-translation-v1', 'http://localhost:' || COALESCE(current_setting('app.port', true), '4044') || '/internal/ai/mock-translation', 1, 'translation_batch', true)
+        VALUES ('prov_trans_batch_mock', 'Deterministic Multilingual Batch Translation Engine', 'MOCK', 'mock-translation-v1', 'http://localhost:4043/internal/ai/mock-translation', 1, 'translation_batch', true)
         ON CONFLICT ("id") DO UPDATE SET "name" = EXCLUDED."name", "scope" = EXCLUDED."scope", "isActive" = true;
       `);
     } catch (tErr) {
@@ -332,6 +335,9 @@ export async function initV2Tables(): Promise<void> {
 
     // Ensure all 23 baseline languages and translations are seeded and self-healed
     await ensureLanguagesSeeded(pgDb);
+
+    // Initialize IELTS Writing Evaluation Engine tables, chart facts, and benchmark datasets
+    await initWritingEvaluationSchema();
   } catch (err) {
     console.error('[initV2Tables] Warning: Failed to auto-initialize V2 tables:', err);
   }
@@ -384,27 +390,17 @@ export async function ensureLanguagesSeeded(db?: any): Promise<void> {
     const initialCount = Number(initialRes.rows[0]?.count || 0);
     console.log(`[i18n-seed] Language database status: ${initialCount} language rows exist / ${BASELINE_LANGUAGES.length} expected`);
 
-    // 3. Ensure baseline translation keys exist
-    const defaultKeys = [
-      { key: 'welcome', description: 'Welcome banner heading', module: 'common' },
-      { key: 'app_title', description: 'Application header title', module: 'common' },
-      { key: 'dashboard', description: 'Navigation dashboard label', module: 'navigation' },
-      { key: 'users', description: 'Navigation user management label', module: 'navigation' },
-      { key: 'courses', description: 'Navigation academic courses label', module: 'navigation' },
-      { key: 'question_bank', description: 'Navigation question bank label', module: 'navigation' },
-      { key: 'exam_patterns', description: 'Navigation exam patterns label', module: 'navigation' },
-      { key: 'exams', description: 'Navigation exams generator label', module: 'navigation' },
-      { key: 'archive', description: 'Navigation published exam archive label', module: 'navigation' },
-      { key: 'analytics', description: 'Navigation student analytics label', module: 'navigation' },
-    ];
-
-    for (const k of defaultKeys) {
+    // 3. Ensure all baseline translation keys exist (237+ keys across all modules)
+    for (const k of SEED_TRANSLATION_KEYS) {
       const keyId = `tk_${k.key}`;
       await client.query(
-        `INSERT INTO "translation_keys" ("id", "key", "description", "module")
-         VALUES ($1, $2, $3, $4)
-         ON CONFLICT ("key") DO NOTHING`,
-        [keyId, k.key, k.description, k.module]
+        `INSERT INTO "translation_keys" ("id", "key", "description", "module", "category")
+         VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT ("key") DO UPDATE SET
+           "description" = EXCLUDED."description",
+           "module" = EXCLUDED."module",
+           "category" = EXCLUDED."category"`,
+        [keyId, k.key, k.description, k.module, k.category || 'general']
       );
     }
 
@@ -421,9 +417,48 @@ export async function ensureLanguagesSeeded(db?: any): Promise<void> {
       );
     }
 
-    // 5. Seed baseline translations for all baseline languages
-    // NOTE: ON CONFLICT ("languageId", "translationKeyId") DO NOTHING ensures pre-existing translations are NEVER overwritten or corrupted
+    // 5. Seed translations
+    // 5a. English base translations (isVerified = true)
+    const enLangRes = await client.query(`SELECT "id" FROM "languages" WHERE "code" = 'en'`);
+    if (enLangRes.rows.length > 0) {
+      const enLangId = enLangRes.rows[0].id;
+      for (const k of SEED_TRANSLATION_KEYS) {
+        const keyRes = await client.query(`SELECT "id" FROM "translation_keys" WHERE "key" = $1`, [k.key]);
+        if (keyRes.rows.length === 0) continue;
+        const keyId = keyRes.rows[0].id;
+        const trId = `t_en_${k.key}`;
+        await client.query(
+          `INSERT INTO "translations" ("id", "languageId", "translationKeyId", "value", "isVerified")
+           VALUES ($1, $2, $3, $4, true)
+           ON CONFLICT ("languageId", "translationKeyId") DO UPDATE SET "value" = EXCLUDED."value", "isVerified" = true`,
+          [trId, enLangId, keyId, k.english]
+        );
+      }
+    }
+
+    // 5b. Hindi verified dictionary translations
+    const hiLangRes = await client.query(`SELECT "id" FROM "languages" WHERE "code" = 'hi'`);
+    if (hiLangRes.rows.length > 0) {
+      const hiLangId = hiLangRes.rows[0].id;
+      const hiDict = BASELINE_TRANSLATION_DICTIONARIES['hi'] || {};
+      for (const k of SEED_TRANSLATION_KEYS) {
+        const keyRes = await client.query(`SELECT "id" FROM "translation_keys" WHERE "key" = $1`, [k.key]);
+        if (keyRes.rows.length === 0) continue;
+        const keyId = keyRes.rows[0].id;
+        const val = hiDict[k.key] || `${k.english} (Hindi)`;
+        const trId = `t_hi_${k.key}`;
+        await client.query(
+          `INSERT INTO "translations" ("id", "languageId", "translationKeyId", "value", "isVerified")
+           VALUES ($1, $2, $3, $4, false)
+           ON CONFLICT ("languageId", "translationKeyId") DO NOTHING`,
+          [trId, hiLangId, keyId, val]
+        );
+      }
+    }
+
+    // 5c. Other baseline languages
     for (const [langCode, keyVals] of Object.entries(SEED_TRANSLATIONS)) {
+      if (langCode === 'en' || langCode === 'hi') continue;
       const langRes = await client.query(`SELECT "id" FROM "languages" WHERE "code" = $1`, [langCode]);
       if (langRes.rows.length === 0) continue;
       const langId = langRes.rows[0].id;

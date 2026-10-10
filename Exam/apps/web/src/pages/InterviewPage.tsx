@@ -149,7 +149,7 @@ const DEFAULT_VOICE_PERSONAS = [
 ];
 
 export const InterviewPage: React.FC = () => {
-  const { user, token, logout } = useAuth();
+  const { user, token } = useAuth();
 
   // Navigation & View States
   const [activeView, setActiveView] = useState<'CATALOG' | 'ROOM' | 'EVALUATION' | 'HISTORY' | 'GROWTH'>('CATALOG');
@@ -276,6 +276,106 @@ export const InterviewPage: React.FC = () => {
     setUsePersonalizedCalibrationState(val);
   };
 
+  // Platform Fleet Status & Microservice Speech Pacing Calibration
+  const [platformServices, setPlatformServices] = useState<Record<string, any> | null>(null);
+  const [loadingPlatformServices, setLoadingPlatformServices] = useState<boolean>(false);
+  const [microserviceWpmCalibration, setMicroserviceWpmCalibration] = useState<{
+    wpm: number;
+    paceProfile: string;
+    paceLabel: string;
+    recommendedSettings: any;
+    status: string;
+  } | null>(null);
+  const [isCalibratingWpm, setIsCalibratingWpm] = useState<boolean>(false);
+
+  const fetchPlatformServicesStatus = async () => {
+    try {
+      setLoadingPlatformServices(true);
+      const res = await fetch(`${API_BASE}/interview/services/status`, {
+        headers: getAuthHeaders(token),
+      });
+      const data = await res.json();
+      if (data?.success && data?.data?.services) {
+        setPlatformServices(data.data.services);
+      }
+    } catch (err) {
+      console.warn('Failed to fetch platform services status:', err);
+    } finally {
+      setLoadingPlatformServices(false);
+    }
+  };
+
+  const handleMicroserviceWpmCalibration = async () => {
+    try {
+      setIsCalibratingWpm(true);
+      let base64ToUse = recordedAudioBase64Ref.current;
+      if (!base64ToUse) {
+        // Generate a sample calibration utterance via Piper TTS synthesis proxy
+        const synthRes = await fetch(`${API_BASE}/interview/audio/synthesize`, {
+          method: 'POST',
+          headers: {
+            ...getAuthHeaders(token),
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            text: 'I am taking this interview to demonstrate my technical knowledge, communication skills, and problem solving ability.',
+            voice: selectedVoicePersona || 'emma',
+          }),
+        });
+        if (synthRes.ok) {
+          const buf = await synthRes.arrayBuffer();
+          const bytes = new Uint8Array(buf);
+          let binary = '';
+          for (let i = 0; i < bytes.byteLength; i++) {
+            binary += String.fromCharCode(bytes[i]);
+          }
+          base64ToUse = btoa(binary);
+        }
+      }
+
+      if (!base64ToUse) {
+        alert('Please record speech first or ensure audio services are reachable.');
+        return;
+      }
+
+      const res = await fetch(`${API_BASE}/interview/audio/calibrate-speech`, {
+        method: 'POST',
+        headers: {
+          ...getAuthHeaders(token),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          audio_base64: base64ToUse,
+          audio_format: 'mp3',
+          language: 'en',
+        }),
+      });
+
+      const json = await res.json();
+      if (json?.success && json?.data) {
+        const d = json.data;
+        setMicroserviceWpmCalibration({
+          wpm: d.wpm,
+          paceProfile: d.pace_profile,
+          paceLabel: d.pace_label,
+          recommendedSettings: d.recommended_settings,
+          status: d.status,
+        });
+        if (d.pace_profile === 'fast') {
+          handlePacingChange('fast');
+        } else if (d.pace_profile === 'deliberate') {
+          handlePacingChange('thoughtful');
+        } else {
+          handlePacingChange('natural');
+        }
+      }
+    } catch (err: any) {
+      console.warn('WPM speech calibration failed:', err);
+    } finally {
+      setIsCalibratingWpm(false);
+    }
+  };
+
   // Derive active turn acoustic parameters (Pause timeout & silence threshold)
   const activeAcoustics = calculateTurnAcousticParameters(
     voiceCalibrationProfile,
@@ -296,9 +396,6 @@ export const InterviewPage: React.FC = () => {
   const audioChunksRef = useRef<Blob[]>([]);
   const recordedAudioBase64Ref = useRef<string | null>(null);
   const candidateInputRef = useRef<string>(candidateInput);
-  const isRecordingRef = useRef<boolean>(false);
-  const isBrowserSpeechDisabledRef = useRef<boolean>(false);
-  const shouldSubmitOnWhisperFinishRef = useRef<boolean>(false);
 
   useEffect(() => {
     candidateInputRef.current = candidateInput;
@@ -327,7 +424,6 @@ export const InterviewPage: React.FC = () => {
   };
 
   const stopAudioRecording = () => {
-    isRecordingRef.current = false;
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       try {
         mediaRecorderRef.current.stop();
@@ -496,11 +592,8 @@ export const InterviewPage: React.FC = () => {
     setAgreedToInterviewTerms(false);
   };
 
+  // Speech-to-Text (STT), MediaRecorder & Text-to-Speech (TTS) States
   const [isRecording, setIsRecording] = useState<boolean>(false);
-
-  useEffect(() => {
-    isRecordingRef.current = isRecording;
-  }, [isRecording]);
   const [speechSupported, setSpeechSupported] = useState<boolean>(false);
   const [ttsEnabled, setTtsEnabled] = useState<boolean>(true);
   const [isTranscribingAudio, setIsTranscribingAudio] = useState<boolean>(false);
@@ -564,15 +657,7 @@ export const InterviewPage: React.FC = () => {
                   });
                   const data = await res.json();
                   if (data?.success && data?.data?.text && !isSubmittingRef.current && isInterviewActiveRef.current && activeViewRef.current === 'ROOM' && !isEvaluatingRef.current) {
-                    const text = data.data.text.trim();
-                    if (text) {
-                      setCandidateInput(text);
-                      setLivePreviewText(text);
-                      if ((isHandsfreeModeRef.current || shouldSubmitOnWhisperFinishRef.current) && isMeaningfulCandidateResponse(text)) {
-                        shouldSubmitOnWhisperFinishRef.current = false;
-                        handleSubmitTurn(undefined, text);
-                      }
-                    }
+                    setCandidateInput(data.data.text);
                   }
                 } catch (asrErr) {
                   console.warn('Whisper ASR auto-transcribe fallback error:', asrErr);
@@ -628,60 +713,10 @@ export const InterviewPage: React.FC = () => {
     };
 
     recog.onend = () => {
-      // If browser speech was disabled due to ad-blockers or network restrictions, do not retry
-      if (isBrowserSpeechDisabledRef.current || !recognitionRef.current) {
-        return;
-      }
-      // Resilient restart (matching Video_model_train):
-      // Browser SpeechRecognition automatically terminates on sentence pauses. If we are still
-      // actively recording, restart recognition seamlessly so the candidate is not interrupted.
-      if (
-        isRecordingRef.current &&
-        !isSubmittingRef.current &&
-        isInterviewActiveRef.current &&
-        activeViewRef.current === 'ROOM' &&
-        !isEvaluatingRef.current
-      ) {
-        setTimeout(() => {
-          if (
-            isRecordingRef.current &&
-            !isBrowserSpeechDisabledRef.current &&
-            !isSubmittingRef.current &&
-            isInterviewActiveRef.current &&
-            activeViewRef.current === 'ROOM' &&
-            !isEvaluatingRef.current &&
-            recognitionRef.current
-          ) {
-            try {
-              recognitionRef.current.start();
-            } catch {}
-          }
-        }, 200);
-      } else {
-        stopAudioRecording();
-      }
+      stopAudioRecording();
     };
 
-    recog.onerror = (event: any) => {
-      // 'no-speech' is triggered when candidate pauses to think - do NOT kill recording!
-      if (event?.error === 'no-speech') {
-        return;
-      }
-      // 'network' or 'not-allowed' triggers when speech.googleapis.com is blocked by ad-blockers or in non-Chrome.
-      // Permanently detach browser speech recognition for this session and switch to Whisper ASR.
-      if (event?.error === 'network' || event?.error === 'not-allowed' || event?.error === 'service-not-allowed') {
-        console.warn(`Browser Speech Recognition endpoint unavailable (${event?.error}); switching to background Whisper ASR mode.`);
-        isBrowserSpeechDisabledRef.current = true;
-        try {
-          recog.onresult = null;
-          recog.onerror = null;
-          recog.onend = null;
-          recog.stop();
-        } catch {}
-        recognitionRef.current = null;
-        return;
-      }
-      console.warn('Speech recognition error:', event?.error);
+    recog.onerror = () => {
       stopAudioRecording();
     };
   };
@@ -691,28 +726,14 @@ export const InterviewPage: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      if (!token) {
-        setLoading(false);
-        return;
-      }
       const res = await fetch(`${API_BASE}/interview/eligibility`, {
         headers: getAuthHeaders(token),
       });
-      if (res.status === 401) {
-        await logout();
-        setError('Your session has expired. Please sign in again.');
-        return;
-      }
       const data = await res.json();
       if (data.success) {
         setEligibility(data.data);
       } else {
-        if (data.errorCode === 'INVALID_TOKEN' || data.errorCode === 'UNAUTHORIZED' || res.status === 401) {
-          await logout();
-          setError('Your session has expired. Please sign in again.');
-        } else {
-          setError(data.message || 'Failed to load interview eligibility');
-        }
+        setError(data.message || 'Failed to load interview eligibility');
       }
     } catch (err: any) {
       setError(err.message || 'Error connecting to interview service');
@@ -1404,9 +1425,6 @@ export const InterviewPage: React.FC = () => {
     const currentText = candidateInputRef.current?.trim();
     if (currentText && !isSubmittingRef.current) {
       handleSubmitTurn(undefined, currentText);
-    } else {
-      // If Whisper is transcribing in the background, submit as soon as it returns
-      shouldSubmitOnWhisperFinishRef.current = true;
     }
   };
 
@@ -1453,19 +1471,15 @@ export const InterviewPage: React.FC = () => {
       recordingStartTimeRef.current = Date.now();
       lastSpeechActivityTimeRef.current = Date.now();
       silenceExtensionMsRef.current = 0;
-      isRecordingRef.current = true;
       setIsRecording(true);
       startLiveAudioMonitoring();
       await startAudioRecording();
 
-      if (!isBrowserSpeechDisabledRef.current && recognitionRef.current) {
+      if (recognitionRef.current) {
         try {
           bindRecognitionHandlers(recognitionRef.current);
           recognitionRef.current.start();
-        } catch {
-          isBrowserSpeechDisabledRef.current = true;
-          recognitionRef.current = null;
-        }
+        } catch {}
       }
 
       if (recordingTimeoutRef.current) clearTimeout(recordingTimeoutRef.current);
@@ -1597,12 +1611,6 @@ export const InterviewPage: React.FC = () => {
         }),
       });
 
-      if (res.status === 401) {
-        await logout();
-        setError('Your session has expired. Please sign in again.');
-        return;
-      }
-
       const data = await res.json();
       if (data.success) {
         const session = data.data.session;
@@ -1628,12 +1636,7 @@ export const InterviewPage: React.FC = () => {
         }
         armInactivityWatchdog(24000);
       } else {
-        if (data.errorCode === 'INVALID_TOKEN' || data.errorCode === 'UNAUTHORIZED' || res.status === 401) {
-          await logout();
-          setError('Your session has expired. Please sign in again.');
-        } else {
-          setError(data.message || 'Failed to start interview session');
-        }
+        setError(data.message || 'Failed to start interview session');
       }
     } catch (err: any) {
       setError(err.message || 'Error starting interview');
@@ -1863,40 +1866,8 @@ export const InterviewPage: React.FC = () => {
 
       {/* Error Alert */}
       {error && (
-        <div
-          style={{
-            padding: '14px 18px',
-            borderRadius: '8px',
-            background: 'rgba(239, 68, 68, 0.12)',
-            border: '1px solid #ef4444',
-            color: '#ef4444',
-            marginBottom: '16px',
-            fontSize: '13px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '10px',
-          }}
-        >
-          <div>⚠️ {error}</div>
-          {(error.includes('expired') || error.includes('token') || error.includes('sign in')) && (
-            <button
-              onClick={() => logout()}
-              style={{
-                background: '#ef4444',
-                color: '#fff',
-                border: 'none',
-                padding: '6px 14px',
-                borderRadius: '6px',
-                fontSize: '12px',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              Sign In Again
-            </button>
-          )}
+        <div style={{ padding: '12px 16px', borderRadius: '6px', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid #ef4444', color: '#ef4444', marginBottom: '16px', fontSize: '13px' }}>
+          ⚠️ {error}
         </div>
       )}
 
@@ -3423,6 +3394,56 @@ export const InterviewPage: React.FC = () => {
                       ? `Calibrated from candidate baseline (Speech rate: ${voiceCalibrationProfile?.speechRateWpm || 140} WPM).`
                       : 'Using standardized fixed acoustic thresholds.'}
                   </p>
+
+                  {/* Microservice WPM Speech Calibration */}
+                  <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px dashed var(--border-color)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-main)' }}>Microservice WPM Analyzer</span>
+                      <button
+                        type="button"
+                        id="btn-wpm-calibrate"
+                        data-testid="btn-wpm-calibrate"
+                        onClick={handleMicroserviceWpmCalibration}
+                        disabled={isCalibratingWpm}
+                        style={{
+                          padding: '3px 8px',
+                          fontSize: '10px',
+                          fontWeight: 700,
+                          borderRadius: '4px',
+                          border: '1px solid #06b6d4',
+                          background: 'rgba(6, 182, 212, 0.15)',
+                          color: '#06b6d4',
+                          cursor: isCalibratingWpm ? 'wait' : 'pointer',
+                        }}
+                      >
+                        {isCalibratingWpm ? 'Analyzing...' : '⚡ Auto-Calibrate WPM'}
+                      </button>
+                    </div>
+                    {microserviceWpmCalibration && (
+                      <div
+                        id="wpm-calibration-result"
+                        data-testid="wpm-calibration-result"
+                        style={{
+                          fontSize: '10px',
+                          padding: '6px 8px',
+                          borderRadius: '4px',
+                          background: 'rgba(6, 182, 212, 0.08)',
+                          border: '1px solid rgba(6, 182, 212, 0.25)',
+                          color: 'var(--text-main)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '2px',
+                        }}
+                      >
+                        <div>
+                          <strong>{microserviceWpmCalibration.wpm} WPM</strong> — {microserviceWpmCalibration.paceLabel} ({microserviceWpmCalibration.paceProfile})
+                        </div>
+                        <div style={{ color: 'var(--text-muted)' }}>
+                          Silence Wait: {microserviceWpmCalibration.recommendedSettings?.silence_wait_sec}s | Inactivity Nudge: {microserviceWpmCalibration.recommendedSettings?.inactivity_nudge_sec}s
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* 4. Active AI Provider & Architecture */}
@@ -3482,6 +3503,65 @@ export const InterviewPage: React.FC = () => {
 
                   <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
                     Session ID: <span style={{ fontFamily: 'monospace' }}>{activeSession.id?.slice(0, 16)}...</span>
+                  </div>
+
+                  {/* Platform Fleet Status */}
+                  <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px dashed var(--border-color)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-main)' }}>Platform Fleet Health</span>
+                      <button
+                        type="button"
+                        id="btn-refresh-services-status"
+                        data-testid="btn-refresh-services-status"
+                        onClick={fetchPlatformServicesStatus}
+                        disabled={loadingPlatformServices}
+                        style={{
+                          padding: '2px 6px',
+                          fontSize: '10px',
+                          fontWeight: 600,
+                          borderRadius: '4px',
+                          border: '1px solid var(--border-color)',
+                          background: 'transparent',
+                          color: 'var(--text-muted)',
+                          cursor: loadingPlatformServices ? 'wait' : 'pointer',
+                        }}
+                      >
+                        {loadingPlatformServices ? 'Checking...' : '🔄 Query Fleet'}
+                      </button>
+                    </div>
+                    {platformServices && (
+                      <div
+                        id="platform-services-list"
+                        data-testid="platform-services-list"
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns: '1fr 1fr',
+                          gap: '4px',
+                          fontSize: '10px',
+                        }}
+                      >
+                        {Object.entries(platformServices).map(([key, svc]: [string, any]) => (
+                          <div
+                            key={key}
+                            style={{
+                              padding: '4px 6px',
+                              borderRadius: '4px',
+                              background: svc.status === 'running' || svc.status === 'active' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                              border: `1px solid ${svc.status === 'running' || svc.status === 'active' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+                              color: svc.status === 'running' || svc.status === 'active' ? '#10b981' : '#ef4444',
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                            }}
+                          >
+                            <span style={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={svc.name || key}>
+                              {key}
+                            </span>
+                            <span style={{ fontSize: '9px', textTransform: 'uppercase' }}>{svc.status}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -3663,32 +3743,32 @@ export const InterviewPage: React.FC = () => {
                 )}
 
                 {/* Done Speaking Instant Send Button */}
-                {(isRecording || isTranscribingAudio || candidateInput.trim().length > 0) && (
+                {(isRecording || candidateInput.trim().length > 0) && (
                   <button
                     type="button"
                     id="btn-done-speaking"
                     data-testid="btn-done-speaking"
                     onClick={handleDoneSpeaking}
-                    disabled={isSubmittingTurn || isTranscribingAudio}
+                    disabled={isSubmittingTurn || !candidateInput.trim()}
                     style={{
                       padding: '10px 14px',
                       borderRadius: '6px',
                       border: '1px solid #10b981',
-                      background: candidateInput.trim() || isRecording ? '#059669' : 'rgba(16, 185, 129, 0.2)',
+                      background: candidateInput.trim() ? '#059669' : 'rgba(16, 185, 129, 0.2)',
                       color: '#fff',
                       fontWeight: 600,
                       fontSize: '12px',
-                      cursor: isSubmittingTurn || isTranscribingAudio ? 'not-allowed' : 'pointer',
+                      cursor: candidateInput.trim() && !isSubmittingTurn ? 'pointer' : 'not-allowed',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '4px',
-                      boxShadow: candidateInput.trim() || isRecording ? '0 0 10px rgba(16, 185, 129, 0.3)' : 'none',
+                      boxShadow: candidateInput.trim() ? '0 0 10px rgba(16, 185, 129, 0.3)' : 'none',
                       whiteSpace: 'nowrap',
                     }}
                     title="Finished speaking? Click to submit your response immediately"
                   >
                     <span>✓</span>
-                    <span id="done-speaking-label">{isTranscribingAudio ? 'Transcribing...' : 'Done Speaking'}</span>
+                    <span id="done-speaking-label">Done Speaking</span>
                   </button>
                 )}
 
@@ -3699,12 +3779,12 @@ export const InterviewPage: React.FC = () => {
                   onChange={(e) => setCandidateInput(e.target.value)}
                   placeholder={
                     isTranscribingAudio
-                      ? "⏳ Transcribing your speech via Whisper AI..."
-                      : isRecording
-                      ? isBrowserSpeechDisabledRef.current
-                        ? "🔴 Recording via Mic... Click 'Done Speaking' or pause when finished"
-                        : "🔴 Listening... Speak your answer clearly into the microphone"
-                      : "🎙️ Spoken response will appear here (click 'Mic' to speak)..."
+                      ? "⏳ Transcribing your speech via Whisper..."
+                      : speechSupported
+                      ? isRecording
+                        ? "🔴 Listening... Speak your answer clearly into the microphone"
+                        : "🎙️ Spoken response will appear here (click 'Mic' to speak)..."
+                      : "Spoken response will appear here..."
                   }
                   disabled={isSubmittingTurn || isTranscribingAudio}
                   style={{

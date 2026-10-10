@@ -199,22 +199,24 @@ export const BASELINE_LANGUAGES = [
   { code: 'lus', name: 'Mizo', nativeName: 'Mizo', isDefault: false },
 ];
 
-export const TRANSLATION_KEYS = [
-  { key: 'welcome', description: 'Welcome banner heading', module: 'common' },
-  { key: 'app_title', description: 'Application header title', module: 'common' },
-  { key: 'dashboard', description: 'Navigation dashboard label', module: 'navigation' },
-  { key: 'users', description: 'Navigation user management label', module: 'navigation' },
-  { key: 'courses', description: 'Navigation academic courses label', module: 'navigation' },
-  { key: 'question_bank', description: 'Navigation question bank label', module: 'navigation' },
-  { key: 'exam_patterns', description: 'Navigation exam patterns label', module: 'navigation' },
-  { key: 'exams', description: 'Navigation exams generator label', module: 'navigation' },
-  { key: 'archive', description: 'Navigation published exam archive label', module: 'navigation' },
-  { key: 'analytics', description: 'Navigation student analytics label', module: 'navigation' },
-];
+import { SEED_TRANSLATION_KEYS } from '../../../apps/api/src/constants/seed-translation-keys';
+import { BASELINE_TRANSLATION_DICTIONARIES } from '../../../apps/api/src/services/ai-translation.service';
+
+const baseSeedEn: Record<string, string> = {};
+for (const k of SEED_TRANSLATION_KEYS) {
+  baseSeedEn[k.key] = k.english;
+}
+
+const baseSeedHi: Record<string, string> = {
+  ...baseSeedEn,
+  ...(BASELINE_TRANSLATION_DICTIONARIES['hi'] || {}),
+};
+
+export const TRANSLATION_KEYS = SEED_TRANSLATION_KEYS;
 
 export const SEED_TRANSLATIONS: Record<string, Record<string, string>> = {
-  en: { welcome: 'Welcome to ExamOS Platform', app_title: 'ExamOS // Adaptive Learning Platform', dashboard: 'Dashboard', users: 'User Management', courses: 'Academic Courses', question_bank: 'Question Bank', exam_patterns: 'Exam Patterns', exams: 'Exam Generator', archive: 'Published Archive', analytics: 'Student Analytics' },
-  hi: { welcome: 'ExamOS प्लेटफॉर्म में आपका स्वागत है', app_title: 'ExamOS // अनुकूलनीय शिक्षण मंच', dashboard: 'डैशबोर्ड', users: 'उपयोगकर्ता प्रबंधन', courses: 'अकादमिक पाठ्यक्रम', question_bank: 'प्रश्न बैंक', exam_patterns: 'परीक्षा पैटर्न', exams: 'परीक्षा जनरेटर', archive: 'प्रकाशित अभिलेखागार', analytics: 'छात्र विश्लेषण' },
+  en: baseSeedEn,
+  hi: baseSeedHi,
   bn: { welcome: 'ExamOS প্ল্যাটফর্মে স্বাগতম', app_title: 'ExamOS // অ্যাডাপ্টিভ লার্নিং প্ল্যাটফর্ম', dashboard: 'ড্যাশবোর্ড', users: 'ব্যবহারকারী পরিচালনা', courses: 'একাডেমিক কোর্স', question_bank: 'প্রশ্ন ব্যাংক', exam_patterns: 'পরীক্ষার প্যাটার্ন', exams: 'পরীক্ষা জেনারেটর', archive: 'প্রকাশিত সংরক্ষণাগার', analytics: 'ছাত্র অ্যানালিটিক্স' },
   gu: { welcome: 'ExamOS પ્લેટફોર્મ પર આપનું સ્વાગત છે', app_title: 'ExamOS // અનુકૂલનશીલ શિક્ષણ પ્લેટફોર્મ', dashboard: 'ડેશબોર્ડ', users: 'વપરાશકર્તા સંચાલન', courses: 'શૈક્ષણિક અભ્યાસક્રમો', question_bank: 'પ્રશ્ન બેંક', exam_patterns: 'પરીક્ષા પેટર્ન', exams: 'પરીક્ષા જનરેટર', analytics: 'વિદ્યાર્થી પૃથ્થકરણ' },
   kn: { welcome: 'ExamOS ವೇದಿಕೆಗೆ ನಿಮಗೆ ಸುಸ್ವಾಗತ', app_title: 'ExamOS // ಅಡಾಪ್ಟಿವ್ ಕಲಿಕಾ ವೇದಿಕೆ', dashboard: 'ಡ್ಯಾಶ್‌ಬೋರ್ಡ್', users: 'ಬಳಕೆದಾರರ ನಿರ್ವಹಣೆ', courses: 'ಶೈಕ್ಷಣಿಕ ಕೋರ್ಸ್‌ಗಳು', question_bank: 'ಪ್ರಶ್ನೆ ಬ್ಯಾಂಕ್', exam_patterns: 'ಪರೀಕ್ಷಾ ಮಾದರಿಗಳು', exams: 'ಪರೀಕ್ಷಾ ಜನರೇಟರ್', analytics: 'ವಿದ್ಯಾರ್ಥಿ ವಿಶ್ಲೇಷಣೆ' },
@@ -3222,19 +3224,40 @@ export async function runSeed() {
       },
     },
 
-    // IELTS Writing Tasks (Subjective Prompts)
+    // IELTS Writing Tasks (Writing Section & Standalone Practice Prompts)
     {
       id: 'q_ielts_wrt_01',
       subjectId: 'sub_ielts_writing',
       topicId: 'top_ielts_write_t1',
-      type: 'SUBJECTIVE',
+      type: 'IELTS_WRITING_TASK_1',
       difficulty: 'MEDIUM',
       marks: 9.0,
       content: 'IELTS Academic Writing Task 1: The bar chart illustrates the proportions of renewable electricity generation (solar, wind, and hydroelectric) across five European nations between 2010 and 2024. Summarise the information by selecting and reporting the main features, and make comparisons where relevant. (Write at least 150 words).',
       data: {
+        preset: 'IELTS_TASK_1',
         taskType: 'TASK_1_GRAPH',
+        promptStem: 'IELTS Academic Writing Task 1: The bar chart illustrates the proportions of renewable electricity generation (solar, wind, and hydroelectric) across five European nations between 2010 and 2024. Summarise the information by selecting and reporting the main features, and make comparisons where relevant. (Write at least 150 words).',
+        promptText: 'IELTS Academic Writing Task 1: The bar chart illustrates the proportions of renewable electricity generation (solar, wind, and hydroelectric) across five European nations between 2010 and 2024. Summarise the information by selecting and reporting the main features, and make comparisons where relevant. (Write at least 150 words).',
+        promptImageUrl: '/assets/charts/ielts_task1_renewable_energy.svg',
+        stimulusText: 'Review the multi-nation renewable electricity generation bar chart (2010 vs 2024) across Germany, United Kingdom, France, Spain, and Norway. Highlight significant proportional shifts in solar, wind, and hydroelectric power.',
         minWords: 150,
-        rubricCriteria: ['Task Achievement', 'Coherence & Cohesion', 'Lexical Resource', 'Grammatical Range & Accuracy'],
+        minWordCount: 150,
+        maxWords: 250,
+        maxWordCount: 250,
+        recommendedTimeMinutes: 20,
+        timeLimitMinutes: 20,
+        rubricCriteria: [
+          { id: 'task_achievement', name: 'Task Achievement', maxScore: 9, weight: 0.25, description: 'Accurate overview, key features selected and illustrated with data.' },
+          { id: 'coherence_cohesion', name: 'Coherence & Cohesion', maxScore: 9, weight: 0.25, description: 'Logical paragraph progression, cohesive devices, reference and substitution.' },
+          { id: 'lexical_resource', name: 'Lexical Resource', maxScore: 9, weight: 0.25, description: 'Range of vocabulary, collocations, precision, and spelling accuracy.' },
+          { id: 'grammatical_range', name: 'Grammatical Range & Accuracy', maxScore: 9, weight: 0.25, description: 'Variety of complex structures, error-free sentences, and punctuation.' },
+        ],
+        rubric: [
+          { id: 'task_achievement', name: 'Task Achievement', maxScore: 9, weight: 0.25, description: 'Accurate overview, key features selected and illustrated with data.' },
+          { id: 'coherence_cohesion', name: 'Coherence & Cohesion', maxScore: 9, weight: 0.25, description: 'Logical paragraph progression, cohesive devices, reference and substitution.' },
+          { id: 'lexical_resource', name: 'Lexical Resource', maxScore: 9, weight: 0.25, description: 'Range of vocabulary, collocations, precision, and spelling accuracy.' },
+          { id: 'grammatical_range', name: 'Grammatical Range & Accuracy', maxScore: 9, weight: 0.25, description: 'Variety of complex structures, error-free sentences, and punctuation.' },
+        ],
         sampleAnswer: 'The provided bar chart compares the percentage shares of renewable electricity generated via solar, wind, and hydroelectric sources across five European countries over a 14-year period from 2010 to 2024...',
       },
     },
@@ -3242,14 +3265,35 @@ export async function runSeed() {
       id: 'q_ielts_wrt_02',
       subjectId: 'sub_ielts_writing',
       topicId: 'top_ielts_write_t1',
-      type: 'SUBJECTIVE',
+      type: 'IELTS_WRITING_TASK_1',
       difficulty: 'MEDIUM',
       marks: 9.0,
       content: 'IELTS Academic Writing Task 1: The flow diagram illustrates the multi-stage technical process of seawater reverse osmosis desalination and municipal potable water distribution. Summarise the process by describing the main chronological stages. (Write at least 150 words).',
       data: {
+        preset: 'IELTS_TASK_1',
         taskType: 'TASK_1_PROCESS',
+        promptStem: 'IELTS Academic Writing Task 1: The flow diagram illustrates the multi-stage technical process of seawater reverse osmosis desalination and municipal potable water distribution. Summarise the process by describing the main chronological stages. (Write at least 150 words).',
+        promptText: 'IELTS Academic Writing Task 1: The flow diagram illustrates the multi-stage technical process of seawater reverse osmosis desalination and municipal potable water distribution. Summarise the process by describing the main chronological stages. (Write at least 150 words).',
+        promptImageUrl: '/assets/charts/ielts_task1_desalination_process.svg',
+        stimulusText: 'Examine the 6-stage seawater reverse osmosis (SWRO) flow diagram: 1. Ocean Intake -> 2. Coagulation & Media Filtration -> 3. High-Pressure Booster Pump -> 4. Polyamide Membrane RO Separation -> 5. Post-Treatment Mineralization -> 6. Municipal Storage & Urban Distribution.',
         minWords: 150,
-        rubricCriteria: ['Task Achievement', 'Coherence & Cohesion', 'Lexical Resource', 'Grammatical Range & Accuracy'],
+        minWordCount: 150,
+        maxWords: 250,
+        maxWordCount: 250,
+        recommendedTimeMinutes: 20,
+        timeLimitMinutes: 20,
+        rubricCriteria: [
+          { id: 'task_achievement', name: 'Task Achievement', maxScore: 9, weight: 0.25, description: 'Accurate overview, key features selected and illustrated with data.' },
+          { id: 'coherence_cohesion', name: 'Coherence & Cohesion', maxScore: 9, weight: 0.25, description: 'Logical paragraph progression, cohesive devices, reference and substitution.' },
+          { id: 'lexical_resource', name: 'Lexical Resource', maxScore: 9, weight: 0.25, description: 'Range of vocabulary, collocations, precision, and spelling accuracy.' },
+          { id: 'grammatical_range', name: 'Grammatical Range & Accuracy', maxScore: 9, weight: 0.25, description: 'Variety of complex structures, error-free sentences, and punctuation.' },
+        ],
+        rubric: [
+          { id: 'task_achievement', name: 'Task Achievement', maxScore: 9, weight: 0.25, description: 'Accurate overview, key features selected and illustrated with data.' },
+          { id: 'coherence_cohesion', name: 'Coherence & Cohesion', maxScore: 9, weight: 0.25, description: 'Logical paragraph progression, cohesive devices, reference and substitution.' },
+          { id: 'lexical_resource', name: 'Lexical Resource', maxScore: 9, weight: 0.25, description: 'Range of vocabulary, collocations, precision, and spelling accuracy.' },
+          { id: 'grammatical_range', name: 'Grammatical Range & Accuracy', maxScore: 9, weight: 0.25, description: 'Variety of complex structures, error-free sentences, and punctuation.' },
+        ],
         sampleAnswer: 'The diagram delineates the sequential technical stages involved in extracting, treating, and purifying ocean seawater through high-pressure reverse osmosis filtration before mineral rebalancing and municipal delivery...',
       },
     },
@@ -3257,14 +3301,33 @@ export async function runSeed() {
       id: 'q_ielts_wrt_03',
       subjectId: 'sub_ielts_writing',
       topicId: 'top_ielts_write_t2',
-      type: 'SUBJECTIVE',
+      type: 'IELTS_WRITING_TASK_2',
       difficulty: 'HARD',
       marks: 9.0,
       content: 'IELTS Academic Writing Task 2: Some educational theorists argue that tertiary institutions should focus exclusively on providing specialized technical and vocational training for immediate industry employment, while others believe universities should cultivate broad philosophical enquiry and critical thinking regardless of market utility. Discuss both views and give your own reasoned opinion with academic examples. (Write at least 250 words).',
       data: {
+        preset: 'IELTS_TASK_2',
         taskType: 'TASK_2_ESSAY',
+        promptStem: 'IELTS Academic Writing Task 2: Some educational theorists argue that tertiary institutions should focus exclusively on providing specialized technical and vocational training for immediate industry employment, while others believe universities should cultivate broad philosophical enquiry and critical thinking regardless of market utility. Discuss both views and give your own reasoned opinion with academic examples. (Write at least 250 words).',
+        promptText: 'IELTS Academic Writing Task 2: Some educational theorists argue that tertiary institutions should focus exclusively on providing specialized technical and vocational training for immediate industry employment, while others believe universities should cultivate broad philosophical enquiry and critical thinking regardless of market utility. Discuss both views and give your own reasoned opinion with academic examples. (Write at least 250 words).',
         minWords: 250,
-        rubricCriteria: ['Task Response', 'Coherence & Cohesion', 'Lexical Resource', 'Grammatical Range & Accuracy'],
+        minWordCount: 250,
+        maxWords: 400,
+        maxWordCount: 400,
+        recommendedTimeMinutes: 40,
+        timeLimitMinutes: 40,
+        rubricCriteria: [
+          { id: 'task_response', name: 'Task Response', maxScore: 9, weight: 0.25, description: 'Addresses all parts of task, clear position throughout, extended ideas.' },
+          { id: 'coherence_cohesion', name: 'Coherence & Cohesion', maxScore: 9, weight: 0.25, description: 'Sequencing, clear central topic in each paragraph, cohesive links.' },
+          { id: 'lexical_resource', name: 'Lexical Resource', maxScore: 9, weight: 0.25, description: 'Sufficient range of vocabulary, style, natural collocations, minimal errors.' },
+          { id: 'grammatical_range', name: 'Grammatical Range & Accuracy', maxScore: 9, weight: 0.25, description: 'Complex sentence forms, good control of grammar, clear communicative effect.' },
+        ],
+        rubric: [
+          { id: 'task_response', name: 'Task Response', maxScore: 9, weight: 0.25, description: 'Addresses all parts of task, clear position throughout, extended ideas.' },
+          { id: 'coherence_cohesion', name: 'Coherence & Cohesion', maxScore: 9, weight: 0.25, description: 'Sequencing, clear central topic in each paragraph, cohesive links.' },
+          { id: 'lexical_resource', name: 'Lexical Resource', maxScore: 9, weight: 0.25, description: 'Sufficient range of vocabulary, style, natural collocations, minimal errors.' },
+          { id: 'grammatical_range', name: 'Grammatical Range & Accuracy', maxScore: 9, weight: 0.25, description: 'Complex sentence forms, good control of grammar, clear communicative effect.' },
+        ],
         sampleAnswer: 'A contentious debate in contemporary higher education revolves around whether universities should function predominantly as vocational training grounds tailored to market demands or remain bastions of open intellectual enquiry...',
       },
     },
@@ -3272,15 +3335,174 @@ export async function runSeed() {
       id: 'q_ielts_wrt_04',
       subjectId: 'sub_ielts_writing',
       topicId: 'top_ielts_write_t2',
-      type: 'SUBJECTIVE',
+      type: 'IELTS_WRITING_TASK_2',
       difficulty: 'HARD',
       marks: 9.0,
       content: 'IELTS Academic Writing Task 2: With the rapid proliferation of artificial intelligence and autonomous cognitive systems, human labour in creative, analytical, and professional fields is facing unprecedented disruption. To what extent do you agree or disagree that automated systems will diminish genuine human creativity and intellectual innovation? Support your argument with concrete illustrations. (Write at least 250 words).',
       data: {
+        preset: 'IELTS_TASK_2',
         taskType: 'TASK_2_ESSAY',
+        promptStem: 'IELTS Academic Writing Task 2: With the rapid proliferation of artificial intelligence and autonomous cognitive systems, human labour in creative, analytical, and professional fields is facing unprecedented disruption. To what extent do you agree or disagree that automated systems will diminish genuine human creativity and intellectual innovation? Support your argument with concrete illustrations. (Write at least 250 words).',
+        promptText: 'IELTS Academic Writing Task 2: With the rapid proliferation of artificial intelligence and autonomous cognitive systems, human labour in creative, analytical, and professional fields is facing unprecedented disruption. To what extent do you agree or disagree that automated systems will diminish genuine human creativity and intellectual innovation? Support your argument with concrete illustrations. (Write at least 250 words).',
         minWords: 250,
-        rubricCriteria: ['Task Response', 'Coherence & Cohesion', 'Lexical Resource', 'Grammatical Range & Accuracy'],
+        minWordCount: 250,
+        maxWords: 400,
+        maxWordCount: 400,
+        recommendedTimeMinutes: 40,
+        timeLimitMinutes: 40,
+        rubricCriteria: [
+          { id: 'task_response', name: 'Task Response', maxScore: 9, weight: 0.25, description: 'Addresses all parts of task, clear position throughout, extended ideas.' },
+          { id: 'coherence_cohesion', name: 'Coherence & Cohesion', maxScore: 9, weight: 0.25, description: 'Sequencing, clear central topic in each paragraph, cohesive links.' },
+          { id: 'lexical_resource', name: 'Lexical Resource', maxScore: 9, weight: 0.25, description: 'Sufficient range of vocabulary, style, natural collocations, minimal errors.' },
+          { id: 'grammatical_range', name: 'Grammatical Range & Accuracy', maxScore: 9, weight: 0.25, description: 'Complex sentence forms, good control of grammar, clear communicative effect.' },
+        ],
+        rubric: [
+          { id: 'task_response', name: 'Task Response', maxScore: 9, weight: 0.25, description: 'Addresses all parts of task, clear position throughout, extended ideas.' },
+          { id: 'coherence_cohesion', name: 'Coherence & Cohesion', maxScore: 9, weight: 0.25, description: 'Sequencing, clear central topic in each paragraph, cohesive links.' },
+          { id: 'lexical_resource', name: 'Lexical Resource', maxScore: 9, weight: 0.25, description: 'Sufficient range of vocabulary, style, natural collocations, minimal errors.' },
+          { id: 'grammatical_range', name: 'Grammatical Range & Accuracy', maxScore: 9, weight: 0.25, description: 'Complex sentence forms, good control of grammar, clear communicative effect.' },
+        ],
         sampleAnswer: 'The exponential rise of generative artificial intelligence has sparked intense scrutiny regarding the sanctity of human intellectual and artistic innovation...',
+      },
+    },
+    {
+      id: 'q_ielts_wrt_05',
+      subjectId: 'sub_ielts_writing',
+      topicId: 'top_ielts_write_t1',
+      type: 'IELTS_WRITING_TASK_1',
+      difficulty: 'MEDIUM',
+      marks: 9.0,
+      content: 'IELTS Academic Writing Task 1: The line graph illustrates annual carbon dioxide (CO₂) emissions across China, the United States, the European Union, and India from 1990 to 2025. Summarise the information by selecting and reporting the main features, and make comparisons where relevant. (Write at least 150 words).',
+      data: {
+        preset: 'IELTS_TASK_1',
+        taskType: 'TASK_1_GRAPH',
+        promptStem: 'IELTS Academic Writing Task 1: The line graph illustrates annual carbon dioxide (CO₂) emissions across China, the United States, the European Union, and India from 1990 to 2025. Summarise the information by selecting and reporting the main features, and make comparisons where relevant. (Write at least 150 words).',
+        promptText: 'IELTS Academic Writing Task 1: The line graph illustrates annual carbon dioxide (CO₂) emissions across China, the United States, the European Union, and India from 1990 to 2025. Summarise the information by selecting and reporting the main features, and make comparisons where relevant. (Write at least 150 words).',
+        promptImageUrl: '/assets/charts/ielts_task1_global_co2_trends.svg',
+        stimulusText: 'Analyze the 35-year emission trajectories of China, the US, the EU, and India. Note China\'s steep upward acceleration, the EU\'s steady decumulation, the US peak and stabilization, and India\'s steady climb.',
+        minWords: 150,
+        minWordCount: 150,
+        maxWords: 250,
+        maxWordCount: 250,
+        recommendedTimeMinutes: 20,
+        timeLimitMinutes: 20,
+        rubricCriteria: [
+          { id: 'task_achievement', name: 'Task Achievement', maxScore: 9, weight: 0.25, description: 'Accurate overview, key features selected and illustrated with data.' },
+          { id: 'coherence_cohesion', name: 'Coherence & Cohesion', maxScore: 9, weight: 0.25, description: 'Logical paragraph progression, cohesive devices, reference and substitution.' },
+          { id: 'lexical_resource', name: 'Lexical Resource', maxScore: 9, weight: 0.25, description: 'Range of vocabulary, collocations, precision, and spelling accuracy.' },
+          { id: 'grammatical_range', name: 'Grammatical Range & Accuracy', maxScore: 9, weight: 0.25, description: 'Variety of complex structures, error-free sentences, and punctuation.' },
+        ],
+        rubric: [
+          { id: 'task_achievement', name: 'Task Achievement', maxScore: 9, weight: 0.25, description: 'Accurate overview, key features selected and illustrated with data.' },
+          { id: 'coherence_cohesion', name: 'Coherence & Cohesion', maxScore: 9, weight: 0.25, description: 'Logical paragraph progression, cohesive devices, reference and substitution.' },
+          { id: 'lexical_resource', name: 'Lexical Resource', maxScore: 9, weight: 0.25, description: 'Range of vocabulary, collocations, precision, and spelling accuracy.' },
+          { id: 'grammatical_range', name: 'Grammatical Range & Accuracy', maxScore: 9, weight: 0.25, description: 'Variety of complex structures, error-free sentences, and punctuation.' },
+        ],
+        sampleAnswer: 'The line graph provides a comparative overview of annual carbon dioxide emissions in Gigatonnes (Gt) produced by China, the United States, the European Union, and India over a 35-year period between 1990 and 2025. Overall, emissions in China and India experienced continuous upward trajectories, with China undergoing remarkable exponential growth, whereas both the United States and the European Union achieved net reductions over the surveyed timeframe.',
+      },
+    },
+    {
+      id: 'q_ielts_wrt_06',
+      subjectId: 'sub_ielts_writing',
+      topicId: 'top_ielts_write_t1',
+      type: 'IELTS_WRITING_TASK_1',
+      difficulty: 'MEDIUM',
+      marks: 9.0,
+      content: 'IELTS Academic Writing Task 1: The comparative pie charts illustrate the proportion of average weekly household expenditure across six spending categories in Country X in 1975 and 2025. Summarise the information by selecting and reporting the main features, and make comparisons where relevant. (Write at least 150 words).',
+      data: {
+        preset: 'IELTS_TASK_1',
+        taskType: 'TASK_1_PIE',
+        promptStem: 'IELTS Academic Writing Task 1: The comparative pie charts illustrate the proportion of average weekly household expenditure across six spending categories in Country X in 1975 and 2025. Summarise the information by selecting and reporting the main features, and make comparisons where relevant. (Write at least 150 words).',
+        promptText: 'IELTS Academic Writing Task 1: The comparative pie charts illustrate the proportion of average weekly household expenditure across six spending categories in Country X in 1975 and 2025. Summarise the information by selecting and reporting the main features, and make comparisons where relevant. (Write at least 150 words).',
+        promptImageUrl: '/assets/charts/ielts_task1_household_expenditure_pie.svg',
+        stimulusText: 'Compare the expenditure proportions in 1975 vs 2025 across Food & Groceries, Housing & Utilities, Transport, Tech & Telecom, Leisure, and Clothing. Note major shifts in food vs housing and tech.',
+        minWords: 150,
+        minWordCount: 150,
+        maxWords: 250,
+        maxWordCount: 250,
+        recommendedTimeMinutes: 20,
+        timeLimitMinutes: 20,
+        rubricCriteria: [
+          { id: 'task_achievement', name: 'Task Achievement', maxScore: 9, weight: 0.25, description: 'Accurate overview, key features selected and illustrated with data.' },
+          { id: 'coherence_cohesion', name: 'Coherence & Cohesion', maxScore: 9, weight: 0.25, description: 'Logical paragraph progression, cohesive devices, reference and substitution.' },
+          { id: 'lexical_resource', name: 'Lexical Resource', maxScore: 9, weight: 0.25, description: 'Range of vocabulary, collocations, precision, and spelling accuracy.' },
+          { id: 'grammatical_range', name: 'Grammatical Range & Accuracy', maxScore: 9, weight: 0.25, description: 'Variety of complex structures, error-free sentences, and punctuation.' },
+        ],
+        rubric: [
+          { id: 'task_achievement', name: 'Task Achievement', maxScore: 9, weight: 0.25, description: 'Accurate overview, key features selected and illustrated with data.' },
+          { id: 'coherence_cohesion', name: 'Coherence & Cohesion', maxScore: 9, weight: 0.25, description: 'Logical paragraph progression, cohesive devices, reference and substitution.' },
+          { id: 'lexical_resource', name: 'Lexical Resource', maxScore: 9, weight: 0.25, description: 'Range of vocabulary, collocations, precision, and spelling accuracy.' },
+          { id: 'grammatical_range', name: 'Grammatical Range & Accuracy', maxScore: 9, weight: 0.25, description: 'Variety of complex structures, error-free sentences, and punctuation.' },
+        ],
+        sampleAnswer: 'The two pie charts compare the proportional distribution of average weekly household spending across six categories in Country X between 1975 and 2025. Overall, the fifty-year period witnessed a dramatic realignment of household budgets, characterized by a substantial contraction in food and clothing outlays alongside marked surges in expenditure on housing and digital communications technology.',
+      },
+    },
+    {
+      id: 'q_ielts_wrt_07',
+      subjectId: 'sub_ielts_writing',
+      topicId: 'top_ielts_write_t2',
+      type: 'IELTS_WRITING_TASK_2',
+      difficulty: 'HARD',
+      marks: 9.0,
+      content: 'IELTS Academic Writing Task 2: Billions of dollars are expended annually on outer space exploration and interplanetary missions, while millions of citizens worldwide suffer from severe poverty, inadequate healthcare, and climate change devastation. Some people argue that governments should redirect space funding toward resolving pressing terrestrial crises. To what extent do you agree or disagree with this view? (Write at least 250 words).',
+      data: {
+        preset: 'IELTS_TASK_2',
+        taskType: 'TASK_2_ESSAY',
+        promptStem: 'IELTS Academic Writing Task 2: Billions of dollars are expended annually on outer space exploration and interplanetary missions, while millions of citizens worldwide suffer from severe poverty, inadequate healthcare, and climate change devastation. Some people argue that governments should redirect space funding toward resolving pressing terrestrial crises. To what extent do you agree or disagree with this view? (Write at least 250 words).',
+        promptText: 'IELTS Academic Writing Task 2: Billions of dollars are expended annually on outer space exploration and interplanetary missions, while millions of citizens worldwide suffer from severe poverty, inadequate healthcare, and climate change devastation. Some people argue that governments should redirect space funding toward resolving pressing terrestrial crises. To what extent do you agree or disagree with this view? (Write at least 250 words).',
+        minWords: 250,
+        minWordCount: 250,
+        maxWords: 400,
+        maxWordCount: 400,
+        recommendedTimeMinutes: 40,
+        timeLimitMinutes: 40,
+        rubricCriteria: [
+          { id: 'task_response', name: 'Task Response', maxScore: 9, weight: 0.25, description: 'Addresses all parts of task, clear position throughout, extended ideas.' },
+          { id: 'coherence_cohesion', name: 'Coherence & Cohesion', maxScore: 9, weight: 0.25, description: 'Sequencing, clear central topic in each paragraph, cohesive links.' },
+          { id: 'lexical_resource', name: 'Lexical Resource', maxScore: 9, weight: 0.25, description: 'Sufficient range of vocabulary, style, natural collocations, minimal errors.' },
+          { id: 'grammatical_range', name: 'Grammatical Range & Accuracy', maxScore: 9, weight: 0.25, description: 'Complex sentence forms, good control of grammar, clear communicative effect.' },
+        ],
+        rubric: [
+          { id: 'task_response', name: 'Task Response', maxScore: 9, weight: 0.25, description: 'Addresses all parts of task, clear position throughout, extended ideas.' },
+          { id: 'coherence_cohesion', name: 'Coherence & Cohesion', maxScore: 9, weight: 0.25, description: 'Sequencing, clear central topic in each paragraph, cohesive links.' },
+          { id: 'lexical_resource', name: 'Lexical Resource', maxScore: 9, weight: 0.25, description: 'Sufficient range of vocabulary, style, natural collocations, minimal errors.' },
+          { id: 'grammatical_range', name: 'Grammatical Range & Accuracy', maxScore: 9, weight: 0.25, description: 'Complex sentence forms, good control of grammar, clear communicative effect.' },
+        ],
+        sampleAnswer: 'In an era marked by profound social inequality, escalating climate instability, and overburdened healthcare systems, allocating billions of dollars to extraterrestrial exploration frequently evokes intense moral reproach...',
+      },
+    },
+    {
+      id: 'q_ielts_wrt_08',
+      subjectId: 'sub_ielts_writing',
+      topicId: 'top_ielts_write_t2',
+      type: 'IELTS_WRITING_TASK_2',
+      difficulty: 'HARD',
+      marks: 9.0,
+      content: 'IELTS Academic Writing Task 2: In many contemporary metropolitan cities, rapid urbanization has resulted in catastrophic traffic congestion, prolonged commute times, and dangerous levels of atmospheric air pollution. What are the principal root causes of this urban crisis, and what effective municipal measures can governments implement to tackle these issues? (Write at least 250 words).',
+      data: {
+        preset: 'IELTS_TASK_2',
+        taskType: 'TASK_2_ESSAY',
+        promptStem: 'IELTS Academic Writing Task 2: In many contemporary metropolitan cities, rapid urbanization has resulted in catastrophic traffic congestion, prolonged commute times, and dangerous levels of atmospheric air pollution. What are the principal root causes of this urban crisis, and what effective municipal measures can governments implement to tackle these issues? (Write at least 250 words).',
+        promptText: 'IELTS Academic Writing Task 2: In many contemporary metropolitan cities, rapid urbanization has resulted in catastrophic traffic congestion, prolonged commute times, and dangerous levels of atmospheric air pollution. What are the principal root causes of this urban crisis, and what effective municipal measures can governments implement to tackle these issues? (Write at least 250 words).',
+        minWords: 250,
+        minWordCount: 250,
+        maxWords: 400,
+        maxWordCount: 400,
+        recommendedTimeMinutes: 40,
+        timeLimitMinutes: 40,
+        rubricCriteria: [
+          { id: 'task_response', name: 'Task Response', maxScore: 9, weight: 0.25, description: 'Addresses all parts of task, clear position throughout, extended ideas.' },
+          { id: 'coherence_cohesion', name: 'Coherence & Cohesion', maxScore: 9, weight: 0.25, description: 'Sequencing, clear central topic in each paragraph, cohesive links.' },
+          { id: 'lexical_resource', name: 'Lexical Resource', maxScore: 9, weight: 0.25, description: 'Sufficient range of vocabulary, style, natural collocations, minimal errors.' },
+          { id: 'grammatical_range', name: 'Grammatical Range & Accuracy', maxScore: 9, weight: 0.25, description: 'Complex sentence forms, good control of grammar, clear communicative effect.' },
+        ],
+        rubric: [
+          { id: 'task_response', name: 'Task Response', maxScore: 9, weight: 0.25, description: 'Addresses all parts of task, clear position throughout, extended ideas.' },
+          { id: 'coherence_cohesion', name: 'Coherence & Cohesion', maxScore: 9, weight: 0.25, description: 'Sequencing, clear central topic in each paragraph, cohesive links.' },
+          { id: 'lexical_resource', name: 'Lexical Resource', maxScore: 9, weight: 0.25, description: 'Sufficient range of vocabulary, style, natural collocations, minimal errors.' },
+          { id: 'grammatical_range', name: 'Grammatical Range & Accuracy', maxScore: 9, weight: 0.25, description: 'Complex sentence forms, good control of grammar, clear communicative effect.' },
+        ],
+        sampleAnswer: 'The uncontrolled expansion of contemporary metropolises has engendered severe transportation bottlenecks and hazardous particulate air pollution, severely degrading urban inhabitants\' quality of life...',
       },
     },
 
@@ -3731,11 +3953,12 @@ export async function runSeed() {
         if (keyRes.rows.length > 0) {
           const keyId = (keyRes.rows[0] as any).id;
           const trId = `tr_${langCode}_${key}`;
+          const isVerified = langCode === 'en';
           await pgDb.query(
-            `INSERT INTO "translations" ("id", "languageId", "translationKeyId", "value")
-             VALUES ($1, $2, $3, $4)
-             ON CONFLICT ("languageId", "translationKeyId") DO UPDATE SET "value" = EXCLUDED."value"`,
-            [trId, langId, keyId, value]
+            `INSERT INTO "translations" ("id", "languageId", "translationKeyId", "value", "isVerified")
+             VALUES ($1, $2, $3, $4, $5)
+             ON CONFLICT ("languageId", "translationKeyId") DO UPDATE SET "value" = EXCLUDED."value", "isVerified" = EXCLUDED."isVerified"`,
+            [trId, langId, keyId, value, isVerified]
           );
           totalTranslationsSeeded++;
         }
@@ -4353,13 +4576,13 @@ export async function runSeed() {
     },
     {
       id: 'prov_writing_local_01',
-      name: 'Local LLM Writing Evaluator (Ollama / LocalAI)',
+      name: 'Local Ollama IELTS Evaluator (qwen3.5-ielts)',
       type: 'LOCAL',
-      modelId: 'llama3:8b',
+      modelId: 'qwen3.5-ielts:latest',
       baseUrl: 'http://localhost:11434',
-      priority: 10,
+      priority: 1,
       scope: 'writing_analysis',
-      isActive: false,
+      isActive: true,
     },
     {
       id: 'prov_writing_mock_01',
@@ -4379,7 +4602,7 @@ export async function runSeed() {
     await pgDb.query(
       `INSERT INTO "ai_providers" ("id", "name", "type", "modelId", "baseUrl", "priority", "scope", "isActive")
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-       ON CONFLICT ("id") DO UPDATE SET "name" = EXCLUDED."name", "priority" = EXCLUDED."priority", "scope" = EXCLUDED."scope", "isActive" = EXCLUDED."isActive"`,
+       ON CONFLICT ("id") DO UPDATE SET "name" = EXCLUDED."name", "type" = EXCLUDED."type", "modelId" = EXCLUDED."modelId", "baseUrl" = EXCLUDED."baseUrl", "priority" = EXCLUDED."priority", "scope" = EXCLUDED."scope", "isActive" = EXCLUDED."isActive"`,
       [prov.id, prov.name, prov.type, prov.modelId, prov.baseUrl, prov.priority, prov.scope, prov.isActive]
     );
   }

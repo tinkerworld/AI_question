@@ -71,6 +71,7 @@ export interface AICompletionRequest {
   expectedSchema?: any;
   preferredProviderId?: string;
   userId?: string;
+  variables?: Record<string, any>;
 }
 
 export interface AICompletionResponse {
@@ -105,7 +106,7 @@ export class AIClient {
 
   constructor(config: AIClientConfig = {}) {
     this.config = {
-      baseUrl: config.baseUrl || (process.env.API_PORT ? `http://localhost:${process.env.API_PORT}/api/v1/ai/gateway` : `http://localhost:${process.env.PORT || 4043}/api/v1/ai/gateway`),
+      baseUrl: config.baseUrl || 'http://localhost:4043/api/v1/ai/gateway',
       internalApiKey: config.internalApiKey || 'examos-internal-ai-key',
       timeoutMs: config.timeoutMs || 15000,
       maxRetries: config.maxRetries || 3,

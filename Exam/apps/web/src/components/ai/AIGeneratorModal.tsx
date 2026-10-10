@@ -280,7 +280,15 @@ export const AIGeneratorModal: React.FC<AIGeneratorModalProps> = ({
               <select
                 id="ai-gen-type-select"
                 value={type}
-                onChange={(e) => setType(e.target.value)}
+                onChange={(e) => {
+                  const newType = e.target.value;
+                  setType(newType);
+                  if (newType === 'WRITING' || newType === 'IELTS_WRITING_TASK_1' || newType === 'IELTS_WRITING_TASK_2') {
+                    setMarks(9);
+                  } else if (marks === 9) {
+                    setMarks(4);
+                  }
+                }}
                 disabled={loading}
                 style={{
                   width: '100%',
@@ -296,6 +304,8 @@ export const AIGeneratorModal: React.FC<AIGeneratorModalProps> = ({
                 <option value="MULTIPLE_CHOICE">Multi-Select</option>
                 <option value="NUMERICAL">Numerical</option>
                 <option value="SUBJECTIVE">Subjective</option>
+                <option value="IELTS_WRITING_TASK_1">IELTS Writing Task 1 (Visual Data / Report)</option>
+                <option value="IELTS_WRITING_TASK_2">IELTS Writing Task 2 (Discursive Essay)</option>
               </select>
             </div>
 

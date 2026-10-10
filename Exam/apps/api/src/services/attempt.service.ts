@@ -3,6 +3,7 @@ import { questionTypeRegistry } from '@repo/question-types';
 import { AppError } from '../middleware/error';
 import { analyticsService } from './analytics.service';
 import { WritingEvaluationService, BUILTIN_WRITING_RUBRICS } from './writing-evaluation.service';
+import { WritingEvaluationEngineService } from './writing-evaluation-engine.service';
 import crypto from 'crypto';
 
 // ----------------------------------------------------------------------------
@@ -378,6 +379,7 @@ export class AttemptService {
           subQuestions: sanitizedSubQuestions,
           // Writing fields
           promptStem: qData?.promptStem || qData?.promptText || q.content,
+          promptImageUrl: qData?.promptImageUrl,
           stimulusText: qData?.stimulusText,
           minWords: qData?.minWords ?? qData?.minWordCount ?? 150,
           maxWords: qData?.maxWords ?? qData?.maxWordCount ?? 400,
@@ -483,6 +485,7 @@ export class AttemptService {
         allowTranscript: snap?.allowTranscript,
         subQuestions: snap?.subQuestions,
         promptStem: snap?.promptStem,
+        promptImageUrl: snap?.promptImageUrl,
         stimulusText: snap?.stimulusText,
         minWords: snap?.minWords,
         maxWords: snap?.maxWords,
@@ -699,33 +702,53 @@ export class AttemptService {
            WHERE "id" = $1`,
           [qa.id]
         );
-      } else if (qa.originalType === 'WRITING') {
+      } else if (qa.originalType === 'WRITING' || qa.originalType === 'IELTS_WRITING_TASK_1' || qa.originalType === 'IELTS_WRITING_TASK_2') {
         const essayText = typeof studentAnswer === 'string' ? studentAnswer : (studentAnswer?.text || '');
-        const rubric = qData?.rubricCriteria || qData?.rubric || BUILTIN_WRITING_RUBRICS.IELTS_TASK_2.criteria;
-        const evalResult = await WritingEvaluationService.evaluateWriting(
+        const taskType: 'TASK_1' | 'TASK_2' =
+          (qa.originalType === 'IELTS_WRITING_TASK_1' ||
+           qData?.preset === 'IELTS_TASK_1' ||
+           qData?.taskType?.startsWith('TASK_1') ||
+           qData?.promptImageUrl ||
+           (snap?.content && /task\s*1/i.test(snap.content)))
+            ? 'TASK_1'
+            : 'TASK_2';
+
+        const evalResult = await WritingEvaluationEngineService.evaluateSubmission({
+          userId: attempt.userId,
+          questionId: qa.questionId,
           essayText,
-          rubric,
-          qData?.minWords || qData?.minWordCount || 150,
-          qData?.maxWords || qData?.maxWordCount || 400,
-          snap?.content || qData?.promptStem
-        );
-        const normalizedFraction = evalResult.maxScore > 0 ? (evalResult.overallScore / evalResult.maxScore) : 0;
-        const awardedMarks = Math.round(normalizedFraction * marksCorrect * 100) / 100;
-        const isPassed = normalizedFraction >= 0.5;
+          attemptId,
+          taskType,
+          allowTestMock: false,
+        });
 
-        if (isPassed) {
-          correctAnswers++;
+        if (evalResult.status === 'REVIEW_REQUIRED' || evalResult.status === 'FAILED') {
+          hasSubjectivePending = true;
+          await pgDb.query(
+            `UPDATE "question_attempts"
+             SET "isCorrect" = NULL, "marksAwarded" = 0.0, "evaluatorComments" = $1, "updatedAt" = CURRENT_TIMESTAMP
+             WHERE "id" = $2`,
+            [JSON.stringify(evalResult), qa.id]
+          );
         } else {
-          wrongAnswers++;
-        }
-        totalScore += awardedMarks;
+          const normalizedFraction = evalResult.maxScore > 0 ? (evalResult.overallScore / evalResult.maxScore) : 0;
+          const awardedMarks = Math.round(normalizedFraction * marksCorrect * 100) / 100;
+          const isPassed = normalizedFraction >= 0.5;
 
-        await pgDb.query(
-          `UPDATE "question_attempts"
-           SET "isCorrect" = $1, "marksAwarded" = $2, "evaluatorComments" = $3, "updatedAt" = CURRENT_TIMESTAMP
-           WHERE "id" = $4`,
-          [isPassed, awardedMarks, JSON.stringify(evalResult), qa.id]
-        );
+          if (isPassed) {
+            correctAnswers++;
+          } else {
+            wrongAnswers++;
+          }
+          totalScore += awardedMarks;
+
+          await pgDb.query(
+            `UPDATE "question_attempts"
+             SET "isCorrect" = $1, "marksAwarded" = $2, "evaluatorComments" = $3, "updatedAt" = CURRENT_TIMESTAMP
+             WHERE "id" = $4`,
+            [isPassed, awardedMarks, JSON.stringify(evalResult), qa.id]
+          );
+        }
       } else {
         // Evaluate using pluggable question types
         const evalResult = questionTypeRegistry.evaluate(qa.originalType, qData, studentAnswer);
@@ -904,7 +927,7 @@ export class AttemptService {
         audioUrl: qData?.audioUrl,
         speechText: qData?.speechText || qData?.audioScript,
         subQuestions: qData?.subQuestions,
-        writingEvaluation: qa.originalType === 'WRITING' ? safeParseJson(qa.evaluatorComments) : undefined,
+        writingEvaluation: (qa.originalType === 'WRITING' || qa.originalType === 'IELTS_WRITING_TASK_1' || qa.originalType === 'IELTS_WRITING_TASK_2') ? safeParseJson(qa.evaluatorComments) : undefined,
       };
     });
 

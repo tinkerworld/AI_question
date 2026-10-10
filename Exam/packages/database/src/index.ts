@@ -79,6 +79,7 @@ async function getOrInitReadyDb(): Promise<PGlite> {
       _pgDbInstance = diskDb;
       return diskDb;
     } catch (err: any) {
+      _initPromise = null;
       const isAbort = String(err?.message || err).includes('Aborted') || err?.name === 'RuntimeError';
       if (isAbort) {
         if (process.env.NODE_ENV === 'test' || process.env.PG_ALLOW_MEMORY_FALLBACK === 'true') {
@@ -101,9 +102,16 @@ async function getOrInitReadyDb(): Promise<PGlite> {
   return _initPromise;
 }
 
+export interface ExamDatabaseClient extends Omit<PGlite, 'query'> {
+  query: <T = any>(query: string, params?: any[]) => Promise<{ rows: T[]; fields: any[]; affectedRows?: number; rowCount?: number }>;
+  close: () => Promise<void>;
+  waitReady: Promise<void>;
+  [key: string]: any;
+}
+
 // Primary in-process PostgreSQL 16 engine for all runtime services and routes
 // Uses lazy Proxy so importing @repo/database in unit tests without queries does not lock postgres-data
-export const pgDb: PGlite = new Proxy({} as PGlite, {
+export const pgDb: ExamDatabaseClient = new Proxy({} as any, {
   get(_target, prop) {
     if (prop === 'close') {
       return async () => {

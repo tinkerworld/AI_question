@@ -18,7 +18,7 @@
       "@repo/ai-client": ["../../packages/ai-client/src/index.ts"],
       "@repo/entitlement-engine": ["../../packages/entitlement-engine/src/index.ts"]
     },
-    "rootDir": "src",
+    "rootDir": "../../",
     "outDir": "dist"
   },
   "include": ["src/**/*"]
