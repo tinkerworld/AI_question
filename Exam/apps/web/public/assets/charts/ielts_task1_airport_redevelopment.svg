@@ -1,0 +1,175 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 520" width="100%" height="100%" style="background:#0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <!-- Title & Subtitle -->
+  <text x="420" y="34" text-anchor="middle" fill="#f8fafc" font-size="18" font-weight="700">Southwest International Airport: Terminal Layout (2010 vs 2024)</text>
+  <text x="420" y="54" text-anchor="middle" fill="#94a3b8" font-size="13">Comparative site plan delineating terminal expansion, gate additions, and transit infrastructure</text>
+
+  <!-- Legend & Compass Rose -->
+  <g transform="translate(180, 72)">
+    <rect x="0" y="0" width="14" height="14" rx="2" fill="#3b82f6" />
+    <text x="20" y="11" fill="#e2e8f0" font-size="11">Terminal / Hall</text>
+
+    <rect x="130" y="0" width="14" height="14" rx="2" fill="#10b981" />
+    <text x="150" y="11" fill="#e2e8f0" font-size="11">Departure Gates</text>
+
+    <rect x="270" y="0" width="14" height="14" rx="2" fill="#f59e0b" />
+    <text x="290" y="11" fill="#e2e8f0" font-size="11">Retail / Lounge</text>
+
+    <rect x="400" y="0" width="14" height="14" rx="2" fill="#ec4899" />
+    <text x="420" y="11" fill="#e2e8f0" font-size="11">Rail / Transit</text>
+  </g>
+
+  <!-- Compass Rose -->
+  <g transform="translate(790, 75)">
+    <circle cx="0" cy="0" r="14" fill="#1e293b" stroke="#475569" stroke-width="1.5" />
+    <line x1="0" y1="10" x2="0" y2="-10" stroke="#f8fafc" stroke-width="1.5" />
+    <line x1="-10" y1="0" x2="10" y2="0" stroke="#f8fafc" stroke-width="1.5" />
+    <polygon points="0,-12 -3,-5 3,-5" fill="#ef4444" />
+    <text x="0" y="-15" text-anchor="middle" fill="#f8fafc" font-size="8" font-weight="700">N</text>
+  </g>
+
+  <!-- ==================== LEFT MAP: 2010 ==================== -->
+  <g transform="translate(40, 105)">
+    <!-- Boundary Box -->
+    <rect x="0" y="0" width="365" height="360" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.5" />
+    <rect x="0" y="0" width="365" height="28" rx="8" fill="#0284c7" fill-opacity="0.25" />
+    <text x="182" y="19" text-anchor="middle" fill="#38bdf8" font-size="13" font-weight="700">Year 2010 (Original Single Terminal)</text>
+
+    <!-- Runway strip at top -->
+    <rect x="15" y="42" width="335" height="24" fill="#334155" rx="2" />
+    <line x1="25" y1="54" x2="340" y2="54" stroke="#e2e8f0" stroke-dasharray="8,6" stroke-width="2" />
+    <text x="182" y="58" text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="600">RUNWAY 09L / 27R</text>
+
+    <!-- Pier / Concourse (Gates 1-8) -->
+    <rect x="135" y="80" width="95" height="110" rx="4" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.5" />
+    <text x="182" y="98" text-anchor="middle" fill="#60a5fa" font-size="10" font-weight="700">Linear Concourse</text>
+
+    <!-- Gates 1 to 8 -->
+    <!-- Left Gates 1, 2, 3, 4 -->
+    <rect x="105" y="88" width="26" height="18" rx="2" fill="#10b981" />
+    <text x="118" y="101" text-anchor="middle" fill="#fff" font-size="9" font-weight="700">G1</text>
+    <rect x="105" y="112" width="26" height="18" rx="2" fill="#10b981" />
+    <text x="118" y="125" text-anchor="middle" fill="#fff" font-size="9" font-weight="700">G2</text>
+    <rect x="105" y="136" width="26" height="18" rx="2" fill="#10b981" />
+    <text x="118" y="149" text-anchor="middle" fill="#fff" font-size="9" font-weight="700">G3</text>
+    <rect x="105" y="160" width="26" height="18" rx="2" fill="#10b981" />
+    <text x="118" y="173" text-anchor="middle" fill="#fff" font-size="9" font-weight="700">G4</text>
+
+    <!-- Right Gates 5, 6, 7, 8 -->
+    <rect x="234" y="88" width="26" height="18" rx="2" fill="#10b981" />
+    <text x="247" y="101" text-anchor="middle" fill="#fff" font-size="9" font-weight="700">G5</text>
+    <rect x="234" y="112" width="26" height="18" rx="2" fill="#10b981" />
+    <text x="247" y="125" text-anchor="middle" fill="#fff" font-size="9" font-weight="700">G6</text>
+    <rect x="234" y="136" width="26" height="18" rx="2" fill="#10b981" />
+    <text x="247" y="149" text-anchor="middle" fill="#fff" font-size="9" font-weight="700">G7</text>
+    <rect x="234" y="160" width="26" height="18" rx="2" fill="#10b981" />
+    <text x="247" y="173" text-anchor="middle" fill="#fff" font-size="9" font-weight="700">G8</text>
+
+    <!-- Main Terminal Building -->
+    <rect x="85" y="200" width="195" height="75" rx="5" fill="#1e293b" stroke="#38bdf8" stroke-width="2" />
+    <text x="182" y="218" text-anchor="middle" fill="#f8fafc" font-size="11" font-weight="700">Main Terminal Building</text>
+    <text x="135" y="240" fill="#94a3b8" font-size="9">Check-in Desks (14)</text>
+    <text x="135" y="255" fill="#94a3b8" font-size="9">Security Checkpoint</text>
+    <rect x="235" y="230" width="36" height="32" rx="2" fill="#f59e0b" />
+    <text x="253" y="249" text-anchor="middle" fill="#fff" font-size="8" font-weight="700">Cafe</text>
+
+    <!-- Landside: Road & Outdoor Surface Parking -->
+    <rect x="30" y="290" width="140" height="55" rx="3" fill="#334155" stroke="#475569" />
+    <text x="100" y="312" text-anchor="middle" fill="#cbd5e1" font-size="10" font-weight="600">Surface Parking</text>
+    <text x="100" y="327" text-anchor="middle" fill="#94a3b8" font-size="9">(250 vehicles)</text>
+
+    <!-- Taxi drop off -->
+    <rect x="190" y="290" width="145" height="24" rx="2" fill="#0f172a" stroke="#475569" />
+    <text x="262" y="306" text-anchor="middle" fill="#facc15" font-size="10" font-weight="600">Taxi / Drop-Off Lane</text>
+
+    <!-- Access Road -->
+    <rect x="190" y="320" width="145" height="25" fill="#1e293b" />
+    <line x1="190" y1="332" x2="335" y2="332" stroke="#64748b" stroke-dasharray="4,4" />
+    <text x="262" y="337" text-anchor="middle" fill="#94a3b8" font-size="9">Access Highway</text>
+  </g>
+
+  <!-- ==================== RIGHT MAP: 2024 ==================== -->
+  <g transform="translate(435, 105)">
+    <!-- Boundary Box -->
+    <rect x="0" y="0" width="365" height="360" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.5" />
+    <rect x="0" y="0" width="365" height="28" rx="8" fill="#10b981" fill-opacity="0.25" />
+    <text x="182" y="19" text-anchor="middle" fill="#34d399" font-size="13" font-weight="700">Year 2024 (Expanded Dual-Wing Hub)</text>
+
+    <!-- Runway strip at top -->
+    <rect x="15" y="42" width="335" height="24" fill="#334155" rx="2" />
+    <line x1="25" y1="54" x2="340" y2="54" stroke="#e2e8f0" stroke-dasharray="8,6" stroke-width="2" />
+    <text x="182" y="58" text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="600">RUNWAY 09L / 27R (EXTENDED)</text>
+
+    <!-- Dual Y-shaped Satellite Concourses (18 Gates total) -->
+    <!-- North Concourse Link & SkyTrain -->
+    <rect x="160" y="70" width="45" height="60" fill="#1e3a5f" stroke="#06b6d4" stroke-width="1.5" />
+    <line x1="182" y1="70" x2="182" y2="130" stroke="#ec4899" stroke-width="3" stroke-dasharray="5,2" />
+
+    <!-- Left Wing (Gates 1-9) -->
+    <path d="M 160 85 L 65 75 L 55 125 L 160 120 Z" fill="#1e3a5f" stroke="#06b6d4" stroke-width="1.5" />
+    <!-- Right Wing (Gates 10-18) -->
+    <path d="M 205 85 L 300 75 L 310 125 L 205 120 Z" fill="#1e3a5f" stroke="#06b6d4" stroke-width="1.5" />
+
+    <!-- Left Wing Gates -->
+    <rect x="40" y="65" width="22" height="16" rx="2" fill="#10b981" /><text x="51" y="77" fill="#fff" font-size="8" font-weight="700" text-anchor="middle">G1</text>
+    <rect x="40" y="88" width="22" height="16" rx="2" fill="#10b981" /><text x="51" y="100" fill="#fff" font-size="8" font-weight="700" text-anchor="middle">G2</text>
+    <rect x="40" y="112" width="22" height="16" rx="2" fill="#10b981" /><text x="51" y="124" fill="#fff" font-size="8" font-weight="700" text-anchor="middle">G3</text>
+    <rect x="80" y="62" width="22" height="16" rx="2" fill="#10b981" /><text x="91" y="74" fill="#fff" font-size="8" font-weight="700" text-anchor="middle">G4</text>
+    <rect x="110" y="62" width="22" height="16" rx="2" fill="#10b981" /><text x="121" y="74" fill="#fff" font-size="8" font-weight="700" text-anchor="middle">G5</text>
+    <rect x="80" y="128" width="22" height="16" rx="2" fill="#10b981" /><text x="91" y="140" fill="#fff" font-size="8" font-weight="700" text-anchor="middle">G6</text>
+    <rect x="110" y="128" width="22" height="16" rx="2" fill="#10b981" /><text x="121" y="140" fill="#fff" font-size="8" font-weight="700" text-anchor="middle">G7</text>
+
+    <!-- Right Wing Gates -->
+    <rect x="305" y="65" width="22" height="16" rx="2" fill="#10b981" /><text x="316" y="77" fill="#fff" font-size="8" font-weight="700" text-anchor="middle">G10</text>
+    <rect x="305" y="88" width="22" height="16" rx="2" fill="#10b981" /><text x="316" y="100" fill="#fff" font-size="8" font-weight="700" text-anchor="middle">G11</text>
+    <rect x="305" y="112" width="22" height="16" rx="2" fill="#10b981" /><text x="316" y="124" fill="#fff" font-size="8" font-weight="700" text-anchor="middle">G12</text>
+    <rect x="235" y="62" width="22" height="16" rx="2" fill="#10b981" /><text x="246" y="74" fill="#fff" font-size="8" font-weight="700" text-anchor="middle">G13</text>
+    <rect x="265" y="62" width="22" height="16" rx="2" fill="#10b981" /><text x="276" y="74" fill="#fff" font-size="8" font-weight="700" text-anchor="middle">G14</text>
+    <rect x="235" y="128" width="22" height="16" rx="2" fill="#10b981" /><text x="246" y="140" fill="#fff" font-size="8" font-weight="700" text-anchor="middle">G15</text>
+    <rect x="265" y="128" width="22" height="16" rx="2" fill="#10b981" /><text x="276" y="140" fill="#fff" font-size="8" font-weight="700" text-anchor="middle">G16</text>
+
+    <!-- Main Terminal Building (Doubled in area) -->
+    <rect x="45" y="155" width="275" height="105" rx="6" fill="#1e293b" stroke="#34d399" stroke-width="2" />
+    <text x="182" y="172" text-anchor="middle" fill="#f8fafc" font-size="11" font-weight="700">Expanded Terminal &amp; Central Atrium</text>
+
+    <!-- Facilities inside Terminal -->
+    <rect x="55" y="180" width="70" height="40" rx="3" fill="#0f172a" stroke="#475569" />
+    <text x="90" y="196" fill="#94a3b8" font-size="8" font-weight="600" text-anchor="middle">Check-in (40)</text>
+    <text x="90" y="210" fill="#38bdf8" font-size="8" text-anchor="middle">Automated Bag</text>
+
+    <!-- Duty-Free Shopping Mall -->
+    <rect x="135" y="180" width="95" height="40" rx="3" fill="#f59e0b" fill-opacity="0.3" stroke="#f59e0b" />
+    <text x="182" y="198" fill="#fde68a" font-size="9" font-weight="700" text-anchor="middle">Duty-Free Mall</text>
+    <text x="182" y="212" fill="#cbd5e1" font-size="8" text-anchor="middle">&amp; VIP Lounges</text>
+
+    <rect x="240" y="180" width="70" height="40" rx="3" fill="#0f172a" stroke="#475569" />
+    <text x="275" y="196" fill="#94a3b8" font-size="8" font-weight="600" text-anchor="middle">Security (e-Gates)</text>
+    <text x="275" y="210" fill="#34d399" font-size="8" text-anchor="middle">Baggage Reclaim</text>
+
+    <!-- Underground Metro & Automated SkyTrain -->
+    <rect x="110" y="226" width="145" height="26" rx="4" fill="#831843" stroke="#ec4899" stroke-width="1.5" />
+    <text x="182" y="243" fill="#fbcfe8" font-size="10" font-weight="700" text-anchor="middle">🚇 Underground Metro Rail Link</text>
+
+    <!-- Multi-Storey Car Park (1,500 bays) -->
+    <rect x="20" y="275" width="150" height="70" rx="4" fill="#0369a1" fill-opacity="0.3" stroke="#0ea5e9" stroke-width="1.5" />
+    <text x="95" y="297" text-anchor="middle" fill="#7dd3fc" font-size="10" font-weight="700">Multi-Storey Garage</text>
+    <text x="95" y="312" text-anchor="middle" fill="#bae6fd" font-size="9">(5 Levels / 1,500 cars)</text>
+    <text x="95" y="327" text-anchor="middle" fill="#94a3b8" font-size="8">Direct Covered Skybridge</text>
+
+    <!-- Dedicated Bus & Taxi Transit Interchange -->
+    <rect x="185" y="275" width="165" height="35" rx="3" fill="#0f172a" stroke="#475569" />
+    <text x="267" y="296" text-anchor="middle" fill="#facc15" font-size="10" font-weight="600">Bus &amp; Coach Interchange</text>
+
+    <!-- Dual-Carriageway Access Road -->
+    <rect x="185" y="315" width="165" height="30" fill="#1e293b" />
+    <line x1="185" y1="330" x2="350" y2="330" stroke="#10b981" stroke-dasharray="6,3" stroke-width="2" />
+    <text x="267" y="326" text-anchor="middle" fill="#94a3b8" font-size="8">Dual-Carriageway Highway</text>
+  </g>
+
+  <!-- Summary Feature Annotations at the bottom -->
+  <g transform="translate(40, 480)">
+    <rect x="0" y="0" width="760" height="28" rx="6" fill="#1e293b" stroke="#334155" />
+    <text x="380" y="18" fill="#94a3b8" font-size="11" text-anchor="middle">
+      <tspan fill="#34d399" font-weight="600">Key Features:</tspan> Departure gates expanded from 8 to 18 across dual Y-wings; multi-storey parking increased capacity 6-fold; direct Metro rail transit link added.
+    </text>
+  </g>
+</svg>

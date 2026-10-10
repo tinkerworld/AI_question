@@ -1,3 +1,4 @@
+import './resolve-dist-packages';
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -91,6 +92,7 @@ app.use('/api/maintenance', maintenanceRouter);
 app.use('/api/v1/audio', audioRouter);
 app.use('/api/audio', audioRouter);
 app.use('/api/v1/writing', writingRouter);
+app.use('/api/v2/writing', writingRouter);
 app.use('/api/writing', writingRouter);
 app.use('/api/v1/listening', listeningRouter);
 app.use('/api/listening', listeningRouter);

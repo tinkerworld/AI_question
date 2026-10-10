@@ -3,6 +3,7 @@ import { BASELINE_LANGUAGES } from '@repo/types';
 import { SEED_TRANSLATIONS } from '../routes/i18n.routes';
 import { SEED_TRANSLATION_KEYS } from '../constants/seed-translation-keys';
 import { BASELINE_TRANSLATION_DICTIONARIES } from '../services/ai-translation.service';
+import { initWritingEvaluationSchema } from './init-writing-evaluation';
 
 export async function initV2Tables(): Promise<void> {
   try {
@@ -334,6 +335,9 @@ export async function initV2Tables(): Promise<void> {
 
     // Ensure all 23 baseline languages and translations are seeded and self-healed
     await ensureLanguagesSeeded(pgDb);
+
+    // Initialize IELTS Writing Evaluation Engine tables, chart facts, and benchmark datasets
+    await initWritingEvaluationSchema();
   } catch (err) {
     console.error('[initV2Tables] Warning: Failed to auto-initialize V2 tables:', err);
   }

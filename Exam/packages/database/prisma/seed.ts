@@ -199,8 +199,8 @@ export const BASELINE_LANGUAGES = [
   { code: 'lus', name: 'Mizo', nativeName: 'Mizo', isDefault: false },
 ];
 
-import { SEED_TRANSLATION_KEYS } from '../../apps/api/src/constants/seed-translation-keys';
-import { BASELINE_TRANSLATION_DICTIONARIES } from '../../apps/api/src/services/ai-translation.service';
+import { SEED_TRANSLATION_KEYS } from '../../../apps/api/src/constants/seed-translation-keys';
+import { BASELINE_TRANSLATION_DICTIONARIES } from '../../../apps/api/src/services/ai-translation.service';
 
 const baseSeedEn: Record<string, string> = {};
 for (const k of SEED_TRANSLATION_KEYS) {
@@ -3229,7 +3229,7 @@ export async function runSeed() {
       id: 'q_ielts_wrt_01',
       subjectId: 'sub_ielts_writing',
       topicId: 'top_ielts_write_t1',
-      type: 'WRITING',
+      type: 'IELTS_WRITING_TASK_1',
       difficulty: 'MEDIUM',
       marks: 9.0,
       content: 'IELTS Academic Writing Task 1: The bar chart illustrates the proportions of renewable electricity generation (solar, wind, and hydroelectric) across five European nations between 2010 and 2024. Summarise the information by selecting and reporting the main features, and make comparisons where relevant. (Write at least 150 words).',
@@ -3265,7 +3265,7 @@ export async function runSeed() {
       id: 'q_ielts_wrt_02',
       subjectId: 'sub_ielts_writing',
       topicId: 'top_ielts_write_t1',
-      type: 'WRITING',
+      type: 'IELTS_WRITING_TASK_1',
       difficulty: 'MEDIUM',
       marks: 9.0,
       content: 'IELTS Academic Writing Task 1: The flow diagram illustrates the multi-stage technical process of seawater reverse osmosis desalination and municipal potable water distribution. Summarise the process by describing the main chronological stages. (Write at least 150 words).',
@@ -3301,7 +3301,7 @@ export async function runSeed() {
       id: 'q_ielts_wrt_03',
       subjectId: 'sub_ielts_writing',
       topicId: 'top_ielts_write_t2',
-      type: 'WRITING',
+      type: 'IELTS_WRITING_TASK_2',
       difficulty: 'HARD',
       marks: 9.0,
       content: 'IELTS Academic Writing Task 2: Some educational theorists argue that tertiary institutions should focus exclusively on providing specialized technical and vocational training for immediate industry employment, while others believe universities should cultivate broad philosophical enquiry and critical thinking regardless of market utility. Discuss both views and give your own reasoned opinion with academic examples. (Write at least 250 words).',
@@ -3335,7 +3335,7 @@ export async function runSeed() {
       id: 'q_ielts_wrt_04',
       subjectId: 'sub_ielts_writing',
       topicId: 'top_ielts_write_t2',
-      type: 'WRITING',
+      type: 'IELTS_WRITING_TASK_2',
       difficulty: 'HARD',
       marks: 9.0,
       content: 'IELTS Academic Writing Task 2: With the rapid proliferation of artificial intelligence and autonomous cognitive systems, human labour in creative, analytical, and professional fields is facing unprecedented disruption. To what extent do you agree or disagree that automated systems will diminish genuine human creativity and intellectual innovation? Support your argument with concrete illustrations. (Write at least 250 words).',
@@ -3369,7 +3369,7 @@ export async function runSeed() {
       id: 'q_ielts_wrt_05',
       subjectId: 'sub_ielts_writing',
       topicId: 'top_ielts_write_t1',
-      type: 'WRITING',
+      type: 'IELTS_WRITING_TASK_1',
       difficulty: 'MEDIUM',
       marks: 9.0,
       content: 'IELTS Academic Writing Task 1: The line graph illustrates annual carbon dioxide (CO₂) emissions across China, the United States, the European Union, and India from 1990 to 2025. Summarise the information by selecting and reporting the main features, and make comparisons where relevant. (Write at least 150 words).',
@@ -3405,7 +3405,7 @@ export async function runSeed() {
       id: 'q_ielts_wrt_06',
       subjectId: 'sub_ielts_writing',
       topicId: 'top_ielts_write_t1',
-      type: 'WRITING',
+      type: 'IELTS_WRITING_TASK_1',
       difficulty: 'MEDIUM',
       marks: 9.0,
       content: 'IELTS Academic Writing Task 1: The comparative pie charts illustrate the proportion of average weekly household expenditure across six spending categories in Country X in 1975 and 2025. Summarise the information by selecting and reporting the main features, and make comparisons where relevant. (Write at least 150 words).',
@@ -3441,7 +3441,7 @@ export async function runSeed() {
       id: 'q_ielts_wrt_07',
       subjectId: 'sub_ielts_writing',
       topicId: 'top_ielts_write_t2',
-      type: 'WRITING',
+      type: 'IELTS_WRITING_TASK_2',
       difficulty: 'HARD',
       marks: 9.0,
       content: 'IELTS Academic Writing Task 2: Billions of dollars are expended annually on outer space exploration and interplanetary missions, while millions of citizens worldwide suffer from severe poverty, inadequate healthcare, and climate change devastation. Some people argue that governments should redirect space funding toward resolving pressing terrestrial crises. To what extent do you agree or disagree with this view? (Write at least 250 words).',
@@ -3475,7 +3475,7 @@ export async function runSeed() {
       id: 'q_ielts_wrt_08',
       subjectId: 'sub_ielts_writing',
       topicId: 'top_ielts_write_t2',
-      type: 'WRITING',
+      type: 'IELTS_WRITING_TASK_2',
       difficulty: 'HARD',
       marks: 9.0,
       content: 'IELTS Academic Writing Task 2: In many contemporary metropolitan cities, rapid urbanization has resulted in catastrophic traffic congestion, prolonged commute times, and dangerous levels of atmospheric air pollution. What are the principal root causes of this urban crisis, and what effective municipal measures can governments implement to tackle these issues? (Write at least 250 words).',
@@ -4576,13 +4576,13 @@ export async function runSeed() {
     },
     {
       id: 'prov_writing_local_01',
-      name: 'Local LLM Writing Evaluator (Ollama / LocalAI)',
+      name: 'Local Ollama IELTS Evaluator (qwen3.5-ielts)',
       type: 'LOCAL',
-      modelId: 'llama3:8b',
+      modelId: 'qwen3.5-ielts:latest',
       baseUrl: 'http://localhost:11434',
-      priority: 10,
+      priority: 1,
       scope: 'writing_analysis',
-      isActive: false,
+      isActive: true,
     },
     {
       id: 'prov_writing_mock_01',
@@ -4602,7 +4602,7 @@ export async function runSeed() {
     await pgDb.query(
       `INSERT INTO "ai_providers" ("id", "name", "type", "modelId", "baseUrl", "priority", "scope", "isActive")
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-       ON CONFLICT ("id") DO UPDATE SET "name" = EXCLUDED."name", "priority" = EXCLUDED."priority", "scope" = EXCLUDED."scope", "isActive" = EXCLUDED."isActive"`,
+       ON CONFLICT ("id") DO UPDATE SET "name" = EXCLUDED."name", "type" = EXCLUDED."type", "modelId" = EXCLUDED."modelId", "baseUrl" = EXCLUDED."baseUrl", "priority" = EXCLUDED."priority", "scope" = EXCLUDED."scope", "isActive" = EXCLUDED."isActive"`,
       [prov.id, prov.name, prov.type, prov.modelId, prov.baseUrl, prov.priority, prov.scope, prov.isActive]
     );
   }

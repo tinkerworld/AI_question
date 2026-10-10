@@ -71,6 +71,7 @@ export interface AICompletionRequest {
   expectedSchema?: any;
   preferredProviderId?: string;
   userId?: string;
+  variables?: Record<string, any>;
 }
 
 export interface AICompletionResponse {

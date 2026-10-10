@@ -183,7 +183,7 @@ router.patch('/gateway/providers/:id', authenticate, requireTenantScope, require
     const tenantId = (req as any).tenantId;
     const parseResult = updateAIProviderSchema.safeParse(req.body);
     if (!parseResult.success) return res.status(400).json({ success: false, message: parseResult.error.errors[0]?.message || 'Invalid input' });
-    const updated = await AIGatewayService.updateProvider(params.id, { ...parseResult.data, tenantId });
+    const updated = await AIGatewayService.updateProvider(params.id, { ...parseResult.data, tenantId } as any);
     return res.json({ success: true, data: updated });
   } catch (err: any) { return res.status(500).json({ success: false, message: err.message }); }
 });
@@ -205,7 +205,7 @@ router.post('/questions/modify', authenticate, requireTenantScope, requirePermis
     const parseResult = modifyQuestionAISchema.safeParse(req.body);
     if (!parseResult.success) return res.status(400).json({ success: false, message: parseResult.error.errors[0]?.message || 'Invalid input' });
     const tenantId = (req as any).tenantId;
-    const result = await AIQuestionService.modifyQuestion(req.user!.userId, { ...parseResult.data, tenantId });
+    const result = await AIQuestionService.modifyQuestion(req.user!.userId, { ...parseResult.data, tenantId } as any);
     return res.status(201).json({ success: true, data: result });
   } catch (err: any) {
     if (err.message?.includes('FEATURE_DAILY_LIMIT_EXCEEDED')) return res.status(429).json({ success: false, errorCode: 'FEATURE_DAILY_LIMIT_EXCEEDED', message: err.message });
@@ -221,10 +221,10 @@ router.post('/questions/generate', authenticate, requireTenantScope, requirePerm
     const tenantId = (req as any).tenantId;
     const count = parseResult.data.count || 1;
     if (count > 1) {
-      const job = await AIQueueService.submitJob(req.user!.userId, 'BATCH_GENERATE', { ...parseResult.data, tenantId });
+      const job = await AIQueueService.submitJob(req.user!.userId, 'BATCH_GENERATE', { ...parseResult.data, tenantId } as any);
       return res.status(202).json({ success: true, data: { jobId: job.id, status: job.status, totalCount: job.totalCount, message: `Batch queued for ${count} questions` } });
     }
-    const created = await AIQuestionService.generateQuestions(req.user!.userId, { ...parseResult.data, tenantId });
+    const created = await AIQuestionService.generateQuestions(req.user!.userId, { ...parseResult.data, tenantId } as any);
     return res.status(201).json({ success: true, data: created[0] });
   } catch (err: any) {
     if (err.message?.includes('FEATURE_DAILY_LIMIT_EXCEEDED')) return res.status(429).json({ success: false, errorCode: 'FEATURE_DAILY_LIMIT_EXCEEDED', message: err.message });
@@ -284,7 +284,7 @@ router.post('/questions/drafts/:id/review', authenticate, requireTenantScope, re
     const parseResult = reviewDraftQuestionSchema.safeParse(req.body);
     if (!parseResult.success) return res.status(400).json({ success: false, message: parseResult.error.errors[0]?.message || 'Invalid input' });
     const tenantId = (req as any).tenantId;
-    const result = await AIQuestionService.reviewDraft(req.user!.userId, params.id, { ...parseResult.data, tenantId });
+    const result = await AIQuestionService.reviewDraft(req.user!.userId, params.id, { ...parseResult.data, tenantId } as any);
     return res.json({ success: true, data: result });
   } catch (err: any) { return res.status(err.message === 'QUESTION_NOT_FOUND' ? 404 : 500).json({ success: false, message: err.message }); }
 });

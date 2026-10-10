@@ -1,0 +1,48 @@
+[
+  {
+    "name": "strict provider-failure submission",
+    "http": 201,
+    "id": "wrt_eval_d969d60371e2b46c",
+    "status": "REVIEW_REQUIRED",
+    "band": "Estimated IELTS band -- (Teacher Review Required)",
+    "score": 0,
+    "reviewReasons": [
+      "MOCK_PROVIDER_EXCLUSION_TEACHER_REVIEW_REQUIRED"
+    ]
+  },
+  {
+    "name": "cross-student evaluation read",
+    "http": 403,
+    "message": "Access to another candidate's evaluation is unauthorized"
+  },
+  {
+    "name": "nonexistent question submission",
+    "http": 404,
+    "message": "Question 'e2e-missing-question' not found"
+  },
+  {
+    "name": "invalid essay type",
+    "http": 400,
+    "message": "essayText must be a string"
+  },
+  {
+    "name": "student mock override",
+    "http": 201,
+    "status": "REVIEW_REQUIRED",
+    "score": 0,
+    "band": "Estimated IELTS band -- (Teacher Review Required)"
+  },
+  {
+    "name": "teacher out-of-range score validation",
+    "http": 400,
+    "message": "Invalid score for criterion 'task_response': must be a valid number between 0 and 9"
+  },
+  {
+    "name": "student denied course creation",
+    "http": 403
+  },
+  {
+    "name": "student denied user listing",
+    "http": 403
+  }
+]

@@ -1,0 +1,404 @@
+src/db/init-v2-tables.ts(134,18): error TS2571: Object is of type 'unknown'.
+src/db/init-v2-tables.ts(158,37): error TS2339: Property 'count' does not exist on type '{}'.
+src/db/init-v2-tables.ts(188,40): error TS2339: Property 'count' does not exist on type '{}'.
+src/db/init-v2-tables.ts(217,40): error TS2339: Property 'count' does not exist on type '{}'.
+src/middleware/audit.test.ts(27,3): error TS2300: Duplicate identifier 'on'.
+src/middleware/audit.test.ts(27,3): error TS2564: Property 'on' has no initializer and is not definitely assigned in the constructor.
+src/middleware/audit.test.ts(35,3): error TS2300: Duplicate identifier 'on'.
+src/middleware/audit.test.ts(53,1): error TS2322: Type '(query: string, params: any[]) => Promise<{ rows: never[]; }>' is not assignable to type '<T>(query: string, params?: any[] | undefined, options?: QueryOptions | undefined) => Promise<Results<T>>'.
+  Type 'Promise<{ rows: never[]; }>' is not assignable to type 'Promise<Results<T>>'.
+    Property 'fields' is missing in type '{ rows: never[]; }' but required in type 'Results<T>'.
+src/middleware/audit.test.ts(69,20): error TS2345: Argument of type 'MockRequest' is not assignable to parameter of type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+  Type 'MockRequest' is missing the following properties from type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>': get, header, accepts, acceptsCharsets, and 91 more.
+src/middleware/audit.test.ts(86,20): error TS2345: Argument of type 'MockRequest' is not assignable to parameter of type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+  Type 'MockRequest' is missing the following properties from type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>': get, header, accepts, acceptsCharsets, and 91 more.
+src/middleware/audit.test.ts(105,3): error TS2322: Type 'undefined' is not assignable to type 'string'.
+src/middleware/audit.test.ts(108,20): error TS2345: Argument of type 'MockRequest' is not assignable to parameter of type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+  Type 'MockRequest' is missing the following properties from type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>': get, header, accepts, acceptsCharsets, and 91 more.
+src/middleware/audit.test.ts(123,3): error TS2322: Type 'undefined' is not assignable to type 'string'.
+src/middleware/audit.test.ts(126,20): error TS2345: Argument of type 'MockRequest' is not assignable to parameter of type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+  Type 'MockRequest' is missing the following properties from type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>': get, header, accepts, acceptsCharsets, and 91 more.
+src/middleware/error.ts(2,34): error TS6059: File '/home/ubuntu/exam_shekhar/AI_question/Exam/packages/types/src/index.ts' is not under 'rootDir' '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src'. 'rootDir' is expected to contain all source files.
+  The file is in the program because:
+    Imported via '@repo/types' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/middleware/error.ts'
+    Imported via '@repo/types' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/middleware/auth.ts'
+    Imported via '@repo/types' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/maintenance.service.ts'
+    Imported via '@repo/types' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/ai-gateway.service.ts'
+    Imported via '@repo/types' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/i18n.routes.ts'
+    Imported via '@repo/types' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/exam-generator.service.ts'
+    Imported via '@repo/types' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/exam-archive.service.ts'
+    Imported via '@repo/types' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/packages/mastery-engine/src/index.ts'
+    Imported via '@repo/types' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/analytics.service.ts'
+    Imported via '@repo/types' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/writing-evaluation.service.ts'
+    Imported via '@repo/types' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/writing-evaluation-engine.service.ts'
+    Imported via '@repo/types' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/ielts-descriptor-analyzer.ts'
+    Imported via '@repo/types' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/entitlement.service.ts'
+    Imported via '@repo/types' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/practice.service.ts'
+    Imported via '@repo/types' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/preview.service.ts'
+    Imported via '@repo/types' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/ai-usage.service.ts'
+    Imported via '@repo/types' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/ai-question.service.ts'
+    Imported via '@repo/types' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/ai-queue.service.ts'
+    Imported via '@repo/types' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/interview.service.ts'
+    Imported via '@repo/types' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/subscription.service.ts'
+    Imported via '@repo/types' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/billing.service.ts'
+    Imported via '@repo/types' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/audio/audio-config.service.ts'
+    Imported via '@repo/types' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/vocabulary.service.ts'
+    Imported via '@repo/types' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/listening.service.ts'
+    Imported via '@repo/types' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/import-export.service.ts'
+    Imported via '@repo/types' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/system.routes.ts'
+    Imported via '@repo/types' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/db/init-v2-tables.ts'
+src/routes/ai.routes.ts(186,93): error TS2353: Object literal may only specify known properties, and 'tenantId' does not exist in type 'Partial<AIProviderDTO>'.
+src/routes/ai.routes.ts(208,100): error TS2353: Object literal may only specify known properties, and 'tenantId' does not exist in type 'ModifyQuestionAIDTO'.
+src/routes/ai.routes.ts(227,104): error TS2353: Object literal may only specify known properties, and 'tenantId' does not exist in type 'GenerateQuestionsAIDTO'.
+src/routes/ai.routes.ts(287,108): error TS2353: Object literal may only specify known properties, and 'tenantId' does not exist in type 'ReviewDraftQuestionDTO'.
+src/routes/analytics.routes.ts(189,101): error TS2345: Argument of type '"week" | "all" | "month" | undefined' is not assignable to parameter of type '"7d" | "all" | "30d" | undefined'.
+  Type '"week"' is not assignable to type '"7d" | "all" | "30d" | undefined'.
+src/routes/analytics.routes.ts(202,100): error TS2345: Argument of type '"week" | "all" | "month" | undefined' is not assignable to parameter of type '"7d" | "all" | "30d" | undefined'.
+  Type '"week"' is not assignable to type '"7d" | "all" | "30d" | undefined'.
+src/routes/audit.routes.ts(37,48): error TS2339: Property 'total' does not exist on type '{}'.
+src/routes/auth.routes.ts(4,22): error TS6059: File '/home/ubuntu/exam_shekhar/AI_question/Exam/packages/database/src/index.ts' is not under 'rootDir' '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src'. 'rootDir' is expected to contain all source files.
+  The file is in the program because:
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/auth.routes.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/middleware/auth.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/user.routes.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/middleware/permission.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/middleware/audit.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/role.routes.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/audit.routes.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/course.routes.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/subject.routes.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/syllabus.routes.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/enrollment.routes.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/question.routes.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/maintenance.service.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/i18n.routes.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/ai-translation.service.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/ai-gateway.service.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/preference.routes.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/exam-patterns.routes.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/exam.routes.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/exam-generator.service.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/exam-archive.service.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/attempt.service.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/analytics.service.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/writing-evaluation.service.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/writing-evaluation-engine.service.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/entitlement.service.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/practice.service.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/preview.service.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/ai.routes.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/ai-question.service.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/ai-usage.service.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/ai-queue.service.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/interview.service.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/interview.routes.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/subscription.service.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/billing.service.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/audio/audio-config.service.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/audio/tts.service.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/writing.routes.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/vocabulary.service.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/listening.service.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/import-export.service.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/system.routes.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/db/init-v2-tables.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/db/init-writing-evaluation.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/server.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/middleware/audit.test.ts'
+    Imported via '@repo/database' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/middleware/auth.test.ts'
+src/routes/auth.routes.ts(5,49): error TS6059: File '/home/ubuntu/exam_shekhar/AI_question/Exam/packages/validation/src/index.ts' is not under 'rootDir' '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src'. 'rootDir' is expected to contain all source files.
+  The file is in the program because:
+    Imported via '@repo/validation' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/auth.routes.ts'
+    Imported via '@repo/validation' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/user.routes.ts'
+    Imported via '@repo/validation' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/role.routes.ts'
+    Imported via '@repo/validation' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/course.routes.ts'
+    Imported via '@repo/validation' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/subject.routes.ts'
+    Imported via '@repo/validation' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/syllabus.routes.ts'
+    Imported via '@repo/validation' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/enrollment.routes.ts'
+    Imported via '@repo/validation' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/question.routes.ts'
+    Imported via '@repo/validation' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/exam-patterns.routes.ts'
+    Imported via '@repo/validation' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/exam.routes.ts'
+    Imported via '@repo/validation' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/attempt.routes.ts'
+    Imported via '@repo/validation' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/analytics.routes.ts'
+    Imported via '@repo/validation' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/practice.routes.ts'
+    Imported via '@repo/validation' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/preview.routes.ts'
+    Imported via '@repo/validation' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/ai.routes.ts'
+    Imported via '@repo/validation' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/interview.routes.ts'
+    Imported via '@repo/validation' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/entitlement.routes.ts'
+    Imported via '@repo/validation' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/subscription.routes.ts'
+    Imported via '@repo/validation' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/ai-credits.routes.ts'
+    Imported via '@repo/validation' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/billing.routes.ts'
+    Imported via '@repo/validation' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/import-export.service.ts'
+src/routes/auth.routes.ts(23,9): error TS18046: 'user' is of type 'unknown'.
+src/routes/auth.routes.ts(24,70): error TS18046: 'user' is of type 'unknown'.
+src/routes/auth.routes.ts(27,60): error TS18046: 'user' is of type 'unknown'.
+src/routes/auth.routes.ts(39,8): error TS18046: 'user' is of type 'unknown'.
+src/routes/auth.routes.ts(57,14): error TS18046: 'user' is of type 'unknown'.
+src/routes/auth.routes.ts(57,30): error TS18046: 'user' is of type 'unknown'.
+src/routes/auth.routes.ts(63,14): error TS18046: 'user' is of type 'unknown'.
+src/routes/auth.routes.ts(63,30): error TS18046: 'user' is of type 'unknown'.
+src/routes/auth.routes.ts(74,14): error TS18046: 'user' is of type 'unknown'.
+src/routes/auth.routes.ts(83,15): error TS18046: 'user' is of type 'unknown'.
+src/routes/auth.routes.ts(84,18): error TS18046: 'user' is of type 'unknown'.
+src/routes/auth.routes.ts(85,22): error TS18046: 'user' is of type 'unknown'.
+src/routes/auth.routes.ts(86,21): error TS18046: 'user' is of type 'unknown'.
+src/routes/auth.routes.ts(87,19): error TS18046: 'user' is of type 'unknown'.
+src/routes/auth.routes.ts(112,18): error TS18046: 'storedToken' is of type 'unknown'.
+src/routes/auth.routes.ts(117,87): error TS18046: 'storedToken' is of type 'unknown'.
+src/routes/auth.routes.ts(119,80): error TS18046: 'storedToken' is of type 'unknown'.
+src/routes/auth.routes.ts(132,8): error TS18046: 'user' is of type 'unknown'.
+src/routes/auth.routes.ts(149,14): error TS18046: 'user' is of type 'unknown'.
+src/routes/auth.routes.ts(149,30): error TS18046: 'user' is of type 'unknown'.
+src/routes/auth.routes.ts(155,14): error TS18046: 'user' is of type 'unknown'.
+src/routes/auth.routes.ts(155,30): error TS18046: 'user' is of type 'unknown'.
+src/routes/auth.routes.ts(166,17): error TS18046: 'user' is of type 'unknown'.
+src/routes/auth.routes.ts(211,8): error TS18046: 'user' is of type 'unknown'.
+src/routes/auth.routes.ts(235,13): error TS18046: 'user' is of type 'unknown'.
+src/routes/auth.routes.ts(236,16): error TS18046: 'user' is of type 'unknown'.
+src/routes/auth.routes.ts(237,20): error TS18046: 'user' is of type 'unknown'.
+src/routes/auth.routes.ts(238,19): error TS18046: 'user' is of type 'unknown'.
+src/routes/auth.routes.ts(239,17): error TS18046: 'user' is of type 'unknown'.
+src/routes/auth.routes.ts(302,22): error TS2571: Object is of type 'unknown'.
+src/routes/course.routes.ts(90,111): error TS18046: 'c' is of type 'unknown'.
+src/routes/course.routes.ts(91,22): error TS2698: Spread types may only be created from object types.
+src/routes/course.routes.ts(160,124): error TS18046: 's' is of type 'unknown'.
+src/routes/course.routes.ts(161,23): error TS2698: Spread types may only be created from object types.
+src/routes/course.routes.ts(163,5): error TS18046: 'course' is of type 'unknown'.
+src/routes/course.routes.ts(191,32): error TS18046: 'existing' is of type 'unknown'.
+src/routes/course.routes.ts(192,13): error TS18046: 'existing' is of type 'unknown'.
+src/routes/course.routes.ts(197,55): error TS18046: 'existing' is of type 'unknown'.
+src/routes/course.routes.ts(198,69): error TS18046: 'existing' is of type 'unknown'.
+src/routes/course.routes.ts(199,61): error TS18046: 'existing' is of type 'unknown'.
+src/routes/course.routes.ts(200,72): error TS18046: 'existing' is of type 'unknown'.
+src/routes/course.routes.ts(201,74): error TS18046: 'existing' is of type 'unknown'.
+src/routes/enrollment.routes.ts(51,7): error TS18046: 'enrollment' is of type 'unknown'.
+src/routes/enrollment.routes.ts(104,86): error TS18046: 'enr' is of type 'unknown'.
+src/routes/enrollment.routes.ts(105,26): error TS2698: Spread types may only be created from object types.
+src/routes/exam-patterns.routes.ts(26,41): error TS2339: Property 'total' does not exist on type '{}'.
+src/routes/exam-patterns.routes.ts(90,7): error TS18046: 'pattern' is of type 'unknown'.
+src/routes/exam-patterns.routes.ts(165,7): error TS18046: 'pattern' is of type 'unknown'.
+src/routes/exam-patterns.routes.ts(175,112): error TS18046: 'sec' is of type 'unknown'.
+src/routes/exam-patterns.routes.ts(176,9): error TS18046: 'sec' is of type 'unknown'.
+src/routes/exam-patterns.routes.ts(178,114): error TS18046: 'sec' is of type 'unknown'.
+src/routes/exam-patterns.routes.ts(179,9): error TS18046: 'sec' is of type 'unknown'.
+src/routes/exam-patterns.routes.ts(181,119): error TS18046: 'sec' is of type 'unknown'.
+src/routes/exam-patterns.routes.ts(182,9): error TS18046: 'sec' is of type 'unknown'.
+src/routes/exam-patterns.routes.ts(184,7): error TS18046: 'pattern' is of type 'unknown'.
+src/routes/exam-patterns.routes.ts(212,42): error TS18046: 'existing' is of type 'unknown'.
+src/routes/exam-patterns.routes.ts(214,13): error TS18046: 'existing' is of type 'unknown'.
+src/routes/exam-patterns.routes.ts(221,24): error TS18046: 'existing' is of type 'unknown'.
+src/routes/exam-patterns.routes.ts(224,11): error TS18046: 'existing' is of type 'unknown'.
+src/routes/exam-patterns.routes.ts(232,13): error TS18046: 'existing' is of type 'unknown'.
+src/routes/exam-patterns.routes.ts(238,22): error TS18046: 'existing' is of type 'unknown'.
+src/routes/exam-patterns.routes.ts(251,26): error TS18046: 'existing' is of type 'unknown'.
+src/routes/exam-patterns.routes.ts(296,11): error TS18046: 'existing' is of type 'unknown'.
+src/routes/exam-patterns.routes.ts(464,82): error TS18046: 'existing' is of type 'unknown'.
+src/routes/exam-patterns.routes.ts(465,94): error TS18046: 'existing' is of type 'unknown'.
+src/routes/exam-patterns.routes.ts(616,26): error TS18046: 'section' is of type 'unknown'.
+src/routes/exam-patterns.routes.ts(620,107): error TS18046: 'section' is of type 'unknown'.
+src/routes/exam-patterns.routes.ts(701,28): error TS18046: 'section' is of type 'unknown'.
+src/routes/exam-patterns.routes.ts(705,114): error TS18046: 'section' is of type 'unknown'.
+src/routes/exam-patterns.routes.ts(785,33): error TS18046: 'section' is of type 'unknown'.
+src/routes/exam-patterns.routes.ts(789,96): error TS18046: 'section' is of type 'unknown'.
+src/routes/exam-patterns.routes.ts(906,13): error TS18046: 'sec' is of type 'unknown'.
+src/routes/exam-patterns.routes.ts(907,24): error TS18046: 'sec' is of type 'unknown'.
+src/routes/exam-patterns.routes.ts(912,50): error TS2339: Property 'cnt' does not exist on type '{}'.
+src/routes/exam-patterns.routes.ts(913,26): error TS18046: 'sec' is of type 'unknown'.
+src/routes/exam-patterns.routes.ts(917,35): error TS18046: 'sec' is of type 'unknown'.
+src/routes/exam-patterns.routes.ts(920,24): error TS18046: 'sec' is of type 'unknown'.
+src/routes/exam-patterns.routes.ts(921,26): error TS18046: 'sec' is of type 'unknown'.
+src/routes/exam-patterns.routes.ts(929,24): error TS18046: 'sec' is of type 'unknown'.
+src/routes/exam-patterns.routes.ts(930,26): error TS18046: 'sec' is of type 'unknown'.
+src/routes/i18n.routes.ts(125,45): error TS2339: Property 'count' does not exist on type '{}'.
+src/routes/i18n.routes.ts(420,39): error TS2339: Property 'id' does not exist on type '{}'.
+src/routes/i18n.routes.ts(430,37): error TS2339: Property 'id' does not exist on type '{}'.
+src/routes/i18n.routes.ts(568,10): error TS18046: 'lang' is of type 'unknown'.
+src/routes/i18n.routes.ts(595,25): error TS18046: 'lang' is of type 'unknown'.
+src/routes/i18n.routes.ts(596,23): error TS18046: 'lang' is of type 'unknown'.
+src/routes/i18n.routes.ts(804,17): error TS18046: 'lang' is of type 'unknown'.
+src/routes/i18n.routes.ts(811,19): error TS18046: 'lang' is of type 'unknown'.
+src/routes/preference.routes.ts(34,9): error TS2698: Spread types may only be created from object types.
+src/routes/preference.routes.ts(35,22): error TS18046: 'row' is of type 'unknown'.
+src/routes/preference.routes.ts(36,31): error TS18046: 'row' is of type 'unknown'.
+src/routes/preference.routes.ts(37,20): error TS18046: 'row' is of type 'unknown'.
+src/routes/preference.routes.ts(38,32): error TS18046: 'row' is of type 'unknown'.
+src/routes/preference.routes.ts(39,24): error TS18046: 'row' is of type 'unknown'.
+src/routes/preference.routes.ts(65,50): error TS2571: Object is of type 'unknown'.
+src/routes/preference.routes.ts(69,22): error TS18046: 'current' is of type 'unknown'.
+src/routes/preference.routes.ts(78,83): error TS18046: 'current' is of type 'unknown'.
+src/routes/preference.routes.ts(81,23): error TS18046: 'current' is of type 'unknown'.
+src/routes/preference.routes.ts(96,90): error TS18046: 'current' is of type 'unknown'.
+src/routes/preference.routes.ts(99,26): error TS18046: 'current' is of type 'unknown'.
+src/routes/preference.routes.ts(109,93): error TS18046: 'current' is of type 'unknown'.
+src/routes/preference.routes.ts(112,40): error TS18046: 'current' is of type 'unknown'.
+src/routes/preference.routes.ts(155,9): error TS2698: Spread types may only be created from object types.
+src/routes/preference.routes.ts(156,22): error TS18046: 'row' is of type 'unknown'.
+src/routes/preference.routes.ts(157,31): error TS18046: 'row' is of type 'unknown'.
+src/routes/preference.routes.ts(158,20): error TS18046: 'row' is of type 'unknown'.
+src/routes/preference.routes.ts(159,32): error TS18046: 'row' is of type 'unknown'.
+src/routes/preference.routes.ts(160,24): error TS18046: 'row' is of type 'unknown'.
+src/routes/question.routes.ts(3,38): error TS6059: File '/home/ubuntu/exam_shekhar/AI_question/Exam/packages/question-types/src/index.ts' is not under 'rootDir' '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src'. 'rootDir' is expected to contain all source files.
+  The file is in the program because:
+    Imported via '@repo/question-types' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/question.routes.ts'
+    Imported via '@repo/question-types' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/attempt.service.ts'
+    Imported via '@repo/question-types' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/listening.service.ts'
+src/routes/question.routes.ts(68,37): error TS2571: Object is of type 'unknown'.
+src/routes/question.routes.ts(368,5): error TS18046: 'question' is of type 'unknown'.
+src/routes/question.routes.ts(369,5): error TS18046: 'question' is of type 'unknown'.
+src/routes/question.routes.ts(370,5): error TS18046: 'question' is of type 'unknown'.
+src/routes/question.routes.ts(399,60): error TS18046: 'existing' is of type 'unknown'.
+src/routes/question.routes.ts(400,103): error TS18046: 'existing' is of type 'unknown'.
+src/routes/question.routes.ts(401,63): error TS18046: 'existing' is of type 'unknown'.
+src/routes/question.routes.ts(402,54): error TS18046: 'existing' is of type 'unknown'.
+src/routes/question.routes.ts(403,57): error TS18046: 'existing' is of type 'unknown'.
+src/routes/question.routes.ts(404,27): error TS18046: 'existing' is of type 'unknown'.
+src/routes/question.routes.ts(407,54): error TS18046: 'existing' is of type 'unknown'.
+src/routes/question.routes.ts(409,94): error TS18046: 'existing' is of type 'unknown'.
+src/routes/question.routes.ts(436,47): error TS18046: 'existing' is of type 'unknown'.
+src/routes/question.routes.ts(437,49): error TS18046: 'existing' is of type 'unknown'.
+src/routes/question.routes.ts(438,59): error TS18046: 'existing' is of type 'unknown'.
+src/routes/question.routes.ts(498,52): error TS2339: Property 'version' does not exist on type '{}'.
+src/routes/question.routes.ts(508,11): error TS18046: 'targetVersion' is of type 'unknown'.
+src/routes/question.routes.ts(509,18): error TS18046: 'targetVersion' is of type 'unknown'.
+src/routes/question.routes.ts(509,67): error TS18046: 'targetVersion' is of type 'unknown'.
+src/routes/question.routes.ts(509,89): error TS18046: 'targetVersion' is of type 'unknown'.
+src/routes/question.routes.ts(510,11): error TS18046: 'targetVersion' is of type 'unknown'.
+src/routes/question.routes.ts(511,11): error TS18046: 'targetVersion' is of type 'unknown'.
+src/routes/question.routes.ts(525,11): error TS18046: 'targetVersion' is of type 'unknown'.
+src/routes/question.routes.ts(526,18): error TS18046: 'targetVersion' is of type 'unknown'.
+src/routes/question.routes.ts(526,67): error TS18046: 'targetVersion' is of type 'unknown'.
+src/routes/question.routes.ts(526,89): error TS18046: 'targetVersion' is of type 'unknown'.
+src/routes/question.routes.ts(527,11): error TS18046: 'targetVersion' is of type 'unknown'.
+src/routes/question.routes.ts(528,11): error TS18046: 'targetVersion' is of type 'unknown'.
+src/routes/question.routes.ts(561,11): error TS18046: 'existing' is of type 'unknown'.
+src/routes/role.routes.ts(30,12): error TS18046: 'r' is of type 'unknown'.
+src/routes/role.routes.ts(33,15): error TS18046: 'r' is of type 'unknown'.
+src/routes/role.routes.ts(34,17): error TS18046: 'r' is of type 'unknown'.
+src/routes/role.routes.ts(35,24): error TS18046: 'r' is of type 'unknown'.
+src/routes/role.routes.ts(36,21): error TS18046: 'r' is of type 'unknown'.
+src/routes/role.routes.ts(80,24): error TS2571: Object is of type 'unknown'.
+src/routes/role.routes.ts(127,24): error TS2571: Object is of type 'unknown'.
+src/routes/role.routes.ts(135,15): error TS18046: 'role' is of type 'unknown'.
+src/routes/role.routes.ts(136,17): error TS18046: 'role' is of type 'unknown'.
+src/routes/subject.routes.ts(115,5): error TS18046: 'subject' is of type 'unknown'.
+src/routes/subject.routes.ts(142,55): error TS18046: 'existing' is of type 'unknown'.
+src/routes/subject.routes.ts(143,69): error TS18046: 'existing' is of type 'unknown'.
+src/routes/subject.routes.ts(144,64): error TS18046: 'existing' is of type 'unknown'.
+src/routes/subject.routes.ts(145,58): error TS18046: 'existing' is of type 'unknown'.
+src/routes/syllabus.routes.ts(146,17): error TS18046: 'parent' is of type 'unknown'.
+src/routes/syllabus.routes.ts(199,58): error TS18046: 'existing' is of type 'unknown'.
+src/routes/syllabus.routes.ts(200,55): error TS18046: 'existing' is of type 'unknown'.
+src/routes/syllabus.routes.ts(201,69): error TS18046: 'existing' is of type 'unknown'.
+src/routes/syllabus.routes.ts(202,97): error TS18046: 'existing' is of type 'unknown'.
+src/routes/syllabus.routes.ts(203,78): error TS18046: 'existing' is of type 'unknown'.
+src/routes/syllabus.routes.ts(204,61): error TS18046: 'existing' is of type 'unknown'.
+src/routes/syllabus.routes.ts(205,55): error TS18046: 'existing' is of type 'unknown'.
+src/routes/syllabus.routes.ts(246,20): error TS2571: Object is of type 'unknown'.
+src/routes/system.routes.ts(28,35): error TS2571: Object is of type 'unknown'.
+src/routes/system.routes.ts(29,19): error TS2571: Object is of type 'unknown'.
+src/routes/user.routes.ts(5,29): error TS6059: File '/home/ubuntu/exam_shekhar/AI_question/Exam/packages/permissions/src/index.ts' is not under 'rootDir' '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src'. 'rootDir' is expected to contain all source files.
+  The file is in the program because:
+    Imported via '@repo/permissions' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/user.routes.ts'
+    Imported via '@repo/permissions' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/middleware/permission.ts'
+    Imported via '@repo/permissions' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/role.routes.ts'
+    Imported via '@repo/permissions' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/audit.routes.ts'
+    Imported via '@repo/permissions' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/course.routes.ts'
+    Imported via '@repo/permissions' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/subject.routes.ts'
+    Imported via '@repo/permissions' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/syllabus.routes.ts'
+    Imported via '@repo/permissions' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/question.routes.ts'
+    Imported via '@repo/permissions' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/i18n.routes.ts'
+    Imported via '@repo/permissions' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/attempt.routes.ts'
+    Imported via '@repo/permissions' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/analytics.routes.ts'
+    Imported via '@repo/permissions' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/practice.routes.ts'
+    Imported via '@repo/permissions' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/preview.service.ts'
+    Imported via '@repo/permissions' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/preview.routes.ts'
+    Imported via '@repo/permissions' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/ai.routes.ts'
+    Imported via '@repo/permissions' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/interview.routes.ts'
+    Imported via '@repo/permissions' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/entitlement.routes.ts'
+    Imported via '@repo/permissions' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/subscription.routes.ts'
+    Imported via '@repo/permissions' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/billing.routes.ts'
+    Imported via '@repo/permissions' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/maintenance.routes.ts'
+    Imported via '@repo/permissions' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/audio.routes.ts'
+    Imported via '@repo/permissions' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/vocabulary.routes.ts'
+    Imported via '@repo/permissions' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/routes/listening.routes.ts'
+src/routes/user.routes.ts(189,15): error TS18046: 'u' is of type 'unknown'.
+src/routes/user.routes.ts(190,18): error TS18046: 'u' is of type 'unknown'.
+src/routes/user.routes.ts(191,22): error TS18046: 'u' is of type 'unknown'.
+src/routes/user.routes.ts(192,21): error TS18046: 'u' is of type 'unknown'.
+src/routes/user.routes.ts(193,19): error TS18046: 'u' is of type 'unknown'.
+src/routes/user.routes.ts(250,33): error TS2571: Object is of type 'unknown'.
+src/routes/user.routes.ts(251,22): error TS2571: Object is of type 'unknown'.
+src/routes/user.routes.ts(252,11): error TS2571: Object is of type 'unknown'.
+src/routes/user.routes.ts(270,20): error TS2571: Object is of type 'unknown'.
+src/routes/user.routes.ts(281,48): error TS2339: Property 'maxVersion' does not exist on type '{}'.
+src/routes/user.routes.ts(281,86): error TS2339: Property 'maxVersion' does not exist on type '{}'.
+src/routes/user.routes.ts(294,9): error TS2698: Spread types may only be created from object types.
+src/routes/user.routes.ts(441,45): error TS2339: Property 'maxVersion' does not exist on type '{}'.
+src/routes/user.routes.ts(441,83): error TS2339: Property 'maxVersion' does not exist on type '{}'.
+src/routes/user.routes.ts(484,9): error TS2698: Spread types may only be created from object types.
+src/services/ai-queue.service.ts(85,36): error TS2339: Property 'status' does not exist on type '{}'.
+src/services/analytics.service.ts(14,8): error TS6059: File '/home/ubuntu/exam_shekhar/AI_question/Exam/packages/mastery-engine/src/index.ts' is not under 'rootDir' '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src'. 'rootDir' is expected to contain all source files.
+src/services/entitlement.service.ts(9,8): error TS6059: File '/home/ubuntu/exam_shekhar/AI_question/Exam/packages/entitlement-engine/src/index.ts' is not under 'rootDir' '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src'. 'rootDir' is expected to contain all source files.
+  The file is in the program because:
+    Imported via '@repo/entitlement-engine' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/entitlement.service.ts'
+    Imported via '@repo/entitlement-engine' from file '/home/ubuntu/exam_shekhar/AI_question/Exam/apps/api/src/services/subscription.service.ts'
+src/services/practice.service.ts(304,11): error TS18046: 'p' is of type 'unknown'.
+src/services/practice.service.ts(305,15): error TS18046: 'p' is of type 'unknown'.
+src/services/practice.service.ts(306,14): error TS18046: 'p' is of type 'unknown'.
+src/services/practice.service.ts(307,17): error TS18046: 'p' is of type 'unknown'.
+src/services/practice.service.ts(308,36): error TS18046: 'p' is of type 'unknown'.
+src/services/practice.service.ts(309,23): error TS18046: 'p' is of type 'unknown'.
+src/services/practice.service.ts(310,15): error TS18046: 'p' is of type 'unknown'.
+src/services/practice.service.ts(311,18): error TS18046: 'p' is of type 'unknown'.
+src/services/practice.service.ts(312,18): error TS18046: 'p' is of type 'unknown'.
+src/services/practice.service.ts(347,33): error TS18046: 'q' is of type 'unknown'.
+src/services/practice.service.ts(348,28): error TS18046: 'q' is of type 'unknown'.
+src/services/practice.service.ts(355,9): error TS18046: 'q' is of type 'unknown'.
+src/services/practice.service.ts(355,29): error TS18046: 'q' is of type 'unknown'.
+src/services/practice.service.ts(355,57): error TS18046: 'q' is of type 'unknown'.
+src/services/practice.service.ts(357,16): error TS18046: 'q' is of type 'unknown'.
+src/services/practice.service.ts(361,16): error TS18046: 'q' is of type 'unknown'.
+src/services/practice.service.ts(403,35): error TS2339: Property 'id' does not exist on type '{}'.
+src/services/practice.service.ts(404,44): error TS2339: Property 'consecutiveCorrect' does not exist on type '{}'.
+src/services/practice.service.ts(456,41): error TS18046: 'q' is of type 'unknown'.
+src/services/practice.service.ts(460,19): error TS18046: 'q' is of type 'unknown'.
+src/services/practice.service.ts(500,21): error TS2571: Object is of type 'unknown'.
+src/services/practice.service.ts(515,18): error TS2571: Object is of type 'unknown'.
+src/services/practice.service.ts(517,18): error TS2571: Object is of type 'unknown'.
+src/services/practice.service.ts(533,28): error TS2571: Object is of type 'unknown'.
+src/services/practice.service.ts(582,24): error TS18046: 'paper' is of type 'unknown'.
+src/services/practice.service.ts(592,90): error TS18046: 'att' is of type 'unknown'.
+src/services/practice.service.ts(611,24): error TS2571: Object is of type 'unknown'.
+src/services/practice.service.ts(612,26): error TS2571: Object is of type 'unknown'.
+src/services/practice.service.ts(613,27): error TS2571: Object is of type 'unknown'.
+src/services/practice.service.ts(614,25): error TS2571: Object is of type 'unknown'.
+src/services/preview.service.ts(371,49): error TS18046: 'targetUser' is of type 'unknown'.
+src/services/preview.service.ts(379,100): error TS18046: 'targetUser' is of type 'unknown'.
+src/services/preview.service.ts(393,12): error TS18046: 'targetUser' is of type 'unknown'.
+src/services/preview.service.ts(394,14): error TS18046: 'targetUser' is of type 'unknown'.
+src/services/preview.service.ts(420,7): error TS18046: 'targetUser' is of type 'unknown'.
+src/services/preview.service.ts(421,7): error TS18046: 'targetUser' is of type 'unknown'.
+src/services/preview.service.ts(432,24): error TS18046: 'targetUser' is of type 'unknown'.
+src/services/preview.service.ts(433,23): error TS18046: 'targetUser' is of type 'unknown'.
+src/services/preview.service.ts(437,19): error TS18046: 'targetUser' is of type 'unknown'.
+src/services/preview.service.ts(440,24): error TS18046: 'targetUser' is of type 'unknown'.
+src/services/preview.service.ts(440,48): error TS18046: 'targetUser' is of type 'unknown'.
+src/services/preview.service.ts(477,20): error TS18046: 'session' is of type 'unknown'.
+src/services/preview.service.ts(478,24): error TS18046: 'session' is of type 'unknown'.
+src/services/preview.service.ts(479,23): error TS18046: 'session' is of type 'unknown'.
+src/services/preview.service.ts(480,13): error TS18046: 'session' is of type 'unknown'.
+src/services/preview.service.ts(605,28): error TS2571: Object is of type 'unknown'.
+src/services/preview.service.ts(617,11): error TS18046: 'row' is of type 'unknown'.
+src/services/preview.service.ts(618,20): error TS18046: 'row' is of type 'unknown'.
+src/services/preview.service.ts(619,19): error TS18046: 'row' is of type 'unknown'.
+src/services/preview.service.ts(620,24): error TS18046: 'row' is of type 'unknown'.
+src/services/preview.service.ts(621,23): error TS18046: 'row' is of type 'unknown'.
+src/services/preview.service.ts(622,13): error TS18046: 'row' is of type 'unknown'.
+src/services/preview.service.ts(623,15): error TS18046: 'row' is of type 'unknown'.
+src/services/preview.service.ts(624,17): error TS18046: 'row' is of type 'unknown'.
+src/services/preview.service.ts(625,19): error TS18046: 'row' is of type 'unknown'.
+src/services/preview.service.ts(626,30): error TS18046: 'row' is of type 'unknown'.
+src/services/preview.service.ts(627,18): error TS18046: 'row' is of type 'unknown'.
+src/services/preview.service.ts(628,18): error TS18046: 'row' is of type 'unknown'.
+src/services/preview.service.ts(629,27): error TS18046: 'row' is of type 'unknown'.
+

@@ -5,18 +5,21 @@ export interface WritingQuestionConfig {
   promptStem: string;
   promptImageUrl?: string;
   stimulusText?: string;
+  aiVisualContext?: string;
+  chartFacts?: any;
   minWords: number;
   maxWords: number;
   recommendedTimeMinutes: number;
   rubricCriteria: WritingRubricCriterionDTO[];
   sampleAnswer?: string;
-  preset?: 'IELTS_TASK_1' | 'IELTS_TASK_2' | 'TOEFL_INDEPENDENT' | 'CUSTOM';
+  preset?: 'IELTS_TASK_1' | 'IELTS_TASK_1_GT' | 'IELTS_TASK_2' | 'TOEFL_INDEPENDENT' | 'CUSTOM';
   taskType?: string;
 }
 
 interface WritingAuthoringPanelProps {
   initialConfig?: Partial<WritingQuestionConfig>;
   onChange: (config: WritingQuestionConfig) => void;
+  forcedTask?: 'TASK_1' | 'TASK_2';
 }
 
 const DEFAULT_RUBRICS: Record<string, WritingRubricCriterionDTO[]> = {
@@ -26,16 +29,17 @@ const DEFAULT_RUBRICS: Record<string, WritingRubricCriterionDTO[]> = {
     { id: 'lexical_resource', name: 'Lexical Resource', weight: 0.25, maxScore: 9, description: 'Accurate academic data vocabulary, proportions, verbs of change, and precision.' },
     { id: 'grammatical_range', name: 'Grammatical Range & Accuracy', weight: 0.25, maxScore: 9, description: 'Variety of complex structures, passive forms for processes, and error-free sentences.' },
   ],
+  IELTS_TASK_1_GT: [
+    { id: 'task_achievement', name: 'Task Achievement (Letter)', weight: 0.25, maxScore: 9, description: 'Clear purpose of letter, all bullet points covered, appropriate tone and register.' },
+    { id: 'coherence_cohesion', name: 'Coherence and Cohesion', weight: 0.25, maxScore: 9, description: 'Logical sequencing, clear paragraph transitions, appropriate salutations and sign-off.' },
+    { id: 'lexical_resource', name: 'Lexical Resource', weight: 0.25, maxScore: 9, description: 'Appropriate register, tone, idiomatic collocations for formal or informal letter.' },
+    { id: 'grammatical_range', name: 'Grammatical Range & Accuracy', weight: 0.25, maxScore: 9, description: 'Variety of sentence structures, accurate grammar, and correct punctuation.' },
+  ],
   IELTS_TASK_2: [
     { id: 'task_response', name: 'Task Response', weight: 0.25, maxScore: 9, description: 'Addressing all parts of the task with clear position throughout and extended, supported ideas.' },
     { id: 'coherence_cohesion', name: 'Coherence and Cohesion', weight: 0.25, maxScore: 9, description: 'Logical sequencing, clear central topic per paragraph, and linking devices.' },
     { id: 'lexical_resource', name: 'Lexical Resource', weight: 0.25, maxScore: 9, description: 'Range, accuracy, natural academic collocations, and sophistication of vocabulary.' },
     { id: 'grammatical_range', name: 'Grammatical Range & Accuracy', weight: 0.25, maxScore: 9, description: 'Complex sentence structures, high accuracy, punctuation control, and communicative effect.' },
-  ],
-  TOEFL_INDEPENDENT: [
-    { id: 'topic_development', name: 'Topic Development', weight: 0.35, maxScore: 5, description: 'Substantive explanation, clear thesis, and concrete supporting examples.' },
-    { id: 'organization_structure', name: 'Organization & Structure', weight: 0.35, maxScore: 5, description: 'Well-formed introduction, body paragraphs, and conclusion with cohesive transitions.' },
-    { id: 'language_use', name: 'Language Use', weight: 0.30, maxScore: 5, description: 'Syntactic variety, idiomatic phrasing, and lexical precision.' },
   ],
 };
 
@@ -112,6 +116,34 @@ const TEMPLATES: PresetTemplate[] = [
     timeLimit: 20,
     sampleAnswer: 'The two pie charts compare the proportional distribution of average weekly household spending across six categories in Country X between 1975 and 2025. Overall, the fifty-year period witnessed a dramatic realignment of household budgets, characterized by a substantial contraction in food and clothing outlays alongside marked surges in expenditure on housing and digital communications technology.\n\nIn 1975, food and groceries constituted the largest single expense, commanding 35% of the total budget (£64/week), followed by housing and utilities at 22%. By 2025, however, these roles had completely inverted: housing expenditure escalated to 34% of the expanded £540 weekly budget, while food outlays shrank by more than half to 15%.\n\nThe most dramatic proportional expansion occurred in digital technology and telecommunications, which surged eight-fold from a negligible 2% in 1975 to 16% in 2025. Conversely, spending on clothing and footwear contracted from 15% to a modest 5%. Transport outlays expanded slightly from 14% to 18%, whereas leisure and recreational expenditure remained remarkably constant at exactly 12% across both benchmark years.',
   },
+  {
+    key: 'task1_pyramid',
+    name: 'Demographic Shift (Population Pyramid)',
+    badge: 'Task 1 Demographic Pyramid',
+    preset: 'IELTS_TASK_1',
+    taskType: 'TASK_1_GRAPH',
+    promptStem: 'IELTS Academic Writing Task 1: The demographic population pyramid illustrates the proportion of age cohorts and gender distributions in an industrialized nation comparing 1970 and 2024. Summarise the information by selecting and reporting the main features, and make comparisons where relevant. (Write at least 150 words).',
+    promptImageUrl: '/assets/charts/ielts_task1_population_pyramid.svg',
+    stimulusText: 'Review the comparative demographic pyramids for 1970 and 2024 across 6 age cohorts (0–14, 15–29, 30–44, 45–59, 60–74, 75+). Note the inversion from expansive youth base in 1970 to constricted base and ballooning elderly demographic (60+) in 2024.',
+    minWords: 150,
+    maxWords: 250,
+    timeLimit: 20,
+    sampleAnswer: 'The comparative population pyramids delineate the structural transformation in age cohorts and gender distribution within an industrialized nation between 1970 and 2024. Overall, the demographic profile underwent a dramatic transition from an expansive, youth-dominated pyramid in 1970 to a top-heavy, constrictive structure in 2024, characterized by an aging population and shrinking youth cohorts.\n\nIn 1970, children aged 0–14 constituted the largest single demographic bracket, representing 14.8% of males and 14.2% of females. By 2024, this youngest cohort had contracted substantially to just 7.4% and 7.1% respectively. Similarly, young adults aged 15–29 declined from approximately 13.5% per gender to under 9.5%.\n\nConversely, the proportion of elderly citizens expanded exponentially over the 54-year span. While seniors aged 75 and older accounted for merely 2.1% of males and 3.4% of females in 1970, their share surged to 6.8% and 8.9% by 2024. The 60–74 demographic exhibited a parallel surge, expanding from around 6.5% to over 11.5% for both sexes. Across both benchmark years, female life expectancy advantages were evident in the oldest age tiers.',
+  },
+  {
+    key: 'task1_airport',
+    name: 'Airport Terminal Expansion (Comparative Maps)',
+    badge: 'Task 1 Redevelopment Map',
+    preset: 'IELTS_TASK_1',
+    taskType: 'TASK_1_MAP',
+    promptStem: 'IELTS Academic Writing Task 1: The two maps illustrate the layout of an international airport terminal in 2010 and following substantial structural redevelopment in 2024. Summarise the changes by describing the main reconfigurations and newly added transit infrastructure. (Write at least 150 words).',
+    promptImageUrl: '/assets/charts/ielts_task1_airport_redevelopment.svg',
+    stimulusText: 'Examine the 2010 vs 2024 airport terminal layouts. Identify the expansion from 8 linear boarding gates to 18 gates across two new Y-shaped concourses, the replacement of ground parking with a multi-storey parkade, and the addition of a high-speed underground metro link.',
+    minWords: 150,
+    maxWords: 250,
+    timeLimit: 20,
+    sampleAnswer: 'The two maps delineate the architectural modernization and physical expansion of an international airport terminal between 2010 and 2024. Overall, the facility underwent extensive modernization, transforming from a modest single-concourse terminal with surface parking into a high-capacity dual-concourse hub integrated with subterranean rail transit.\n\nIn 2010, the airport featured a simple linear design with eight boarding gates situated along a single northern concourse. Check-in desks and security screening occupied a compact central hall, fronted by an outdoor surface parking lot with bus connections. By 2024, the linear concourse had been demolished and replaced by two expansive Y-shaped wings—Concourse A and Concourse B—more than doubling the boarding capacity to eighteen gates equipped with automated walkways.\n\nSignificant improvements were also made to passenger amenities and ground transportation. The central departures concourse was expanded to incorporate a large duty-free retail and dining plaza. On the landside, the former outdoor parking lot was converted into a multi-storey parking structure, while a new subterranean high-speed metro station was excavated beneath the terminal, offering direct passenger rail transfers to the city center.',
+  },
 
   // Task 2 Templates
   {
@@ -167,37 +199,97 @@ const TEMPLATES: PresetTemplate[] = [
 export const WritingAuthoringPanel: React.FC<WritingAuthoringPanelProps> = ({
   initialConfig,
   onChange,
+  forcedTask,
 }) => {
+  const isTask1 = forcedTask ? forcedTask === 'TASK_1' : (initialConfig?.preset?.startsWith('IELTS_TASK_1') || false);
   const [promptStem, setPromptStem] = useState(initialConfig?.promptStem || '');
   const [promptImageUrl, setPromptImageUrl] = useState(initialConfig?.promptImageUrl || '');
   const [stimulusText, setStimulusText] = useState(initialConfig?.stimulusText || '');
-  const [minWords, setMinWords] = useState(initialConfig?.minWords || 150);
-  const [maxWords, setMaxWords] = useState(initialConfig?.maxWords || 400);
-  const [timeLimit, setTimeLimit] = useState(initialConfig?.recommendedTimeMinutes || 40);
+  const [aiVisualContext, setAiVisualContext] = useState(initialConfig?.aiVisualContext || '');
+  const [minWords, setMinWords] = useState(initialConfig?.minWords || (isTask1 ? 150 : 250));
+  const [maxWords, setMaxWords] = useState(initialConfig?.maxWords || (isTask1 ? 250 : 400));
+  const [timeLimit, setTimeLimit] = useState(initialConfig?.recommendedTimeMinutes || (isTask1 ? 20 : 40));
   const [sampleAnswer, setSampleAnswer] = useState(initialConfig?.sampleAnswer || '');
-  const [preset, setPreset] = useState<'IELTS_TASK_1' | 'IELTS_TASK_2' | 'TOEFL_INDEPENDENT' | 'CUSTOM'>(
-    initialConfig?.preset || 'IELTS_TASK_2'
+  const [preset, setPreset] = useState<'IELTS_TASK_1' | 'IELTS_TASK_1_GT' | 'IELTS_TASK_2' | 'TOEFL_INDEPENDENT' | 'CUSTOM'>(
+    forcedTask === 'TASK_1'
+      ? (initialConfig?.preset === 'IELTS_TASK_1_GT' ? 'IELTS_TASK_1_GT' : 'IELTS_TASK_1')
+      : forcedTask === 'TASK_2'
+      ? 'IELTS_TASK_2'
+      : (isTask1 ? (initialConfig?.preset === 'IELTS_TASK_1_GT' ? 'IELTS_TASK_1_GT' : 'IELTS_TASK_1') : 'IELTS_TASK_2')
   );
-  const [taskType, setTaskType] = useState<string>(initialConfig?.taskType || 'TASK_2_ESSAY');
+  const [taskType, setTaskType] = useState<string>(
+    initialConfig?.taskType || (isTask1 ? 'TASK_1_GRAPH' : 'TASK_2_ESSAY')
+  );
   const [showSampleAnswer, setShowSampleAnswer] = useState<boolean>(false);
-  const [rubrics, setRubrics] = useState<WritingRubricCriterionDTO[]>(
-    initialConfig?.rubricCriteria || DEFAULT_RUBRICS.IELTS_TASK_2
-  );
+
+  // Compute clean initial rubrics ensuring Task 1 never has Task 2 criteria, and Task 2 never has Task 1 criteria
+  const initialRubrics = (() => {
+    if (initialConfig?.rubricCriteria && initialConfig.rubricCriteria.length > 0) {
+      if (isTask1) {
+        if (initialConfig.rubricCriteria.some((r) => r.id === 'task_response')) {
+          return initialConfig.preset === 'IELTS_TASK_1_GT' ? DEFAULT_RUBRICS.IELTS_TASK_1_GT : DEFAULT_RUBRICS.IELTS_TASK_1;
+        }
+        return initialConfig.rubricCriteria;
+      } else {
+        if (initialConfig.rubricCriteria.some((r) => r.id === 'task_achievement')) {
+          return DEFAULT_RUBRICS.IELTS_TASK_2;
+        }
+        return initialConfig.rubricCriteria;
+      }
+    }
+    return isTask1
+      ? (initialConfig?.preset === 'IELTS_TASK_1_GT' ? DEFAULT_RUBRICS.IELTS_TASK_1_GT : DEFAULT_RUBRICS.IELTS_TASK_1)
+      : DEFAULT_RUBRICS.IELTS_TASK_2;
+  })();
+
+  const [rubrics, setRubrics] = useState<WritingRubricCriterionDTO[]>(initialRubrics);
+
+  // Synchronize when forcedTask or isTask1 prop changes
+  useEffect(() => {
+    if (isTask1) {
+      if (preset === 'IELTS_TASK_2' || (preset as string) === 'TOEFL_INDEPENDENT') {
+        setPreset('IELTS_TASK_1');
+      }
+      if (rubrics.some((r) => r.id === 'task_response')) {
+        setRubrics(DEFAULT_RUBRICS.IELTS_TASK_1);
+      }
+      if (taskType === 'TASK_2_ESSAY') {
+        setTaskType('TASK_1_GRAPH');
+      }
+    } else {
+      if (preset.startsWith('IELTS_TASK_1')) {
+        setPreset('IELTS_TASK_2');
+      }
+      if (rubrics.some((r) => r.id === 'task_achievement')) {
+        setRubrics(DEFAULT_RUBRICS.IELTS_TASK_2);
+      }
+      if (taskType.startsWith('TASK_1')) {
+        setTaskType('TASK_2_ESSAY');
+      }
+    }
+  }, [isTask1, forcedTask]);
 
   useEffect(() => {
     onChange({
       promptStem,
-      promptImageUrl: promptImageUrl.trim() || undefined,
+      promptImageUrl: isTask1 ? (promptImageUrl.trim() || undefined) : undefined,
       stimulusText: stimulusText.trim() || undefined,
+      aiVisualContext: isTask1 ? (aiVisualContext.trim() || undefined) : undefined,
+      chartFacts: isTask1 && aiVisualContext.trim() ? {
+        chartTitle: promptStem.slice(0, 100) || 'Visual Stimulus Chart',
+        chartType: taskType || 'CHART',
+        notes: aiVisualContext.trim(),
+        contextText: aiVisualContext.trim(),
+      } : (initialConfig?.chartFacts || undefined),
       minWords,
       maxWords,
       recommendedTimeMinutes: timeLimit,
       rubricCriteria: rubrics,
       sampleAnswer: sampleAnswer.trim() || undefined,
-      preset,
-      taskType,
+      preset: isTask1 ? (preset === 'IELTS_TASK_1_GT' ? 'IELTS_TASK_1_GT' : 'IELTS_TASK_1') : 'IELTS_TASK_2',
+      taskType: isTask1 ? (taskType.startsWith('TASK_1') ? taskType : 'TASK_1_GRAPH') : 'TASK_2_ESSAY',
     });
-  }, [promptStem, promptImageUrl, stimulusText, minWords, maxWords, timeLimit, rubrics, sampleAnswer, preset, taskType]);
+  }, [promptStem, promptImageUrl, stimulusText, aiVisualContext, minWords, maxWords, timeLimit, rubrics, sampleAnswer, preset, taskType, isTask1]);
 
   const applyTemplate = (t: PresetTemplate) => {
     setPromptStem(t.promptStem);
@@ -215,6 +307,10 @@ export const WritingAuthoringPanel: React.FC<WritingAuthoringPanelProps> = ({
   };
 
   const loadPreset = (presetKey: string) => {
+    // Guard against loading wrong task preset
+    if (isTask1 && presetKey === 'IELTS_TASK_2') return;
+    if (!isTask1 && presetKey.startsWith('IELTS_TASK_1')) return;
+
     if (DEFAULT_RUBRICS[presetKey]) {
       setRubrics(DEFAULT_RUBRICS[presetKey]);
       setPreset(presetKey as any);
@@ -223,16 +319,16 @@ export const WritingAuthoringPanel: React.FC<WritingAuthoringPanelProps> = ({
         setMaxWords(250);
         setTimeLimit(20);
         setTaskType('TASK_1_GRAPH');
+      } else if (presetKey === 'IELTS_TASK_1_GT') {
+        setMinWords(150);
+        setMaxWords(250);
+        setTimeLimit(20);
+        setTaskType('TASK_1_GENERAL');
       } else if (presetKey === 'IELTS_TASK_2') {
         setMinWords(250);
         setMaxWords(400);
         setTimeLimit(40);
         setTaskType('TASK_2_ESSAY');
-      } else if (presetKey === 'TOEFL_INDEPENDENT') {
-        setMinWords(300);
-        setMaxWords(450);
-        setTimeLimit(30);
-        setTaskType('TOEFL_INDEPENDENT');
       }
     }
   };
@@ -252,98 +348,100 @@ export const WritingAuthoringPanel: React.FC<WritingAuthoringPanelProps> = ({
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
-          ✍️ Writing Task Specification &amp; Authoring
+          {isTask1 ? '📊 IELTS Writing Task 1 Specification' : '📝 IELTS Writing Task 2 Specification'}
         </h4>
         <span
           style={{
             fontSize: '11px',
             padding: '2px 8px',
             borderRadius: '4px',
-            background: preset === 'IELTS_TASK_1' ? 'rgba(6, 182, 212, 0.15)' : 'rgba(99, 102, 241, 0.15)',
-            color: preset === 'IELTS_TASK_1' ? '#06b6d4' : '#818cf8',
-            border: `1px solid ${preset === 'IELTS_TASK_1' ? '#06b6d4' : '#818cf8'}`,
+            background: isTask1 ? 'rgba(6, 182, 212, 0.15)' : 'rgba(99, 102, 241, 0.15)',
+            color: isTask1 ? '#06b6d4' : '#818cf8',
+            border: `1px solid ${isTask1 ? '#06b6d4' : '#818cf8'}`,
             fontWeight: 600,
           }}
         >
-          {preset.replace('_', ' ')}
+          {isTask1 ? 'Task 1 (Visual Stimulus)' : 'Task 2 (Discursive Essay)'}
         </span>
       </div>
 
       {/* Quick Template Picker */}
       <div style={{ background: 'var(--bg-secondary)', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
         <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-main)', marginBottom: '8px' }}>
-          ⚡ 1-Click Writing Templates &amp; Benchmarks:
+          ⚡ 1-Click Writing Templates &amp; Benchmarks ({isTask1 ? 'Task 1 Visual' : 'Task 2 Essay'}):
         </div>
 
-        {/* Task 1 Row */}
-        <div style={{ marginBottom: '8px' }}>
-          <div style={{ fontSize: '11px', color: '#06b6d4', fontWeight: 600, marginBottom: '4px' }}>
-            IELTS Academic Task 1 (Visual Data / Process):
+        {isTask1 ? (
+          <div>
+            <div style={{ fontSize: '11px', color: '#06b6d4', fontWeight: 600, marginBottom: '4px' }}>
+              IELTS Academic Task 1 Templates (Visual Data / Process / Maps):
+            </div>
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              {TEMPLATES.filter((t) => t.preset === 'IELTS_TASK_1').map((tmpl) => (
+                <button
+                  key={tmpl.key}
+                  type="button"
+                  onClick={() => applyTemplate(tmpl)}
+                  style={{
+                    fontSize: '11px',
+                    padding: '4px 10px',
+                    borderRadius: '4px',
+                    background: promptImageUrl === tmpl.promptImageUrl ? 'rgba(6, 182, 212, 0.25)' : 'rgba(6, 182, 212, 0.1)',
+                    border: `1px solid ${promptImageUrl === tmpl.promptImageUrl ? '#06b6d4' : 'rgba(6, 182, 212, 0.3)'}`,
+                    color: '#06b6d4',
+                    cursor: 'pointer',
+                    fontWeight: promptImageUrl === tmpl.promptImageUrl ? 700 : 500,
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  {tmpl.name}
+                </button>
+              ))}
+            </div>
           </div>
-          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-            {TEMPLATES.filter((t) => t.preset === 'IELTS_TASK_1').map((tmpl) => (
-              <button
-                key={tmpl.key}
-                type="button"
-                onClick={() => applyTemplate(tmpl)}
-                style={{
-                  fontSize: '11px',
-                  padding: '4px 10px',
-                  borderRadius: '4px',
-                  background: promptImageUrl === tmpl.promptImageUrl ? 'rgba(6, 182, 212, 0.25)' : 'rgba(6, 182, 212, 0.1)',
-                  border: `1px solid ${promptImageUrl === tmpl.promptImageUrl ? '#06b6d4' : 'rgba(6, 182, 212, 0.3)'}`,
-                  color: '#06b6d4',
-                  cursor: 'pointer',
-                  fontWeight: promptImageUrl === tmpl.promptImageUrl ? 700 : 500,
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                {tmpl.name}
-              </button>
-            ))}
+        ) : (
+          <div>
+            <div style={{ fontSize: '11px', color: '#818cf8', fontWeight: 600, marginBottom: '4px' }}>
+              IELTS Academic Task 2 Templates (Discursive Essays):
+            </div>
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              {TEMPLATES.filter((t) => t.preset === 'IELTS_TASK_2').map((tmpl) => (
+                <button
+                  key={tmpl.key}
+                  type="button"
+                  onClick={() => applyTemplate(tmpl)}
+                  style={{
+                    fontSize: '11px',
+                    padding: '4px 10px',
+                    borderRadius: '4px',
+                    background: promptStem === tmpl.promptStem ? 'rgba(99, 102, 241, 0.25)' : 'rgba(99, 102, 241, 0.1)',
+                    border: `1px solid ${promptStem === tmpl.promptStem ? '#818cf8' : 'rgba(99, 102, 241, 0.3)'}`,
+                    color: '#818cf8',
+                    cursor: 'pointer',
+                    fontWeight: promptStem === tmpl.promptStem ? 700 : 500,
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  {tmpl.name}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
-
-        {/* Task 2 Row */}
-        <div>
-          <div style={{ fontSize: '11px', color: '#818cf8', fontWeight: 600, marginBottom: '4px' }}>
-            IELTS Academic Task 2 (Discursive Essays):
-          </div>
-          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-            {TEMPLATES.filter((t) => t.preset === 'IELTS_TASK_2').map((tmpl) => (
-              <button
-                key={tmpl.key}
-                type="button"
-                onClick={() => applyTemplate(tmpl)}
-                style={{
-                  fontSize: '11px',
-                  padding: '4px 10px',
-                  borderRadius: '4px',
-                  background: promptStem === tmpl.promptStem ? 'rgba(99, 102, 241, 0.25)' : 'rgba(99, 102, 241, 0.1)',
-                  border: `1px solid ${promptStem === tmpl.promptStem ? '#818cf8' : 'rgba(99, 102, 241, 0.3)'}`,
-                  color: '#818cf8',
-                  cursor: 'pointer',
-                  fontWeight: promptStem === tmpl.promptStem ? 700 : 500,
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                {tmpl.name}
-              </button>
-            ))}
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Prompt Stem */}
       <div>
         <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>
-          Essay Topic / Prompt Stem *
+          {isTask1 ? 'Task 1 Prompt Instructions *' : 'Essay Topic / Question Prompt *'}
         </label>
         <textarea
           rows={3}
           value={promptStem}
           onChange={(e) => setPromptStem(e.target.value)}
-          placeholder="e.g. In some countries, an increasing number of people are choosing to live alone. What are the advantages and disadvantages?"
+          placeholder={isTask1
+            ? 'e.g. The bar chart illustrates the proportions of renewable electricity generation across five European nations between 2010 and 2024. Summarise the information by selecting and reporting the main features, and make comparisons where relevant.'
+            : 'e.g. Some people argue that technological development leads to loss of traditional culture. To what extent do you agree or disagree?'}
           style={{
             width: '100%',
             background: 'var(--bg-main)',
@@ -356,16 +454,16 @@ export const WritingAuthoringPanel: React.FC<WritingAuthoringPanelProps> = ({
         />
       </div>
 
-      {/* Optional Stimulus */}
+      {/* Background / Stimulus Text (Optional) */}
       <div>
         <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>
-          Background Context / Stimulus Text (Optional)
+          Background Context / Candidate Stimulus Text (Optional)
         </label>
         <textarea
           rows={2}
           value={stimulusText}
           onChange={(e) => setStimulusText(e.target.value)}
-          placeholder="Provide optional background articles, graphs, or instructions..."
+          placeholder="Provide optional candidate instructions or additional background notes..."
           style={{
             width: '100%',
             background: 'var(--bg-main)',
@@ -378,71 +476,149 @@ export const WritingAuthoringPanel: React.FC<WritingAuthoringPanelProps> = ({
         />
       </div>
 
-      {/* IELTS Task 1 Stimulus / Chart Image Attachment */}
-      <div style={{ background: 'var(--bg-secondary)', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-          <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-main)' }}>
-            📊 Stimulus Image / Chart URL (IELTS Task 1 &amp; Visual Prompts)
-          </label>
+      {/* IELTS Task 1 ONLY: Required Stimulus Picture / Chart Attachment */}
+      {isTask1 && (
+        <div style={{ background: 'var(--bg-secondary)', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+            <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span>📊</span> Stimulus Image / Chart URL <span style={{ color: '#ef4444' }}>* (Required for Task 1)</span>
+            </label>
+            {promptImageUrl && (
+              <button
+                type="button"
+                onClick={() => setPromptImageUrl('')}
+                style={{
+                  fontSize: '11px',
+                  color: '#ef4444',
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '2px 6px',
+                }}
+              >
+                ✕ Clear Image
+              </button>
+            )}
+          </div>
+
+          <input
+            type="text"
+            value={promptImageUrl}
+            onChange={(e) => setPromptImageUrl(e.target.value)}
+            placeholder="e.g. /assets/charts/ielts_task1_renewable_energy.svg or https://example.com/chart.png"
+            style={{
+              width: '100%',
+              background: 'var(--bg-main)',
+              border: !promptImageUrl.trim() ? '1px solid #ef4444' : '1px solid var(--border-color)',
+              borderRadius: '6px',
+              padding: '7px 10px',
+              color: 'var(--text-main)',
+              fontSize: '12px',
+              marginBottom: '6px',
+            }}
+          />
+
+          {!promptImageUrl.trim() && (
+            <div style={{ fontSize: '11px', color: '#ef4444', marginBottom: '8px' }}>
+              ⚠️ A stimulus picture or chart is required for IELTS Writing Task 1. Please provide an image URL or choose a preset asset below.
+            </div>
+          )}
+
+          {/* Quick Chart Asset Pickers */}
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '8px' }}>
+            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Quick Visual Assets:</span>
+            {[
+              { label: '⚡ Renewable Energy (Bar)', url: '/assets/charts/ielts_task1_renewable_energy.svg' },
+              { label: '💧 Desalination (Process)', url: '/assets/charts/ielts_task1_desalination_process.svg' },
+              { label: '🌍 CO₂ Trends (Line)', url: '/assets/charts/ielts_task1_global_co2_trends.svg' },
+              { label: '🥧 Spending (Pie)', url: '/assets/charts/ielts_task1_household_expenditure_pie.svg' },
+              { label: '👥 Population (Pyramid)', url: '/assets/charts/ielts_task1_population_pyramid.svg' },
+              { label: '✈️ Airport (Map)', url: '/assets/charts/ielts_task1_airport_redevelopment.svg' },
+              { label: '📋 Student Enrolments (Table)', url: '/assets/charts/ielts_task1_student_enrolments_table.svg' },
+            ].map((asset) => (
+              <button
+                key={asset.url}
+                type="button"
+                onClick={() => setPromptImageUrl(asset.url)}
+                style={{
+                  fontSize: '10px',
+                  padding: '3px 8px',
+                  borderRadius: '4px',
+                  background: promptImageUrl === asset.url ? 'rgba(6, 182, 212, 0.25)' : 'rgba(255,255,255,0.05)',
+                  border: `1px solid ${promptImageUrl === asset.url ? '#06b6d4' : 'var(--border-color)'}`,
+                  color: promptImageUrl === asset.url ? '#06b6d4' : 'var(--text-main)',
+                  cursor: 'pointer',
+                }}
+              >
+                {asset.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Image Preview */}
           {promptImageUrl && (
-            <button
-              type="button"
-              onClick={() => setPromptImageUrl('')}
-              style={{
-                fontSize: '11px',
-                color: '#ef4444',
-                background: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                padding: '2px 6px',
-              }}
-            >
-              ✕ Remove Image
-            </button>
+            <div style={{ marginTop: '8px', textAlign: 'center', background: '#0a0f1d', padding: '10px', borderRadius: '6px', border: '1px solid #1f2937' }}>
+              <div style={{ fontSize: '11px', color: '#9ca3af', marginBottom: '6px', textAlign: 'left', display: 'flex', justifyContent: 'space-between' }}>
+                <span>Stimulus Preview:</span>
+                <span style={{ color: '#06b6d4' }}>{promptImageUrl}</span>
+              </div>
+              <img
+                src={promptImageUrl}
+                alt="Stimulus Preview"
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '200px',
+                  objectFit: 'contain',
+                  borderRadius: '4px',
+                  border: '1px solid #374151',
+                }}
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  if (!target.src.includes('ielts_task1_renewable_energy.svg')) {
+                    target.src = '/assets/charts/ielts_task1_renewable_energy.svg';
+                  }
+                }}
+              />
+            </div>
           )}
         </div>
+      )}
 
-        <input
-          type="text"
-          value={promptImageUrl}
-          onChange={(e) => setPromptImageUrl(e.target.value)}
-          placeholder="e.g. /assets/charts/ielts_task1_global_co2_trends.svg or https://..."
-          style={{
-            width: '100%',
-            background: 'var(--bg-main)',
-            border: '1px solid var(--border-color)',
-            borderRadius: '6px',
-            padding: '7px 10px',
-            color: 'var(--text-main)',
-            fontSize: '12px',
-            marginBottom: '8px',
-          }}
-        />
-
-        {/* Image Preview */}
-        {promptImageUrl && (
-          <div style={{ marginTop: '8px', textAlign: 'center', background: '#0a0f1d', padding: '10px', borderRadius: '6px', border: '1px solid #1f2937' }}>
-            <div style={{ fontSize: '11px', color: '#9ca3af', marginBottom: '6px', textAlign: 'left', display: 'flex', justifyContent: 'space-between' }}>
-              <span>Stimulus Preview:</span>
-              <span style={{ color: '#06b6d4' }}>{promptImageUrl}</span>
-            </div>
-            <img
-              src={promptImageUrl}
-              alt="Stimulus Preview"
-              style={{
-                maxWidth: '100%',
-                maxHeight: '200px',
-                objectFit: 'contain',
-                borderRadius: '4px',
-                border: '1px solid #374151',
-              }}
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none';
-              }}
-            />
+      {/* IELTS Task 1 ONLY: AI Visual Context Box (Hidden from candidates, used for AI evaluation) */}
+      {isTask1 && (
+        <div style={{ background: 'rgba(6, 182, 212, 0.05)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(6, 182, 212, 0.3)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+            <span style={{ fontSize: '14px' }}>🧠</span>
+            <label style={{ fontSize: '12px', fontWeight: 600, color: '#06b6d4' }}>
+              Picture Context &amp; Key Data (For AI Evaluation Only — Hidden from Candidates)
+            </label>
           </div>
-        )}
-      </div>
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '8px', lineHeight: '1.4' }}>
+            Describe the picture, chart data, or process stages below. <strong>Candidates will NOT see this context during the exam.</strong> The AI evaluation engine uses this data directly to verify candidate factual accuracy, data figures, and trend descriptions without needing image OCR or visual analysis.
+          </div>
+          <textarea
+            rows={4}
+            value={aiVisualContext}
+            onChange={(e) => setAiVisualContext(e.target.value)}
+            placeholder={`e.g.
+- Chart type: Bar chart comparing renewable electricity generation (2010 vs 2024)
+- Surveyed nations: Germany, UK, France, Spain, Norway
+- Key figures: Norway hydro dominant at 90% in 2010 and 88% in 2024. Germany wind jumped from 9% to 32%, solar from 3% to 18%. Spain solar+wind expanded from 20% to 45%. UK offshore wind rose from 5% to 28%.
+- Main trend: All 5 nations expanded solar and wind capacity while Norway remained reliant on hydro.`}
+            style={{
+              width: '100%',
+              background: 'var(--bg-main)',
+              border: '1px solid var(--border-color)',
+              borderRadius: '6px',
+              padding: '8px 12px',
+              color: 'var(--text-main)',
+              fontSize: '12px',
+              lineHeight: '1.5',
+              fontFamily: 'inherit',
+            }}
+          />
+        </div>
+      )}
 
       {/* Limits & Timing */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px' }}>
@@ -525,54 +701,59 @@ export const WritingAuthoringPanel: React.FC<WritingAuthoringPanelProps> = ({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
           <label style={{ fontSize: '12px', fontWeight: 600 }}>Evaluation Rubric Presets</label>
           <div style={{ display: 'flex', gap: '6px' }}>
-            <button
-              type="button"
-              onClick={() => loadPreset('IELTS_TASK_1')}
-              style={{
-                fontSize: '11px',
-                padding: '3px 8px',
-                borderRadius: '4px',
-                border: `1px solid ${preset === 'IELTS_TASK_1' ? '#06b6d4' : 'var(--border-color)'}`,
-                background: preset === 'IELTS_TASK_1' ? 'rgba(6, 182, 212, 0.15)' : 'transparent',
-                color: preset === 'IELTS_TASK_1' ? '#06b6d4' : 'var(--text-main)',
-                cursor: 'pointer',
-                fontWeight: preset === 'IELTS_TASK_1' ? 600 : 400,
-              }}
-            >
-              IELTS Task 1
-            </button>
-            <button
-              type="button"
-              onClick={() => loadPreset('IELTS_TASK_2')}
-              style={{
-                fontSize: '11px',
-                padding: '3px 8px',
-                borderRadius: '4px',
-                border: `1px solid ${preset === 'IELTS_TASK_2' ? '#818cf8' : 'var(--border-color)'}`,
-                background: preset === 'IELTS_TASK_2' ? 'rgba(99, 102, 241, 0.15)' : 'transparent',
-                color: preset === 'IELTS_TASK_2' ? '#818cf8' : 'var(--text-main)',
-                cursor: 'pointer',
-                fontWeight: preset === 'IELTS_TASK_2' ? 600 : 400,
-              }}
-            >
-              IELTS Task 2
-            </button>
-            <button
-              type="button"
-              onClick={() => loadPreset('TOEFL_INDEPENDENT')}
-              style={{
-                fontSize: '11px',
-                padding: '3px 8px',
-                borderRadius: '4px',
-                border: `1px solid ${preset === 'TOEFL_INDEPENDENT' ? '#10b981' : 'var(--border-color)'}`,
-                background: preset === 'TOEFL_INDEPENDENT' ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
-                color: preset === 'TOEFL_INDEPENDENT' ? '#10b981' : 'var(--text-main)',
-                cursor: 'pointer',
-                fontWeight: preset === 'TOEFL_INDEPENDENT' ? 600 : 400,
-              }}
-            >
-              TOEFL
-            </button>
+            {isTask1 ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => loadPreset('IELTS_TASK_1')}
+                  style={{
+                    fontSize: '11px',
+                    padding: '3px 8px',
+                    borderRadius: '4px',
+                    border: `1px solid ${preset === 'IELTS_TASK_1' ? '#06b6d4' : 'var(--border-color)'}`,
+                    background: preset === 'IELTS_TASK_1' ? 'rgba(6, 182, 212, 0.15)' : 'transparent',
+                    color: preset === 'IELTS_TASK_1' ? '#06b6d4' : 'var(--text-main)',
+                    cursor: 'pointer',
+                    fontWeight: preset === 'IELTS_TASK_1' ? 600 : 400,
+                  }}
+                >
+                  IELTS Task 1 Academic (Report)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => loadPreset('IELTS_TASK_1_GT')}
+                  style={{
+                    fontSize: '11px',
+                    padding: '3px 8px',
+                    borderRadius: '4px',
+                    border: `1px solid ${preset === 'IELTS_TASK_1_GT' ? '#06b6d4' : 'var(--border-color)'}`,
+                    background: preset === 'IELTS_TASK_1_GT' ? 'rgba(6, 182, 212, 0.15)' : 'transparent',
+                    color: preset === 'IELTS_TASK_1_GT' ? '#06b6d4' : 'var(--text-main)',
+                    cursor: 'pointer',
+                    fontWeight: preset === 'IELTS_TASK_1_GT' ? 600 : 400,
+                  }}
+                >
+                  IELTS Task 1 GT (Letter)
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={() => loadPreset('IELTS_TASK_2')}
+                style={{
+                  fontSize: '11px',
+                  padding: '3px 8px',
+                  borderRadius: '4px',
+                  border: `1px solid ${preset === 'IELTS_TASK_2' ? '#818cf8' : 'var(--border-color)'}`,
+                  background: preset === 'IELTS_TASK_2' ? 'rgba(99, 102, 241, 0.15)' : 'transparent',
+                  color: preset === 'IELTS_TASK_2' ? '#818cf8' : 'var(--text-main)',
+                  cursor: 'pointer',
+                  fontWeight: preset === 'IELTS_TASK_2' ? 600 : 400,
+                }}
+              >
+                IELTS Task 2 (Discursive Essay)
+              </button>
+            )}
           </div>
         </div>
 

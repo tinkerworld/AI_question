@@ -196,12 +196,13 @@ export class AIMockGenerator {
     }
 
     // Adjust for WRITING, NUMERICAL or MULTIPLE_SELECT if requested
-    if (type === 'WRITING') {
-      const isTask1 = promptLower.includes('task 1') || topicLower.includes('task 1') || promptLower.includes('chart') || promptLower.includes('graph') || promptLower.includes('diagram');
+    if (type === 'WRITING' || type === 'IELTS_WRITING_TASK_1' || type === 'IELTS_WRITING_TASK_2') {
+      const isTask1 = type === 'IELTS_WRITING_TASK_1' || (type !== 'IELTS_WRITING_TASK_2' && (promptLower.includes('task 1') || topicLower.includes('task 1') || promptLower.includes('chart') || promptLower.includes('graph') || promptLower.includes('diagram')));
       const writingMarks = marks || 9.0;
       let promptStem = '';
       let promptImageUrl: string | undefined = undefined;
       let stimulusText: string | undefined = undefined;
+      let aiVisualContext: string | undefined = undefined;
       let minWords = 250;
       let maxWords = 400;
       let timeLimit = 40;
@@ -214,6 +215,7 @@ export class AIMockGenerator {
         promptStem = `IELTS Academic Writing Task 1: The visual diagram illustrates trends and distributions relevant to ${topic}. Summarise the information by selecting and reporting the main features, and make comparisons where relevant. (Write at least 150 words).`;
         promptImageUrl = '/assets/charts/ielts_task1_global_co2_trends.svg';
         stimulusText = `Examine the provided visual data for topic "${topic}". Synthesize primary trajectories and key inflection points.`;
+        aiVisualContext = `The chart illustrates trends and proportions regarding ${topic} from 2000 to 2025. Key features: total output rose consistently from 100 units to 320 units. Category A accounts for 55% of the total, while Category B plateaued at 45%. The most significant shift occurred between 2010 and 2018.`;
         rubrics = [
           { id: 'task_achievement', name: 'Task Achievement', weight: 0.25, maxScore: 9, description: 'Accurate overview, key features selected and illustrated with data/stages.' },
           { id: 'coherence_cohesion', name: 'Coherence and Cohesion', weight: 0.25, maxScore: 9, description: 'Logical paragraph progression, cohesive devices, and data sequencing.' },
@@ -237,7 +239,7 @@ export class AIMockGenerator {
 
       return {
         content: promptStem,
-        type: 'WRITING',
+        type: type === 'WRITING' ? (isTask1 ? 'IELTS_WRITING_TASK_1' : 'IELTS_WRITING_TASK_2') : type,
         difficulty,
         marks: writingMarks,
         data: {
@@ -247,6 +249,7 @@ export class AIMockGenerator {
           promptText: promptStem,
           promptImageUrl,
           stimulusText,
+          aiVisualContext,
           minWords,
           minWordCount: minWords,
           maxWords,

@@ -46,6 +46,10 @@ export const StudentLoginPage: React.FC = () => {
       data-testid="student-login-page-root"
       style={{
         minHeight: '100vh',
+        width: '100%',
+        maxWidth: '100vw',
+        overflowX: 'hidden',
+        boxSizing: 'border-box',
         display: 'flex',
         flexDirection: 'column',
         background: 'var(--bg-color)',
@@ -57,16 +61,21 @@ export const StudentLoginPage: React.FC = () => {
       <header
         style={{
           display: 'flex',
+          flexWrap: 'wrap',
+          gap: '10px',
           justifyContent: 'space-between',
           alignItems: 'center',
-          padding: '16px 28px',
+          padding: '12px 16px',
           borderBottom: '1px solid var(--border-color)',
           background: 'var(--panel-bg)',
+          width: '100%',
+          maxWidth: '100%',
+          boxSizing: 'border-box',
         }}
       >
         <div
           onClick={() => navigate('/')}
-          style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
+          style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', flexShrink: 0 }}
         >
           <div
             style={{
@@ -95,7 +104,7 @@ export const StudentLoginPage: React.FC = () => {
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', maxWidth: '100%' }}>
           <ThemeSwitcher />
           <LanguageSelector />
           <button
@@ -106,10 +115,11 @@ export const StudentLoginPage: React.FC = () => {
               background: 'transparent',
               border: '1px solid var(--border-color)',
               color: 'var(--text-muted)',
-              padding: '6px 12px',
+              padding: '6px 10px',
               borderRadius: '6px',
               fontSize: '12px',
               cursor: 'pointer',
+              whiteSpace: 'nowrap',
             }}
           >
             ← Back to Home
@@ -124,7 +134,10 @@ export const StudentLoginPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '32px 16px',
+          padding: '24px 12px',
+          width: '100%',
+          maxWidth: '100%',
+          boxSizing: 'border-box',
         }}
       >
         <div
@@ -132,9 +145,10 @@ export const StudentLoginPage: React.FC = () => {
             background: 'var(--panel-bg)',
             border: '1px solid var(--border-color)',
             borderRadius: '12px',
-            padding: '36px',
+            padding: '28px 20px',
             width: '100%',
-            maxWidth: '420px',
+            maxWidth: '400px',
+            boxSizing: 'border-box',
             boxShadow: '0 8px 30px rgba(0, 0, 0, 0.25)',
           }}
         >

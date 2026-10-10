@@ -10,6 +10,9 @@ export interface ExamWritingEditorProps {
   placeholder?: string;
   autoSaveIntervalMs?: number;
   onAutoSave?: (text: string) => void;
+  fontSize?: 'sm' | 'md' | 'lg';
+  fullHeight?: boolean;
+  hideHeaderStats?: boolean;
 }
 
 export const ExamWritingEditor: React.FC<ExamWritingEditorProps> = ({
@@ -21,6 +24,9 @@ export const ExamWritingEditor: React.FC<ExamWritingEditorProps> = ({
   placeholder = 'Begin composing your response here...',
   autoSaveIntervalMs = 5000,
   onAutoSave,
+  fontSize = 'md',
+  fullHeight = false,
+  hideHeaderStats = false,
 }) => {
   const { t } = useTranslation();
   const [text, setText] = useState(value);
@@ -30,6 +36,16 @@ export const ExamWritingEditor: React.FC<ExamWritingEditorProps> = ({
   useEffect(() => {
     setText(value);
   }, [value]);
+
+  // Cancel any pending autosave timer on unmount
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+        autoSaveTimerRef.current = null;
+      }
+    };
+  }, []);
 
   const countWords = (str: string): number => {
     const trimmed = str.trim();
@@ -67,6 +83,8 @@ export const ExamWritingEditor: React.FC<ExamWritingEditorProps> = ({
 
   const status = getWordCountStatus();
 
+  const computedFontSize = fontSize === 'sm' ? '14px' : fontSize === 'lg' ? '18px' : '15px';
+
   return (
     <div
       data-testid="exam-writing-editor"
@@ -74,54 +92,57 @@ export const ExamWritingEditor: React.FC<ExamWritingEditorProps> = ({
         display: 'flex',
         flexDirection: 'column',
         gap: '10px',
-        background: 'var(--panel-bg)',
-        border: '1px solid var(--border-color)',
+        background: fullHeight ? 'transparent' : 'var(--panel-bg)',
+        border: fullHeight ? 'none' : '1px solid var(--border-color)',
         borderRadius: '10px',
-        padding: '16px',
+        padding: fullHeight ? '0' : '16px',
+        ...(fullHeight ? { height: '100%', flex: 1, minHeight: 0 } : {}),
       }}
     >
       {/* Editor toolbar / statistics header */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          fontSize: '12px',
-          borderBottom: '1px solid var(--border-color)',
-          paddingBottom: '10px',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div>
-            <strong>{t('word_count', 'Words')}:</strong>{' '}
-            <span data-testid="writing-word-count" style={{ fontWeight: 700, fontSize: '14px', color: status.color }}>
-              {wordCount}
-            </span>{' '}
-            / {minWords}–{maxWords} {t('target_words_range', 'target')}
+      {!hideHeaderStats ? (
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            fontSize: '12px',
+            borderBottom: '1px solid var(--border-color)',
+            paddingBottom: '10px',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div>
+              <strong>{t('word_count', 'Words')}:</strong>{' '}
+              <span data-testid="writing-word-count" style={{ fontWeight: 700, fontSize: '14px', color: status.color }}>
+                {wordCount}
+              </span>{' '}
+              / {minWords}–{maxWords} {t('target_words_range', 'target')}
+            </div>
+            <div style={{ color: 'var(--text-muted)' }}>
+              <strong>{t('chars', 'Chars')}:</strong> {charCount}
+            </div>
+            <span
+              style={{
+                padding: '2px 8px',
+                borderRadius: '12px',
+                fontSize: '11px',
+                fontWeight: 600,
+                background: `${status.color}22`,
+                color: status.color,
+              }}
+            >
+              {status.text}
+            </span>
           </div>
-          <div style={{ color: 'var(--text-muted)' }}>
-            <strong>{t('chars', 'Chars')}:</strong> {charCount}
-          </div>
-          <span
-            style={{
-              padding: '2px 8px',
-              borderRadius: '12px',
-              fontSize: '11px',
-              fontWeight: 600,
-              background: `${status.color}22`,
-              color: status.color,
-            }}
-          >
-            {status.text}
-          </span>
-        </div>
 
-        {lastSaved && (
-          <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-            {t('auto_saved', 'Auto-saved')} at {lastSaved.toLocaleTimeString()}
-          </div>
-        )}
-      </div>
+          {lastSaved && (
+            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+              {t('auto_saved', 'Auto-saved')} at {lastSaved.toLocaleTimeString()}
+            </div>
+          )}
+        </div>
+      ) : null}
 
       {/* Main composition text area */}
       <textarea
@@ -129,21 +150,22 @@ export const ExamWritingEditor: React.FC<ExamWritingEditorProps> = ({
         onChange={handleChange}
         disabled={disabled}
         placeholder={placeholder}
-        rows={16}
+        rows={fullHeight ? undefined : 16}
         data-testid="writing-textarea"
         style={{
           width: '100%',
           boxSizing: 'border-box',
-          background: 'var(--bg-main)',
+          background: 'var(--bg-main, #0b1120)',
           border: '1px solid var(--border-color)',
           borderRadius: '8px',
-          padding: '14px',
+          padding: '16px',
           color: 'var(--text-main)',
-          fontSize: '14px',
-          lineHeight: '1.7',
+          fontSize: computedFontSize,
+          lineHeight: '1.8',
           fontFamily: 'Inter, -apple-system, sans-serif',
-          resize: 'vertical',
+          resize: fullHeight ? 'none' : 'vertical',
           outline: 'none',
+          ...(fullHeight ? { height: '100%', flex: 1, minHeight: '260px' } : {}),
         }}
       />
     </div>

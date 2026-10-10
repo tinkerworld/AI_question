@@ -1,0 +1,68 @@
+[
+  {
+    "name": "strict provider-failure submission",
+    "http": 201,
+    "id": "wrt_eval_01267abff43f545f",
+    "status": "REVIEW_REQUIRED",
+    "band": "Estimated IELTS band -- (Teacher Review Required)",
+    "score": 0,
+    "reviewReasons": [
+      "MOCK_PROVIDER_EXCLUSION_TEACHER_REVIEW_REQUIRED"
+    ]
+  },
+  {
+    "name": "cross-student evaluation read",
+    "http": 403,
+    "message": "Access to another candidate's evaluation is unauthorized"
+  },
+  {
+    "name": "nonexistent question submission",
+    "http": 500,
+    "message": "insert or update on table \"writing_evaluations\" violates foreign key constraint \"writing_evaluations_questionId_fkey\""
+  },
+  {
+    "name": "invalid essay type",
+    "http": 201
+  },
+  {
+    "name": "student mock override",
+    "http": 201,
+    "status": "COMPLETED",
+    "score": 5,
+    "band": "Estimated IELTS band 5.0"
+  },
+  {
+    "name": "teacher out-of-range score validation",
+    "http": 201,
+    "data": {
+      "id": "wrt_rev_317e0f939c7dd06f",
+      "evaluationId": "wrt_eval_01267abff43f545f",
+      "teacherId": "usr_teacher_test",
+      "originalCriteriaScores": {
+        "task_response": 0,
+        "coherence_cohesion": 0,
+        "lexical_resource": 0,
+        "grammatical_range": 0
+      },
+      "correctedCriteriaScores": {
+        "task_response": 99,
+        "coherence_cohesion": 99,
+        "lexical_resource": 99,
+        "grammatical_range": 99
+      },
+      "originalOverallScore": 0,
+      "correctedOverallScore": 9,
+      "teacherNotes": "E2E invalid score validation",
+      "isApproved": true,
+      "createdAt": "2026-10-02T12:12:58.175Z"
+    }
+  },
+  {
+    "name": "student denied course creation",
+    "http": 403
+  },
+  {
+    "name": "student denied user listing",
+    "http": 403
+  }
+]
