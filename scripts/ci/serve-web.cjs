@@ -37,10 +37,10 @@ app.use((req, res, next) => {
   req.pipe(upstream);
 });
 const dist = path.join(root, 'Exam/apps/web/dist');
-app.use(express.static(dist, { dotfiles: 'deny', maxAge: 0, index: false }));
+app.use(express.static(dist, { dotfiles: 'allow', maxAge: 0, index: 'index.html' }));
 app.use((req, res) => {
   if (req.method !== 'GET' || path.extname(req.path)) return res.sendStatus(404);
-  res.sendFile(path.join(dist, 'index.html'));
+  res.sendFile('index.html', { root: dist, dotfiles: 'allow' });
 });
 const server = app.listen(webPort, '127.0.0.1');
 for (const signal of ['SIGTERM', 'SIGINT']) process.on(signal, () => {
