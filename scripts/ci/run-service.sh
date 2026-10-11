@@ -8,7 +8,10 @@ source /etc/examos/ports.env
 case "${1:-}" in
   api)
     cd "$ROOT/Exam"
-    export PORT="$API_PORT" PG_DATA_DIR="$ROOT/postgres-data"
+    DATA_PATH="$ROOT/postgres-data"
+    [[ -e "$DATA_PATH" ]] || DATA_PATH="$ROOT/Exam/postgres-data"
+    REAL_DATA=$(readlink -f "$DATA_PATH" 2>/dev/null || echo "$DATA_PATH")
+    export PORT="$API_PORT" PG_DATA_DIR="$REAL_DATA"
     if [[ -f "$ROOT/.cicd-release.json" ]]; then
       EXAMOS_COMMIT=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["commit"])' "$ROOT/.cicd-release.json")
       export EXAMOS_COMMIT
