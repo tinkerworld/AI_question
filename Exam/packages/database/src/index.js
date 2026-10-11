@@ -46,7 +46,13 @@ function getDbPath() {
         if (process.env.PG_DATA_DIR === 'memory://' || process.env.PG_DATA_DIR === ':memory:') {
             return process.env.PG_DATA_DIR;
         }
-        return path.resolve(process.env.PG_DATA_DIR);
+        const resolved = path.resolve(process.env.PG_DATA_DIR);
+        try {
+            if (fs.existsSync(resolved)) {
+                return fs.realpathSync(resolved);
+            }
+        } catch {}
+        return resolved;
     }
     // Default to in-memory for unit and integration tests if no explicit PG_DATA_DIR is provided
     if (process.env.NODE_ENV === 'test') {
@@ -59,7 +65,11 @@ function getDbPath() {
             if (!fs.existsSync(targetDir)) {
                 fs.mkdirSync(targetDir, { recursive: true });
             }
-            return targetDir;
+            try {
+                return fs.realpathSync(targetDir);
+            } catch {
+                return targetDir;
+            }
         }
         const parent = path.dirname(cur);
         if (parent === cur)
@@ -70,7 +80,11 @@ function getDbPath() {
     if (!fs.existsSync(fallback)) {
         fs.mkdirSync(fallback, { recursive: true });
     }
-    return fallback;
+    try {
+        return fs.realpathSync(fallback);
+    } catch {
+        return fallback;
+    }
 }
 let _pgDbInstance = null;
 let _initPromise = null;
