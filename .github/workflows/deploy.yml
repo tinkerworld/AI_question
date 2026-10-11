@@ -4,11 +4,11 @@ on:
   workflow_run:
     workflows: [ExamOS CI]
     types: [completed]
-    branches: [main]
+    branches: [Release_2026, main]
   workflow_dispatch:
     inputs:
       ci_run_id:
-        description: Successful ExamOS CI run ID for the current main commit
+        description: Successful ExamOS CI run ID for the deployment commit
         required: true
         type: string
 
@@ -33,6 +33,7 @@ jobs:
       sha: ${{ steps.verify.outputs.sha }}
       run_id: ${{ steps.verify.outputs.run_id }}
       attempt: ${{ steps.verify.outputs.attempt }}
+      branch: ${{ steps.verify.outputs.branch }}
     steps:
       - name: Verify CI provenance through GitHub API
         id: verify
@@ -47,12 +48,13 @@ jobs:
           set -euo pipefail
           [[ "$REQUESTED_RUN" =~ ^[0-9]+$ ]]
           if [[ "$EVENT_NAME" == workflow_dispatch ]]; then
-            [[ "$DISPATCH_REF" == refs/heads/main ]]
+            [[ "$DISPATCH_REF" == refs/heads/Release_2026 || "$DISPATCH_REF" == refs/heads/main ]]
           fi
           gh api "repos/$GH_REPO/actions/runs/$REQUESTED_RUN" > "$RUNNER_TEMP/ci-run.json"
           WORKFLOW_ID=$(gh api "repos/$GH_REPO/actions/workflows/ci.yml" --jq .id)
-          MAIN_SHA=$(gh api "repos/$GH_REPO/git/ref/heads/main" --jq .object.sha)
-          export WORKFLOW_ID MAIN_SHA
+          TARGET_BRANCH=$(python3 -c "import json, os; print(json.load(open(os.environ['RUNNER_TEMP'] + '/ci-run.json'))['head_branch'])")
+          TARGET_SHA=$(gh api "repos/$GH_REPO/git/ref/heads/$TARGET_BRANCH" --jq .object.sha)
+          export WORKFLOW_ID TARGET_SHA TARGET_BRANCH
           python3 - <<'PY'
           import json, os
           from pathlib import Path
@@ -60,10 +62,10 @@ jobs:
           assert run['conclusion'] == 'success' and run['status'] == 'completed'
           assert run['workflow_id'] == int(os.environ['WORKFLOW_ID'])
           assert run['head_repository']['full_name'] == os.environ['GH_REPO']
-          assert run['head_branch'] == 'main' and run['event'] in ['push', 'workflow_dispatch']
-          assert run['head_sha'] == os.environ['MAIN_SHA'], 'A newer main commit exists; validate it first'
+          assert run['head_branch'] in ['Release_2026', 'main'] and run['event'] in ['push', 'workflow_dispatch']
+          assert run['head_sha'] == os.environ['TARGET_SHA'], f'A newer {os.environ["TARGET_BRANCH"]} commit exists; validate it first'
           with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
-              output.write(f"sha={run['head_sha']}\nrun_id={run['id']}\nattempt={run['run_attempt']}\n")
+              output.write(f"sha={run['head_sha']}\nrun_id={run['id']}\nattempt={run['run_attempt']}\nbranch={run['head_branch']}\n")
           PY
 
   deploy:
@@ -85,13 +87,14 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           APPROVED_SHA: ${{ needs.verify.outputs.sha }}
+          TARGET_BRANCH: ${{ needs.verify.outputs.branch }}
         run: |
           python3 - <<'PY'
           import json, os, urllib.request
-          url = 'https://api.github.com/repos/' + os.environ['GH_REPO'] + '/git/ref/heads/main'
+          url = 'https://api.github.com/repos/' + os.environ['GH_REPO'] + '/git/ref/heads/' + os.environ['TARGET_BRANCH']
           request = urllib.request.Request(url, headers={'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json'})
           with urllib.request.urlopen(request, timeout=15) as response:
-              assert json.load(response)['object']['sha'] == os.environ['APPROVED_SHA'], 'Main changed; use the newest successful CI run'
+              assert json.load(response)['object']['sha'] == os.environ['APPROVED_SHA'], f'{os.environ["TARGET_BRANCH"]} changed; use the newest successful CI run'
           PY
       - name: Run installed deployment controller
         env:
