@@ -49,4 +49,6 @@ agyssessionid.txt
 .pids/
 .ports.env
 logs/
+# Backend tester execution logs
+tools/backend-tester/logs/
 

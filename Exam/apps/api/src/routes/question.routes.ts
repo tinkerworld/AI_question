@@ -40,7 +40,7 @@ const listQuestionsQuerySchema = z.object({
   subjectId: z.string().max(128).regex(identifierRegex, 'Invalid subject identifier format').optional(),
   syllabusNodeId: z.string().max(128).regex(identifierRegex, 'Invalid syllabus node identifier format').optional(),
   difficulty: z.enum(['EASY', 'MEDIUM', 'HARD']).optional(),
-  type: z.string().max(32).regex(/^[a-zA-Z_]+$/, 'Invalid question type format').optional(),
+  type: z.string().max(32).regex(/^[a-zA-Z0-9_]+$/, 'Invalid question type format').optional(),
   status: z.enum(['DRAFT', 'REVIEW', 'PUBLISHED', 'ARCHIVED']).optional(),
   limit: z.string().regex(/^\d+$/).optional(),
 });
@@ -165,8 +165,25 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
       params.push(difficulty);
     }
     if (type) {
-      whereClause += ` AND "type" = $${paramIdx++}`;
-      params.push((type as string).toUpperCase());
+      const typeUpper = (type as string).toUpperCase();
+      if (typeUpper === 'IELTS_WRITING_TASK_1' || typeUpper === 'WRITING_TASK_1') {
+        whereClause += ` AND ("type" = 'IELTS_WRITING_TASK_1' OR ("type" = 'WRITING' AND (
+          COALESCE("data"::text, '') LIKE '%IELTS_TASK_1%' OR 
+          COALESCE("data"::text, '') LIKE '%TASK_1%' OR 
+          "content" ILIKE '%task 1%'
+        )))`;
+      } else if (typeUpper === 'IELTS_WRITING_TASK_2' || typeUpper === 'WRITING_TASK_2') {
+        whereClause += ` AND ("type" = 'IELTS_WRITING_TASK_2' OR ("type" = 'WRITING' AND (
+          COALESCE("data"::text, '') LIKE '%IELTS_TASK_2%' OR 
+          COALESCE("data"::text, '') LIKE '%TASK_2%' OR 
+          "content" ILIKE '%task 2%'
+        )))`;
+      } else if (typeUpper === 'WRITING') {
+        whereClause += ` AND ("type" IN ('WRITING', 'IELTS_WRITING_TASK_1', 'IELTS_WRITING_TASK_2') OR "type" LIKE 'WRITING%')`;
+      } else {
+        whereClause += ` AND "type" = $${paramIdx++}`;
+        params.push(typeUpper);
+      }
     }
     if (status) {
       whereClause += ` AND "status" = $${paramIdx++}`;
@@ -201,31 +218,53 @@ router.post(
   auditLog('CREATE', 'question'),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { type, content, data, difficulty, marks, status, courseId, subjectId, syllabusNodeId } = req.body;
+      const { id: customId, type, content, data, difficulty, marks, status, courseId, subjectId, syllabusNodeId } = req.body;
 
       const typeKey = type.toUpperCase();
-      const qId = `q_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+      const qId = customId || `q_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
       const payloadData = typeof data === 'object' ? JSON.stringify(data) : data;
 
-      await pgDb.query(
-        `INSERT INTO "questions" (
-          "id", "type", "content", "data", "difficulty", "marks", "status", "version",
-          "courseId", "subjectId", "syllabusNodeId", "createdById", "createdAt", "updatedAt"
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, 1, $8, $9, $10, $11, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-        [
-          qId,
-          typeKey,
-          content,
-          payloadData,
-          difficulty || 'MEDIUM',
-          marks || 1.0,
-          status || 'DRAFT',
-          courseId || null,
-          subjectId || null,
-          syllabusNodeId || null,
-          req.user!.userId,
-        ]
-      );
+      const existing = await pgDb.query(`SELECT id FROM "questions" WHERE "id" = $1`, [qId]);
+      if (existing.rows.length > 0) {
+        await pgDb.query(
+          `UPDATE "questions" SET
+             "type" = $1, "content" = $2, "data" = $3, "difficulty" = $4, "marks" = $5,
+             "status" = $6, "courseId" = $7, "subjectId" = $8, "syllabusNodeId" = $9, "updatedAt" = CURRENT_TIMESTAMP
+           WHERE "id" = $10`,
+          [
+            typeKey,
+            content,
+            payloadData,
+            difficulty || 'MEDIUM',
+            marks || 1.0,
+            status || 'DRAFT',
+            courseId || null,
+            subjectId || null,
+            syllabusNodeId || null,
+            qId,
+          ]
+        );
+      } else {
+        await pgDb.query(
+          `INSERT INTO "questions" (
+            "id", "type", "content", "data", "difficulty", "marks", "status", "version",
+            "courseId", "subjectId", "syllabusNodeId", "createdById", "createdAt", "updatedAt"
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, 1, $8, $9, $10, $11, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+          [
+            qId,
+            typeKey,
+            content,
+            payloadData,
+            difficulty || 'MEDIUM',
+            marks || 1.0,
+            status || 'DRAFT',
+            courseId || null,
+            subjectId || null,
+            syllabusNodeId || null,
+            req.user!.userId,
+          ]
+        );
+      }
 
       const vId = `qv_${crypto.randomBytes(8).toString('hex')}`;
       await pgDb.query(

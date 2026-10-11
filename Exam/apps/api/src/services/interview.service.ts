@@ -1459,6 +1459,57 @@ Output JSON only.`;
   }
 
   /**
+   * Platform services fleet status check (microservice, cloudflared, examos-api, examos-web, postgres).
+   */
+  static async getPlatformServicesStatus() {
+    return await VoiceMicroserviceClient.getInstance().getServicesStatus();
+  }
+
+  /**
+   * Fetches live logs from microservice or components.
+   */
+  static async getPlatformLogs(source?: string, lines?: number, filter?: string) {
+    return await VoiceMicroserviceClient.getInstance().getLogs({ source, lines, filter });
+  }
+
+  /**
+   * Automatic Candidate Pacing & WPM Speech Calibration.
+   */
+  static async calibrateSpeech(params: {
+    audio_base64: string;
+    audio_format?: string;
+    language?: string;
+  }) {
+    return await VoiceMicroserviceClient.getInstance().calibrateSpeech(params);
+  }
+
+  /**
+   * Creates a new knowledge workspace in the microservice.
+   */
+  static async createWorkspace(
+    name: string,
+    subject: string = 'General',
+    description: string = '',
+    topics: string[] = []
+  ) {
+    return await VoiceMicroserviceClient.getInstance().createWorkspace(name, subject, description, topics);
+  }
+
+  /**
+   * Deletes a knowledge workspace from the microservice.
+   */
+  static async deleteWorkspace(workspaceId: string) {
+    return await VoiceMicroserviceClient.getInstance().deleteWorkspace(workspaceId);
+  }
+
+  /**
+   * Gets version history for a knowledge workspace.
+   */
+  static async getWorkspaceVersions(workspaceId: string) {
+    return await VoiceMicroserviceClient.getInstance().getWorkspaceVersions(workspaceId);
+  }
+
+  /**
    * Skips the current turn in the microservice interview session.
    */
   static async skipTurn(
@@ -1524,6 +1575,61 @@ Output JSON only.`;
       }
     }
     return await InterviewService.getSession(sessionId, user);
+  }
+
+  /**
+   * Updates examiner voice persona and speaking rate mid-interview.
+   */
+  static async updateSessionVoice(
+    sessionId: string,
+    voicePersona: string,
+    speedRate?: number,
+    user?: { userId: string; roles?: string[] }
+  ): Promise<any> {
+    await this.ensureSchema();
+    const db = pgDb;
+    const sessRes = await db.query(`SELECT * FROM "interview_sessions" WHERE "id" = $1`, [sessionId]);
+    if (sessRes.rows.length === 0) throw new AppError(404, 'NOT_FOUND', 'Session not found');
+    await db.query(
+      `UPDATE "interview_sessions" SET "voicePersona" = $1, "updatedAt" = CURRENT_TIMESTAMP WHERE "id" = $2`,
+      [voicePersona, sessionId]
+    );
+    const row = sessRes.rows[0] as any;
+    if (row.remoteSessionId) {
+      try {
+        await VoiceMicroserviceClient.getInstance().updateRemoteVoice(
+          row.remoteSessionId,
+          voicePersona,
+          speedRate ?? 1.0
+        );
+      } catch (err) {
+        console.warn('Microservice voice profile update warning:', err);
+      }
+    }
+    return { success: true, sessionId, voicePersona, speedRate };
+  }
+
+  /**
+   * Updates candidate full name for conversational greetings and evaluation reports.
+   */
+  static async updateSessionCandidateName(
+    sessionId: string,
+    candidateName: string,
+    user?: { userId: string; roles?: string[] }
+  ): Promise<any> {
+    await this.ensureSchema();
+    const db = pgDb;
+    const sessRes = await db.query(`SELECT * FROM "interview_sessions" WHERE "id" = $1`, [sessionId]);
+    if (sessRes.rows.length === 0) throw new AppError(404, 'NOT_FOUND', 'Session not found');
+    const row = sessRes.rows[0] as any;
+    if (row.remoteSessionId) {
+      try {
+        await VoiceMicroserviceClient.getInstance().updateCandidateName(row.remoteSessionId, candidateName);
+      } catch (err) {
+        console.warn('Microservice candidate name update warning:', err);
+      }
+    }
+    return { success: true, sessionId, candidateName };
   }
 
   /**
@@ -2024,7 +2130,7 @@ Output JSON only.`;
    */
   static async startInterviewSession(
     dto: StartInterviewDTO,
-    user: { userId: string; roles?: string[] }
+    user: { userId: string; email?: string; roles?: string[] }
   ): Promise<{ session: InterviewSessionDTO; initialTurn: InterviewTurnDTO }> {
     await InterviewService.ensureSchema();
     const db = pgDb;
@@ -3452,7 +3558,10 @@ Output JSON only.`;
           const audioUrl = microserviceClient.getAudioStreamUrl(sessionRow.remoteSessionId, 'question', aiMessage, aiTurnNumber);
           const evidenceCites = remoteState.current_turn.evidence_cites || [];
           const expectedConcepts = remoteState.current_turn.expected_concepts || [];
-          const evaluationData = remoteState.latest_eval || null;
+          const conversationalPrompt = remoteState.current_turn.conversational_prompt || null;
+          const evaluationData = remoteState.latest_eval
+            ? { ...remoteState.latest_eval, conversational_prompt: conversationalPrompt }
+            : (conversationalPrompt ? { conversational_prompt: conversationalPrompt } : null);
 
           await db.query(
             `INSERT INTO "interview_turns" (
@@ -3492,6 +3601,9 @@ Output JSON only.`;
             providerType: 'CLOUD',
             createdAt: new Date().toISOString(),
           };
+          if (conversationalPrompt) {
+            (aiTurn as any).conversational_prompt = conversationalPrompt;
+          }
 
           const updatedSession = await InterviewService.getSession(sessionId, user);
           return {

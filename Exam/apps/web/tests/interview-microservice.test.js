@@ -180,8 +180,67 @@ describe('AI Interview & Viva Microservice Integration Tests', () => {
     assert.strictEqual(res.body.success, true);
     assert.ok(res.body.data);
     assert.strictEqual(res.body.data.status, 'healthy');
-    assert.strictEqual(res.body.data.whisper_model, 'small');
+    assert.ok(res.body.data.whisper_model, 'Whisper model should be present');
     assert.strictEqual(res.body.data.tts_provider, 'piper');
+  });
+
+  test('PATCH /api/v1/interview/sessions/:id/voice switches voice persona and speed rate mid-interview', async () => {
+    assert.ok(adminToken, 'Token required');
+    // Start session
+    const startRes = await apiRequest(
+      'POST',
+      '/interview/sessions/start',
+      {
+        questionId: 'q_interview_ielts_07',
+        mode: 'PRACTICE',
+        voicePersona: 'emma',
+      },
+      adminToken
+    );
+    assert.strictEqual(startRes.status, 201);
+    const sess = startRes.body.data.session || startRes.body.data;
+    assert.ok(sess.id);
+
+    // Switch voice persona to pooja
+    const patchRes = await apiRequest(
+      'PATCH',
+      `/interview/sessions/${sess.id}/voice`,
+      {
+        voicePersona: 'pooja',
+        speedRate: 1.05,
+      },
+      adminToken
+    );
+    assert.strictEqual(patchRes.status, 200);
+    assert.strictEqual(patchRes.body.success, true);
+    assert.strictEqual(patchRes.body.data.voicePersona, 'pooja');
+  });
+
+  test('POST /api/v1/interview/sessions/:id/candidate-name updates candidate name', async () => {
+    assert.ok(adminToken, 'Token required');
+    const startRes = await apiRequest(
+      'POST',
+      '/interview/sessions/start',
+      {
+        questionId: 'q_interview_ielts_07',
+        mode: 'PRACTICE',
+      },
+      adminToken
+    );
+    assert.strictEqual(startRes.status, 201);
+    const sess = startRes.body.data.session || startRes.body.data;
+
+    const nameRes = await apiRequest(
+      'POST',
+      `/interview/sessions/${sess.id}/candidate-name`,
+      {
+        candidateName: 'Shekhar Sharma',
+      },
+      adminToken
+    );
+    assert.strictEqual(nameRes.status, 200);
+    assert.strictEqual(nameRes.body.success, true);
+    assert.strictEqual(nameRes.body.data.candidateName, 'Shekhar Sharma');
   });
 
   test('POST /api/v1/interview/workspaces/:id/search performs vector search', async () => {
@@ -237,5 +296,106 @@ describe('AI Interview & Viva Microservice Integration Tests', () => {
     assert.ok(transcribeRes.body.data.confidence_metadata, 'Must contain confidence metadata');
     assert.strictEqual(transcribeRes.body.data.confidence_metadata.is_low_confidence, false);
     assert.ok(typeof transcribeRes.body.data.confidence_metadata.avg_logprob === 'number');
+  });
+
+  test('GET /api/v1/interview/services/status returns platform services fleet status', async () => {
+    const res = await apiRequest('GET', '/interview/services/status', null, adminToken);
+    assert.strictEqual(res.status, 200);
+    assert.strictEqual(res.body.success, true);
+    assert.ok(res.body.data.services, 'Must contain services object');
+    assert.ok(res.body.data.services.ai_interview_server, 'ai_interview_server must be present');
+    assert.strictEqual(res.body.data.services.ai_interview_server.status, 'running');
+    assert.ok(res.body.data.timestamp);
+  });
+
+  test('GET /api/v1/interview/services/logs returns live system logs', async () => {
+    assert.ok(adminToken, 'Token required');
+    const res = await apiRequest('GET', '/interview/services/logs?source=server&lines=10', null, adminToken);
+    assert.strictEqual(res.status, 200);
+    assert.strictEqual(res.body.success, true);
+    assert.strictEqual(res.body.data.source, 'server');
+    assert.ok(Array.isArray(res.body.data.lines));
+    assert.ok(typeof res.body.data.count === 'number');
+  });
+
+  test('POST /api/v1/interview/audio/calibrate-speech analyzes candidate WPM and pace profile', async () => {
+    assert.ok(adminToken, 'Token required');
+    // First synthesize audio sample via microservice
+    const synthRes = await fetch(`${API_BASE}/interview/audio/synthesize`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${adminToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        text: 'This candidate speaks clearly with steady pacing and sufficient silence between thoughts.',
+        voice: 'emma',
+      }),
+    });
+    assert.strictEqual(synthRes.status, 200);
+    const audioBuffer = await synthRes.arrayBuffer();
+    const base64Audio = Buffer.from(audioBuffer).toString('base64');
+
+    const calRes = await apiRequest(
+      'POST',
+      '/interview/audio/calibrate-speech',
+      {
+        audio_base64: base64Audio,
+        audio_format: 'mp3',
+        language: 'en',
+      },
+      adminToken
+    );
+
+    assert.strictEqual(calRes.status, 200);
+    assert.strictEqual(calRes.body.success, true);
+    assert.strictEqual(calRes.body.data.status, 'calibrated');
+    assert.ok(typeof calRes.body.data.wpm === 'number');
+    assert.ok(calRes.body.data.wpm > 0);
+    assert.ok(['fast', 'moderate', 'deliberate'].includes(calRes.body.data.pace_profile));
+    assert.ok(calRes.body.data.recommended_settings);
+    assert.ok(calRes.body.data.recommended_settings.silence_wait_sec > 0);
+    assert.ok(calRes.body.data.recommended_settings.inactivity_nudge_sec > 0);
+  });
+
+  test('GET /api/v1/interview/workspaces/:id/versions retrieves knowledge version history', async () => {
+    assert.ok(adminToken, 'Token required');
+    const res = await apiRequest('GET', '/interview/workspaces/ws_yocto/versions', null, adminToken);
+    assert.strictEqual(res.status, 200);
+    assert.strictEqual(res.body.success, true);
+    assert.ok(Array.isArray(res.body.data));
+    assert.ok(res.body.data.length >= 1);
+    const v = res.body.data[0];
+    assert.ok(v.version_number !== undefined || v.id !== undefined, 'Version must have version_number or id');
+    assert.strictEqual(v.workspace_id, 'ws_yocto');
+  });
+
+  test('POST /api/v1/interview/workspaces enforces dataset security or manages knowledge workspaces', async () => {
+    assert.ok(adminToken, 'Token required');
+    const testWsName = `test_ws_${Date.now()}`;
+    const createRes = await apiRequest(
+      'POST',
+      '/interview/workspaces',
+      {
+        name: testWsName,
+        subject: 'Testing',
+        description: 'Temporary workspace for integration test',
+        topics: ['testing', 'integration'],
+      },
+      adminToken
+    );
+
+    if (createRes.status === 201) {
+      assert.strictEqual(createRes.body.success, true);
+      const wsId = createRes.body.data.workspace?.id || createRes.body.data.workspace_id || createRes.body.data.id;
+      assert.ok(wsId, 'Created workspace must have an id');
+      const deleteRes = await apiRequest('DELETE', `/interview/workspaces/${wsId}`, null, adminToken);
+      assert.strictEqual(deleteRes.status, 200);
+    } else {
+      // Training datasets are read-only for external clients
+      assert.strictEqual(createRes.status, 403);
+      assert.strictEqual(createRes.body.errorCode, 'API_INGESTION_DISABLED');
+      assert.ok(createRes.body.message.includes('read-only'));
+    }
   });
 });

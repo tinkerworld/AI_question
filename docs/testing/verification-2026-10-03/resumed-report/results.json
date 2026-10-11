@@ -1,0 +1,1039 @@
+{
+  "config": {
+    "argv": [
+      "/home/ubuntu/.nvm/versions/node/v24.16.0/bin/node",
+      "/home/ubuntu/exam_shekhar/AI_question/tools/e2e-tester/node_modules/.bin/playwright",
+      "test",
+      "--config",
+      "/tmp/examos-reverify-pPUolh/resumed.config.cjs"
+    ],
+    "configFile": "/tmp/examos-reverify-pPUolh/resumed.config.cjs",
+    "rootDir": "/tmp/examos-reverify-pPUolh/focused",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/tmp/examos-reverify-pPUolh/resumed-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/tmp/examos-reverify-pPUolh/focused",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 45000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "./resumed-report/results.json"
+        }
+      ],
+      [
+        "html",
+        {
+          "open": "never",
+          "outputFolder": "./resumed-report/html"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.62.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "current.spec.ts",
+      "file": "current.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "public landing links to student login",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1205,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T05:26:31.026Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e16f9ddfc2380dc9fa32-9915a716b7764ecd19ca",
+          "file": "current.spec.ts",
+          "line": 7,
+          "column": 5
+        },
+        {
+          "title": "admin current login reaches dashboard",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1318,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T05:26:32.359Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e16f9ddfc2380dc9fa32-627166dccedf97011cca",
+          "file": "current.spec.ts",
+          "line": 8,
+          "column": 62
+        },
+        {
+          "title": "teacher current login reaches dashboard",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1222,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T05:26:33.695Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e16f9ddfc2380dc9fa32-f4bf070ce797c81b1879",
+          "file": "current.spec.ts",
+          "line": 8,
+          "column": 62
+        },
+        {
+          "title": "student current login reaches dashboard",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1201,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T05:26:34.938Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e16f9ddfc2380dc9fa32-09a37895585434832934",
+          "file": "current.spec.ts",
+          "line": 8,
+          "column": 62
+        },
+        {
+          "title": "invalid student login shows error",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1050,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T05:26:36.154Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e16f9ddfc2380dc9fa32-54502089ea646e6546b2",
+          "file": "current.spec.ts",
+          "line": 9,
+          "column": 5
+        },
+        {
+          "title": "mobile login fits 390px viewport",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 997,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T05:26:37.214Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e16f9ddfc2380dc9fa32-9f4b94d75e6b492c5cbb",
+          "file": "current.spec.ts",
+          "line": 10,
+          "column": 5
+        },
+        {
+          "title": "writing Task 1 opens image, counts words, and submits",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1718,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T05:26:38.221Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e16f9ddfc2380dc9fa32-353e98424dc1005b5af4",
+          "file": "current.spec.ts",
+          "line": 11,
+          "column": 5
+        },
+        {
+          "title": "writing draft survives refresh",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 8026,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T05:26:39.950Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e16f9ddfc2380dc9fa32-15eadc46ef424f9b1a53",
+          "file": "current.spec.ts",
+          "line": 23,
+          "column": 5
+        },
+        {
+          "title": "student cannot access staff reviews and export",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 126,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T05:26:47.986Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e16f9ddfc2380dc9fa32-cbd85531c50291fdcdf5",
+          "file": "current.spec.ts",
+          "line": 24,
+          "column": 5
+        },
+        {
+          "title": "student cannot enable mock grading through request body",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 108,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T05:26:48.121Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "evaluation-response",
+                      "contentType": "application/json",
+                      "body": "ewogICJzdWNjZXNzIjogdHJ1ZSwKICAiZGF0YSI6IHsKICAgICJpZCI6ICJ3cnRfZXZhbF85Yzc5OTg2ODA0OWEyZWY5IiwKICAgICJzZXNzaW9uSWQiOiBudWxsLAogICAgInRhc2tUeXBlIjogIlRBU0tfMiIsCiAgICAib3ZlcmFsbFNjb3JlIjogMCwKICAgICJyYXdBdmVyYWdlU2NvcmUiOiAwLAogICAgIm1heFNjb3JlIjogOSwKICAgICJiYW5kIjogIjAuMCIsCiAgICAiYmFuZExhYmVsIjogIkVzdGltYXRlZCBJRUxUUyBiYW5kIC0tIChUZWFjaGVyIFJldmlldyBSZXF1aXJlZCkiLAogICAgIndvcmRDb3VudCI6IDI4MCwKICAgICJ3b3JkQ291bnRDb21wbGlhbnQiOiB0cnVlLAogICAgInNlbnRlbmNlQ291bnQiOiA3MCwKICAgICJwYXJhZ3JhcGhDb3VudCI6IDEsCiAgICAidGV4dFN0YXRzIjogewogICAgICAid29yZENvdW50IjogMjgwLAogICAgICAic2VudGVuY2VDb3VudCI6IDcwLAogICAgICAibGV4aWNhbERlbnNpdHkiOiAxLAogICAgICAicGFyYWdyYXBoQ291bnQiOiAxLAogICAgICAiYXZnU2VudGVuY2VMZW5ndGgiOiA0LAogICAgICAidm9jYWJ1bGFyeURpdmVyc2l0eSI6IDAuMDE0CiAgICB9LAogICAgInN0YXR1cyI6ICJSRVZJRVdfUkVRVUlSRUQiLAogICAgInJlbGlhYmlsaXR5U3RhdHVzIjogIkZMQUdHRURfRk9SX1JFVklFVyIsCiAgICAicmV2aWV3UmVhc29ucyI6IFsKICAgICAgIk1PQ0tfUFJPVklERVJfRVhDTFVTSU9OX1RFQUNIRVJfUkVWSUVXX1JFUVVJUkVEIgogICAgXSwKICAgICJjcml0ZXJpYVNjb3JlcyI6IFsKICAgICAgewogICAgICAgICJpZCI6ICJ0YXNrX3Jlc3BvbnNlIiwKICAgICAgICAibmFtZSI6ICJUYXNrIFJlc3BvbnNlIiwKICAgICAgICAic2NvcmUiOiAwLAogICAgICAgICJtYXhTY29yZSI6IDksCiAgICAgICAgInJhd1Njb3JlIjogMCwKICAgICAgICAiZXhwbGFuYXRpb24iOiAiTW9jayBwcm92aWRlciBvdXRwdXQgZXhjbHVkZWQuIFBlbmRpbmcgY2VydGlmaWVkIGh1bWFuIHRlYWNoZXIgYXNzZXNzbWVudC4iLAogICAgICAgICJyZXF1aXJlc1JldmlldyI6IHRydWUsCiAgICAgICAgIndoYXRXb3VsZEltcHJvdmUiOiAiU3VibWlzc2lvbiB3aWxsIGJlIHJldmlld2VkIGJ5IGFuIGF1dGhvcml6ZWQgdGVhY2hlci4iLAogICAgICAgICJzcGVjaWZpY1dlYWtuZXNzZXMiOiBbXSwKICAgICAgICAic3VwcG9ydGluZ1F1b3RhdGlvbnMiOiBbXQogICAgICB9LAogICAgICB7CiAgICAgICAgImlkIjogImNvaGVyZW5jZV9jb2hlc2lvbiIsCiAgICAgICAgIm5hbWUiOiAiQ29oZXJlbmNlIGFuZCBDb2hlc2lvbiIsCiAgICAgICAgInNjb3JlIjogMCwKICAgICAgICAibWF4U2NvcmUiOiA5LAogICAgICAgICJyYXdTY29yZSI6IDAsCiAgICAgICAgImV4cGxhbmF0aW9uIjogIk1vY2sgcHJvdmlkZXIgb3V0cHV0IGV4Y2x1ZGVkLiBQZW5kaW5nIGNlcnRpZmllZCBodW1hbiB0ZWFjaGVyIGFzc2Vzc21lbnQuIiwKICAgICAgICAicmVxdWlyZXNSZXZpZXciOiB0cnVlLAogICAgICAgICJ3aGF0V291bGRJbXByb3ZlIjogIlN1Ym1pc3Npb24gd2lsbCBiZSByZXZpZXdlZCBieSBhbiBhdXRob3JpemVkIHRlYWNoZXIuIiwKICAgICAgICAic3BlY2lmaWNXZWFrbmVzc2VzIjogW10sCiAgICAgICAgInN1cHBvcnRpbmdRdW90YXRpb25zIjogW10KICAgICAgfSwKICAgICAgewogICAgICAgICJpZCI6ICJsZXhpY2FsX3Jlc291cmNlIiwKICAgICAgICAibmFtZSI6ICJMZXhpY2FsIFJlc291cmNlIiwKICAgICAgICAic2NvcmUiOiAwLAogICAgICAgICJtYXhTY29yZSI6IDksCiAgICAgICAgInJhd1Njb3JlIjogMCwKICAgICAgICAiZXhwbGFuYXRpb24iOiAiTW9jayBwcm92aWRlciBvdXRwdXQgZXhjbHVkZWQuIFBlbmRpbmcgY2VydGlmaWVkIGh1bWFuIHRlYWNoZXIgYXNzZXNzbWVudC4iLAogICAgICAgICJyZXF1aXJlc1JldmlldyI6IHRydWUsCiAgICAgICAgIndoYXRXb3VsZEltcHJvdmUiOiAiU3VibWlzc2lvbiB3aWxsIGJlIHJldmlld2VkIGJ5IGFuIGF1dGhvcml6ZWQgdGVhY2hlci4iLAogICAgICAgICJzcGVjaWZpY1dlYWtuZXNzZXMiOiBbXSwKICAgICAgICAic3VwcG9ydGluZ1F1b3RhdGlvbnMiOiBbXQogICAgICB9LAogICAgICB7CiAgICAgICAgImlkIjogImdyYW1tYXRpY2FsX3JhbmdlIiwKICAgICAgICAibmFtZSI6ICJHcmFtbWF0aWNhbCBSYW5nZSBhbmQgQWNjdXJhY3kiLAogICAgICAgICJzY29yZSI6IDAsCiAgICAgICAgIm1heFNjb3JlIjogOSwKICAgICAgICAicmF3U2NvcmUiOiAwLAogICAgICAgICJleHBsYW5hdGlvbiI6ICJNb2NrIHByb3ZpZGVyIG91dHB1dCBleGNsdWRlZC4gUGVuZGluZyBjZXJ0aWZpZWQgaHVtYW4gdGVhY2hlciBhc3Nlc3NtZW50LiIsCiAgICAgICAgInJlcXVpcmVzUmV2aWV3IjogdHJ1ZSwKICAgICAgICAid2hhdFdvdWxkSW1wcm92ZSI6ICJTdWJtaXNzaW9uIHdpbGwgYmUgcmV2aWV3ZWQgYnkgYW4gYXV0aG9yaXplZCB0ZWFjaGVyLiIsCiAgICAgICAgInNwZWNpZmljV2Vha25lc3NlcyI6IFtdLAogICAgICAgICJzdXBwb3J0aW5nUXVvdGF0aW9ucyI6IFtdCiAgICAgIH0KICAgIF0sCiAgICAic3RyZW5ndGhzIjogW10sCiAgICAicHJpb3JpdHlJbXByb3ZlbWVudHMiOiBbCiAgICAgICJBd2FpdGluZyB0ZWFjaGVyIGZlZWRiYWNrIGFuZCBiYW5kIGNvbmZpcm1hdGlvbi4iCiAgICBdLAogICAgImdyYW1tYXJGZWVkYmFjayI6IFtdLAogICAgImdyYW1tYXJDb3JyZWN0aW9ucyI6IFtdLAogICAgInZvY2FidWxhcnlTdWdnZXN0aW9ucyI6IFtdLAogICAgIm92ZXJhbGxGZWVkYmFjayI6ICJBdXRvbWF0ZWQgbW9jayBzY29yZXMgYXJlIHN1cHByZXNzZWQgaW4gYWRoZXJlbmNlIHRvIG9mZmljaWFsIGFzc2Vzc21lbnQgaW50ZWdyaXR5LiBUaGlzIHN1Ym1pc3Npb24gaGFzIGJlZW4gc2VjdXJlbHkgcHJlc2VydmVkIGFuZCBhc3NpZ25lZCB0byB0aGUgdGVhY2hlciByZXZpZXcgcXVldWUuIiwKICAgICJyZXRyaWV2ZWREb2N1bWVudElkcyI6IFtdLAogICAgInByb3ZpZGVySWQiOiBudWxsLAogICAgIm1vZGVsVXNlZCI6IG51bGwsCiAgICAicnVicmljVmVyc2lvbiI6ICJJRUxUU19BQ0FERU1JQ18yMDI2X1YxIiwKICAgICJwcm9tcHRWZXJzaW9uIjogIjEuMCIsCiAgICAicmV0cmlldmFsVmVyc2lvbiI6ICIxLjAiLAogICAgImZhaWx1cmVSZWFzb24iOiBudWxsLAogICAgInRlYWNoZXJSZXZpZXdlZCI6IGZhbHNlLAogICAgInRlYWNoZXJSZXZpZXdJZCI6IG51bGwsCiAgICAidGVhY2hlck5vdGVzIjogbnVsbCwKICAgICJ0ZWFjaGVyUmV2aWV3ZWRBdCI6IG51bGwsCiAgICAic3VibWl0dGVkVGV4dCI6ICJFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIEVkdWNhdGlvbiBnaXZlcyBwZW9wbGUgb3Bwb3J0dW5pdGllcy4gRWR1Y2F0aW9uIGdpdmVzIHBlb3BsZSBvcHBvcnR1bml0aWVzLiBFZHVjYXRpb24gZ2l2ZXMgcGVvcGxlIG9wcG9ydHVuaXRpZXMuIgogIH0KfQ=="
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e16f9ddfc2380dc9fa32-b8acc1ef16fbacf00151",
+          "file": "current.spec.ts",
+          "line": 25,
+          "column": 5
+        },
+        {
+          "title": "evaluation rejects a non-writing question",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 105,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T05:26:48.236Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "e16f9ddfc2380dc9fa32-68817f3b7c1bbd6de1e2",
+          "file": "current.spec.ts",
+          "line": 26,
+          "column": 5
+        }
+      ]
+    },
+    {
+      "title": "regressions.spec.ts",
+      "file": "regressions.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "review rejects missing criterion IDs",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 131,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m400\u001b[39m\nReceived: \u001b[31m201\u001b[39m",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m400\u001b[39m\nReceived: \u001b[31m201\u001b[39m\n    at /tmp/examos-reverify-pPUolh/focused/regressions.spec.ts:6:610",
+                    "location": {
+                      "file": "/tmp/examos-reverify-pPUolh/focused/regressions.spec.ts",
+                      "column": 610,
+                      "line": 6
+                    },
+                    "snippet": "  4 | async function auth(request:any,email='teacher@examos.com',password='Teacher@123'){const r=await request.post(api+'/auth/login',{data:{email,password}});expect(r.status()).toBe(200);const j=await r.json();return{Authorization:`Bearer ${j.data.accessToken||j.data.token}`};}\n  5 | async function evaluation(request:any){const headers=await auth(request);const r=await request.post(api+'/writing/evaluations/submit',{headers,data:{questionId:'q_ielts_wrt_03',essayText:'Verification '+Date.now()+Math.random()+' Students need explanations and examples.'}});expect(r.status()).toBe(201);return{headers,id:(await r.json()).data.id};}\n> 6 | for(const [name,scores] of Object.entries({missing:{task_response:9},unknown:{invented:9},extra:{task_response:6,coherence_cohesion:6,lexical_resource:6,grammatical_range:6,invented:9},wrongTask:{task_achievement:6,coherence_cohesion:6,lexical_resource:6,grammatical_range:6}}))test(`review rejects ${name} criterion IDs`,async({request})=>{const {headers,id}=await evaluation(request);const r=await request.post(`${api}/writing/reviews/${id}/submit`,{headers,data:{correctedCriteriaScores:scores}});await test.info().attach('response',{body:await r.text(),contentType:'application/json'});expect(r.status()).toBe(400);});\n    |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  ^\n  7 | test('valid review calculates average instead of supplied overall',async({request})=>{const{headers,id}=await evaluation(request);const r=await request.post(`${api}/writing/reviews/${id}/submit`,{headers,data:{correctedCriteriaScores:{task_response:6,coherence_cohesion:6,lexical_resource:6,grammatical_range:6},correctedOverallScore:9}});expect(r.status()).toBe(201);expect((await r.json()).data.correctedOverallScore).toBe(6);});\n  8 | test('draft is isolated when a second student signs in',async({page,context})=>{await loginAs(page,'student');await goToTab(page,'writing_practice');await page.locator('#btn-start-writing-q_ielts_wrt_03').click();await page.locator('#checkbox-accept-writing-rules').check();await page.locator('#btn-accept-rules-start-writing').click();const draft='Private answer belonging only to student one.';await page.locator('[data-testid=writing-textarea]').fill(draft);await expect.poll(()=>page.evaluate(()=>localStorage.getItem('examos_writing_active_draft'))).toContain(draft);const second=await context.newPage();await loginAs(second,'student2');await goToTab(second,'writing_practice');await expect(second.locator('[data-testid=writing-textarea]')).not.toHaveValue(draft);});\n  9 | test('erasing entire draft does not resurrect deleted text',async({page})=>{await loginAs(page,'student');await goToTab(page,'writing_practice');await page.locator('#btn-start-writing-q_ielts_wrt_03').click();await page.locator('#checkbox-accept-writing-rules').check();await page.locator('#btn-accept-rules-start-writing').click();const editor=page.locator('[data-testid=writing-textarea]');await editor.fill('Text deliberately deleted by the candidate.');await expect.poll(()=>page.evaluate(()=>localStorage.getItem('examos_writing_active_draft'))).toContain('deliberately deleted');await editor.fill('');await page.waitForTimeout(5500);await page.reload();await goToTab(page,'writing_practice');await expect(page.locator('[data-testid=writing-textarea]')).not.toHaveValue('Text deliberately deleted by the candidate.');});"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/tmp/examos-reverify-pPUolh/focused/regressions.spec.ts",
+                        "column": 610,
+                        "line": 6
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m400\u001b[39m\nReceived: \u001b[31m201\u001b[39m\n\n  4 | async function auth(request:any,email='teacher@examos.com',password='Teacher@123'){const r=await request.post(api+'/auth/login',{data:{email,password}});expect(r.status()).toBe(200);const j=await r.json();return{Authorization:`Bearer ${j.data.accessToken||j.data.token}`};}\n  5 | async function evaluation(request:any){const headers=await auth(request);const r=await request.post(api+'/writing/evaluations/submit',{headers,data:{questionId:'q_ielts_wrt_03',essayText:'Verification '+Date.now()+Math.random()+' Students need explanations and examples.'}});expect(r.status()).toBe(201);return{headers,id:(await r.json()).data.id};}\n> 6 | for(const [name,scores] of Object.entries({missing:{task_response:9},unknown:{invented:9},extra:{task_response:6,coherence_cohesion:6,lexical_resource:6,grammatical_range:6,invented:9},wrongTask:{task_achievement:6,coherence_cohesion:6,lexical_resource:6,grammatical_range:6}}))test(`review rejects ${name} criterion IDs`,async({request})=>{const {headers,id}=await evaluation(request);const r=await request.post(`${api}/writing/reviews/${id}/submit`,{headers,data:{correctedCriteriaScores:scores}});await test.info().attach('response',{body:await r.text(),contentType:'application/json'});expect(r.status()).toBe(400);});\n    |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  ^\n  7 | test('valid review calculates average instead of supplied overall',async({request})=>{const{headers,id}=await evaluation(request);const r=await request.post(`${api}/writing/reviews/${id}/submit`,{headers,data:{correctedCriteriaScores:{task_response:6,coherence_cohesion:6,lexical_resource:6,grammatical_range:6},correctedOverallScore:9}});expect(r.status()).toBe(201);expect((await r.json()).data.correctedOverallScore).toBe(6);});\n  8 | test('draft is isolated when a second student signs in',async({page,context})=>{await loginAs(page,'student');await goToTab(page,'writing_practice');await page.locator('#btn-start-writing-q_ielts_wrt_03').click();await page.locator('#checkbox-accept-writing-rules').check();await page.locator('#btn-accept-rules-start-writing').click();const draft='Private answer belonging only to student one.';await page.locator('[data-testid=writing-textarea]').fill(draft);await expect.poll(()=>page.evaluate(()=>localStorage.getItem('examos_writing_active_draft'))).toContain(draft);const second=await context.newPage();await loginAs(second,'student2');await goToTab(second,'writing_practice');await expect(second.locator('[data-testid=writing-textarea]')).not.toHaveValue(draft);});\n  9 | test('erasing entire draft does not resurrect deleted text',async({page})=>{await loginAs(page,'student');await goToTab(page,'writing_practice');await page.locator('#btn-start-writing-q_ielts_wrt_03').click();await page.locator('#checkbox-accept-writing-rules').check();await page.locator('#btn-accept-rules-start-writing').click();const editor=page.locator('[data-testid=writing-textarea]');await editor.fill('Text deliberately deleted by the candidate.');await expect.poll(()=>page.evaluate(()=>localStorage.getItem('examos_writing_active_draft'))).toContain('deliberately deleted');await editor.fill('');await page.waitForTimeout(5500);await page.reload();await goToTab(page,'writing_practice');await expect(page.locator('[data-testid=writing-textarea]')).not.toHaveValue('Text deliberately deleted by the candidate.');});\n    at /tmp/examos-reverify-pPUolh/focused/regressions.spec.ts:6:610"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T05:26:48.352Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "response",
+                      "contentType": "application/json",
+                      "body": "eyJzdWNjZXNzIjp0cnVlLCJkYXRhIjp7ImlkIjoid3J0X3Jldl9hYTQ0YzczMzU2ZmI5ZGNmIiwiZXZhbHVhdGlvbklkIjoid3J0X2V2YWxfYTgyNThkNTEwMGJhNzkzMiIsInRlYWNoZXJJZCI6InVzcl90ZWFjaGVyX3Rlc3QiLCJvcmlnaW5hbENyaXRlcmlhU2NvcmVzIjp7InRhc2tfcmVzcG9uc2UiOjAsImNvaGVyZW5jZV9jb2hlc2lvbiI6MCwibGV4aWNhbF9yZXNvdXJjZSI6MCwiZ3JhbW1hdGljYWxfcmFuZ2UiOjB9LCJjb3JyZWN0ZWRDcml0ZXJpYVNjb3JlcyI6eyJ0YXNrX3Jlc3BvbnNlIjo5fSwib3JpZ2luYWxPdmVyYWxsU2NvcmUiOjAsImNvcnJlY3RlZE92ZXJhbGxTY29yZSI6OSwidGVhY2hlck5vdGVzIjoiIiwiaXNBcHByb3ZlZCI6dHJ1ZSwiY3JlYXRlZEF0IjoiMjAyNi0xMC0wM1QwNToyNjo0OC40NjRaIn19"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/tmp/examos-reverify-pPUolh/resumed-results/regressions-review-rejects-missing-criterion-IDs-chromium/error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "/tmp/examos-reverify-pPUolh/resumed-results/regressions-review-rejects-missing-criterion-IDs-chromium/trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/tmp/examos-reverify-pPUolh/focused/regressions.spec.ts",
+                    "column": 610,
+                    "line": 6
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "a34af78d704591628420-ad2ab2915f1b4824cf92",
+          "file": "regressions.spec.ts",
+          "line": 6,
+          "column": 283
+        },
+        {
+          "title": "review rejects unknown criterion IDs",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 151,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m400\u001b[39m\nReceived: \u001b[31m201\u001b[39m",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m400\u001b[39m\nReceived: \u001b[31m201\u001b[39m\n    at /tmp/examos-reverify-pPUolh/focused/regressions.spec.ts:6:610",
+                    "location": {
+                      "file": "/tmp/examos-reverify-pPUolh/focused/regressions.spec.ts",
+                      "column": 610,
+                      "line": 6
+                    },
+                    "snippet": "  4 | async function auth(request:any,email='teacher@examos.com',password='Teacher@123'){const r=await request.post(api+'/auth/login',{data:{email,password}});expect(r.status()).toBe(200);const j=await r.json();return{Authorization:`Bearer ${j.data.accessToken||j.data.token}`};}\n  5 | async function evaluation(request:any){const headers=await auth(request);const r=await request.post(api+'/writing/evaluations/submit',{headers,data:{questionId:'q_ielts_wrt_03',essayText:'Verification '+Date.now()+Math.random()+' Students need explanations and examples.'}});expect(r.status()).toBe(201);return{headers,id:(await r.json()).data.id};}\n> 6 | for(const [name,scores] of Object.entries({missing:{task_response:9},unknown:{invented:9},extra:{task_response:6,coherence_cohesion:6,lexical_resource:6,grammatical_range:6,invented:9},wrongTask:{task_achievement:6,coherence_cohesion:6,lexical_resource:6,grammatical_range:6}}))test(`review rejects ${name} criterion IDs`,async({request})=>{const {headers,id}=await evaluation(request);const r=await request.post(`${api}/writing/reviews/${id}/submit`,{headers,data:{correctedCriteriaScores:scores}});await test.info().attach('response',{body:await r.text(),contentType:'application/json'});expect(r.status()).toBe(400);});\n    |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  ^\n  7 | test('valid review calculates average instead of supplied overall',async({request})=>{const{headers,id}=await evaluation(request);const r=await request.post(`${api}/writing/reviews/${id}/submit`,{headers,data:{correctedCriteriaScores:{task_response:6,coherence_cohesion:6,lexical_resource:6,grammatical_range:6},correctedOverallScore:9}});expect(r.status()).toBe(201);expect((await r.json()).data.correctedOverallScore).toBe(6);});\n  8 | test('draft is isolated when a second student signs in',async({page,context})=>{await loginAs(page,'student');await goToTab(page,'writing_practice');await page.locator('#btn-start-writing-q_ielts_wrt_03').click();await page.locator('#checkbox-accept-writing-rules').check();await page.locator('#btn-accept-rules-start-writing').click();const draft='Private answer belonging only to student one.';await page.locator('[data-testid=writing-textarea]').fill(draft);await expect.poll(()=>page.evaluate(()=>localStorage.getItem('examos_writing_active_draft'))).toContain(draft);const second=await context.newPage();await loginAs(second,'student2');await goToTab(second,'writing_practice');await expect(second.locator('[data-testid=writing-textarea]')).not.toHaveValue(draft);});\n  9 | test('erasing entire draft does not resurrect deleted text',async({page})=>{await loginAs(page,'student');await goToTab(page,'writing_practice');await page.locator('#btn-start-writing-q_ielts_wrt_03').click();await page.locator('#checkbox-accept-writing-rules').check();await page.locator('#btn-accept-rules-start-writing').click();const editor=page.locator('[data-testid=writing-textarea]');await editor.fill('Text deliberately deleted by the candidate.');await expect.poll(()=>page.evaluate(()=>localStorage.getItem('examos_writing_active_draft'))).toContain('deliberately deleted');await editor.fill('');await page.waitForTimeout(5500);await page.reload();await goToTab(page,'writing_practice');await expect(page.locator('[data-testid=writing-textarea]')).not.toHaveValue('Text deliberately deleted by the candidate.');});"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/tmp/examos-reverify-pPUolh/focused/regressions.spec.ts",
+                        "column": 610,
+                        "line": 6
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m400\u001b[39m\nReceived: \u001b[31m201\u001b[39m\n\n  4 | async function auth(request:any,email='teacher@examos.com',password='Teacher@123'){const r=await request.post(api+'/auth/login',{data:{email,password}});expect(r.status()).toBe(200);const j=await r.json();return{Authorization:`Bearer ${j.data.accessToken||j.data.token}`};}\n  5 | async function evaluation(request:any){const headers=await auth(request);const r=await request.post(api+'/writing/evaluations/submit',{headers,data:{questionId:'q_ielts_wrt_03',essayText:'Verification '+Date.now()+Math.random()+' Students need explanations and examples.'}});expect(r.status()).toBe(201);return{headers,id:(await r.json()).data.id};}\n> 6 | for(const [name,scores] of Object.entries({missing:{task_response:9},unknown:{invented:9},extra:{task_response:6,coherence_cohesion:6,lexical_resource:6,grammatical_range:6,invented:9},wrongTask:{task_achievement:6,coherence_cohesion:6,lexical_resource:6,grammatical_range:6}}))test(`review rejects ${name} criterion IDs`,async({request})=>{const {headers,id}=await evaluation(request);const r=await request.post(`${api}/writing/reviews/${id}/submit`,{headers,data:{correctedCriteriaScores:scores}});await test.info().attach('response',{body:await r.text(),contentType:'application/json'});expect(r.status()).toBe(400);});\n    |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  ^\n  7 | test('valid review calculates average instead of supplied overall',async({request})=>{const{headers,id}=await evaluation(request);const r=await request.post(`${api}/writing/reviews/${id}/submit`,{headers,data:{correctedCriteriaScores:{task_response:6,coherence_cohesion:6,lexical_resource:6,grammatical_range:6},correctedOverallScore:9}});expect(r.status()).toBe(201);expect((await r.json()).data.correctedOverallScore).toBe(6);});\n  8 | test('draft is isolated when a second student signs in',async({page,context})=>{await loginAs(page,'student');await goToTab(page,'writing_practice');await page.locator('#btn-start-writing-q_ielts_wrt_03').click();await page.locator('#checkbox-accept-writing-rules').check();await page.locator('#btn-accept-rules-start-writing').click();const draft='Private answer belonging only to student one.';await page.locator('[data-testid=writing-textarea]').fill(draft);await expect.poll(()=>page.evaluate(()=>localStorage.getItem('examos_writing_active_draft'))).toContain(draft);const second=await context.newPage();await loginAs(second,'student2');await goToTab(second,'writing_practice');await expect(second.locator('[data-testid=writing-textarea]')).not.toHaveValue(draft);});\n  9 | test('erasing entire draft does not resurrect deleted text',async({page})=>{await loginAs(page,'student');await goToTab(page,'writing_practice');await page.locator('#btn-start-writing-q_ielts_wrt_03').click();await page.locator('#checkbox-accept-writing-rules').check();await page.locator('#btn-accept-rules-start-writing').click();const editor=page.locator('[data-testid=writing-textarea]');await editor.fill('Text deliberately deleted by the candidate.');await expect.poll(()=>page.evaluate(()=>localStorage.getItem('examos_writing_active_draft'))).toContain('deliberately deleted');await editor.fill('');await page.waitForTimeout(5500);await page.reload();await goToTab(page,'writing_practice');await expect(page.locator('[data-testid=writing-textarea]')).not.toHaveValue('Text deliberately deleted by the candidate.');});\n    at /tmp/examos-reverify-pPUolh/focused/regressions.spec.ts:6:610"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T05:26:48.983Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "response",
+                      "contentType": "application/json",
+                      "body": "eyJzdWNjZXNzIjp0cnVlLCJkYXRhIjp7ImlkIjoid3J0X3Jldl8zMmZiNTliYTkyZGM4MjZlIiwiZXZhbHVhdGlvbklkIjoid3J0X2V2YWxfMjU3YmQ4MTQyNzU4MWZmOSIsInRlYWNoZXJJZCI6InVzcl90ZWFjaGVyX3Rlc3QiLCJvcmlnaW5hbENyaXRlcmlhU2NvcmVzIjp7InRhc2tfcmVzcG9uc2UiOjAsImNvaGVyZW5jZV9jb2hlc2lvbiI6MCwibGV4aWNhbF9yZXNvdXJjZSI6MCwiZ3JhbW1hdGljYWxfcmFuZ2UiOjB9LCJjb3JyZWN0ZWRDcml0ZXJpYVNjb3JlcyI6eyJpbnZlbnRlZCI6OX0sIm9yaWdpbmFsT3ZlcmFsbFNjb3JlIjowLCJjb3JyZWN0ZWRPdmVyYWxsU2NvcmUiOjksInRlYWNoZXJOb3RlcyI6IiIsImlzQXBwcm92ZWQiOnRydWUsImNyZWF0ZWRBdCI6IjIwMjYtMTAtMDNUMDU6MjY6NDkuMTMzWiJ9fQ=="
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/tmp/examos-reverify-pPUolh/resumed-results/regressions-review-rejects-unknown-criterion-IDs-chromium/error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "/tmp/examos-reverify-pPUolh/resumed-results/regressions-review-rejects-unknown-criterion-IDs-chromium/trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/tmp/examos-reverify-pPUolh/focused/regressions.spec.ts",
+                    "column": 610,
+                    "line": 6
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "a34af78d704591628420-de5229065adc12fbb32b",
+          "file": "regressions.spec.ts",
+          "line": 6,
+          "column": 283
+        },
+        {
+          "title": "review rejects extra criterion IDs",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 176,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m400\u001b[39m\nReceived: \u001b[31m201\u001b[39m",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m400\u001b[39m\nReceived: \u001b[31m201\u001b[39m\n    at /tmp/examos-reverify-pPUolh/focused/regressions.spec.ts:6:610",
+                    "location": {
+                      "file": "/tmp/examos-reverify-pPUolh/focused/regressions.spec.ts",
+                      "column": 610,
+                      "line": 6
+                    },
+                    "snippet": "  4 | async function auth(request:any,email='teacher@examos.com',password='Teacher@123'){const r=await request.post(api+'/auth/login',{data:{email,password}});expect(r.status()).toBe(200);const j=await r.json();return{Authorization:`Bearer ${j.data.accessToken||j.data.token}`};}\n  5 | async function evaluation(request:any){const headers=await auth(request);const r=await request.post(api+'/writing/evaluations/submit',{headers,data:{questionId:'q_ielts_wrt_03',essayText:'Verification '+Date.now()+Math.random()+' Students need explanations and examples.'}});expect(r.status()).toBe(201);return{headers,id:(await r.json()).data.id};}\n> 6 | for(const [name,scores] of Object.entries({missing:{task_response:9},unknown:{invented:9},extra:{task_response:6,coherence_cohesion:6,lexical_resource:6,grammatical_range:6,invented:9},wrongTask:{task_achievement:6,coherence_cohesion:6,lexical_resource:6,grammatical_range:6}}))test(`review rejects ${name} criterion IDs`,async({request})=>{const {headers,id}=await evaluation(request);const r=await request.post(`${api}/writing/reviews/${id}/submit`,{headers,data:{correctedCriteriaScores:scores}});await test.info().attach('response',{body:await r.text(),contentType:'application/json'});expect(r.status()).toBe(400);});\n    |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  ^\n  7 | test('valid review calculates average instead of supplied overall',async({request})=>{const{headers,id}=await evaluation(request);const r=await request.post(`${api}/writing/reviews/${id}/submit`,{headers,data:{correctedCriteriaScores:{task_response:6,coherence_cohesion:6,lexical_resource:6,grammatical_range:6},correctedOverallScore:9}});expect(r.status()).toBe(201);expect((await r.json()).data.correctedOverallScore).toBe(6);});\n  8 | test('draft is isolated when a second student signs in',async({page,context})=>{await loginAs(page,'student');await goToTab(page,'writing_practice');await page.locator('#btn-start-writing-q_ielts_wrt_03').click();await page.locator('#checkbox-accept-writing-rules').check();await page.locator('#btn-accept-rules-start-writing').click();const draft='Private answer belonging only to student one.';await page.locator('[data-testid=writing-textarea]').fill(draft);await expect.poll(()=>page.evaluate(()=>localStorage.getItem('examos_writing_active_draft'))).toContain(draft);const second=await context.newPage();await loginAs(second,'student2');await goToTab(second,'writing_practice');await expect(second.locator('[data-testid=writing-textarea]')).not.toHaveValue(draft);});\n  9 | test('erasing entire draft does not resurrect deleted text',async({page})=>{await loginAs(page,'student');await goToTab(page,'writing_practice');await page.locator('#btn-start-writing-q_ielts_wrt_03').click();await page.locator('#checkbox-accept-writing-rules').check();await page.locator('#btn-accept-rules-start-writing').click();const editor=page.locator('[data-testid=writing-textarea]');await editor.fill('Text deliberately deleted by the candidate.');await expect.poll(()=>page.evaluate(()=>localStorage.getItem('examos_writing_active_draft'))).toContain('deliberately deleted');await editor.fill('');await page.waitForTimeout(5500);await page.reload();await goToTab(page,'writing_practice');await expect(page.locator('[data-testid=writing-textarea]')).not.toHaveValue('Text deliberately deleted by the candidate.');});"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/tmp/examos-reverify-pPUolh/focused/regressions.spec.ts",
+                        "column": 610,
+                        "line": 6
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m400\u001b[39m\nReceived: \u001b[31m201\u001b[39m\n\n  4 | async function auth(request:any,email='teacher@examos.com',password='Teacher@123'){const r=await request.post(api+'/auth/login',{data:{email,password}});expect(r.status()).toBe(200);const j=await r.json();return{Authorization:`Bearer ${j.data.accessToken||j.data.token}`};}\n  5 | async function evaluation(request:any){const headers=await auth(request);const r=await request.post(api+'/writing/evaluations/submit',{headers,data:{questionId:'q_ielts_wrt_03',essayText:'Verification '+Date.now()+Math.random()+' Students need explanations and examples.'}});expect(r.status()).toBe(201);return{headers,id:(await r.json()).data.id};}\n> 6 | for(const [name,scores] of Object.entries({missing:{task_response:9},unknown:{invented:9},extra:{task_response:6,coherence_cohesion:6,lexical_resource:6,grammatical_range:6,invented:9},wrongTask:{task_achievement:6,coherence_cohesion:6,lexical_resource:6,grammatical_range:6}}))test(`review rejects ${name} criterion IDs`,async({request})=>{const {headers,id}=await evaluation(request);const r=await request.post(`${api}/writing/reviews/${id}/submit`,{headers,data:{correctedCriteriaScores:scores}});await test.info().attach('response',{body:await r.text(),contentType:'application/json'});expect(r.status()).toBe(400);});\n    |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  ^\n  7 | test('valid review calculates average instead of supplied overall',async({request})=>{const{headers,id}=await evaluation(request);const r=await request.post(`${api}/writing/reviews/${id}/submit`,{headers,data:{correctedCriteriaScores:{task_response:6,coherence_cohesion:6,lexical_resource:6,grammatical_range:6},correctedOverallScore:9}});expect(r.status()).toBe(201);expect((await r.json()).data.correctedOverallScore).toBe(6);});\n  8 | test('draft is isolated when a second student signs in',async({page,context})=>{await loginAs(page,'student');await goToTab(page,'writing_practice');await page.locator('#btn-start-writing-q_ielts_wrt_03').click();await page.locator('#checkbox-accept-writing-rules').check();await page.locator('#btn-accept-rules-start-writing').click();const draft='Private answer belonging only to student one.';await page.locator('[data-testid=writing-textarea]').fill(draft);await expect.poll(()=>page.evaluate(()=>localStorage.getItem('examos_writing_active_draft'))).toContain(draft);const second=await context.newPage();await loginAs(second,'student2');await goToTab(second,'writing_practice');await expect(second.locator('[data-testid=writing-textarea]')).not.toHaveValue(draft);});\n  9 | test('erasing entire draft does not resurrect deleted text',async({page})=>{await loginAs(page,'student');await goToTab(page,'writing_practice');await page.locator('#btn-start-writing-q_ielts_wrt_03').click();await page.locator('#checkbox-accept-writing-rules').check();await page.locator('#btn-accept-rules-start-writing').click();const editor=page.locator('[data-testid=writing-textarea]');await editor.fill('Text deliberately deleted by the candidate.');await expect.poll(()=>page.evaluate(()=>localStorage.getItem('examos_writing_active_draft'))).toContain('deliberately deleted');await editor.fill('');await page.waitForTimeout(5500);await page.reload();await goToTab(page,'writing_practice');await expect(page.locator('[data-testid=writing-textarea]')).not.toHaveValue('Text deliberately deleted by the candidate.');});\n    at /tmp/examos-reverify-pPUolh/focused/regressions.spec.ts:6:610"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T05:26:49.803Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "response",
+                      "contentType": "application/json",
+                      "body": "eyJzdWNjZXNzIjp0cnVlLCJkYXRhIjp7ImlkIjoid3J0X3Jldl8wNDY4ZmE4ZjMyYThkOTBiIiwiZXZhbHVhdGlvbklkIjoid3J0X2V2YWxfOGQ2ODBlYzAxZDkwYjU5YyIsInRlYWNoZXJJZCI6InVzcl90ZWFjaGVyX3Rlc3QiLCJvcmlnaW5hbENyaXRlcmlhU2NvcmVzIjp7InRhc2tfcmVzcG9uc2UiOjAsImNvaGVyZW5jZV9jb2hlc2lvbiI6MCwibGV4aWNhbF9yZXNvdXJjZSI6MCwiZ3JhbW1hdGljYWxfcmFuZ2UiOjB9LCJjb3JyZWN0ZWRDcml0ZXJpYVNjb3JlcyI6eyJ0YXNrX3Jlc3BvbnNlIjo2LCJjb2hlcmVuY2VfY29oZXNpb24iOjYsImxleGljYWxfcmVzb3VyY2UiOjYsImdyYW1tYXRpY2FsX3JhbmdlIjo2LCJpbnZlbnRlZCI6OX0sIm9yaWdpbmFsT3ZlcmFsbFNjb3JlIjowLCJjb3JyZWN0ZWRPdmVyYWxsU2NvcmUiOjYuNSwidGVhY2hlck5vdGVzIjoiIiwiaXNBcHByb3ZlZCI6dHJ1ZSwiY3JlYXRlZEF0IjoiMjAyNi0xMC0wM1QwNToyNjo0OS45OTNaIn19"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/tmp/examos-reverify-pPUolh/resumed-results/regressions-review-rejects-extra-criterion-IDs-chromium/error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "/tmp/examos-reverify-pPUolh/resumed-results/regressions-review-rejects-extra-criterion-IDs-chromium/trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/tmp/examos-reverify-pPUolh/focused/regressions.spec.ts",
+                    "column": 610,
+                    "line": 6
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "a34af78d704591628420-6a45c0a3bf2a57d31562",
+          "file": "regressions.spec.ts",
+          "line": 6,
+          "column": 283
+        },
+        {
+          "title": "review rejects wrongTask criterion IDs",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 158,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m400\u001b[39m\nReceived: \u001b[31m201\u001b[39m",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m400\u001b[39m\nReceived: \u001b[31m201\u001b[39m\n    at /tmp/examos-reverify-pPUolh/focused/regressions.spec.ts:6:610",
+                    "location": {
+                      "file": "/tmp/examos-reverify-pPUolh/focused/regressions.spec.ts",
+                      "column": 610,
+                      "line": 6
+                    },
+                    "snippet": "  4 | async function auth(request:any,email='teacher@examos.com',password='Teacher@123'){const r=await request.post(api+'/auth/login',{data:{email,password}});expect(r.status()).toBe(200);const j=await r.json();return{Authorization:`Bearer ${j.data.accessToken||j.data.token}`};}\n  5 | async function evaluation(request:any){const headers=await auth(request);const r=await request.post(api+'/writing/evaluations/submit',{headers,data:{questionId:'q_ielts_wrt_03',essayText:'Verification '+Date.now()+Math.random()+' Students need explanations and examples.'}});expect(r.status()).toBe(201);return{headers,id:(await r.json()).data.id};}\n> 6 | for(const [name,scores] of Object.entries({missing:{task_response:9},unknown:{invented:9},extra:{task_response:6,coherence_cohesion:6,lexical_resource:6,grammatical_range:6,invented:9},wrongTask:{task_achievement:6,coherence_cohesion:6,lexical_resource:6,grammatical_range:6}}))test(`review rejects ${name} criterion IDs`,async({request})=>{const {headers,id}=await evaluation(request);const r=await request.post(`${api}/writing/reviews/${id}/submit`,{headers,data:{correctedCriteriaScores:scores}});await test.info().attach('response',{body:await r.text(),contentType:'application/json'});expect(r.status()).toBe(400);});\n    |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  ^\n  7 | test('valid review calculates average instead of supplied overall',async({request})=>{const{headers,id}=await evaluation(request);const r=await request.post(`${api}/writing/reviews/${id}/submit`,{headers,data:{correctedCriteriaScores:{task_response:6,coherence_cohesion:6,lexical_resource:6,grammatical_range:6},correctedOverallScore:9}});expect(r.status()).toBe(201);expect((await r.json()).data.correctedOverallScore).toBe(6);});\n  8 | test('draft is isolated when a second student signs in',async({page,context})=>{await loginAs(page,'student');await goToTab(page,'writing_practice');await page.locator('#btn-start-writing-q_ielts_wrt_03').click();await page.locator('#checkbox-accept-writing-rules').check();await page.locator('#btn-accept-rules-start-writing').click();const draft='Private answer belonging only to student one.';await page.locator('[data-testid=writing-textarea]').fill(draft);await expect.poll(()=>page.evaluate(()=>localStorage.getItem('examos_writing_active_draft'))).toContain(draft);const second=await context.newPage();await loginAs(second,'student2');await goToTab(second,'writing_practice');await expect(second.locator('[data-testid=writing-textarea]')).not.toHaveValue(draft);});\n  9 | test('erasing entire draft does not resurrect deleted text',async({page})=>{await loginAs(page,'student');await goToTab(page,'writing_practice');await page.locator('#btn-start-writing-q_ielts_wrt_03').click();await page.locator('#checkbox-accept-writing-rules').check();await page.locator('#btn-accept-rules-start-writing').click();const editor=page.locator('[data-testid=writing-textarea]');await editor.fill('Text deliberately deleted by the candidate.');await expect.poll(()=>page.evaluate(()=>localStorage.getItem('examos_writing_active_draft'))).toContain('deliberately deleted');await editor.fill('');await page.waitForTimeout(5500);await page.reload();await goToTab(page,'writing_practice');await expect(page.locator('[data-testid=writing-textarea]')).not.toHaveValue('Text deliberately deleted by the candidate.');});"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/tmp/examos-reverify-pPUolh/focused/regressions.spec.ts",
+                        "column": 610,
+                        "line": 6
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m400\u001b[39m\nReceived: \u001b[31m201\u001b[39m\n\n  4 | async function auth(request:any,email='teacher@examos.com',password='Teacher@123'){const r=await request.post(api+'/auth/login',{data:{email,password}});expect(r.status()).toBe(200);const j=await r.json();return{Authorization:`Bearer ${j.data.accessToken||j.data.token}`};}\n  5 | async function evaluation(request:any){const headers=await auth(request);const r=await request.post(api+'/writing/evaluations/submit',{headers,data:{questionId:'q_ielts_wrt_03',essayText:'Verification '+Date.now()+Math.random()+' Students need explanations and examples.'}});expect(r.status()).toBe(201);return{headers,id:(await r.json()).data.id};}\n> 6 | for(const [name,scores] of Object.entries({missing:{task_response:9},unknown:{invented:9},extra:{task_response:6,coherence_cohesion:6,lexical_resource:6,grammatical_range:6,invented:9},wrongTask:{task_achievement:6,coherence_cohesion:6,lexical_resource:6,grammatical_range:6}}))test(`review rejects ${name} criterion IDs`,async({request})=>{const {headers,id}=await evaluation(request);const r=await request.post(`${api}/writing/reviews/${id}/submit`,{headers,data:{correctedCriteriaScores:scores}});await test.info().attach('response',{body:await r.text(),contentType:'application/json'});expect(r.status()).toBe(400);});\n    |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  ^\n  7 | test('valid review calculates average instead of supplied overall',async({request})=>{const{headers,id}=await evaluation(request);const r=await request.post(`${api}/writing/reviews/${id}/submit`,{headers,data:{correctedCriteriaScores:{task_response:6,coherence_cohesion:6,lexical_resource:6,grammatical_range:6},correctedOverallScore:9}});expect(r.status()).toBe(201);expect((await r.json()).data.correctedOverallScore).toBe(6);});\n  8 | test('draft is isolated when a second student signs in',async({page,context})=>{await loginAs(page,'student');await goToTab(page,'writing_practice');await page.locator('#btn-start-writing-q_ielts_wrt_03').click();await page.locator('#checkbox-accept-writing-rules').check();await page.locator('#btn-accept-rules-start-writing').click();const draft='Private answer belonging only to student one.';await page.locator('[data-testid=writing-textarea]').fill(draft);await expect.poll(()=>page.evaluate(()=>localStorage.getItem('examos_writing_active_draft'))).toContain(draft);const second=await context.newPage();await loginAs(second,'student2');await goToTab(second,'writing_practice');await expect(second.locator('[data-testid=writing-textarea]')).not.toHaveValue(draft);});\n  9 | test('erasing entire draft does not resurrect deleted text',async({page})=>{await loginAs(page,'student');await goToTab(page,'writing_practice');await page.locator('#btn-start-writing-q_ielts_wrt_03').click();await page.locator('#checkbox-accept-writing-rules').check();await page.locator('#btn-accept-rules-start-writing').click();const editor=page.locator('[data-testid=writing-textarea]');await editor.fill('Text deliberately deleted by the candidate.');await expect.poll(()=>page.evaluate(()=>localStorage.getItem('examos_writing_active_draft'))).toContain('deliberately deleted');await editor.fill('');await page.waitForTimeout(5500);await page.reload();await goToTab(page,'writing_practice');await expect(page.locator('[data-testid=writing-textarea]')).not.toHaveValue('Text deliberately deleted by the candidate.');});\n    at /tmp/examos-reverify-pPUolh/focused/regressions.spec.ts:6:610"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T05:26:50.502Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "response",
+                      "contentType": "application/json",
+                      "body": "eyJzdWNjZXNzIjp0cnVlLCJkYXRhIjp7ImlkIjoid3J0X3Jldl8xZTNkN2Q1ZTc1OTBiN2ZmIiwiZXZhbHVhdGlvbklkIjoid3J0X2V2YWxfNDk1MTI4Y2U4OWUwODhhMCIsInRlYWNoZXJJZCI6InVzcl90ZWFjaGVyX3Rlc3QiLCJvcmlnaW5hbENyaXRlcmlhU2NvcmVzIjp7InRhc2tfcmVzcG9uc2UiOjAsImNvaGVyZW5jZV9jb2hlc2lvbiI6MCwibGV4aWNhbF9yZXNvdXJjZSI6MCwiZ3JhbW1hdGljYWxfcmFuZ2UiOjB9LCJjb3JyZWN0ZWRDcml0ZXJpYVNjb3JlcyI6eyJ0YXNrX2FjaGlldmVtZW50Ijo2LCJjb2hlcmVuY2VfY29oZXNpb24iOjYsImxleGljYWxfcmVzb3VyY2UiOjYsImdyYW1tYXRpY2FsX3JhbmdlIjo2fSwib3JpZ2luYWxPdmVyYWxsU2NvcmUiOjAsImNvcnJlY3RlZE92ZXJhbGxTY29yZSI6NiwidGVhY2hlck5vdGVzIjoiIiwiaXNBcHByb3ZlZCI6dHJ1ZSwiY3JlYXRlZEF0IjoiMjAyNi0xMC0wM1QwNToyNjo1MC42NjFaIn19"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/tmp/examos-reverify-pPUolh/resumed-results/regressions-review-rejects-wrongTask-criterion-IDs-chromium/error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "/tmp/examos-reverify-pPUolh/resumed-results/regressions-review-rejects-wrongTask-criterion-IDs-chromium/trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/tmp/examos-reverify-pPUolh/focused/regressions.spec.ts",
+                    "column": 610,
+                    "line": 6
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "a34af78d704591628420-eff9a3ebaa3b51b144d3",
+          "file": "regressions.spec.ts",
+          "line": 6,
+          "column": 283
+        },
+        {
+          "title": "valid review calculates average instead of supplied overall",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 4,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 143,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T05:26:51.249Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a34af78d704591628420-2ffba120ea50c9bfd4a8",
+          "file": "regressions.spec.ts",
+          "line": 7,
+          "column": 5
+        },
+        {
+          "title": "draft is isolated when a second student signs in",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 4,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 8332,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).not.\u001b[22mtoHaveValue\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('[data-testid=writing-textarea]')\nExpected: not \u001b[32m\"Private answer belonging only to student one.\"\u001b[39m\nReceived: \u001b[31m\"\u001b[7mPrivate answer belonging only to student one.\u001b[27m\"\u001b[39m\nTimeout:  5000ms\n\nCall log:\n\u001b[2m  - Expect \"not toHaveValue\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('[data-testid=writing-textarea]')\u001b[22m\n\u001b[2m    14 × locator resolved to <textarea data-testid=\"writing-textarea\" placeholder=\"Begin composing your response here...\">Private answer belonging only to student one.</textarea>\u001b[22m\n\u001b[2m       - unexpected value \"Private answer belonging only to student one.\"\u001b[22m\n",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).not.\u001b[22mtoHaveValue\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('[data-testid=writing-textarea]')\nExpected: not \u001b[32m\"Private answer belonging only to student one.\"\u001b[39m\nReceived: \u001b[31m\"\u001b[7mPrivate answer belonging only to student one.\u001b[27m\"\u001b[39m\nTimeout:  5000ms\n\nCall log:\n\u001b[2m  - Expect \"not toHaveValue\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('[data-testid=writing-textarea]')\u001b[22m\n\u001b[2m    14 × locator resolved to <textarea data-testid=\"writing-textarea\" placeholder=\"Begin composing your response here...\">Private answer belonging only to student one.</textarea>\u001b[22m\n\u001b[2m       - unexpected value \"Private answer belonging only to student one.\"\u001b[22m\n\n    at /tmp/examos-reverify-pPUolh/focused/regressions.spec.ts:8:751",
+                    "location": {
+                      "file": "/tmp/examos-reverify-pPUolh/focused/regressions.spec.ts",
+                      "column": 751,
+                      "line": 8
+                    },
+                    "snippet": "   6 | for(const [name,scores] of Object.entries({missing:{task_response:9},unknown:{invented:9},extra:{task_response:6,coherence_cohesion:6,lexical_resource:6,grammatical_range:6,invented:9},wrongTask:{task_achievement:6,coherence_cohesion:6,lexical_resource:6,grammatical_range:6}}))test(`review rejects ${name} criterion IDs`,async({request})=>{const {headers,id}=await evaluation(request);const r=await request.post(`${api}/writing/reviews/${id}/submit`,{headers,data:{correctedCriteriaScores:scores}});await test.info().attach('response',{body:await r.text(),contentType:'application/json'});expect(r.status()).toBe(400);});\n   7 | test('valid review calculates average instead of supplied overall',async({request})=>{const{headers,id}=await evaluation(request);const r=await request.post(`${api}/writing/reviews/${id}/submit`,{headers,data:{correctedCriteriaScores:{task_response:6,coherence_cohesion:6,lexical_resource:6,grammatical_range:6},correctedOverallScore:9}});expect(r.status()).toBe(201);expect((await r.json()).data.correctedOverallScore).toBe(6);});\n>  8 | test('draft is isolated when a second student signs in',async({page,context})=>{await loginAs(page,'student');await goToTab(page,'writing_practice');await page.locator('#btn-start-writing-q_ielts_wrt_03').click();await page.locator('#checkbox-accept-writing-rules').check();await page.locator('#btn-accept-rules-start-writing').click();const draft='Private answer belonging only to student one.';await page.locator('[data-testid=writing-textarea]').fill(draft);await expect.poll(()=>page.evaluate(()=>localStorage.getItem('examos_writing_active_draft'))).toContain(draft);const second=await context.newPage();await loginAs(second,'student2');await goToTab(second,'writing_practice');await expect(second.locator('[data-testid=writing-textarea]')).not.toHaveValue(draft);});\n     |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               ^\n   9 | test('erasing entire draft does not resurrect deleted text',async({page})=>{await loginAs(page,'student');await goToTab(page,'writing_practice');await page.locator('#btn-start-writing-q_ielts_wrt_03').click();await page.locator('#checkbox-accept-writing-rules').check();await page.locator('#btn-accept-rules-start-writing').click();const editor=page.locator('[data-testid=writing-textarea]');await editor.fill('Text deliberately deleted by the candidate.');await expect.poll(()=>page.evaluate(()=>localStorage.getItem('examos_writing_active_draft'))).toContain('deliberately deleted');await editor.fill('');await page.waitForTimeout(5500);await page.reload();await goToTab(page,'writing_practice');await expect(page.locator('[data-testid=writing-textarea]')).not.toHaveValue('Text deliberately deleted by the candidate.');});\n  10 | test('submitted draft stays cleared after autosave debounce',async({page})=>{await loginAs(page,'student');await goToTab(page,'writing_practice');await page.locator('#btn-start-writing-q_ielts_wrt_03').click();await page.locator('#checkbox-accept-writing-rules').check();await page.locator('#btn-accept-rules-start-writing').click();await page.locator('[data-testid=writing-textarea]').fill('A submission for checking draft cleanup.');await page.locator('#btn-submit-writing-attempt').click();await expect(page.locator('[data-testid=writing-scorecard]')).toBeVisible();await page.waitForTimeout(6000);expect(await page.evaluate(()=>localStorage.getItem('examos_writing_active_draft'))).toBeNull();});\n  11 |"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/tmp/examos-reverify-pPUolh/focused/regressions.spec.ts",
+                        "column": 751,
+                        "line": 8
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).not.\u001b[22mtoHaveValue\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('[data-testid=writing-textarea]')\nExpected: not \u001b[32m\"Private answer belonging only to student one.\"\u001b[39m\nReceived: \u001b[31m\"\u001b[7mPrivate answer belonging only to student one.\u001b[27m\"\u001b[39m\nTimeout:  5000ms\n\nCall log:\n\u001b[2m  - Expect \"not toHaveValue\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('[data-testid=writing-textarea]')\u001b[22m\n\u001b[2m    14 × locator resolved to <textarea data-testid=\"writing-textarea\" placeholder=\"Begin composing your response here...\">Private answer belonging only to student one.</textarea>\u001b[22m\n\u001b[2m       - unexpected value \"Private answer belonging only to student one.\"\u001b[22m\n\n\n   6 | for(const [name,scores] of Object.entries({missing:{task_response:9},unknown:{invented:9},extra:{task_response:6,coherence_cohesion:6,lexical_resource:6,grammatical_range:6,invented:9},wrongTask:{task_achievement:6,coherence_cohesion:6,lexical_resource:6,grammatical_range:6}}))test(`review rejects ${name} criterion IDs`,async({request})=>{const {headers,id}=await evaluation(request);const r=await request.post(`${api}/writing/reviews/${id}/submit`,{headers,data:{correctedCriteriaScores:scores}});await test.info().attach('response',{body:await r.text(),contentType:'application/json'});expect(r.status()).toBe(400);});\n   7 | test('valid review calculates average instead of supplied overall',async({request})=>{const{headers,id}=await evaluation(request);const r=await request.post(`${api}/writing/reviews/${id}/submit`,{headers,data:{correctedCriteriaScores:{task_response:6,coherence_cohesion:6,lexical_resource:6,grammatical_range:6},correctedOverallScore:9}});expect(r.status()).toBe(201);expect((await r.json()).data.correctedOverallScore).toBe(6);});\n>  8 | test('draft is isolated when a second student signs in',async({page,context})=>{await loginAs(page,'student');await goToTab(page,'writing_practice');await page.locator('#btn-start-writing-q_ielts_wrt_03').click();await page.locator('#checkbox-accept-writing-rules').check();await page.locator('#btn-accept-rules-start-writing').click();const draft='Private answer belonging only to student one.';await page.locator('[data-testid=writing-textarea]').fill(draft);await expect.poll(()=>page.evaluate(()=>localStorage.getItem('examos_writing_active_draft'))).toContain(draft);const second=await context.newPage();await loginAs(second,'student2');await goToTab(second,'writing_practice');await expect(second.locator('[data-testid=writing-textarea]')).not.toHaveValue(draft);});\n     |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               ^\n   9 | test('erasing entire draft does not resurrect deleted text',async({page})=>{await loginAs(page,'student');await goToTab(page,'writing_practice');await page.locator('#btn-start-writing-q_ielts_wrt_03').click();await page.locator('#checkbox-accept-writing-rules').check();await page.locator('#btn-accept-rules-start-writing').click();const editor=page.locator('[data-testid=writing-textarea]');await editor.fill('Text deliberately deleted by the candidate.');await expect.poll(()=>page.evaluate(()=>localStorage.getItem('examos_writing_active_draft'))).toContain('deliberately deleted');await editor.fill('');await page.waitForTimeout(5500);await page.reload();await goToTab(page,'writing_practice');await expect(page.locator('[data-testid=writing-textarea]')).not.toHaveValue('Text deliberately deleted by the candidate.');});\n  10 | test('submitted draft stays cleared after autosave debounce',async({page})=>{await loginAs(page,'student');await goToTab(page,'writing_practice');await page.locator('#btn-start-writing-q_ielts_wrt_03').click();await page.locator('#checkbox-accept-writing-rules').check();await page.locator('#btn-accept-rules-start-writing').click();await page.locator('[data-testid=writing-textarea]').fill('A submission for checking draft cleanup.');await page.locator('#btn-submit-writing-attempt').click();await expect(page.locator('[data-testid=writing-scorecard]')).toBeVisible();await page.waitForTimeout(6000);expect(await page.evaluate(()=>localStorage.getItem('examos_writing_active_draft'))).toBeNull();});\n  11 |\n    at /tmp/examos-reverify-pPUolh/focused/regressions.spec.ts:8:751"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T05:26:51.419Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/tmp/examos-reverify-pPUolh/resumed-results/regressions-draft-is-isolated-when-a-second-student-signs-in-chromium/test-failed-1.png"
+                    },
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/tmp/examos-reverify-pPUolh/resumed-results/regressions-draft-is-isolated-when-a-second-student-signs-in-chromium/test-failed-2.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/tmp/examos-reverify-pPUolh/resumed-results/regressions-draft-is-isolated-when-a-second-student-signs-in-chromium/error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "/tmp/examos-reverify-pPUolh/resumed-results/regressions-draft-is-isolated-when-a-second-student-signs-in-chromium/trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/tmp/examos-reverify-pPUolh/focused/regressions.spec.ts",
+                    "column": 751,
+                    "line": 8
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "a34af78d704591628420-9a95998f5734e381987a",
+          "file": "regressions.spec.ts",
+          "line": 8,
+          "column": 5
+        },
+        {
+          "title": "erasing entire draft does not resurrect deleted text",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 5,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 12836,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).not.\u001b[22mtoHaveValue\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('[data-testid=writing-textarea]')\nExpected: not \u001b[32m\"Text deliberately deleted by the candidate.\"\u001b[39m\nReceived: \u001b[31m\"\u001b[7mText deliberately deleted by the candidate.\u001b[27m\"\u001b[39m\nTimeout:  5000ms\n\nCall log:\n\u001b[2m  - Expect \"not toHaveValue\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('[data-testid=writing-textarea]')\u001b[22m\n\u001b[2m    14 × locator resolved to <textarea data-testid=\"writing-textarea\" placeholder=\"Begin composing your response here...\">Text deliberately deleted by the candidate.</textarea>\u001b[22m\n\u001b[2m       - unexpected value \"Text deliberately deleted by the candidate.\"\u001b[22m\n",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).not.\u001b[22mtoHaveValue\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('[data-testid=writing-textarea]')\nExpected: not \u001b[32m\"Text deliberately deleted by the candidate.\"\u001b[39m\nReceived: \u001b[31m\"\u001b[7mText deliberately deleted by the candidate.\u001b[27m\"\u001b[39m\nTimeout:  5000ms\n\nCall log:\n\u001b[2m  - Expect \"not toHaveValue\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('[data-testid=writing-textarea]')\u001b[22m\n\u001b[2m    14 × locator resolved to <textarea data-testid=\"writing-textarea\" placeholder=\"Begin composing your response here...\">Text deliberately deleted by the candidate.</textarea>\u001b[22m\n\u001b[2m       - unexpected value \"Text deliberately deleted by the candidate.\"\u001b[22m\n\n    at /tmp/examos-reverify-pPUolh/focused/regressions.spec.ts:9:764",
+                    "location": {
+                      "file": "/tmp/examos-reverify-pPUolh/focused/regressions.spec.ts",
+                      "column": 764,
+                      "line": 9
+                    },
+                    "snippet": "   7 | test('valid review calculates average instead of supplied overall',async({request})=>{const{headers,id}=await evaluation(request);const r=await request.post(`${api}/writing/reviews/${id}/submit`,{headers,data:{correctedCriteriaScores:{task_response:6,coherence_cohesion:6,lexical_resource:6,grammatical_range:6},correctedOverallScore:9}});expect(r.status()).toBe(201);expect((await r.json()).data.correctedOverallScore).toBe(6);});\n   8 | test('draft is isolated when a second student signs in',async({page,context})=>{await loginAs(page,'student');await goToTab(page,'writing_practice');await page.locator('#btn-start-writing-q_ielts_wrt_03').click();await page.locator('#checkbox-accept-writing-rules').check();await page.locator('#btn-accept-rules-start-writing').click();const draft='Private answer belonging only to student one.';await page.locator('[data-testid=writing-textarea]').fill(draft);await expect.poll(()=>page.evaluate(()=>localStorage.getItem('examos_writing_active_draft'))).toContain(draft);const second=await context.newPage();await loginAs(second,'student2');await goToTab(second,'writing_practice');await expect(second.locator('[data-testid=writing-textarea]')).not.toHaveValue(draft);});\n>  9 | test('erasing entire draft does not resurrect deleted text',async({page})=>{await loginAs(page,'student');await goToTab(page,'writing_practice');await page.locator('#btn-start-writing-q_ielts_wrt_03').click();await page.locator('#checkbox-accept-writing-rules').check();await page.locator('#btn-accept-rules-start-writing').click();const editor=page.locator('[data-testid=writing-textarea]');await editor.fill('Text deliberately deleted by the candidate.');await expect.poll(()=>page.evaluate(()=>localStorage.getItem('examos_writing_active_draft'))).toContain('deliberately deleted');await editor.fill('');await page.waitForTimeout(5500);await page.reload();await goToTab(page,'writing_practice');await expect(page.locator('[data-testid=writing-textarea]')).not.toHaveValue('Text deliberately deleted by the candidate.');});\n     |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            ^\n  10 | test('submitted draft stays cleared after autosave debounce',async({page})=>{await loginAs(page,'student');await goToTab(page,'writing_practice');await page.locator('#btn-start-writing-q_ielts_wrt_03').click();await page.locator('#checkbox-accept-writing-rules').check();await page.locator('#btn-accept-rules-start-writing').click();await page.locator('[data-testid=writing-textarea]').fill('A submission for checking draft cleanup.');await page.locator('#btn-submit-writing-attempt').click();await expect(page.locator('[data-testid=writing-scorecard]')).toBeVisible();await page.waitForTimeout(6000);expect(await page.evaluate(()=>localStorage.getItem('examos_writing_active_draft'))).toBeNull();});\n  11 |"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/tmp/examos-reverify-pPUolh/focused/regressions.spec.ts",
+                        "column": 764,
+                        "line": 9
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).not.\u001b[22mtoHaveValue\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator:  locator('[data-testid=writing-textarea]')\nExpected: not \u001b[32m\"Text deliberately deleted by the candidate.\"\u001b[39m\nReceived: \u001b[31m\"\u001b[7mText deliberately deleted by the candidate.\u001b[27m\"\u001b[39m\nTimeout:  5000ms\n\nCall log:\n\u001b[2m  - Expect \"not toHaveValue\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('[data-testid=writing-textarea]')\u001b[22m\n\u001b[2m    14 × locator resolved to <textarea data-testid=\"writing-textarea\" placeholder=\"Begin composing your response here...\">Text deliberately deleted by the candidate.</textarea>\u001b[22m\n\u001b[2m       - unexpected value \"Text deliberately deleted by the candidate.\"\u001b[22m\n\n\n   7 | test('valid review calculates average instead of supplied overall',async({request})=>{const{headers,id}=await evaluation(request);const r=await request.post(`${api}/writing/reviews/${id}/submit`,{headers,data:{correctedCriteriaScores:{task_response:6,coherence_cohesion:6,lexical_resource:6,grammatical_range:6},correctedOverallScore:9}});expect(r.status()).toBe(201);expect((await r.json()).data.correctedOverallScore).toBe(6);});\n   8 | test('draft is isolated when a second student signs in',async({page,context})=>{await loginAs(page,'student');await goToTab(page,'writing_practice');await page.locator('#btn-start-writing-q_ielts_wrt_03').click();await page.locator('#checkbox-accept-writing-rules').check();await page.locator('#btn-accept-rules-start-writing').click();const draft='Private answer belonging only to student one.';await page.locator('[data-testid=writing-textarea]').fill(draft);await expect.poll(()=>page.evaluate(()=>localStorage.getItem('examos_writing_active_draft'))).toContain(draft);const second=await context.newPage();await loginAs(second,'student2');await goToTab(second,'writing_practice');await expect(second.locator('[data-testid=writing-textarea]')).not.toHaveValue(draft);});\n>  9 | test('erasing entire draft does not resurrect deleted text',async({page})=>{await loginAs(page,'student');await goToTab(page,'writing_practice');await page.locator('#btn-start-writing-q_ielts_wrt_03').click();await page.locator('#checkbox-accept-writing-rules').check();await page.locator('#btn-accept-rules-start-writing').click();const editor=page.locator('[data-testid=writing-textarea]');await editor.fill('Text deliberately deleted by the candidate.');await expect.poll(()=>page.evaluate(()=>localStorage.getItem('examos_writing_active_draft'))).toContain('deliberately deleted');await editor.fill('');await page.waitForTimeout(5500);await page.reload();await goToTab(page,'writing_practice');await expect(page.locator('[data-testid=writing-textarea]')).not.toHaveValue('Text deliberately deleted by the candidate.');});\n     |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            ^\n  10 | test('submitted draft stays cleared after autosave debounce',async({page})=>{await loginAs(page,'student');await goToTab(page,'writing_practice');await page.locator('#btn-start-writing-q_ielts_wrt_03').click();await page.locator('#checkbox-accept-writing-rules').check();await page.locator('#btn-accept-rules-start-writing').click();await page.locator('[data-testid=writing-textarea]').fill('A submission for checking draft cleanup.');await page.locator('#btn-submit-writing-attempt').click();await expect(page.locator('[data-testid=writing-scorecard]')).toBeVisible();await page.waitForTimeout(6000);expect(await page.evaluate(()=>localStorage.getItem('examos_writing_active_draft'))).toBeNull();});\n  11 |\n    at /tmp/examos-reverify-pPUolh/focused/regressions.spec.ts:9:764"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T05:27:00.650Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/tmp/examos-reverify-pPUolh/resumed-results/regressions-erasing-entire-b3657--not-resurrect-deleted-text-chromium/test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/tmp/examos-reverify-pPUolh/resumed-results/regressions-erasing-entire-b3657--not-resurrect-deleted-text-chromium/error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "/tmp/examos-reverify-pPUolh/resumed-results/regressions-erasing-entire-b3657--not-resurrect-deleted-text-chromium/trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/tmp/examos-reverify-pPUolh/focused/regressions.spec.ts",
+                    "column": 764,
+                    "line": 9
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "a34af78d704591628420-546f74d787defc99d651",
+          "file": "regressions.spec.ts",
+          "line": 9,
+          "column": 5
+        },
+        {
+          "title": "submitted draft stays cleared after autosave debounce",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 45000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 6,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 7966,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeNull\u001b[2m()\u001b[22m\n\nReceived: \u001b[31m\"{\\\"activeQuestion\\\":{\\\"id\\\":\\\"q_ielts_wrt_03\\\",\\\"content\\\":\\\"IELTS Academic Writing Task 2: In many nations, modern automated artificial intelligence systems are increasingly being deployed in diagnostic medicine and legal adjudication. Some believe this enhances precision and reduces human prejudice, whereas others fear the erosion of empathy and accountability. Discuss both views and give your own opinion. (Write at least 250 words).\\\",\\\"difficulty\\\":\\\"MEDIUM\\\",\\\"marks\\\":9,\\\"courseName\\\":\\\"International English Language Testing System (IELTS)\\\",\\\"subjectName\\\":\\\"IELTS Academic Writing\\\",\\\"data\\\":{\\\"preset\\\":\\\"IELTS_TASK_2\\\",\\\"maxWords\\\":400,\\\"minWords\\\":250,\\\"taskType\\\":\\\"TASK_2_ESSAY\\\",\\\"promptStem\\\":\\\"IELTS Academic Writing Task 2: In many nations, modern automated artificial intelligence systems are increasingly being deployed in diagnostic medicine and legal adjudication. Some believe this enhances precision and reduces human prejudice, whereas others fear the erosion of empathy and accountability. Discuss both views and give your own opinion.\\\",\\\"promptText\\\":\\\"IELTS Academic Writing Task 2: In many nations, modern automated artificial intelligence systems are increasingly being deployed in diagnostic medicine and legal adjudication. Some believe this enhances precision and reduces human prejudice, whereas others fear the erosion of empathy and accountability. Discuss both views and give your own opinion.\\\",\\\"maxWordCount\\\":400,\\\"minWordCount\\\":250,\\\"rubricCriteria\\\":[{\\\"id\\\":\\\"task_response\\\",\\\"name\\\":\\\"Task Response\\\",\\\"weight\\\":0.25,\\\"maxScore\\\":9,\\\"description\\\":\\\"Addresses all parts of task, clear position throughout, extended ideas.\\\"},{\\\"id\\\":\\\"coherence_cohesion\\\",\\\"name\\\":\\\"Coherence & Cohesion\\\",\\\"weight\\\":0.25,\\\"maxScore\\\":9,\\\"description\\\":\\\"Sequencing, clear central topic in each paragraph, cohesive links.\\\"},{\\\"id\\\":\\\"lexical_resource\\\",\\\"name\\\":\\\"Lexical Resource\\\",\\\"weight\\\":0.25,\\\"maxScore\\\":9,\\\"description\\\":\\\"Sufficient range of vocabulary, style, natural collocations, minimal errors.\\\"},{\\\"id\\\":\\\"grammatical_range\\\",\\\"name\\\":\\\"Grammatical Range & Accuracy\\\",\\\"weight\\\":0.25,\\\"maxScore\\\":9,\\\"description\\\":\\\"Complex sentence forms, good control of grammar, clear communicative effect.\\\"}],\\\"timeLimitMinutes\\\":40,\\\"recommendedTimeMinutes\\\":40}},\\\"activeSession\\\":{\\\"id\\\":\\\"wrt_sess_09a41d560ebec7eb\\\",\\\"userId\\\":\\\"usr_student_test\\\",\\\"questionId\\\":\\\"q_ielts_wrt_03\\\",\\\"courseId\\\":\\\"c3\\\",\\\"mode\\\":\\\"PRACTICE\\\",\\\"status\\\":\\\"IN_PROGRESS\\\",\\\"score\\\":0,\\\"maxScore\\\":9,\\\"startedAt\\\":\\\"2026-10-03T05:27:15.860Z\\\"},\\\"essayText\\\":\\\"A submission for checking draft cleanup.\\\",\\\"selectedMode\\\":\\\"PRACTICE\\\",\\\"startTime\\\":1791005235862,\\\"savedAt\\\":1791005237982}\"\u001b[39m",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeNull\u001b[2m()\u001b[22m\n\nReceived: \u001b[31m\"{\\\"activeQuestion\\\":{\\\"id\\\":\\\"q_ielts_wrt_03\\\",\\\"content\\\":\\\"IELTS Academic Writing Task 2: In many nations, modern automated artificial intelligence systems are increasingly being deployed in diagnostic medicine and legal adjudication. Some believe this enhances precision and reduces human prejudice, whereas others fear the erosion of empathy and accountability. Discuss both views and give your own opinion. (Write at least 250 words).\\\",\\\"difficulty\\\":\\\"MEDIUM\\\",\\\"marks\\\":9,\\\"courseName\\\":\\\"International English Language Testing System (IELTS)\\\",\\\"subjectName\\\":\\\"IELTS Academic Writing\\\",\\\"data\\\":{\\\"preset\\\":\\\"IELTS_TASK_2\\\",\\\"maxWords\\\":400,\\\"minWords\\\":250,\\\"taskType\\\":\\\"TASK_2_ESSAY\\\",\\\"promptStem\\\":\\\"IELTS Academic Writing Task 2: In many nations, modern automated artificial intelligence systems are increasingly being deployed in diagnostic medicine and legal adjudication. Some believe this enhances precision and reduces human prejudice, whereas others fear the erosion of empathy and accountability. Discuss both views and give your own opinion.\\\",\\\"promptText\\\":\\\"IELTS Academic Writing Task 2: In many nations, modern automated artificial intelligence systems are increasingly being deployed in diagnostic medicine and legal adjudication. Some believe this enhances precision and reduces human prejudice, whereas others fear the erosion of empathy and accountability. Discuss both views and give your own opinion.\\\",\\\"maxWordCount\\\":400,\\\"minWordCount\\\":250,\\\"rubricCriteria\\\":[{\\\"id\\\":\\\"task_response\\\",\\\"name\\\":\\\"Task Response\\\",\\\"weight\\\":0.25,\\\"maxScore\\\":9,\\\"description\\\":\\\"Addresses all parts of task, clear position throughout, extended ideas.\\\"},{\\\"id\\\":\\\"coherence_cohesion\\\",\\\"name\\\":\\\"Coherence & Cohesion\\\",\\\"weight\\\":0.25,\\\"maxScore\\\":9,\\\"description\\\":\\\"Sequencing, clear central topic in each paragraph, cohesive links.\\\"},{\\\"id\\\":\\\"lexical_resource\\\",\\\"name\\\":\\\"Lexical Resource\\\",\\\"weight\\\":0.25,\\\"maxScore\\\":9,\\\"description\\\":\\\"Sufficient range of vocabulary, style, natural collocations, minimal errors.\\\"},{\\\"id\\\":\\\"grammatical_range\\\",\\\"name\\\":\\\"Grammatical Range & Accuracy\\\",\\\"weight\\\":0.25,\\\"maxScore\\\":9,\\\"description\\\":\\\"Complex sentence forms, good control of grammar, clear communicative effect.\\\"}],\\\"timeLimitMinutes\\\":40,\\\"recommendedTimeMinutes\\\":40}},\\\"activeSession\\\":{\\\"id\\\":\\\"wrt_sess_09a41d560ebec7eb\\\",\\\"userId\\\":\\\"usr_student_test\\\",\\\"questionId\\\":\\\"q_ielts_wrt_03\\\",\\\"courseId\\\":\\\"c3\\\",\\\"mode\\\":\\\"PRACTICE\\\",\\\"status\\\":\\\"IN_PROGRESS\\\",\\\"score\\\":0,\\\"maxScore\\\":9,\\\"startedAt\\\":\\\"2026-10-03T05:27:15.860Z\\\"},\\\"essayText\\\":\\\"A submission for checking draft cleanup.\\\",\\\"selectedMode\\\":\\\"PRACTICE\\\",\\\"startTime\\\":1791005235862,\\\"savedAt\\\":1791005237982}\"\u001b[39m\n    at /tmp/examos-reverify-pPUolh/focused/regressions.spec.ts:10:687",
+                    "location": {
+                      "file": "/tmp/examos-reverify-pPUolh/focused/regressions.spec.ts",
+                      "column": 687,
+                      "line": 10
+                    },
+                    "snippet": "   8 | test('draft is isolated when a second student signs in',async({page,context})=>{await loginAs(page,'student');await goToTab(page,'writing_practice');await page.locator('#btn-start-writing-q_ielts_wrt_03').click();await page.locator('#checkbox-accept-writing-rules').check();await page.locator('#btn-accept-rules-start-writing').click();const draft='Private answer belonging only to student one.';await page.locator('[data-testid=writing-textarea]').fill(draft);await expect.poll(()=>page.evaluate(()=>localStorage.getItem('examos_writing_active_draft'))).toContain(draft);const second=await context.newPage();await loginAs(second,'student2');await goToTab(second,'writing_practice');await expect(second.locator('[data-testid=writing-textarea]')).not.toHaveValue(draft);});\n   9 | test('erasing entire draft does not resurrect deleted text',async({page})=>{await loginAs(page,'student');await goToTab(page,'writing_practice');await page.locator('#btn-start-writing-q_ielts_wrt_03').click();await page.locator('#checkbox-accept-writing-rules').check();await page.locator('#btn-accept-rules-start-writing').click();const editor=page.locator('[data-testid=writing-textarea]');await editor.fill('Text deliberately deleted by the candidate.');await expect.poll(()=>page.evaluate(()=>localStorage.getItem('examos_writing_active_draft'))).toContain('deliberately deleted');await editor.fill('');await page.waitForTimeout(5500);await page.reload();await goToTab(page,'writing_practice');await expect(page.locator('[data-testid=writing-textarea]')).not.toHaveValue('Text deliberately deleted by the candidate.');});\n> 10 | test('submitted draft stays cleared after autosave debounce',async({page})=>{await loginAs(page,'student');await goToTab(page,'writing_practice');await page.locator('#btn-start-writing-q_ielts_wrt_03').click();await page.locator('#checkbox-accept-writing-rules').check();await page.locator('#btn-accept-rules-start-writing').click();await page.locator('[data-testid=writing-textarea]').fill('A submission for checking draft cleanup.');await page.locator('#btn-submit-writing-attempt').click();await expect(page.locator('[data-testid=writing-scorecard]')).toBeVisible();await page.waitForTimeout(6000);expect(await page.evaluate(()=>localStorage.getItem('examos_writing_active_draft'))).toBeNull();});\n     |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               ^\n  11 |"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/tmp/examos-reverify-pPUolh/focused/regressions.spec.ts",
+                        "column": 687,
+                        "line": 10
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeNull\u001b[2m()\u001b[22m\n\nReceived: \u001b[31m\"{\\\"activeQuestion\\\":{\\\"id\\\":\\\"q_ielts_wrt_03\\\",\\\"content\\\":\\\"IELTS Academic Writing Task 2: In many nations, modern automated artificial intelligence systems are increasingly being deployed in diagnostic medicine and legal adjudication. Some believe this enhances precision and reduces human prejudice, whereas others fear the erosion of empathy and accountability. Discuss both views and give your own opinion. (Write at least 250 words).\\\",\\\"difficulty\\\":\\\"MEDIUM\\\",\\\"marks\\\":9,\\\"courseName\\\":\\\"International English Language Testing System (IELTS)\\\",\\\"subjectName\\\":\\\"IELTS Academic Writing\\\",\\\"data\\\":{\\\"preset\\\":\\\"IELTS_TASK_2\\\",\\\"maxWords\\\":400,\\\"minWords\\\":250,\\\"taskType\\\":\\\"TASK_2_ESSAY\\\",\\\"promptStem\\\":\\\"IELTS Academic Writing Task 2: In many nations, modern automated artificial intelligence systems are increasingly being deployed in diagnostic medicine and legal adjudication. Some believe this enhances precision and reduces human prejudice, whereas others fear the erosion of empathy and accountability. Discuss both views and give your own opinion.\\\",\\\"promptText\\\":\\\"IELTS Academic Writing Task 2: In many nations, modern automated artificial intelligence systems are increasingly being deployed in diagnostic medicine and legal adjudication. Some believe this enhances precision and reduces human prejudice, whereas others fear the erosion of empathy and accountability. Discuss both views and give your own opinion.\\\",\\\"maxWordCount\\\":400,\\\"minWordCount\\\":250,\\\"rubricCriteria\\\":[{\\\"id\\\":\\\"task_response\\\",\\\"name\\\":\\\"Task Response\\\",\\\"weight\\\":0.25,\\\"maxScore\\\":9,\\\"description\\\":\\\"Addresses all parts of task, clear position throughout, extended ideas.\\\"},{\\\"id\\\":\\\"coherence_cohesion\\\",\\\"name\\\":\\\"Coherence & Cohesion\\\",\\\"weight\\\":0.25,\\\"maxScore\\\":9,\\\"description\\\":\\\"Sequencing, clear central topic in each paragraph, cohesive links.\\\"},{\\\"id\\\":\\\"lexical_resource\\\",\\\"name\\\":\\\"Lexical Resource\\\",\\\"weight\\\":0.25,\\\"maxScore\\\":9,\\\"description\\\":\\\"Sufficient range of vocabulary, style, natural collocations, minimal errors.\\\"},{\\\"id\\\":\\\"grammatical_range\\\",\\\"name\\\":\\\"Grammatical Range & Accuracy\\\",\\\"weight\\\":0.25,\\\"maxScore\\\":9,\\\"description\\\":\\\"Complex sentence forms, good control of grammar, clear communicative effect.\\\"}],\\\"timeLimitMinutes\\\":40,\\\"recommendedTimeMinutes\\\":40}},\\\"activeSession\\\":{\\\"id\\\":\\\"wrt_sess_09a41d560ebec7eb\\\",\\\"userId\\\":\\\"usr_student_test\\\",\\\"questionId\\\":\\\"q_ielts_wrt_03\\\",\\\"courseId\\\":\\\"c3\\\",\\\"mode\\\":\\\"PRACTICE\\\",\\\"status\\\":\\\"IN_PROGRESS\\\",\\\"score\\\":0,\\\"maxScore\\\":9,\\\"startedAt\\\":\\\"2026-10-03T05:27:15.860Z\\\"},\\\"essayText\\\":\\\"A submission for checking draft cleanup.\\\",\\\"selectedMode\\\":\\\"PRACTICE\\\",\\\"startTime\\\":1791005235862,\\\"savedAt\\\":1791005237982}\"\u001b[39m\n\n   8 | test('draft is isolated when a second student signs in',async({page,context})=>{await loginAs(page,'student');await goToTab(page,'writing_practice');await page.locator('#btn-start-writing-q_ielts_wrt_03').click();await page.locator('#checkbox-accept-writing-rules').check();await page.locator('#btn-accept-rules-start-writing').click();const draft='Private answer belonging only to student one.';await page.locator('[data-testid=writing-textarea]').fill(draft);await expect.poll(()=>page.evaluate(()=>localStorage.getItem('examos_writing_active_draft'))).toContain(draft);const second=await context.newPage();await loginAs(second,'student2');await goToTab(second,'writing_practice');await expect(second.locator('[data-testid=writing-textarea]')).not.toHaveValue(draft);});\n   9 | test('erasing entire draft does not resurrect deleted text',async({page})=>{await loginAs(page,'student');await goToTab(page,'writing_practice');await page.locator('#btn-start-writing-q_ielts_wrt_03').click();await page.locator('#checkbox-accept-writing-rules').check();await page.locator('#btn-accept-rules-start-writing').click();const editor=page.locator('[data-testid=writing-textarea]');await editor.fill('Text deliberately deleted by the candidate.');await expect.poll(()=>page.evaluate(()=>localStorage.getItem('examos_writing_active_draft'))).toContain('deliberately deleted');await editor.fill('');await page.waitForTimeout(5500);await page.reload();await goToTab(page,'writing_practice');await expect(page.locator('[data-testid=writing-textarea]')).not.toHaveValue('Text deliberately deleted by the candidate.');});\n> 10 | test('submitted draft stays cleared after autosave debounce',async({page})=>{await loginAs(page,'student');await goToTab(page,'writing_practice');await page.locator('#btn-start-writing-q_ielts_wrt_03').click();await page.locator('#checkbox-accept-writing-rules').check();await page.locator('#btn-accept-rules-start-writing').click();await page.locator('[data-testid=writing-textarea]').fill('A submission for checking draft cleanup.');await page.locator('#btn-submit-writing-attempt').click();await expect(page.locator('[data-testid=writing-scorecard]')).toBeVisible();await page.waitForTimeout(6000);expect(await page.evaluate(()=>localStorage.getItem('examos_writing_active_draft'))).toBeNull();});\n     |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               ^\n  11 |\n    at /tmp/examos-reverify-pPUolh/focused/regressions.spec.ts:10:687"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-03T05:27:14.229Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/tmp/examos-reverify-pPUolh/resumed-results/regressions-submitted-draf-bb05d-red-after-autosave-debounce-chromium/test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/tmp/examos-reverify-pPUolh/resumed-results/regressions-submitted-draf-bb05d-red-after-autosave-debounce-chromium/error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "/tmp/examos-reverify-pPUolh/resumed-results/regressions-submitted-draf-bb05d-red-after-autosave-debounce-chromium/trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/tmp/examos-reverify-pPUolh/focused/regressions.spec.ts",
+                    "column": 687,
+                    "line": 10
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "a34af78d704591628420-86f00edcbf5358e75fa8",
+          "file": "regressions.spec.ts",
+          "line": 10,
+          "column": 5
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-03T05:26:30.422Z",
+    "duration": 52020.857,
+    "expected": 12,
+    "skipped": 0,
+    "unexpected": 7,
+    "flaky": 0
+  }
+}

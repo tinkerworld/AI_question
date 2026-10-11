@@ -1,0 +1,132 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" width="100%" height="100%" style="background:#0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+  <!-- Title & Subtitle -->
+  <text x="400" y="36" text-anchor="middle" fill="#f8fafc" font-size="18" font-weight="700">Global Carbon Dioxide (CO₂) Emissions in Four Regions (1990–2025)</text>
+  <text x="400" y="58" text-anchor="middle" fill="#94a3b8" font-size="13">Annual emissions measured in Gigatonnes (Gt) of CO₂ equivalent</text>
+
+  <!-- Legend -->
+  <g transform="translate(130, 78)">
+    <!-- China -->
+    <line x1="0" y1="8" x2="24" y2="8" stroke="#ef4444" stroke-width="3" />
+    <circle cx="12" cy="8" r="4" fill="#ef4444" />
+    <text x="32" y="12" fill="#e2e8f0" font-size="12" font-weight="600">China</text>
+
+    <!-- USA -->
+    <line x1="140" y1="8" x2="164" y2="8" stroke="#3b82f6" stroke-width="3" />
+    <circle cx="152" cy="8" r="4" fill="#3b82f6" />
+    <text x="172" y="12" fill="#e2e8f0" font-size="12" font-weight="600">United States</text>
+
+    <!-- European Union -->
+    <line x1="310" y1="8" x2="334" y2="8" stroke="#10b981" stroke-width="3" />
+    <circle cx="322" cy="8" r="4" fill="#10b981" />
+    <text x="342" y="12" fill="#e2e8f0" font-size="12" font-weight="600">European Union</text>
+
+    <!-- India -->
+    <line x1="480" y1="8" x2="504" y2="8" stroke="#f59e0b" stroke-width="3" />
+    <circle cx="492" cy="8" r="4" fill="#f59e0b" />
+    <text x="512" y="12" fill="#e2e8f0" font-size="12" font-weight="600">India</text>
+  </g>
+
+  <!-- Gridlines -->
+  <g stroke="#334155" stroke-dasharray="4,4" stroke-width="1">
+    <line x1="85" y1="110" x2="745" y2="110" />
+    <line x1="85" y1="153" x2="745" y2="153" />
+    <line x1="85" y1="196" x2="745" y2="196" />
+    <line x1="85" y1="239" x2="745" y2="239" />
+    <line x1="85" y1="281" x2="745" y2="281" />
+    <line x1="85" y1="324" x2="745" y2="324" />
+    <line x1="85" y1="367" x2="745" y2="367" />
+  </g>
+  <line x1="85" y1="410" x2="745" y2="410" stroke="#64748b" stroke-width="2" />
+
+  <!-- Y-Axis Labels -->
+  <g fill="#94a3b8" font-size="11" text-anchor="end">
+    <text x="75" y="114">14 Gt</text>
+    <text x="75" y="157">12 Gt</text>
+    <text x="75" y="200">10 Gt</text>
+    <text x="75" y="243">8 Gt</text>
+    <text x="75" y="285">6 Gt</text>
+    <text x="75" y="328">4 Gt</text>
+    <text x="75" y="371">2 Gt</text>
+    <text x="75" y="414">0 Gt</text>
+  </g>
+
+  <!-- X-Axis Labels -->
+  <g fill="#94a3b8" font-size="12" text-anchor="middle">
+    <text x="100" y="432">1990</text>
+    <text x="189" y="432">1995</text>
+    <text x="277" y="432">2000</text>
+    <text x="366" y="432">2005</text>
+    <text x="454" y="432">2010</text>
+    <text x="543" y="432">2015</text>
+    <text x="631" y="432">2020</text>
+    <text x="720" y="432">2025</text>
+  </g>
+
+  <!-- Vertical tick markers -->
+  <g stroke="#64748b" stroke-width="1">
+    <line x1="100" y1="410" x2="100" y2="416" />
+    <line x1="189" y1="410" x2="189" y2="416" />
+    <line x1="277" y1="410" x2="277" y2="416" />
+    <line x1="366" y1="410" x2="366" y2="416" />
+    <line x1="454" y1="410" x2="454" y2="416" />
+    <line x1="543" y1="410" x2="543" y2="416" />
+    <line x1="631" y1="410" x2="631" y2="416" />
+    <line x1="720" y1="410" x2="720" y2="416" />
+  </g>
+
+  <!-- CHINA Line (Red): 2.4 (358), 3.2 (341), 3.5 (335), 6.0 (281), 8.5 (228), 9.8 (200), 10.9 (177), 12.4 (144) -->
+  <path d="M 100 358 L 189 341 L 277 335 L 366 281 L 454 228 L 543 200 L 631 177 L 720 144" fill="none" stroke="#ef4444" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
+  <g fill="#ef4444" stroke="#0f172a" stroke-width="2">
+    <circle cx="100" cy="358" r="5" />
+    <circle cx="189" cy="341" r="5" />
+    <circle cx="277" cy="335" r="5" />
+    <circle cx="366" cy="281" r="5" />
+    <circle cx="454" cy="228" r="5" />
+    <circle cx="543" cy="200" r="5" />
+    <circle cx="631" cy="177" r="5" />
+    <circle cx="720" cy="144" r="5" />
+  </g>
+  <text x="728" y="142" fill="#ef4444" font-size="11" font-weight="700">12.4</text>
+
+  <!-- USA Line (Blue): 5.0 (303), 5.3 (296), 5.8 (286), 6.1 (279), 5.6 (290), 5.2 (299), 4.6 (311), 4.8 (307) -->
+  <path d="M 100 303 L 189 296 L 277 286 L 366 279 L 454 290 L 543 299 L 631 311 L 720 307" fill="none" stroke="#3b82f6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+  <g fill="#3b82f6" stroke="#0f172a" stroke-width="2">
+    <circle cx="100" cy="303" r="4.5" />
+    <circle cx="189" cy="296" r="4.5" />
+    <circle cx="277" cy="286" r="4.5" />
+    <circle cx="366" cy="279" r="4.5" />
+    <circle cx="454" cy="290" r="4.5" />
+    <circle cx="543" cy="299" r="4.5" />
+    <circle cx="631" cy="311" r="4.5" />
+    <circle cx="720" cy="307" r="4.5" />
+  </g>
+  <text x="728" y="306" fill="#3b82f6" font-size="11" font-weight="700">4.8</text>
+
+  <!-- EU Line (Green): 4.4 (316), 4.1 (322), 4.0 (324), 4.1 (322), 3.7 (331), 3.2 (341), 2.7 (352), 2.5 (356) -->
+  <path d="M 100 316 L 189 322 L 277 324 L 366 322 L 454 331 L 543 341 L 631 352 L 720 356" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+  <g fill="#10b981" stroke="#0f172a" stroke-width="2">
+    <circle cx="100" cy="316" r="4.5" />
+    <circle cx="189" cy="322" r="4.5" />
+    <circle cx="277" cy="324" r="4.5" />
+    <circle cx="366" cy="322" r="4.5" />
+    <circle cx="454" cy="331" r="4.5" />
+    <circle cx="543" cy="341" r="4.5" />
+    <circle cx="631" cy="352" r="4.5" />
+    <circle cx="720" cy="356" r="4.5" />
+  </g>
+  <text x="728" y="358" fill="#10b981" font-size="11" font-weight="700">2.5</text>
+
+  <!-- INDIA Line (Amber): 0.6 (397), 0.9 (391), 1.1 (386), 1.3 (382), 1.8 (371), 2.3 (361), 2.5 (356), 3.1 (344) -->
+  <path d="M 100 397 L 189 391 L 277 386 L 366 382 L 454 371 L 543 361 L 631 356 L 720 344" fill="none" stroke="#f59e0b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+  <g fill="#f59e0b" stroke="#0f172a" stroke-width="2">
+    <circle cx="100" cy="397" r="4.5" />
+    <circle cx="189" cy="391" r="4.5" />
+    <circle cx="277" cy="386" r="4.5" />
+    <circle cx="366" cy="382" r="4.5" />
+    <circle cx="454" cy="371" r="4.5" />
+    <circle cx="543" cy="361" r="4.5" />
+    <circle cx="631" cy="356" r="4.5" />
+    <circle cx="720" cy="344" r="4.5" />
+  </g>
+  <text x="728" y="342" fill="#f59e0b" font-size="11" font-weight="700">3.1</text>
+</svg>

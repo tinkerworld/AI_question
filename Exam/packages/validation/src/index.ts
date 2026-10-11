@@ -114,6 +114,7 @@ export const createEnrollmentSchema = z.object({
 
 // Phase 3 Validation Schemas (Question Bank)
 export const createQuestionSchema = z.object({
+  id: z.string().optional(),
   type: z.string().min(1, 'Question type is required'),
   content: z.string().min(5, 'Question content must be at least 5 characters'),
   data: z.record(z.any()),

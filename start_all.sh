@@ -50,7 +50,7 @@ PREFERRED_API=${API_PORT:-${PORT:-4043}}
 API_PORT=$(find_free_port "$PREFERRED_API")
 
 # 3. Resolve Web Frontend Port
-PREFERRED_WEB=${WEB_PORT:-3000}
+PREFERRED_WEB=${WEB_PORT:-3002}
 WEB_PORT=$(find_free_port "$PREFERRED_WEB")
 
 # Save detected ports for stop_all.sh and environment

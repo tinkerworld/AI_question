@@ -1,0 +1,107 @@
+name: ExamOS production deployment
+
+on:
+  workflow_run:
+    workflows: [ExamOS CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      ci_run_id:
+        description: Successful ExamOS CI run ID for the current main commit
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: examos-production
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Verify main commit and successful CI
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    if: >-
+      vars.EXAMOS_DEPLOY_ENABLED == 'true' &&
+      (github.event_name == 'workflow_dispatch' ||
+       github.event.workflow_run.conclusion == 'success')
+    outputs:
+      sha: ${{ steps.verify.outputs.sha }}
+      run_id: ${{ steps.verify.outputs.run_id }}
+      attempt: ${{ steps.verify.outputs.attempt }}
+    steps:
+      - name: Verify CI provenance through GitHub API
+        id: verify
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          REQUESTED_RUN: ${{ inputs.ci_run_id || github.event.workflow_run.id }}
+          DISPATCH_REF: ${{ github.ref }}
+          EVENT_NAME: ${{ github.event_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$REQUESTED_RUN" =~ ^[0-9]+$ ]]
+          if [[ "$EVENT_NAME" == workflow_dispatch ]]; then
+            [[ "$DISPATCH_REF" == refs/heads/main ]]
+          fi
+          gh api "repos/$GH_REPO/actions/runs/$REQUESTED_RUN" > "$RUNNER_TEMP/ci-run.json"
+          WORKFLOW_ID=$(gh api "repos/$GH_REPO/actions/workflows/ci.yml" --jq .id)
+          MAIN_SHA=$(gh api "repos/$GH_REPO/git/ref/heads/main" --jq .object.sha)
+          export WORKFLOW_ID MAIN_SHA
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          run = json.loads((Path(os.environ['RUNNER_TEMP']) / 'ci-run.json').read_text())
+          assert run['conclusion'] == 'success' and run['status'] == 'completed'
+          assert run['workflow_id'] == int(os.environ['WORKFLOW_ID'])
+          assert run['head_repository']['full_name'] == os.environ['GH_REPO']
+          assert run['head_branch'] == 'main' and run['event'] in ['push', 'workflow_dispatch']
+          assert run['head_sha'] == os.environ['MAIN_SHA'], 'A newer main commit exists; validate it first'
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write(f"sha={run['head_sha']}\nrun_id={run['id']}\nattempt={run['run_attempt']}\n")
+          PY
+
+  deploy:
+    name: Activate validated production release
+    needs: verify
+    environment: production
+    runs-on: [self-hosted, linux, x64, examos-production]
+    timeout-minutes: 20
+    steps:
+      # No checkout, build, PR code, or production secrets on the runner account.
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: release-${{ needs.verify.outputs.sha }}-${{ needs.verify.outputs.attempt }}
+          run-id: ${{ needs.verify.outputs.run_id }}
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/examos-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Reject a stale release after any approval wait
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          APPROVED_SHA: ${{ needs.verify.outputs.sha }}
+        run: |
+          python3 - <<'PY'
+          import json, os, urllib.request
+          url = 'https://api.github.com/repos/' + os.environ['GH_REPO'] + '/git/ref/heads/main'
+          request = urllib.request.Request(url, headers={'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json'})
+          with urllib.request.urlopen(request, timeout=15) as response:
+              assert json.load(response)['object']['sha'] == os.environ['APPROVED_SHA'], 'Main changed; use the newest successful CI run'
+          PY
+      - name: Run installed deployment controller
+        env:
+          APPROVED_SHA: ${{ needs.verify.outputs.sha }}
+          ARTIFACT: ${{ runner.temp }}/examos-${{ github.run_id }}-${{ github.run_attempt }}/release.tar.gz
+          RELEASE_ID: ${{ github.run_id }}-${{ github.run_attempt }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          INCOMING="/var/lib/examos-deploy/incoming/$RELEASE_ID-$APPROVED_SHA.tar.gz"
+          install -m 0640 "$ARTIFACT" "$INCOMING"
+          trap 'rm -f "$INCOMING"' EXIT
+          sudo -n -u ubuntu /usr/bin/python3 /usr/local/lib/examos/github-deploy.py "$INCOMING" "$APPROVED_SHA"

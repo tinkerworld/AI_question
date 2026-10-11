@@ -186,7 +186,8 @@ analyticsRouter.get('/mastery/progress', async (req: Request, res: Response, nex
     const query = validateParams(progressQuerySchema, req.query, res);
     if (!query) return;
     const currentUserId = req.user?.userId || (req.user as any)?.id;
-    const progress = await analyticsService.getStudentProgress(currentUserId, currentUserId, false, query.range);
+    const mappedRange = query.range === 'week' ? '7d' : query.range === 'month' ? '30d' : query.range;
+    const progress = await analyticsService.getStudentProgress(currentUserId, currentUserId, false, mappedRange as any);
     res.json({ success: true, data: progress });
   } catch (error) { next(error); }
 });
@@ -199,7 +200,8 @@ analyticsRouter.get('/students/:id/progress', async (req: Request, res: Response
     if (!query) return;
     const currentUserId = req.user?.userId || (req.user as any)?.id;
     const elevated = isElevatedUser(req.user);
-    const progress = await analyticsService.getStudentProgress(params.id, currentUserId, elevated, query.range);
+    const mappedRange = query.range === 'week' ? '7d' : query.range === 'month' ? '30d' : query.range;
+    const progress = await analyticsService.getStudentProgress(params.id, currentUserId, elevated, mappedRange as any);
     res.json({ success: true, data: progress });
   } catch (error) { next(error); }
 });
