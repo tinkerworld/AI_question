@@ -598,4 +598,124 @@ router.all(
   }
 );
 
+/**
+ * GET /api/v1/interview/services/status
+ * Fleet status check for all system components (microservice, cloudflared, examos-api, examos-web, postgres).
+ */
+router.get(
+  '/services/status',
+  async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+      const status = await InterviewService.getPlatformServicesStatus();
+      res.json({ success: true, data: status });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+/**
+ * GET /api/v1/interview/services/logs
+ * Live log streaming across platform components.
+ */
+router.get(
+  '/services/logs',
+  requirePermission(PERMISSIONS.INTERVIEW_READ_OWN),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const source = typeof req.query.source === 'string' ? req.query.source : undefined;
+      const lines = req.query.lines ? Number(req.query.lines) : undefined;
+      const filter = typeof req.query.filter === 'string' ? req.query.filter : undefined;
+      const logs = await InterviewService.getPlatformLogs(source, lines, filter);
+      res.json({ success: true, data: logs });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+/**
+ * POST /api/v1/interview/audio/calibrate-speech
+ * Automatic Candidate Pacing & WPM Calibration.
+ */
+router.post(
+  '/audio/calibrate-speech',
+  express.json({ limit: '50mb' }),
+  requirePermission(PERMISSIONS.INTERVIEW_ATTEMPT),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { audio_base64, audioBase64, audio_format, audioFormat, language } = req.body || {};
+      const base64Data = audio_base64 || audioBase64;
+      if (!base64Data) {
+        throw new AppError(400, 'BAD_REQUEST', 'audio_base64 or audioBase64 is required');
+      }
+
+      const result = await InterviewService.calibrateSpeech({
+        audio_base64: base64Data,
+        audio_format: audio_format || audioFormat || 'webm',
+        language: language || 'en',
+      });
+
+      res.json({ success: true, data: result });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+/**
+ * POST /api/v1/interview/workspaces
+ * Creates a new knowledge workspace in the microservice.
+ */
+router.post(
+  '/workspaces',
+  requirePermission(PERMISSIONS.INTERVIEW_ATTEMPT),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { name, subject, description, topics } = req.body || {};
+      if (!name) {
+        throw new AppError(400, 'BAD_REQUEST', 'Workspace name is required');
+      }
+      const result = await InterviewService.createWorkspace(name, subject, description, topics);
+      res.status(201).json({ success: true, data: result });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+/**
+ * DELETE /api/v1/interview/workspaces/:id
+ * Deletes a knowledge workspace from the microservice.
+ */
+router.delete(
+  '/workspaces/:id',
+  requirePermission(PERMISSIONS.INTERVIEW_ATTEMPT),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const result = await InterviewService.deleteWorkspace(req.params.id);
+      res.json({ success: true, data: result });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+/**
+ * GET /api/v1/interview/workspaces/:id/versions
+ * Retrieves knowledge version history for a workspace.
+ */
+router.get(
+  '/workspaces/:id/versions',
+  requirePermission(PERMISSIONS.INTERVIEW_ATTEMPT),
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const versions = await InterviewService.getWorkspaceVersions(req.params.id);
+      res.json({ success: true, data: versions });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 export default router;

@@ -16,7 +16,7 @@ export const LanguageSelector: React.FC = () => {
       value={activeCode}
       onChange={(e) => setLanguage(e.target.value)}
       style={{
-        padding: '6px 12px',
+        padding: '6px 10px',
         borderRadius: '6px',
         border: '1px solid rgba(255,255,255,0.2)',
         background: 'rgba(0,0,0,0.4)',
@@ -24,6 +24,8 @@ export const LanguageSelector: React.FC = () => {
         fontSize: '12px',
         cursor: 'pointer',
         outline: 'none',
+        maxWidth: '130px',
+        textOverflow: 'ellipsis',
       }}
     >
       {list.map((lang) => (

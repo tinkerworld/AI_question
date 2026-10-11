@@ -45,6 +45,10 @@ agyssessionid.txt
 **/apps/api/storage/audio/*.wav
 !**/apps/api/storage/audio/.gitkeep
 
+# Runtime PIDs & Ports
+.pids/
+.ports.env
+logs/
 # Backend tester execution logs
 tools/backend-tester/logs/
 

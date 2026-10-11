@@ -1324,6 +1324,7 @@ export interface AIProviderDTO {
   modelId: string;
   baseUrl?: string;
   apiKey?: string;
+  temperature?: number;
   priority: number;
   scope: string;
   isActive: boolean;
@@ -1961,30 +1962,238 @@ export interface WritingRubricCriterionDTO {
   description?: string;
 }
 
+export type WritingEvaluationStatus = 'PENDING' | 'EVALUATING' | 'COMPLETED' | 'REVIEW_REQUIRED' | 'FAILED';
+export type WritingReliabilityStatus = 'HIGH' | 'MEDIUM' | 'FLAGGED_FOR_REVIEW' | 'FAILED';
+
+export interface WritingCriterionDetailDTO {
+  id: string;
+  name: string;
+  score: number;
+  rawScore?: number;
+  maxScore: number;
+  weight?: number;
+  feedback?: string;
+  explanation: string;
+  supportingQuotations?: string[];
+  specificWeaknesses?: string[];
+  whatWouldImprove?: string;
+  requiresReview?: boolean;
+}
+
+export interface WritingGrammarCorrectionDTO {
+  quote: string;
+  issue: string;
+  suggestion: string;
+  startOffset?: number;
+  endOffset?: number;
+  isGenuineError: boolean;
+}
+
+export interface WritingVocabularySuggestionDTO {
+  word: string;
+  betterAlternative: string;
+  context: string;
+  quote?: string;
+  startOffset?: number;
+  endOffset?: number;
+}
+
+export interface WritingTeacherReviewDTO {
+  id: string;
+  evaluationId: string;
+  teacherId: string;
+  teacherName?: string;
+  originalCriteriaScores: Record<string, number>;
+  correctedCriteriaScores: Record<string, number>;
+  originalOverallScore: number;
+  correctedOverallScore: number;
+  teacherNotes: string;
+  isApproved: boolean;
+  createdAt: string;
+}
+
+export interface WritingReferenceRecordDTO {
+  id: string;
+  workspaceId: string;
+  taskType: 'TASK_1' | 'TASK_2';
+  questionType: string;
+  title: string;
+  questionPrompt: string;
+  sampleAnswer: string;
+  bandScore: number;
+  criterionScores: Record<string, number>;
+  criterionExplanations: Record<string, string>;
+  chartFacts?: Record<string, any>;
+  source: string;
+  reviewStatus: 'APPROVED' | 'DRAFT' | 'REJECTED';
+  version: string;
+  isApproved: boolean;
+  tags?: string[];
+  similarity?: number;
+  relevanceScore?: number;
+  retrievalStrategy?: 'SEMANTIC_VECTOR' | 'STRUCTURED_RELEVANCE';
+  provenance?: string;
+  createdAt?: string;
+}
+
+export interface WritingChartFactsDTO {
+  questionId: string;
+  isTeacherVerified: boolean;
+  verifiedBy?: string;
+  verifiedAt?: string;
+  chartTitle: string;
+  chartType: string;
+  units?: string;
+  timeframes?: string[];
+  keyDataPoints: any[];
+  majorTrends: string[];
+  keyComparisons: string[];
+  processStagesOrMapChanges?: string[];
+  expectedOverviewFeatures: string[];
+  sourceImageUrl?: string;
+  notes?: string;
+}
+
+export type WritingErrorSeverity = 'minor' | 'moderate' | 'major' | 'critical';
+export type WritingErrorCategory = 'Grammar' | 'Vocabulary' | 'Cohesion' | 'Punctuation' | 'Register' | 'Task';
+
+export interface WritingErrorAnnotationDTO {
+  id?: string;
+  criterion: 'task_achievement' | 'task_response' | 'coherence_cohesion' | 'lexical_resource' | 'grammatical_range' | string;
+  category: WritingErrorCategory | string;
+  subcategory: string;
+  severity: WritingErrorSeverity;
+  original: string;
+  correction: string;
+  explanation: string;
+  startOffset: number;
+  endOffset: number; // exclusive end position
+  isGenuineError: boolean;
+  meaningImpact?: string;
+  quote?: string;
+  suggestedRevision?: string;
+}
+
+export type CheckStatus = 'met' | 'partially_met' | 'not_met' | 'not_applicable' | 'uncertain';
+
+export interface WritingCheckItemDTO {
+  checkId: string;
+  name: string;
+  status: CheckStatus;
+  explanation: string;
+  supportingSpans?: Array<{ quote: string; startOffset?: number; endOffset?: number }>;
+  taskEvidence?: string;
+  detectedIssues?: string[];
+}
+
+export type WritingTaskType = 'TASK_1_ACADEMIC' | 'TASK_1_GENERAL' | 'TASK_2';
+export type Task2QuestionType =
+  | 'OPINION'
+  | 'AGREE_DISAGREE'
+  | 'DISCUSSION'
+  | 'ADVANTAGES_DISADVANTAGES'
+  | 'PROBLEMS_SOLUTIONS'
+  | 'CAUSES_EFFECTS'
+  | 'TWO_PART'
+  | 'MIXED';
+
+export interface WritingTaskSpecificationDTO {
+  taskType: WritingTaskType;
+  academicTask1?: {
+    visualType: 'BAR_CHART' | 'LINE_GRAPH' | 'PIE_CHART' | 'TABLE' | 'PROCESS_DIAGRAM' | 'MAP' | 'COMBINED';
+    units?: string;
+    datesOrTimeframes?: string[];
+    keyFeatures?: string[];
+    expectedOverviewFeatures?: string[];
+    processStagesOrMapChanges?: string[];
+    isTeacherVerified: boolean;
+    verifiedBy?: string;
+  };
+  generalTask1?: {
+    recipient: 'FRIEND' | 'MANAGER' | 'AUTHORITY' | 'COMPANY' | string;
+    purpose: string;
+    requiredBulletPoints: string[];
+    expectedTone: 'FORMAL' | 'SEMI_FORMAL' | 'INFORMAL';
+  };
+  task2?: {
+    questionType: Task2QuestionType;
+    individualInstructions: string[];
+    requiresPosition: boolean;
+  };
+  task2QuestionType?: Task2QuestionType | string;
+  minimumWords?: number;
+  expectedStructure?: string[];
+  requiredElements?: string[];
+}
+
 export interface WritingEvaluationResultDTO {
+  id?: string;
+  sessionId?: string;
+  taskType?: 'TASK_1' | 'TASK_2' | string;
   overallScore: number;
+  roundedBand?: number;
+  rawAverageScore?: number;
   maxScore: number;
   band: string;
+  bandLabel?: string;
   wordCount: number;
   wordCountCompliant: boolean;
-  criteriaScores: Array<{
-    id: string;
-    name: string;
-    score: number;
-    maxScore: number;
-    feedback: string;
-  }>;
-  grammarFeedback: Array<{
-    quote: string;
-    issue: string;
-    suggestion: string;
-  }>;
-  vocabularySuggestions: Array<{
-    word: string;
-    betterAlternative: string;
-    context: string;
-  }>;
+  sentenceCount?: number;
+  paragraphCount?: number;
+  textStats?: {
+    wordCount: number;
+    sentenceCount: number;
+    paragraphCount: number;
+    avgSentenceLength: number;
+    vocabularyDiversity: number;
+    lexicalDensity: number;
+  };
+  status?: WritingEvaluationStatus;
+  reliabilityStatus?: WritingReliabilityStatus;
+  reviewReasons?: string[];
+  criteriaScores: WritingCriterionDetailDTO[];
+  strengths?: string[];
+  priorityImprovements?: string[];
+  grammarFeedback?: WritingGrammarCorrectionDTO[];
+  grammarCorrections?: WritingGrammarCorrectionDTO[];
+  vocabularySuggestions: WritingVocabularySuggestionDTO[];
+  annotations?: WritingErrorAnnotationDTO[];
+  detailedChecks?: Record<string, WritingCheckItemDTO[]>;
+  errorFreeSentenceMetrics?: {
+    errorFreeCount: number;
+    totalSentences: number;
+    percentage: number;
+    isConfident?: boolean;
+    uncertaintyReason?: string;
+  };
+  mainPriority?: string;
+  nextBandTarget?: string;
+  taskSpecification?: WritingTaskSpecificationDTO;
+  evaluatorVersion?: string;
   overallFeedback: string;
+  retrievedDocumentIds?: Array<{
+    id: string;
+    version: string;
+    title: string;
+    taskType: string;
+    similarity?: number;
+    relevanceScore?: number;
+    retrievalStrategy?: string;
+    provenance?: string;
+  }>;
+  providerId?: string;
+  modelUsed?: string;
+  rubricVersion?: string;
+  promptVersion?: string;
+  retrievalVersion?: string;
+  failureReason?: string;
+  teacherReviewed?: boolean;
+  teacherReviewId?: string;
+  latestTeacherScore?: number;
+  teacherNotes?: string;
+  teacherReviewedAt?: string;
+  submittedText?: string;
+  timeSpentSeconds?: number;
 }
 
 // ==========================================

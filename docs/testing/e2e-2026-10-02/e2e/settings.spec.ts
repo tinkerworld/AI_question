@@ -1,0 +1,97 @@
+import { test, expect, Page } from '@playwright/test';
+import { loginAs, goToTab } from './helpers/auth';
+
+let page: Page;
+
+test.describe.serial('Phase 11: System Settings & AI Gateway Configuration', () => {
+  test.beforeAll(async ({ browser }) => {
+    page = await browser.newPage();
+  });
+
+  test.afterAll(async () => {
+    await page.close();
+  });
+
+  test('admin can access Settings tab and configure AI Gateway multi-provider cascade', async () => {
+    // 1. Log in as Main Admin
+    await loginAs(page, 'admin');
+
+    // 2. Navigate to Settings module
+    const settingsNavTab = page.locator('#nav-tab-settings');
+    await expect(settingsNavTab).toBeVisible({ timeout: 10_000 });
+    await goToTab(page, 'settings');
+
+    // 3. Verify Settings page header and subtab switcher
+    await expect(page.getByText('System Settings & Administration')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('#settings-subtab-ai')).toBeVisible();
+    await expect(page.locator('#settings-subtab-appearance')).toBeVisible();
+    await expect(page.locator('#settings-subtab-exam-themes')).toBeVisible();
+
+    // 4. Verify AI Configuration subtab loads real provider cards from database
+    const mockCard = page.locator('[id^="provider-card-prov_"][id*="mock"]').first();
+
+    await expect(mockCard).toBeVisible({ timeout: 10_000 });
+    const toggleInput = mockCard.locator('input[type="checkbox"]');
+    await expect(toggleInput).toBeVisible();
+
+    // 5. Test live connection to deterministic mock provider
+    const testBtn = mockCard.getByRole('button', { name: /Test Connection|Test/i });
+    if (await testBtn.isVisible().catch(() => false)) {
+      await testBtn.click();
+      // Confirm live connection test outputs success or latency
+      await expect(mockCard.getByText(/Connection operational|Successfully connected/i).first()).toBeVisible({ timeout: 10_000 });
+    }
+
+    // 6. Test Scope-Isolated Provider Filter Switches & Clarity Banners
+    const scopeIvconvBtn = page.locator('#scope-filter-interview_conversation');
+    const scopeIvgradeBtn = page.locator('#scope-filter-interview_grading');
+    const scopeQuestionAuthoringBtn = page.locator('#scope-filter-question_authoring');
+    const scopeInterviewBtn = page.locator('#scope-filter-interview');
+    const scopeAllBtn = page.locator('#scope-filter-all');
+
+    if (await scopeIvconvBtn.isVisible().catch(() => false)) {
+      // Filter by Live Interview Dialogue
+      await scopeIvconvBtn.click();
+      await expect(page.locator('#scope-section-interview_conversation')).toBeVisible();
+      await expect(page.getByText('Live back-and-forth during the interview').first()).toBeVisible();
+
+      // Filter by Post-Interview Grading
+      await scopeIvgradeBtn.click();
+      await expect(page.locator('#scope-section-interview_grading')).toBeVisible();
+      await expect(page.getByText('One-time evaluation after the interview ends').first()).toBeVisible();
+
+      // Reset to All Scopes
+      await scopeAllBtn.click();
+    } else if (await scopeQuestionAuthoringBtn.isVisible().catch(() => false)) {
+      // Filter by Question Authoring
+      await scopeQuestionAuthoringBtn.click();
+      await expect(mockCard).toBeVisible();
+
+      // Filter by Interview Scope
+      await scopeInterviewBtn.click();
+      await expect(page.locator('[id^="provider-card-prov_"]').first()).toBeVisible({ timeout: 5000 });
+
+      // Reset to All Scopes
+      await scopeAllBtn.click();
+      await expect(mockCard).toBeVisible();
+    }
+
+    // 7. Test Appearance Subtab
+    await page.locator('#settings-subtab-appearance').click();
+    await expect(page.getByText('UI Color Scheme')).toBeVisible();
+    await expect(page.locator('#theme-card-light')).toBeVisible();
+    await expect(page.locator('#theme-card-gray')).toBeVisible();
+    await expect(page.locator('#theme-card-dark')).toBeVisible();
+
+    // Click Slate Theme
+    await page.locator('#theme-card-gray').click();
+    await expect(page.locator('#theme-card-gray').getByText('Active')).toBeVisible();
+
+    // 7. Test Exam Paper Themes Subtab (Placeholder/Stub)
+    await page.locator('#settings-subtab-exam-themes').click();
+    await expect(page.getByText('Exam Paper Presentation Themes')).toBeVisible();
+    await expect(page.getByText('COMING SOON', { exact: true })).toBeVisible();
+    await expect(page.getByText('NTA / JEE Standard')).toBeVisible();
+    await expect(page.getByText('CBSE Board Style')).toBeVisible();
+  });
+});

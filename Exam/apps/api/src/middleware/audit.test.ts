@@ -1,4 +1,4 @@
-import { test } from 'node:test';
+import { test, after } from 'node:test';
 import { strict as assert } from 'node:assert';
 import { auditLog } from './audit.js';
 import { pgDb } from '@repo/database';
@@ -11,7 +11,7 @@ class MockRequest {
   query: Record<string, string>;
   ip?: string;
   socket?: { remoteAddress?: string };
-  headers: Record<string, string>;
+  headers: Record<string, string | undefined>;
 
   constructor() {
     this.params = {};
@@ -24,7 +24,6 @@ class MockRequest {
 
 class MockResponse {
   statusCode: number;
-  on: (event: string, callback: () => void) => void;
   _events: Record<string, Array<() => void>>;
 
   constructor() {
@@ -50,9 +49,11 @@ const mockNext = () => {};
 
 // Mock pgDb.query to avoid actual database calls
 const originalQuery = pgDb.query;
-pgDb.query = async (query: string, params: any[]) => {
-  // Simulate successful insert
-  return Promise.resolve({ rows: [] });
+(pgDb as any).query = async (query: string, params?: any[]) => {
+  if (typeof query === 'string' && query.includes('audit_logs')) {
+    return Promise.resolve({ rows: [], fields: [] });
+  }
+  return originalQuery ? originalQuery.call(pgDb, query, params) : Promise.resolve({ rows: [], fields: [] });
 };
 
 test('auditLog middleware should log audit entry on successful request', async () => {
@@ -66,7 +67,7 @@ test('auditLog middleware should log audit entry on successful request', async (
   req.headers['user-agent'] = 'test-agent';
 
   const middleware = auditLog('create', 'user');
-  await middleware(req, res, next);
+  await middleware(req as any, res as any, next);
 
   // Trigger finish event
   res.emit('finish');
@@ -83,7 +84,7 @@ test('auditLog middleware should not log when response status is not 2xx', async
   res.statusCode = 500; // Internal server error
 
   const middleware = auditLog('update', 'user');
-  await middleware(req, res, next);
+  await middleware(req as any, res as any, next);
 
   // Trigger finish event
   res.emit('finish');
@@ -105,7 +106,7 @@ test('auditLog middleware should handle missing user and resource ID gracefully'
   req.headers['user-agent'] = undefined;
 
   const middleware = auditLog('delete', 'post');
-  await middleware(req, res, next);
+  await middleware(req as any, res as any, next);
 
   // Trigger finish event
   res.emit('finish');
@@ -123,7 +124,7 @@ test('auditLog middleware should handle missing ip and user-agent gracefully', a
   req.headers['user-agent'] = undefined;
 
   const middleware = auditLog('read', 'document');
-  await middleware(req, res, next);
+  await middleware(req as any, res as any, next);
 
   // Trigger finish event
   res.emit('finish');
@@ -132,4 +133,6 @@ test('auditLog middleware should handle missing ip and user-agent gracefully', a
 });
 
 // Restore original query after tests
-pgDb.query = originalQuery;
+after(() => {
+  (pgDb as any).query = originalQuery;
+});

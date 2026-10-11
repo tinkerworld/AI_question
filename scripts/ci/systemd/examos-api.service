@@ -1,0 +1,29 @@
+[Unit]
+Description=ExamOS production api
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/Deploy/AI_question
+ExecStart=/usr/bin/bash /usr/local/lib/examos/run-service.sh api
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=30
+KillMode=control-group
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/ubuntu/Deploy
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=examos-api
+
+[Install]
+WantedBy=multi-user.target

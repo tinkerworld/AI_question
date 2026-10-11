@@ -3,6 +3,8 @@ import { pgDb } from '@repo/database';
 import { AppError } from '../middleware/error';
 import crypto from 'crypto';
 import { AIGatewayService } from './ai-gateway.service';
+import { WritingEvaluationEngineService, roundToIeltsBand } from './writing-evaluation-engine.service';
+import { IeltsDescriptorAnalyzer } from './ielts-descriptor-analyzer';
 
 export const BUILTIN_WRITING_RUBRICS: Record<string, { name: string; criteria: WritingRubricCriterionDTO[] }> = {
   IELTS_TASK_1: {
@@ -75,185 +77,63 @@ export class WritingEvaluationService {
         overallScore: 0,
         maxScore: 9,
         band: 'Band 0.0 (Did not attempt)',
+        bandLabel: 'Estimated IELTS band 0.0',
         wordCount: 0,
         wordCountCompliant: false,
+        sentenceCount: 0,
+        paragraphCount: 0,
         criteriaScores: rubric.map((c) => ({
           id: c.id,
           name: c.name,
           score: 0,
           maxScore: c.maxScore,
+          explanation: 'No response submitted.',
           feedback: 'No response submitted.',
         })),
+        strengths: [],
+        priorityImprovements: ['Submit a response meeting the minimum word length.'],
         grammarFeedback: [],
+        grammarCorrections: [],
         vocabularySuggestions: [],
         overallFeedback: 'The essay area was left completely blank. A minimum of ' + minWordCount + ' words is required.',
+        annotations: [],
+        detailedChecks: {},
+        errorFreeSentenceMetrics: { errorFreeCount: 0, totalSentences: 0, percentage: 0, isConfident: true },
+        mainPriority: 'Submit a response meeting the minimum word length.',
+        nextBandTarget: 'Band 1.0 (Non-user)',
+        evaluatorVersion: '2.0.0',
       };
     }
 
-    // Baseline heuristic values
-    let lengthPenaltyFraction = 0;
-    if (wordCount < minWordCount) {
-      lengthPenaltyFraction = (minWordCount - wordCount) / minWordCount;
-    }
+    const isTask1 = minWordCount <= 150 || (promptText && /task\s*1/i.test(promptText));
+    const taskType: 'TASK_1' | 'TASK_2' = isTask1 ? 'TASK_1' : 'TASK_2';
 
-    const baselineCriteriaScores = rubric.map((c) => {
-      let baseRaw = c.maxScore * 0.75;
-      if (wordCount < minWordCount) {
-        baseRaw = Math.max(1, baseRaw * (1 - lengthPenaltyFraction * 0.6));
-      }
-      const score = Math.round(baseRaw * 2) / 2;
-      return {
-        id: c.id,
-        name: c.name,
-        score,
-        maxScore: c.maxScore,
-        feedback:
-          wordCount >= minWordCount
-            ? `Satisfies ${c.name} standards with structured development and good coherence.`
-            : `Affected by short length (${wordCount}/${minWordCount} words). Expand on central points to achieve higher marks.`,
-      };
-    });
+    // Run objective IELTS Descriptor Engine based on official public descriptors
+    const analysis = IeltsDescriptorAnalyzer.analyzeSubmission(text, taskType, null, promptText);
+    const roundedOverall = roundToIeltsBand(analysis.rawAverageScore);
 
-    const totalEarned = baselineCriteriaScores.reduce((sum, c) => sum + c.score, 0);
-    const totalMax = baselineCriteriaScores.reduce((sum, c) => sum + c.maxScore, 0);
-    const normalizedScore = totalMax > 0 ? (totalEarned / totalMax) * 9 : 0;
-    const roundedOverall = Math.round(normalizedScore * 2) / 2;
-
-    // Baseline diagnostic items
-    const grammarFeedback: Array<{ quote: string; issue: string; suggestion: string }> = [];
-    const vocabularySuggestions: Array<{ word: string; betterAlternative: string; context: string }> = [];
-
-    if (text.toLowerCase().includes('a lot of') || text.toLowerCase().includes('lots of')) {
-      vocabularySuggestions.push({
-        word: 'a lot of',
-        betterAlternative: 'a substantial proportion of / numerous / myriad',
-        context: 'Use formal academic quantifiers instead of colloquial terms.',
-      });
-    }
-
-    if (text.toLowerCase().includes('good')) {
-      vocabularySuggestions.push({
-        word: 'good',
-        betterAlternative: 'beneficial / advantageous / commendable',
-        context: 'Elevate generic adjectives to precise lexical markers.',
-      });
-    }
-
-    if (text.toLowerCase().includes('bad')) {
-      vocabularySuggestions.push({
-        word: 'bad',
-        betterAlternative: 'detrimental / adverse / deleterious',
-        context: 'Select nuanced academic vocabulary for negative impacts.',
-      });
-    }
-
-    const sentences = text.split(/[.!?]+/).map((s) => s.trim()).filter(Boolean);
-    for (const s of sentences) {
-      if (s.length > 0 && s[0] === s[0].toLowerCase()) {
-        grammarFeedback.push({
-          quote: s.substring(0, 30) + '...',
-          issue: 'Sentence does not begin with an uppercase letter.',
-          suggestion: s[0].toUpperCase() + s.substring(1),
-        });
-        break;
-      }
-    }
-
-    // Call AIGatewayService (with automatic fallback to mock provider if cloud provider fails)
-    let aiEvaluation: any = null;
-    try {
-      const criteriaStr = rubric.map((c) => `- ${c.name} (Max: ${c.maxScore}): ${c.description || ''}`).join('\n');
-      const response = await AIGatewayService.routeRequest({
-        featureKey: 'writing_evaluation',
-        scope: 'writing_analysis',
-        systemPrompt: `You are an expert examiner evaluating academic essay submissions. Evaluate the candidate's essay against the specified rubric:\n${criteriaStr}\nTarget length: ${minWordCount}-${maxWordCount || 400} words. Candidate length: ${wordCount} words. Output JSON with score, gradeBand, feedback, criteria, strengths, weaknesses, recommendations.`,
-        prompt: `Writing Prompt: ${promptText || 'Academic Essay Task'}\n\nCandidate Submission:\n${text}`,
-        variables: {
-          writingPrompt: promptText,
-          studentText: text,
-          minWordCount,
-          maxWordCount,
-        },
-      });
-
-      if (response && (response.parsedJson || response.content)) {
-        aiEvaluation = response.parsedJson;
-        if (!aiEvaluation && typeof response.content === 'string') {
-          let clean = response.content.trim();
-          if (clean.startsWith('```json')) clean = clean.replace(/^```json\s*/i, '').replace(/```\s*$/, '').trim();
-          else if (clean.startsWith('```')) clean = clean.replace(/^```\s*/, '').replace(/```\s*$/, '').trim();
-          aiEvaluation = JSON.parse(clean);
-        }
-      }
-    } catch (aiErr: any) {
-      console.warn(`[WritingEvaluationService] AI Gateway request fallback: ${aiErr.message}`);
-    }
-
-    // Merge AI Evaluation if available, otherwise use baseline heuristic
-    if (aiEvaluation) {
-      const finalScore = typeof aiEvaluation.score === 'number'
-        ? aiEvaluation.score
-        : typeof aiEvaluation.finalScore === 'number'
-        ? aiEvaluation.finalScore
-        : roundedOverall;
-
-      const mergedCriteriaScores = rubric.map((c, idx) => {
-        const aiCritList = aiEvaluation.criteria || aiEvaluation.rubricScores || [];
-        const matched = aiCritList.find((ac: any) =>
-          (ac.name && ac.name.toLowerCase().includes(c.name.toLowerCase().slice(0, 5))) ||
-          (ac.id && ac.id.toLowerCase() === c.id.toLowerCase())
-        ) || aiCritList[idx];
-
-        if (matched) {
-          return {
-            id: c.id,
-            name: c.name,
-            score: typeof matched.score === 'number' ? matched.score : baselineCriteriaScores[idx].score,
-            maxScore: c.maxScore,
-            feedback: matched.feedback || baselineCriteriaScores[idx].feedback,
-          };
-        }
-        return baselineCriteriaScores[idx];
-      });
-
-      if (Array.isArray(aiEvaluation.grammarFeedback) && aiEvaluation.grammarFeedback.length > 0) {
-        grammarFeedback.push(...aiEvaluation.grammarFeedback);
-      }
-      if (Array.isArray(aiEvaluation.vocabularySuggestions) && aiEvaluation.vocabularySuggestions.length > 0) {
-        vocabularySuggestions.push(...aiEvaluation.vocabularySuggestions);
-      }
-
-      return {
-        overallScore: Math.round(finalScore * 2) / 2,
-        maxScore: 9,
-        band: aiEvaluation.gradeBand || `Band ${finalScore.toFixed(1)}`,
-        wordCount,
-        wordCountCompliant,
-        criteriaScores: mergedCriteriaScores,
-        grammarFeedback,
-        vocabularySuggestions,
-        overallFeedback: aiEvaluation.feedback || (
-          wordCount >= minWordCount
-            ? `Well-developed response of ${wordCount} words satisfying formal examination criteria. Good paragraph structure with clear communicative clarity.`
-            : `Submission reached ${wordCount} words, falling short of the required ${minWordCount} minimum.`
-        ),
-      };
-    }
-
-    // Heuristic fallback
     return {
       overallScore: roundedOverall,
+      rawAverageScore: analysis.rawAverageScore,
       maxScore: 9,
-      band: `Band ${roundedOverall.toFixed(1)}`,
+      band: roundedOverall.toFixed(1),
+      bandLabel: `Estimated IELTS band ${roundedOverall.toFixed(1)}`,
       wordCount,
       wordCountCompliant,
-      criteriaScores: baselineCriteriaScores,
-      grammarFeedback,
-      vocabularySuggestions,
-      overallFeedback:
-        wordCount >= minWordCount
-          ? `Well-developed response of ${wordCount} words satisfying formal examination criteria. Good paragraph structure with clear communicative clarity.`
-          : `Submission reached ${wordCount} words, falling short of the required ${minWordCount} minimum. Under-length submissions receive an automatic penalty on Task Response.`,
+      sentenceCount: text ? text.split(/[.!?]+/).filter(Boolean).length : 0,
+      criteriaScores: analysis.criteriaScores,
+      strengths: analysis.strengths,
+      priorityImprovements: analysis.priorityImprovements,
+      grammarFeedback: analysis.grammarCorrections,
+      grammarCorrections: analysis.grammarCorrections,
+      vocabularySuggestions: analysis.vocabularySuggestions,
+      overallFeedback: analysis.overallFeedback,
+      annotations: analysis.annotations,
+      detailedChecks: analysis.detailedChecks,
+      errorFreeSentenceMetrics: analysis.errorFreeSentenceMetrics,
+      mainPriority: analysis.mainPriority,
+      nextBandTarget: analysis.nextBandTarget,
+      evaluatorVersion: '2.0.0',
     };
   }
 
@@ -321,7 +201,7 @@ export class WritingEvaluationService {
         COUNT(q.id)::int as "questionCount"
       FROM "courses" c
       LEFT JOIN "questions" q ON (
-        q."type" = 'WRITING' AND 
+        q."type" IN ('WRITING', 'IELTS_WRITING_TASK_1', 'IELTS_WRITING_TASK_2') AND 
         q."status" = 'PUBLISHED' AND 
         (q."courseId" = c.id OR q."subjectId" IN (SELECT id FROM "subjects" WHERE "courseId" = c.id))
       )
@@ -342,7 +222,7 @@ export class WritingEvaluationService {
     const standaloneCountRes = await db.query(`
       SELECT COUNT(id)::int as count 
       FROM "questions" 
-      WHERE "type" = 'WRITING' 
+      WHERE "type" IN ('WRITING', 'IELTS_WRITING_TASK_1', 'IELTS_WRITING_TASK_2') 
         AND "status" = 'PUBLISHED' 
         AND ("courseId" IS NULL OR "courseId" NOT IN (SELECT id FROM "courses"))
     `);
@@ -383,25 +263,25 @@ export class WritingEvaluationService {
       if (isStaff) {
         qRes = await db.query(
           `SELECT 
-             q.id, q.content, q.difficulty, q.marks, q."courseId", q."subjectId", q."data",
+             q.id, q.type, q.content, q.difficulty, q.marks, q."courseId", q."subjectId", q."data",
              c.name as "courseName", s.name as "subjectName"
            FROM "questions" q
            LEFT JOIN "courses" c ON q."courseId" = c.id
            LEFT JOIN "subjects" s ON q."subjectId" = s.id
-           WHERE q."type" = 'WRITING' AND q."status" = 'PUBLISHED'
-           ORDER BY q."createdAt" DESC`
+            WHERE q."type" IN ('WRITING', 'IELTS_WRITING_TASK_1', 'IELTS_WRITING_TASK_2') AND q."status" = 'PUBLISHED'
+            ORDER BY q."createdAt" DESC`
         );
       } else {
         const realCourseIds = userEligibleCourseIds.filter((id) => id !== 'general');
         if (realCourseIds.length > 0) {
           qRes = await db.query(
             `SELECT 
-               q.id, q.content, q.difficulty, q.marks, q."courseId", q."subjectId", q."data",
+               q.id, q.type, q.content, q.difficulty, q.marks, q."courseId", q."subjectId", q."data",
                c.name as "courseName", s.name as "subjectName"
              FROM "questions" q
              LEFT JOIN "courses" c ON q."courseId" = c.id
              LEFT JOIN "subjects" s ON q."subjectId" = s.id
-             WHERE q."type" = 'WRITING' AND q."status" = 'PUBLISHED'
+             WHERE q."type" IN ('WRITING', 'IELTS_WRITING_TASK_1', 'IELTS_WRITING_TASK_2') AND q."status" = 'PUBLISHED'
                AND (
                  q."courseId" = ANY($1) 
                  OR s."courseId" = ANY($1)
@@ -414,12 +294,12 @@ export class WritingEvaluationService {
         } else {
           qRes = await db.query(
             `SELECT 
-               q.id, q.content, q.difficulty, q.marks, q."courseId", q."subjectId", q."data",
+               q.id, q.type, q.content, q.difficulty, q.marks, q."courseId", q."subjectId", q."data",
                c.name as "courseName", s.name as "subjectName"
              FROM "questions" q
              LEFT JOIN "courses" c ON q."courseId" = c.id
              LEFT JOIN "subjects" s ON q."subjectId" = s.id
-             WHERE q."type" = 'WRITING' AND q."status" = 'PUBLISHED'
+             WHERE q."type" IN ('WRITING', 'IELTS_WRITING_TASK_1', 'IELTS_WRITING_TASK_2') AND q."status" = 'PUBLISHED'
                AND (
                  q."courseId" IS NULL 
                  OR q."courseId" NOT IN (SELECT id FROM "courses")
@@ -433,6 +313,7 @@ export class WritingEvaluationService {
         const data = typeof r.data === 'string' ? JSON.parse(r.data) : r.data;
         return {
           id: r.id,
+          type: r.type,
           content: r.content,
           difficulty: r.difficulty,
           marks: Number(r.marks || 10),
@@ -477,7 +358,7 @@ export class WritingEvaluationService {
     }
 
     const qRow = qRes.rows[0] as any;
-    if (qRow.type !== 'WRITING') {
+    if (qRow.type !== 'WRITING' && qRow.type !== 'IELTS_WRITING_TASK_1' && qRow.type !== 'IELTS_WRITING_TASK_2') {
       throw new AppError(400, 'BAD_REQUEST', `Question '${dto.questionId}' is not a WRITING question`);
     }
 
@@ -496,6 +377,15 @@ export class WritingEvaluationService {
       ) VALUES ($1, $2, $3, $4, $5, 'IN_PROGRESS', 0.0, $6, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
       [sessionId, user.userId, dto.questionId, courseId, mode, maxScore]
     );
+
+    const isStaff = (user.roles || []).some((r: string) => ['MAIN_ADMIN', 'SUB_ADMIN', 'TEACHER'].includes(r));
+    const sanitizedData = { ...qData };
+    if (!isStaff) {
+      delete sanitizedData.aiVisualContext;
+      delete sanitizedData.chartFacts;
+      delete sanitizedData.teacherVerifiedChartData;
+      delete sanitizedData.sampleAnswer;
+    }
 
     return {
       session: {
@@ -516,7 +406,7 @@ export class WritingEvaluationService {
         marks: maxScore,
         courseName: qRow.courseName || 'General Writing',
         subjectName: qRow.subjectName || 'Writing Module',
-        data: qData,
+        data: sanitizedData,
       },
     };
   }
@@ -551,6 +441,13 @@ export class WritingEvaluationService {
     }
 
     const qData = typeof row.questionData === 'string' ? JSON.parse(row.questionData) : row.questionData;
+    const sanitizedQData = { ...qData };
+    if (!isStaff) {
+      delete sanitizedQData.aiVisualContext;
+      delete sanitizedQData.chartFacts;
+      delete sanitizedQData.teacherVerifiedChartData;
+      delete sanitizedQData.sampleAnswer;
+    }
     const evaluation = typeof row.evaluation === 'string' ? JSON.parse(row.evaluation) : row.evaluation;
 
     return {
@@ -575,7 +472,7 @@ export class WritingEvaluationService {
         marks: row.questionMarks,
         courseName: row.courseName,
         subjectName: row.subjectName,
-        data: qData,
+        data: sanitizedQData,
       },
     };
   }
@@ -585,8 +482,8 @@ export class WritingEvaluationService {
    */
   static async submitWritingSession(
     sessionId: string,
-    dto: { essayText: string; timeSpentSeconds?: number },
-    user: { userId: string; roles?: string[] }
+    dto: { essayText: string; timeSpentSeconds?: number; allowTestMock?: boolean },
+    user: { userId: string; roles?: string[]; isIsolatedTest?: boolean }
   ) {
     await this.ensureSchema();
     const db = pgDb;
@@ -614,35 +511,51 @@ export class WritingEvaluationService {
     const minWords = Number(qData.minWords || qData.minWordCount || 150);
     const maxWords = Number(qData.maxWords || qData.maxWordCount || 400);
     const promptStem = qData.promptStem || row.questionContent || '';
-    const rubrics = Array.isArray(qData.rubrics) && qData.rubrics.length > 0
+    const textToEvaluate = dto.essayText || (dto as any).submissionText || '';
+    const rubrics = Array.isArray(qData.rubricCriteria) && qData.rubricCriteria.length > 0
+      ? qData.rubricCriteria
+      : Array.isArray(qData.rubric) && qData.rubric.length > 0
+      ? qData.rubric
+      : Array.isArray(qData.rubrics) && qData.rubrics.length > 0
       ? qData.rubrics
+      : qData.preset === 'IELTS_TASK_1'
+      ? BUILTIN_WRITING_RUBRICS.IELTS_TASK_1.criteria
       : BUILTIN_WRITING_RUBRICS.IELTS_TASK_2.criteria;
 
-    const evaluation = await this.evaluateWriting(
-      dto.essayText || '',
-      rubrics,
-      minWords,
-      maxWords,
-      promptStem
-    );
+    const isIsolatedTest = Boolean(user.isIsolatedTest);
+    const allowTestMock = isIsolatedTest && Boolean(dto.allowTestMock);
+
+    const evaluation = await WritingEvaluationEngineService.evaluateSubmission({
+      userId: user.userId,
+      questionId: row.questionId,
+      essayText: textToEvaluate,
+      sessionId,
+      timeSpentSeconds: dto.timeSpentSeconds,
+      allowTestMock,
+    });
 
     const score = evaluation.overallScore;
     const maxScore = Number(row.maxScore || 9.0);
     const wordCount = evaluation.wordCount;
+    const sessionStatus =
+      evaluation.status === 'REVIEW_REQUIRED' || evaluation.status === 'FAILED'
+        ? evaluation.status
+        : 'COMPLETED';
 
     await db.query(
       `UPDATE "writing_practice_sessions"
-       SET "status" = 'COMPLETED',
-           "essayText" = $1,
-           "wordCount" = $2,
-           "score" = $3,
-           "maxScore" = $4,
-           "evaluation" = $5,
-           "timeSpentSeconds" = $6,
-           "completedAt" = CURRENT_TIMESTAMP,
+       SET "status" = $1,
+           "essayText" = $2,
+           "wordCount" = $3,
+           "score" = $4,
+           "maxScore" = $5,
+           "evaluation" = $6,
+           "timeSpentSeconds" = $7,
+           "completedAt" = CASE WHEN $1 = 'COMPLETED' THEN CURRENT_TIMESTAMP ELSE NULL END,
            "updatedAt" = CURRENT_TIMESTAMP
-       WHERE id = $7`,
+       WHERE id = $8`,
       [
+        sessionStatus,
         dto.essayText || '',
         wordCount,
         score,
@@ -655,14 +568,14 @@ export class WritingEvaluationService {
 
     return {
       sessionId,
-      status: 'COMPLETED',
+      status: sessionStatus,
       essayText: dto.essayText || '',
       wordCount,
       score,
       maxScore,
       evaluation,
       timeSpentSeconds: dto.timeSpentSeconds || 0,
-      completedAt: new Date().toISOString(),
+      completedAt: sessionStatus === 'COMPLETED' ? new Date().toISOString() : undefined,
     };
   }
 

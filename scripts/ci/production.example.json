@@ -1,0 +1,23 @@
+{
+  "enabled": false,
+  "startup_schema_reviewed": false,
+  "release": "/home/ubuntu/Deploy/AI_question",
+  "releases": "/home/ubuntu/Deploy/.examos-releases",
+  "api_port": 4201,
+  "web_port": 3002,
+  "tracker_port": 3050,
+  "public_url": "https://examos.tinkerlab.online",
+  "keep_releases": 5,
+  "shared_paths": [
+    "Exam/.env",
+    "Exam/apps/api/.env",
+    "Exam/apps/web/.env",
+    "postgres-data",
+    "Exam/postgres-data",
+    "Exam/apps/api/storage",
+    "Exam/apps/api/uploads",
+    "uploads",
+    "logs",
+    "tools/build-tracker/state.json"
+  ]
+}

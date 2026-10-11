@@ -3,6 +3,8 @@
  * Connects Exam platform to the high-fidelity AI interview and viva microservice (https://voice.tinkerlab.online).
  */
 
+import { AppError } from '../middleware/error';
+
 export interface VoicePersonaDefinition {
   id: string;
   name: string;
@@ -412,6 +414,169 @@ export class VoiceMicroserviceClient {
     }
 
     return (await res.json()) as any;
+  }
+
+  async updateRemoteVoice(
+    sessionId: string,
+    voicePersona: string,
+    speedRate: number = 1.0
+  ): Promise<{ status: string; voice_profile: string }> {
+    const res = await fetch(`${this.baseUrl}/api/interview/voice`, {
+      method: 'POST',
+      headers: this.getHeaders('application/json'),
+      body: JSON.stringify({
+        session_id: sessionId,
+        voice_profile: voicePersona,
+        speed_rate: speedRate,
+      }),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Failed to update voice in microservice (${res.status}): ${text}`);
+    }
+
+    return (await res.json()) as any;
+  }
+
+  async getServicesStatus(): Promise<{
+    services: Record<string, {
+      name: string;
+      port?: number;
+      status: string;
+      pid?: number;
+      protocol?: string;
+      domain?: string;
+      unit?: string;
+    }>;
+    timestamp: string;
+  }> {
+    const res = await fetch(`${this.baseUrl}/v1/services/status`, {
+      headers: this.getHeaders('application/json'),
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Failed to get services status (${res.status}): ${text}`);
+    }
+    return (await res.json()) as any;
+  }
+
+  async getLogs(params?: {
+    source?: string;
+    lines?: number;
+    filter?: string;
+  }): Promise<{
+    source: string;
+    service: any;
+    count: number;
+    total: number;
+    lines: string[];
+    timestamp: string;
+  }> {
+    const q = new URLSearchParams();
+    if (params?.source) q.set('source', params.source);
+    if (params?.lines) q.set('lines', String(params.lines));
+    if (params?.filter) q.set('filter', params.filter);
+
+    const res = await fetch(`${this.baseUrl}/v1/logs?${q.toString()}`, {
+      headers: this.getHeaders('application/json'),
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Failed to get logs (${res.status}): ${text}`);
+    }
+    return (await res.json()) as any;
+  }
+
+  async calibrateSpeech(params: {
+    audio_base64: string;
+    audio_format?: string;
+    language?: string;
+  }): Promise<{
+    status: string;
+    transcribed_text: string;
+    duration_s: number;
+    words_count: number;
+    wpm: number;
+    pace_profile: 'fast' | 'moderate' | 'deliberate';
+    pace_label: string;
+    recommended_settings: {
+      speed_rate: number;
+      silence_wait_sec: number;
+      inactivity_nudge_sec: number;
+      speech_threshold_rms: number;
+    };
+    confidence_metadata?: any;
+  }> {
+    const res = await fetch(`${this.baseUrl}/v1/audio/calibrate-speech`, {
+      method: 'POST',
+      headers: this.getHeaders('application/json'),
+      body: JSON.stringify({
+        audio_base64: params.audio_base64,
+        audio_format: params.audio_format || 'webm',
+        language: params.language || 'en',
+      }),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Failed to calibrate speech in microservice (${res.status}): ${text}`);
+    }
+    return (await res.json()) as any;
+  }
+
+  async createWorkspace(
+    name: string,
+    subject: string = 'General',
+    description: string = '',
+    topics: string[] = []
+  ): Promise<{ status: string; workspace: any }> {
+    const res = await fetch(`${this.baseUrl}/v1/workspaces`, {
+      method: 'POST',
+      headers: this.getHeaders('application/json'),
+      body: JSON.stringify({ name, subject, description, topics }),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      let parsed: any = null;
+      try { parsed = JSON.parse(text); } catch {}
+      const errMsg = parsed?.error || parsed?.message || text;
+      throw new AppError(res.status, parsed?.code || 'MICROSERVICE_ERROR', errMsg);
+    }
+    return (await res.json()) as any;
+  }
+
+  async deleteWorkspace(workspaceId: string): Promise<{ status: string; workspace_id: string }> {
+    const res = await fetch(`${this.baseUrl}/v1/workspaces/${workspaceId}`, {
+      method: 'DELETE',
+      headers: this.getHeaders('application/json'),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      let parsed: any = null;
+      try { parsed = JSON.parse(text); } catch {}
+      const errMsg = parsed?.error || parsed?.message || text;
+      throw new AppError(res.status, parsed?.code || 'MICROSERVICE_ERROR', errMsg);
+    }
+    return (await res.json()) as any;
+  }
+
+  async getWorkspaceVersions(workspaceId: string): Promise<any[]> {
+    const res = await fetch(`${this.baseUrl}/v1/workspaces/${workspaceId}/versions`, {
+      headers: this.getHeaders('application/json'),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      let parsed: any = null;
+      try { parsed = JSON.parse(text); } catch {}
+      const errMsg = parsed?.error || parsed?.message || text;
+      throw new AppError(res.status, parsed?.code || 'MICROSERVICE_ERROR', errMsg);
+    }
+    const data = await res.json();
+    return data.versions || [];
   }
 
   getAudioStreamUrl(

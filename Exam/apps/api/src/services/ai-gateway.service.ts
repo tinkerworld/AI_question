@@ -178,6 +178,17 @@ export class AIGatewayService {
       providers = (providersRes.rows as any[]) || [];
     }
 
+    if (targetScope === 'writing_analysis') {
+      // User requirement: Do NOT use OpenAI for writing evaluation. Strictly enforce local AI. Cloud/OpenAI is prohibited.
+      providers = providers.filter(
+        (p) =>
+          p.type !== 'CLOUD' &&
+          !p.id.toLowerCase().includes('openai') &&
+          !p.name.toLowerCase().includes('openai') &&
+          !(p.modelId && p.modelId.toLowerCase().includes('gpt'))
+      );
+    }
+
     if (providers.length === 0) {
       throw new Error(`NO_AI_PROVIDERS_AVAILABLE: No active providers found for scope '${targetScope}'`);
     }
@@ -213,7 +224,7 @@ export class AIGatewayService {
 
       try {
         selectedProvider = provider;
-        const callResult = await this.executeProviderCall(provider, systemPrompt, userPrompt, req.maxTokens);
+        const callResult = await this.executeProviderCall(provider, systemPrompt, userPrompt, req.maxTokens, req.temperature);
         rawResult = callResult.content;
         promptTokens = callResult.promptTokens;
         completionTokens = callResult.completionTokens;
@@ -234,7 +245,16 @@ export class AIGatewayService {
               throw new Error('SCHEMA_VALIDATION_FAILED: Missing required interview evaluation fields');
             }
           } else if (targetScope === 'writing_analysis' || req.featureKey === 'writing_evaluation') {
-            if (typeof parsedJson.score !== 'number' && typeof parsedJson.finalScore !== 'number' && !parsedJson.feedback) {
+            if (
+              typeof parsedJson.score !== 'number' &&
+              typeof parsedJson.finalScore !== 'number' &&
+              !parsedJson.feedback &&
+              !parsedJson.criteria &&
+              !parsedJson.overallFeedback &&
+              !parsedJson.task_achievement &&
+              !parsedJson.task_response &&
+              !parsedJson.coherence_cohesion
+            ) {
               throw new Error('SCHEMA_VALIDATION_FAILED: Missing required writing analysis fields');
             }
           } else if (req.featureKey === 'interview_doc_generate' || parsedJson.knowledgeDataset || parsedJson.scenarioContext) {
@@ -256,7 +276,8 @@ export class AIGatewayService {
             provider,
             systemPrompt + ' Output MUST be valid JSON only matching expected schema.',
             userPrompt,
-            req.maxTokens
+            req.maxTokens,
+            req.temperature
           );
           let retryClean = (retryCall.content || '').trim();
           if (retryClean.startsWith('```json')) {
@@ -355,7 +376,8 @@ export class AIGatewayService {
     provider: AIProviderDTO,
     systemPrompt: string,
     userPrompt: string,
-    maxTokens?: number
+    maxTokens?: number,
+    temperature?: number
   ): Promise<{ content: string; promptTokens: number; completionTokens: number }> {
     if (provider.type === 'MOCK') {
       const isDocGenerate =
@@ -510,25 +532,35 @@ export class AIGatewayService {
     if (provider.type === 'LOCAL') {
       try {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), LOCAL_PROVIDER_DEFAULT_TIMEOUT_MS);
+        const timeoutMs =
+          provider.scope === 'writing_analysis' || (maxTokens && maxTokens > 1000)
+            ? 300000
+            : LOCAL_PROVIDER_DEFAULT_TIMEOUT_MS;
+        const timeout = setTimeout(() => controller.abort(), timeoutMs);
         let baseUrl = provider.baseUrl?.trim() || 'http://localhost:11434';
         baseUrl = baseUrl.replace(/\/+$/, '');
 
         const isOllamaNative = !baseUrl.endsWith('/v1') && !baseUrl.includes('/chat/completions');
         let endpoint = isOllamaNative ? `${baseUrl}/api/chat` : (baseUrl.endsWith('/chat/completions') ? baseUrl : `${baseUrl}/chat/completions`);
 
+        const effectiveTemperature =
+          temperature !== undefined ? temperature : (provider.temperature !== undefined ? provider.temperature : 0.7);
+
         let reqBody: any;
         if (isOllamaNative) {
+          const messages: Array<{ role: string; content: string }> = [];
+          if (systemPrompt) {
+            messages.push({ role: 'system', content: systemPrompt });
+          }
+          messages.push({ role: 'user', content: userPrompt });
+
           reqBody = {
             model: provider.modelId,
-            messages: [
-              { role: 'system', content: systemPrompt },
-              { role: 'user', content: userPrompt },
-            ],
+            messages,
             stream: false,
             options: {
-              num_predict: maxTokens || 4096,
-              temperature: 0.7,
+              num_predict: maxTokens || 1200,
+              temperature: effectiveTemperature,
             },
             format: 'json',
           };
@@ -539,7 +571,7 @@ export class AIGatewayService {
               { role: 'system', content: systemPrompt },
               { role: 'user', content: userPrompt },
             ],
-            temperature: 0.7,
+            temperature: effectiveTemperature,
             max_tokens: maxTokens || 4096,
             response_format: { type: 'json_object' },
           };
@@ -574,6 +606,9 @@ export class AIGatewayService {
       baseUrl = baseUrl.replace(/\/+$/, '');
       const endpoint = baseUrl.endsWith('/chat/completions') ? baseUrl : `${baseUrl}/chat/completions`;
 
+      const effectiveTemperature =
+        temperature !== undefined ? temperature : (provider.temperature !== undefined ? provider.temperature : 0.7);
+
       try {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 120000);
@@ -594,7 +629,7 @@ export class AIGatewayService {
               { role: 'user', content: userPrompt },
             ],
             response_format: { type: 'json_object' },
-            temperature: 0.7,
+            temperature: effectiveTemperature,
             max_tokens: maxTokens || 4096,
           }),
           signal: controller.signal,

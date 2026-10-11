@@ -85,42 +85,48 @@ async function getOrInitReadyDb() {
         }
         return _pgDbInstance;
     }
-    const dbPath = getDbPath();
-    if (dbPath === 'memory://' || dbPath === ':memory:') {
-        const memDb = new pglite_1.PGlite();
-        await memDb.waitReady;
-        _pgDbInstance = memDb;
-        return memDb;
+    if (_initPromise) {
+        return _initPromise;
     }
-    const pidFile = path.join(dbPath, 'postmaster.pid');
-    if (fs.existsSync(pidFile)) {
-        try {
-            fs.unlinkSync(pidFile);
+    _initPromise = (async () => {
+        const dbPath = getDbPath();
+        if (dbPath === 'memory://' || dbPath === ':memory:') {
+            const memDb = new pglite_1.PGlite();
+            await memDb.waitReady;
+            _pgDbInstance = memDb;
+            return memDb;
         }
-        catch { }
-    }
-    try {
-        const diskDb = new pglite_1.PGlite(dbPath);
-        // Attach noop catch to suppress raw unhandled rejection from Node.js
-        diskDb.waitReady.catch(() => { });
-        await diskDb.waitReady;
-        _pgDbInstance = diskDb;
-        return diskDb;
-    }
-    catch (err) {
-        const isAbort = String(err?.message || err).includes('Aborted') || err?.name === 'RuntimeError';
-        if (isAbort) {
-            if (process.env.NODE_ENV === 'test' || process.env.PG_ALLOW_MEMORY_FALLBACK === 'true') {
-                console.warn(`[ExamOS Database] Warning: Database directory at "${dbPath}" is locked by another running ExamOS process. Falling back to isolated in-memory database.`);
-                const fallbackDb = new pglite_1.PGlite();
-                await fallbackDb.waitReady;
-                _pgDbInstance = fallbackDb;
-                return fallbackDb;
+        const pidFile = path.join(dbPath, 'postmaster.pid');
+        if (fs.existsSync(pidFile)) {
+            try {
+                fs.unlinkSync(pidFile);
             }
-            throw new Error(`[ExamOS Database Lock Error] Could not open database directory "${dbPath}" because it is currently locked by another active ExamOS process (likely the API server on port 4043). Please stop existing processes using "stop_all.bat", or set PG_DATA_DIR=memory:// for an isolated instance.`);
+            catch { }
         }
-        throw err;
-    }
+        try {
+            const diskDb = new pglite_1.PGlite(dbPath);
+            // Attach noop catch to suppress raw unhandled rejection from Node.js
+            diskDb.waitReady.catch(() => { });
+            await diskDb.waitReady;
+            _pgDbInstance = diskDb;
+            return diskDb;
+        }
+        catch (err) {
+            const isAbort = String(err?.message || err).includes('Aborted') || err?.name === 'RuntimeError';
+            if (isAbort) {
+                if (process.env.NODE_ENV === 'test' || process.env.PG_ALLOW_MEMORY_FALLBACK === 'true') {
+                    console.warn(`[ExamOS Database] Warning: Database directory at "${dbPath}" is locked by another running ExamOS process. Falling back to isolated in-memory database.`);
+                    const fallbackDb = new pglite_1.PGlite();
+                    await fallbackDb.waitReady;
+                    _pgDbInstance = fallbackDb;
+                    return fallbackDb;
+                }
+                throw new Error(`[ExamOS Database Lock Error] Could not open database directory "${dbPath}" because it is currently locked by another active ExamOS process (likely the API server on port 4043). Please stop existing processes using "stop_all.bat", or set PG_DATA_DIR=memory:// for an isolated instance.`);
+            }
+            throw err;
+        }
+    })();
+    return _initPromise;
 }
 // Primary in-process PostgreSQL 16 engine for all runtime services and routes
 // Uses lazy Proxy so importing @repo/database in unit tests without queries does not lock postgres-data
