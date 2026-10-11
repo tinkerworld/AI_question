@@ -418,7 +418,23 @@ export const ExamPlayerPage: React.FC<ExamPlayerPageProps> = ({
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await res.json();
+      let data: any = null;
+      let rawText = '';
+      try {
+        rawText = await res.text();
+        data = rawText ? JSON.parse(rawText) : null;
+      } catch {
+        if (res.status === 524 || res.status === 504 || (rawText && rawText.includes('<!DOCTYPE'))) {
+          alert('Submission timed out on gateway (HTTP 524). Please try submitting again.');
+          return;
+        }
+        alert(`Network error during submission (HTTP ${res.status}). Please try again.`);
+        return;
+      }
+      if (!data) {
+        alert('Server returned an empty response. Please try submitting again.');
+        return;
+      }
       if (data.success || data.data?.status === 'EVALUATED' || data.message?.includes('already')) {
         isCompletedRef.current = true;
         setIsCompleted(true);

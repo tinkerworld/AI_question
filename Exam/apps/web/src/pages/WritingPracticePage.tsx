@@ -334,10 +334,14 @@ export const WritingPracticePage: React.FC = () => {
       });
 
       let data: any = null;
+      let rawText = '';
       try {
-        const rawText = await res.text();
+        rawText = await res.text();
         data = rawText ? JSON.parse(rawText) : null;
       } catch {
+        if (res.status === 524 || res.status === 504 || (rawText && rawText.includes('<!DOCTYPE'))) {
+          throw new Error('Evaluation gateway timed out (HTTP 524). Please click "Retry Analysis" to finalize evaluation.');
+        }
         throw new Error(`The connection was interrupted during evaluation (HTTP ${res.status}). Please click "Retry Analysis".`);
       }
 
