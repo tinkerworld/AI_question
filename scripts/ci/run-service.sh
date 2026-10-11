@@ -24,6 +24,7 @@ case "${1:-}" in
       export EXAMOS_ROOT="$ROOT"
       exec node /usr/local/lib/examos/serve-web.cjs
     fi
+    export NODE_ENV=development
     exec node node_modules/vite/bin/vite.js --host 127.0.0.1 --port "$WEB_PORT" --strictPort
     ;;
   tracker)
