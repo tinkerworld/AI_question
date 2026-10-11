@@ -56,7 +56,7 @@ def retain(config, current, previous):
                     protected.add(parent)
         if re.fullmatch(r'[a-f0-9]{12}-\d{8}T\d{6}-[a-f0-9]{8}', path.name) and (path / '.cicd-healthy').is_file():
             candidates.append(path)
-    candidates.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+    candidates.sort(key=lambda p: (p.name.split('-')[1] if len(p.name.split('-')) > 1 else '', p.stat().st_mtime), reverse=True)
     protected.update(candidates[:max(2, int(config.get('keep_releases', 5)))])
     for path in candidates:
         if path not in protected:

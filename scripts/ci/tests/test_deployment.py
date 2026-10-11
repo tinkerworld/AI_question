@@ -123,6 +123,8 @@ class DeploymentTests(unittest.TestCase):
             release.mkdir()
             (release / '.cicd-healthy').touch()
             (release / 'postgres-data').symlink_to(legacy / 'postgres-data')
+            import os
+            os.utime(release, (1700000000 + number, 1700000000 + number))
             old_dirs.append(release)
         backup = self.releases / 'database-backup-fixture'
         backup.mkdir()
