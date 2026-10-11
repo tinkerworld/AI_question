@@ -534,7 +534,7 @@ export class AIGatewayService {
         const controller = new AbortController();
         const timeoutMs =
           provider.scope === 'writing_analysis' || (maxTokens && maxTokens > 1000)
-            ? 300000
+            ? 45000
             : LOCAL_PROVIDER_DEFAULT_TIMEOUT_MS;
         const timeout = setTimeout(() => controller.abort(), timeoutMs);
         let baseUrl = provider.baseUrl?.trim() || 'http://localhost:11434';
@@ -559,7 +559,8 @@ export class AIGatewayService {
             messages,
             stream: false,
             options: {
-              num_predict: maxTokens || 1200,
+              num_predict: Math.min(maxTokens || 800, 800),
+              num_thread: 12,
               temperature: effectiveTemperature,
             },
             format: 'json',

@@ -872,7 +872,7 @@ Output valid JSON ONLY matching this schema:
         scope: 'writing_analysis',
         systemPrompt,
         prompt: userPrompt,
-        maxTokens: 1000,
+        maxTokens: 800,
         temperature: 0.1, // low temperature for consistent, calibrated scoring
         preferredProviderId: allowTestMock ? 'prov_writing_mock_01' : 'prov_writing_local_01',
       });

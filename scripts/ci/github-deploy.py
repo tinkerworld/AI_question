@@ -94,26 +94,31 @@ def save_record(record):
 def health(config, sha=None):
     last = None
     deadline = time.monotonic() + 90
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) ExamOS-HealthCheck/1.0'}
     while time.monotonic() < deadline:
         try:
             for unit in UNITS:
                 command(['/usr/bin/systemctl', 'is-active', '--quiet', unit])
             for port, path in [(config['api_port'], '/health'), (config['web_port'], '/')]:
-                with urllib.request.urlopen(f'http://127.0.0.1:{port}{path}', timeout=2) as response:
+                req = urllib.request.Request(f'http://127.0.0.1:{port}{path}', headers=headers)
+                with urllib.request.urlopen(req, timeout=2) as response:
                     if response.status != 200:
                         raise RuntimeError('Non-200 health response')
             if sha:
                 for base in [f"http://127.0.0.1:{config['web_port']}", config['public_url']]:
-                    with urllib.request.urlopen(base.rstrip('/') + '/__release.json', timeout=5) as response:
+                    req = urllib.request.Request(base.rstrip('/') + '/__release.json', headers=headers)
+                    with urllib.request.urlopen(req, timeout=5) as response:
                         if json.load(response)['commit'] != sha:
                             raise RuntimeError('Traffic is reaching another release')
-                    with urllib.request.urlopen(base.rstrip('/') + '/api/__cicd/ready', timeout=5) as response:
+                    req = urllib.request.Request(base.rstrip('/') + '/api/__cicd/ready', headers=headers)
+                    with urllib.request.urlopen(req, timeout=5) as response:
                         body = json.load(response)
                         if body.get('status') != 'ready' or body.get('commit') != sha:
                             raise RuntimeError('API/database readiness or identity check failed')
             else:
                 # The legacy app has no readiness route or version metadata.
-                with urllib.request.urlopen(config['public_url'], timeout=5) as response:
+                req = urllib.request.Request(config['public_url'], headers=headers)
+                with urllib.request.urlopen(req, timeout=5) as response:
                     if response.status != 200:
                         raise RuntimeError('Legacy public route is unavailable')
             return
